@@ -252,15 +252,51 @@
       height: 60px;
     }
     .logo {
-      font-family: var(--font-display);
-      font-size: 22px;
-      font-weight: 900;
-      letter-spacing: -0.01em;
-      color: var(--black);
+      display: flex;
+      align-items: center;
+      gap: 12px;
       text-decoration: none;
+    }
+    .logo-img {
+      height: 40px;
+      width: auto;
+    }
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+    }
+    .logo-strikers {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      color: var(--black);
       text-transform: uppercase;
     }
-    .logo span { color: var(--red); }
+    .logo-line {
+      width: 100%;
+      height: 3px;
+      background: var(--red);
+      margin: 2px 0;
+    }
+    .logo-match {
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      color: var(--gray-600);
+      text-transform: uppercase;
+    }
+    footer .logo-strikers {
+      font-size: 18px;
+    }
+    footer .logo-match {
+      font-size: 9px;
+    }
+    footer .logo-img {
+      height: 32px;
+    }
 
     .lang-toggle {
       display: flex;
@@ -635,7 +671,14 @@
 <!-- NAV -->
 <nav aria-label="Navegación principal">
   <div class="container nav-inner">
-    <a href="#" class="logo">Strikers<span>&nbsp;Match</span></a>
+    <a href="#" class="logo">
+        <img src="logo.png" alt="" class="logo-img">
+        <div class="logo-text">
+          <span class="logo-strikers">STRIKERS</span>
+          <span class="logo-line"></span>
+          <span class="logo-match">MATCH</span>
+        </div>
+      </a>
     <div class="lang-toggle">
       <button class="lang-btn active" id="btn-es" onclick="setLang('es')" aria-pressed="true" aria-label="Cambiar a Español">ES</button>
       <button class="lang-btn" id="btn-en" onclick="setLang('en')" aria-pressed="false" aria-label="Switch to English">EN</button>
@@ -800,7 +843,14 @@
 <!-- FOOTER -->
 <footer>
   <div class="container footer-inner">
-    <a href="#" class="logo">Strikers<span>&nbsp;Match</span></a>
+    <a href="#" class="logo">
+        <img src="logo.png" alt="" class="logo-img">
+        <div class="logo-text">
+          <span class="logo-strikers">STRIKERS</span>
+          <span class="logo-line"></span>
+          <span class="logo-match">MATCH</span>
+        </div>
+      </a>
     <span class="footer-copy">© 2026 Strikers Match · México</span>
   </div>
 </footer>
