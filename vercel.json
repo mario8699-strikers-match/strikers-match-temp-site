@@ -1,15 +1,15 @@
 {
   "version": 2,
   "outputDirectory": ".",
-  "files": [
-    "index.html",
-    "strikers-match-logo-removebg-preview.png",
-    "logo.png"
-  ],
+  "publicDirectory": "public",
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "/api/$1.js"
+    },
+    {
+      "src": "/public/(.*)",
+      "dest": "/public/$1"
     },
     {
       "src": "/(.*)",
