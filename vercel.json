@@ -1,14 +1,21 @@
 {
   "version": 2,
+  "buildCommand": null,
+  "devCommand": null,
+  "installCommand": null,
   "outputDirectory": ".",
   "routes": [
     {
-      "src": "/api/(.*)",
+      "src": "^/api/(.*)",
       "dest": "/api/$1.js"
     },
     {
-      "src": "/(.*)",
+      "src": "/(.+\\.(png|jpg|jpeg|gif|ico|svg|css|js))",
       "dest": "/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
