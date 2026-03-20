@@ -1,11 +1,6 @@
 {
   "version": 2,
   "outputDirectory": ".",
-  "files": [
-    "index.html",
-    "strikers-logo.png",
-    "logo.png"
-  ],
   "routes": [
     {
       "src": "/api/(.*)",
