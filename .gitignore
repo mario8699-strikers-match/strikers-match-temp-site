@@ -46,3 +46,5 @@ pids
 # Build outputs
 dist/
 build/
+.vercel
+.env*.local
