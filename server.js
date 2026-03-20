@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { Resend } = require('resend');
 require('dotenv').config();
 
@@ -12,7 +13,14 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('.'));
+
+// Serve static files from the current directory
+app.use(express.static(path.join(__dirname, '.')));
+
+// Serve index.html for the root route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 // Honeypot field name (hidden field that bots will fill)
 const HONEYPOT_FIELD = 'website';
