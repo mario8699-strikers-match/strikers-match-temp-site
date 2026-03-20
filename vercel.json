@@ -1,21 +1,15 @@
 {
   "version": 2,
-  "buildCommand": null,
-  "devCommand": null,
-  "installCommand": null,
-  "outputDirectory": ".",
+  "builds": [
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
+    }
+  ],
   "routes": [
     {
-      "src": "^/api/(.*)",
+      "src": "/api/(.*)",
       "dest": "/api/$1.js"
-    },
-    {
-      "src": "/(.+\\.(png|jpg|jpeg|gif|ico|svg|css|js))",
-      "dest": "/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
     }
   ]
 }
