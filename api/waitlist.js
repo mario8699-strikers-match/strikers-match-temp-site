@@ -69,7 +69,7 @@ module.exports = async (req, res) => {
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #c0001e;">¡Bienvenido a Strikers Match!</h2>
           <p>Hola ${escapeHtml(name)},</p>
-          <p>Gracias por unirte a nuestra lista de espera. Te notificaremos tan pronto como lancemos en México.</p>
+          <p>Gracias por unirte a nuestra lista de espera. Te notificaremos en cuanto lancemos en México.</p>
           <p>Tu rol seleccionado: <strong>${escapeHtml(role)}</strong></p>
           <br>
           <p>Saludos,<br>El equipo de Strikers Match</p>
