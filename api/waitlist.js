@@ -64,14 +64,25 @@ module.exports = async (req, res) => {
     await resend.emails.send({
       from: 'Strikers Match <noreply@strikersmatch.com>',
       to: email,
-      subject: 'Welcome to Strikers Match Waitlist',
+      subject: 'Bienvenido a Strikers Match / Welcome to Strikers Match',
       html: `
-        <h2>¡Bienvenido a Strikers Match!</h2>
-        <p>Hi ${escapeHtml(name)},</p>
-        <p>Thanks for joining our waitlist. We'll notify you as soon as we launch in Mexico.</p>
-        <p>Your selected role: <strong>${escapeHtml(role)}</strong></p>
-        <br>
-        <p>Best regards,<br>Strikers Match Team</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #c0001e;">¡Bienvenido a Strikers Match!</h2>
+          <p>Hola ${escapeHtml(name)},</p>
+          <p>Gracias por unirte a nuestra lista de espera. Te notificaremos tan pronto como lancemos en México.</p>
+          <p>Tu rol seleccionado: <strong>${escapeHtml(role)}</strong></p>
+          <br>
+          <p>Saludos,<br>El equipo de Strikers Match</p>
+          
+          <hr style="border: none; border-top: 1px solid #e2e2e2; margin: 30px 0;">
+          
+          <h2 style="color: #c0001e;">Welcome to Strikers Match!</h2>
+          <p>Hi ${escapeHtml(name)},</p>
+          <p>Thanks for joining our waitlist. We'll notify you as soon as we launch in Mexico.</p>
+          <p>Your selected role: <strong>${escapeHtml(role)}</strong></p>
+          <br>
+          <p>Best regards,<br>Strikers Match Team</p>
+        </div>
       `
     });
 
