@@ -1,0 +1,38 @@
+{
+  "common": {
+    "appName": "Strikers Match",
+    "tagline": "Connect fighters, promoters, managers, and sponsors for combat sports events in Mexico.",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "view": "View",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "continue": "Continue",
+    "confirm": "Confirm",
+    "language": "Language",
+    "eyebrow": "Combat Sports Platform \u00b7 Mexico",
+    "hero": {
+      "line1": "Find",
+      "line2": "fighters.",
+      "line3": "Fill",
+      "line4": "fight cards.",
+      "line5": "No last-minute",
+      "line6": "chaos."
+    },
+    "comingSoon": "Coming soon to",
+    "appStore": "App Store",
+    "googlePlay": "Google Play"
+  }
+}

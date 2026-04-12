@@ -1,0 +1,12 @@
+{
+  "promoters": {
+    "title": "Promotores",
+    "subtitle": "Conoce a los promotores de eventos de combate en México",
+    "loading": "Cargando promotores...",
+    "empty": "No hay promotores registrados",
+    "events": "eventos",
+    "city": "Ciudad",
+    "contact": "Contactar",
+    "viewEvents": "Ver Eventos"
+  }
+}

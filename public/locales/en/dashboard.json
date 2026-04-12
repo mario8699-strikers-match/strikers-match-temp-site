@@ -1,0 +1,29 @@
+{
+  "dashboard": {
+    "welcome": "Welcome, {{name}}",
+    "title": "Dashboard",
+    "stats": {
+      "upcomingEvents": "Upcoming Events",
+      "totalFighters": "Total Fighters",
+      "activeContracts": "Active Contracts",
+      "pendingMatches": "Pending Matches"
+    },
+    "sections": {
+      "recentActivity": "Recent Activity",
+      "upcomingEvents": "Upcoming Events",
+      "topFighters": "Top Fighters",
+      "quickActions": "Quick Actions"
+    },
+    "actions": {
+      "createEvent": "Create Event",
+      "addFighter": "Add Fighter",
+      "viewContracts": "View Contracts",
+      "generateReport": "Generate Report"
+    },
+    "empty": {
+      "noEvents": "No events scheduled",
+      "noActivity": "No recent activity",
+      "noFighters": "No fighters registered"
+    }
+  }
+}

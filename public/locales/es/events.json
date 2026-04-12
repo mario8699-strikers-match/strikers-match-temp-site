@@ -1,0 +1,76 @@
+{
+  "events": {
+    "title": "Eventos",
+    "subtitle": "Gestiona los eventos de combate",
+    "createEvent": "Crear Evento",
+    "editEvent": "Editar Evento",
+    "deleteEvent": "Eliminar Evento",
+    "saveChanges": "Guardar Cambios",
+    "saving": "Guardando...",
+    "creating": "Creando...",
+    "deleting": "Eliminando...",
+    "confirmDelete": "¿Estás seguro de que deseas eliminar este evento? Esta acción no se puede deshacer.",
+    "noEvents": "No hay eventos registrados",
+    "noEventsSubtitle": "Crea tu primer evento para empezar a conectar con atletas.",
+    "loginToCreate": "Inicia sesión para crear un evento",
+    "backToEvents": "Volver a Eventos",
+    "fields": {
+      "event_name": "Nombre del Evento",
+      "event_namePlaceholder": "Ej. Gran Premio de Boxeo Ciudad de México",
+      "event_date": "Fecha del Evento",
+      "city": "Ciudad",
+      "cityPlaceholder": "Ej. Ciudad de México",
+      "venue": "Lugar / Venue",
+      "venuePlaceholder": "Ej. Arena Ciudad de México",
+      "weight_class_needed": "Categoría de Peso Requerida",
+      "weight_class_neededPlaceholder": "Selecciona una categoría",
+      "purse_amount": "Bolsa del Evento (MXN)",
+      "purse_amountPlaceholder": "Ej. 50000",
+      "notes": "Notas Adicionales",
+      "notesPlaceholder": "Información relevante para los atletas...",
+      "status": "Estado del Evento",
+      "promoter": "Promotor"
+    },
+    "status": {
+      "draft": "Borrador",
+      "published": "Publicado",
+      "cancelled": "Cancelado",
+      "completed": "Completado"
+    },
+    "weightClasses": {
+      "minimosca": "Minimosca",
+      "mosca": "Mosca",
+      "supermosca": "Supermosca",
+      "gallo": "Gallo",
+      "supergallo": "Supergallo",
+      "pluma": "Pluma",
+      "superpluma": "Superpluma",
+      "ligero": "Ligero",
+      "superligero": "Superligero",
+      "welter": "Welter",
+      "superwelter": "Superwelter",
+      "medio": "Medio",
+      "supermedio": "Supermedio",
+      "semipesado": "Semipesado",
+      "crucero": "Crucero",
+      "pesado": "Pesado",
+      "multiple": "Múltiples Categorías"
+    },
+    "errors": {
+      "nameRequired": "El nombre del evento es requerido",
+      "generic": "Algo salió mal. Inténtalo de nuevo.",
+      "loadFailed": "Error al cargar el evento.",
+      "deleteFailed": "Error al eliminar el evento."
+    },
+    "detail": {
+      "date": "Fecha",
+      "city": "Ciudad",
+      "venue": "Venue",
+      "weightClass": "Categoría",
+      "purse": "Bolsa",
+      "notes": "Notas",
+      "notSpecified": "No especificado",
+      "currency": "MXN"
+    }
+  }
+}

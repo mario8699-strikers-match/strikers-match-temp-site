@@ -1,0 +1,18 @@
+{
+  "fighters": {
+    "title": "Fighters",
+    "subtitle": "Explore registered fighters on the platform",
+    "loading": "Loading fighters...",
+    "empty": "No fighters registered",
+    "verified": "Verified",
+    "available": "Available",
+    "unavailable": "Unavailable",
+    "wins": "Wins",
+    "losses": "Losses",
+    "draws": "Draws",
+    "filter": {
+      "all": "All",
+      "available": "Available"
+    }
+  }
+}

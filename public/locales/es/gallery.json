@@ -1,0 +1,22 @@
+{
+  "gallery": {
+    "title": "Galería de Eventos",
+    "subtitle": "Fotos oficiales de nuestros eventos de deportes de combate",
+    "loading": "Cargando fotos...",
+    "empty": "No hay fotos en la galería aún.",
+    "emptySubtitle": "Las fotos de eventos aparecerán aquí próximamente.",
+    "uploadTitle": "Subir Foto",
+    "uploadFile": "Seleccionar archivo",
+    "uploadCaption": "Descripción (opcional)",
+    "uploadCaptionPlaceholder": "Describe la foto...",
+    "uploadEventName": "Nombre del evento (opcional)",
+    "uploadEventNamePlaceholder": "Ej. Fight Night Monterrey...",
+    "uploadSubmit": "Subir foto",
+    "uploading": "Subiendo...",
+    "uploadSuccess": "Foto subida exitosamente.",
+    "deleteConfirm": "¿Eliminar esta foto? Esta acción no se puede deshacer.",
+    "delete": "Eliminar",
+    "adminTitle": "Gestión de Galería",
+    "adminSubtitle": "Sube y administra las fotos oficiales de eventos."
+  }
+}

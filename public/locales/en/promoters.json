@@ -1,0 +1,12 @@
+{
+  "promoters": {
+    "title": "Promoters",
+    "subtitle": "Meet the combat sports event promoters in Mexico",
+    "loading": "Loading promoters...",
+    "empty": "No promoters registered",
+    "events": "events",
+    "city": "City",
+    "contact": "Contact",
+    "viewEvents": "View Events"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "gallery": {
+    "title": "Event Gallery",
+    "subtitle": "Official photos from our combat sports events",
+    "loading": "Loading photos...",
+    "empty": "No photos in the gallery yet.",
+    "emptySubtitle": "Event photos will appear here soon.",
+    "uploadTitle": "Upload Photo",
+    "uploadFile": "Select file",
+    "uploadCaption": "Caption (optional)",
+    "uploadCaptionPlaceholder": "Describe the photo...",
+    "uploadEventName": "Event name (optional)",
+    "uploadEventNamePlaceholder": "E.g. Fight Night Monterrey...",
+    "uploadSubmit": "Upload photo",
+    "uploading": "Uploading...",
+    "uploadSuccess": "Photo uploaded successfully.",
+    "deleteConfirm": "Delete this photo? This action cannot be undone.",
+    "delete": "Delete",
+    "adminTitle": "Gallery Management",
+    "adminSubtitle": "Upload and manage official event photos."
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "fighters": {
+    "title": "Atletas",
+    "subtitle": "Explora los atletas registrados en la plataforma",
+    "loading": "Cargando atletas...",
+    "empty": "No hay atletas registrados",
+    "verified": "Verificado",
+    "available": "Disponible",
+    "unavailable": "No disponible",
+    "wins": "Victorias",
+    "losses": "Derrotas",
+    "draws": "Empates",
+    "filter": {
+      "all": "Todos",
+      "available": "Disponibles"
+    }
+  }
+}

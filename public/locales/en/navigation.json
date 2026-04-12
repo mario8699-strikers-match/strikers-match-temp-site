@@ -1,0 +1,17 @@
+{
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "fighters": "Fighters",
+    "events": "Events",
+    "promoters": "Promoters",
+    "sponsors": "Sponsors",
+    "gallery": "Gallery",
+    "managers": "Managers",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register"
+  }
+}

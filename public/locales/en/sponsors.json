@@ -1,0 +1,11 @@
+{
+  "sponsors": {
+    "title": "Sponsors",
+    "subtitle": "Companies and brands supporting combat sports in Mexico",
+    "loading": "Loading sponsors...",
+    "empty": "No sponsors registered yet",
+    "contact": "Contact",
+    "becomeSponsor": "Become a Sponsor",
+    "becomeSponsorSubtitle": "Want to sponsor combat sports events? Create your account."
+  }
+}

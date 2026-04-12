@@ -1,0 +1,83 @@
+{
+  "admin": {
+    "title": "Administración",
+    "backToSite": "← Volver al sitio",
+    "logout": "Cerrar sesión",
+    "unauthorized": "No tienes permiso para acceder a esta sección.",
+    "devMode": "Modo desarrollo — la protección de rol se activa cuando conectes Supabase.",
+    "nav": {
+      "dashboard": "Dashboard",
+      "users": "Usuarios",
+      "fighters": "Atletas",
+      "events": "Eventos",
+      "gallery": "Galería"
+    },
+    "dashboard": {
+      "title": "Resumen General",
+      "totalUsers": "Usuarios Totales",
+      "totalFighters": "Atletas Totales",
+      "totalEvents": "Eventos Totales",
+      "pendingVerifications": "Verificaciones Pendientes"
+    },
+    "users": {
+      "title": "Gestión de Usuarios",
+      "subtitle": "Administra todos los usuarios registrados en la plataforma.",
+      "name": "Nombre",
+      "email": "Correo",
+      "role": "Rol",
+      "city": "Ciudad",
+      "status": "Estado",
+      "actions": "Acciones",
+      "active": "Activo",
+      "banned": "Baneado",
+      "ban": "Banear",
+      "unban": "Desbanear",
+      "confirmBan": "¿Banear a este usuario? No podrá acceder a la plataforma.",
+      "confirmUnban": "¿Desbanear a este usuario? Recuperará acceso a la plataforma.",
+      "noUsers": "No hay usuarios registrados.",
+      "roles": {
+        "fighter": "Atleta",
+        "promoter": "Promotor",
+        "manager": "Manager",
+        "sponsor": "Patrocinador",
+        "admin": "Admin"
+      }
+    },
+    "fighters": {
+      "title": "Gestión de Atletas",
+      "subtitle": "Verifica perfiles de atletas para mostrarlos en el directorio.",
+      "name": "Nombre",
+      "email": "Correo",
+      "city": "Ciudad",
+      "weightClass": "Categoría",
+      "record": "Récord",
+      "available": "Disponible",
+      "verified": "Verificado",
+      "notVerified": "Sin verificar",
+      "yes": "Sí",
+      "no": "No",
+      "actions": "Acciones",
+      "verify": "Verificar",
+      "unverify": "Quitar Verificación",
+      "confirmVerify": "¿Verificar a este atleta? Aparecerá como verificado en el directorio.",
+      "confirmUnverify": "¿Quitar verificación a este atleta?",
+      "noFighters": "No hay atletas registrados."
+    },
+    "events": {
+      "title": "Todos los Eventos",
+      "subtitle": "Vista de todos los eventos registrados en la plataforma.",
+      "name": "Evento",
+      "date": "Fecha",
+      "city": "Ciudad",
+      "promoter": "Promotor",
+      "status": "Estado",
+      "weightClass": "Categoría",
+      "purse": "Bolsa",
+      "noEvents": "No hay eventos registrados."
+    },
+    "errors": {
+      "generic": "Algo salió mal. Inténtalo de nuevo.",
+      "loadFailed": "Error al cargar datos."
+    }
+  }
+}

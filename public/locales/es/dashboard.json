@@ -1,0 +1,29 @@
+{
+  "dashboard": {
+    "welcome": "Bienvenido, {{name}}",
+    "title": "Panel de Control",
+    "stats": {
+      "upcomingEvents": "Próximos Eventos",
+      "totalFighters": "Atletas Totales",
+      "activeContracts": "Contratos Activos",
+      "pendingMatches": "Peleas Pendientes"
+    },
+    "sections": {
+      "recentActivity": "Actividad Reciente",
+      "upcomingEvents": "Próximos Eventos",
+      "topFighters": "Mejores Atletas",
+      "quickActions": "Acciones Rápidas"
+    },
+    "actions": {
+      "createEvent": "Crear Evento",
+      "addFighter": "Agregar Atleta",
+      "viewContracts": "Ver Contratos",
+      "generateReport": "Generar Reporte"
+    },
+    "empty": {
+      "noEvents": "No hay eventos programados",
+      "noActivity": "No hay actividad reciente",
+      "noFighters": "No hay atletas registrados"
+    }
+  }
+}

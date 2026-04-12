@@ -1,0 +1,83 @@
+{
+  "admin": {
+    "title": "Administration",
+    "backToSite": "← Back to site",
+    "logout": "Log out",
+    "unauthorized": "You do not have permission to access this section.",
+    "devMode": "Dev mode — role protection activates when you connect Supabase.",
+    "nav": {
+      "dashboard": "Dashboard",
+      "users": "Users",
+      "fighters": "Fighters",
+      "events": "Events",
+      "gallery": "Gallery"
+    },
+    "dashboard": {
+      "title": "Overview",
+      "totalUsers": "Total Users",
+      "totalFighters": "Total Fighters",
+      "totalEvents": "Total Events",
+      "pendingVerifications": "Pending Verifications"
+    },
+    "users": {
+      "title": "User Management",
+      "subtitle": "Manage all registered users on the platform.",
+      "name": "Name",
+      "email": "Email",
+      "role": "Role",
+      "city": "City",
+      "status": "Status",
+      "actions": "Actions",
+      "active": "Active",
+      "banned": "Banned",
+      "ban": "Ban",
+      "unban": "Unban",
+      "confirmBan": "Ban this user? They will lose access to the platform.",
+      "confirmUnban": "Unban this user? They will regain platform access.",
+      "noUsers": "No users registered yet.",
+      "roles": {
+        "fighter": "Fighter",
+        "promoter": "Promoter",
+        "manager": "Manager",
+        "sponsor": "Sponsor",
+        "admin": "Admin"
+      }
+    },
+    "fighters": {
+      "title": "Fighter Management",
+      "subtitle": "Verify fighter profiles to display them in the directory.",
+      "name": "Name",
+      "email": "Email",
+      "city": "City",
+      "weightClass": "Weight Class",
+      "record": "Record",
+      "available": "Available",
+      "verified": "Verified",
+      "notVerified": "Not verified",
+      "yes": "Yes",
+      "no": "No",
+      "actions": "Actions",
+      "verify": "Verify",
+      "unverify": "Remove Verification",
+      "confirmVerify": "Verify this fighter? They will appear as verified in the directory.",
+      "confirmUnverify": "Remove verification from this fighter?",
+      "noFighters": "No fighters registered yet."
+    },
+    "events": {
+      "title": "All Events",
+      "subtitle": "View all events registered on the platform.",
+      "name": "Event",
+      "date": "Date",
+      "city": "City",
+      "promoter": "Promoter",
+      "status": "Status",
+      "weightClass": "Weight Class",
+      "purse": "Purse",
+      "noEvents": "No events registered yet."
+    },
+    "errors": {
+      "generic": "Something went wrong. Please try again.",
+      "loadFailed": "Failed to load data."
+    }
+  }
+}

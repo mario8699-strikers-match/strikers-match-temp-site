@@ -1,0 +1,76 @@
+{
+  "events": {
+    "title": "Events",
+    "subtitle": "Manage your combat events",
+    "createEvent": "Create Event",
+    "editEvent": "Edit Event",
+    "deleteEvent": "Delete Event",
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "creating": "Creating...",
+    "deleting": "Deleting...",
+    "confirmDelete": "Are you sure you want to delete this event? This action cannot be undone.",
+    "noEvents": "No events yet",
+    "noEventsSubtitle": "Create your first event to start connecting with fighters.",
+    "loginToCreate": "Sign in to create an event",
+    "backToEvents": "Back to Events",
+    "fields": {
+      "event_name": "Event Name",
+      "event_namePlaceholder": "e.g. Grand Boxing Prix Mexico City",
+      "event_date": "Event Date",
+      "city": "City",
+      "cityPlaceholder": "e.g. Mexico City",
+      "venue": "Venue",
+      "venuePlaceholder": "e.g. Arena Ciudad de México",
+      "weight_class_needed": "Weight Class Needed",
+      "weight_class_neededPlaceholder": "Select a weight class",
+      "purse_amount": "Event Purse (MXN)",
+      "purse_amountPlaceholder": "e.g. 50000",
+      "notes": "Additional Notes",
+      "notesPlaceholder": "Relevant information for fighters...",
+      "status": "Event Status",
+      "promoter": "Promoter"
+    },
+    "status": {
+      "draft": "Draft",
+      "published": "Published",
+      "cancelled": "Cancelled",
+      "completed": "Completed"
+    },
+    "weightClasses": {
+      "minimosca": "Minimumweight",
+      "mosca": "Flyweight",
+      "supermosca": "Super Flyweight",
+      "gallo": "Bantamweight",
+      "supergallo": "Super Bantamweight",
+      "pluma": "Featherweight",
+      "superpluma": "Super Featherweight",
+      "ligero": "Lightweight",
+      "superligero": "Super Lightweight",
+      "welter": "Welterweight",
+      "superwelter": "Super Welterweight",
+      "medio": "Middleweight",
+      "supermedio": "Super Middleweight",
+      "semipesado": "Light Heavyweight",
+      "crucero": "Cruiserweight",
+      "pesado": "Heavyweight",
+      "multiple": "Multiple Classes"
+    },
+    "errors": {
+      "nameRequired": "Event name is required",
+      "generic": "Something went wrong. Please try again.",
+      "loadFailed": "Failed to load event.",
+      "deleteFailed": "Failed to delete event."
+    },
+    "detail": {
+      "date": "Date",
+      "city": "City",
+      "venue": "Venue",
+      "weightClass": "Weight Class",
+      "purse": "Purse",
+      "notes": "Notes",
+      "notSpecified": "Not specified",
+      "currency": "MXN"
+    }
+  }
+}

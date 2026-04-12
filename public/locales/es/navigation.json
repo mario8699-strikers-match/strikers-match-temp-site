@@ -1,0 +1,17 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "dashboard": "Panel de Control",
+    "fighters": "Atletas",
+    "events": "Eventos",
+    "promoters": "Promotores",
+    "sponsors": "Patrocinadores",
+    "gallery": "Galería",
+    "managers": "Managers",
+    "profile": "Perfil",
+    "settings": "Configuración",
+    "logout": "Cerrar Sesión",
+    "login": "Iniciar Sesión",
+    "register": "Registrarse"
+  }
+}

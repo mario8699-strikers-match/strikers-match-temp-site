@@ -1,26 +1,91 @@
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────
+   STRIKERS MATCH — Brand Design System
+   Carbon Black  #0A0A0A
+   Strike Red    #C0001E
+   White         #FFFFFF
+   Slate         #5A5A5A
+   ───────────────────────────────────────── */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0A0A0A;
+  --foreground: #0A0A0A;
+
+  /* Brand palette */
+  --sm-red:       #C0001E;
+  --sm-red-dark:  #9A0018;
+  --sm-black:     #0A0A0A;
+  --sm-white:     #FFFFFF;
+  --sm-slate:     #5A5A5A;
+  --sm-gray-100:  #F4F4F4;
+  --sm-gray-200:  #E2E2E2;
+  --sm-gray-400:  #9A9A9A;
+
+  /* Brand fonts */
+  --font-display: 'Barlow Condensed', 'Arial Narrow', Impact, sans-serif;
+  --font-body:    'Barlow', Helvetica, Arial, sans-serif;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans:    var(--font-barlow), Helvetica, Arial, sans-serif;
+  --font-display: var(--font-barlow-condensed), 'Arial Narrow', Impact, sans-serif;
+
+  /* Tailwind custom colors */
+  --color-brand-red:      var(--sm-red);
+  --color-brand-red-dark: var(--sm-red-dark);
+  --color-brand-black:    var(--sm-black);
+  --color-brand-slate:    var(--sm-slate);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* ── Base ── */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-barlow), Helvetica, Arial, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* ── Display (Wordmark / Hero headings) ── */
+/* Barlow Condensed 900 · all-caps · tight tracking */
+h1 {
+  font-family: var(--font-barlow-condensed), 'Arial Narrow', Impact, sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+/* Section headings — Barlow Condensed 800 */
+h2 {
+  font-family: var(--font-barlow-condensed), 'Arial Narrow', Impact, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+h3, h4 {
+  font-family: var(--font-barlow-condensed), 'Arial Narrow', Impact, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+/* ── Labels / Captions ── */
+/* Barlow 700 · all caps · wide tracking */
+.label {
+  font-family: var(--font-barlow), Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--sm-slate);
+}
+
+/* ── Strike Red accent rule ── */
+.brand-rule {
+  height: 2px;
+  background: var(--sm-red);
+  width: 100%;
 }

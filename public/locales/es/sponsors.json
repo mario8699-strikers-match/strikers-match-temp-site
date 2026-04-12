@@ -1,0 +1,11 @@
+{
+  "sponsors": {
+    "title": "Patrocinadores",
+    "subtitle": "Empresas y marcas que apoyan el deporte de combate en México",
+    "loading": "Cargando patrocinadores...",
+    "empty": "No hay patrocinadores registrados",
+    "contact": "Contactar",
+    "becomeSponsor": "Conviértete en Patrocinador",
+    "becomeSponsorSubtitle": "¿Quieres patrocinar eventos de combate? Crea tu cuenta."
+  }
+}
