@@ -18,7 +18,7 @@ export default function Home() {
         playsInline
         className="absolute inset-0 w-full h-full object-cover z-0"
       >
-        <source src="/Cut-BG-Vid.mp4" type="video/mp4" />
+        <source src="https://strikers-match.sfo3.digitaloceanspaces.com/videos/Cut-BG-Vid.mp4" type="video/mp4" />
       </video>
 
       {/* Dark overlay for readability */}
