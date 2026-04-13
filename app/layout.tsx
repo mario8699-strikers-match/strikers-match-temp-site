@@ -5,6 +5,8 @@ import { I18nProvider } from "@/components/I18nProvider";
 import { QueryProvider } from "@/components/QueryProvider";
 import { CookieBanner } from "@/components/CookieBanner";
 import { JsonLd } from "@/components/JsonLd";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const barlow = Barlow({
   subsets: ["latin"],
@@ -123,6 +125,8 @@ export default function RootLayout({
           <QueryProvider>
             {children}
             <CookieBanner />
+            <Analytics />
+            <SpeedInsights />
           </QueryProvider>
         </I18nProvider>
       </body>
