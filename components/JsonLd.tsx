@@ -8,7 +8,7 @@ export function JsonLd() {
     description:
       'The premier combat sports platform connecting fighters, promoters, managers, and sponsors across Mexico and the US Southwest.',
     email: 'info@strikersmatch.com',
-    sameAs: [],
+    sameAs: ['https://www.instagram.com/strikersmatch/'],
     contactPoint: {
       '@type': 'ContactPoint',
       email: 'info@strikersmatch.com',
