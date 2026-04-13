@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /profile/
+Disallow: /promoter/dashboard
+Disallow: /manager/dashboard
+Disallow: /sponsor/dashboard
+Disallow: /fighter/profile
+
+Sitemap: https://strikersmatch.com/sitemap.xml
