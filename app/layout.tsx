@@ -96,6 +96,7 @@ export const metadata: Metadata = {
     },
   },
   other: {
+    'google-site-verification': 'jWJuHCcAsNFwzfMVPbgj2mo0NAqyGnIVk0umKW0F8OY',
     'geo.region': 'MX',
     'geo.placename': 'Mexico',
     'ICBM': '23.6345, -102.5528',
