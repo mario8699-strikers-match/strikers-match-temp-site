@@ -22,6 +22,15 @@ const barlowCondensed = Barlow_Condensed({
 export const metadata: Metadata = {
   title: "Strikers Match - Combat Sports Platform",
   description: "Connect fighters, promoters, managers, and sponsors for combat sports events in Mexico",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/site.webmanifest",
 };
 
 export default function RootLayout({

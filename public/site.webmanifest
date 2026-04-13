@@ -1,6 +1,6 @@
 {
-  "name": "https://strikersmatch.com/",
-  "short_name": "strikersmatch.com",
+  "name": "Strikers Match",
+  "short_name": "StrikersMatch",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
