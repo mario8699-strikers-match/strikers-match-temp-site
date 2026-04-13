@@ -109,6 +109,17 @@ export function Footer() {
             <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#2A2A2A' }}>
               &copy; {new Date().getFullYear()} Strikers Match
             </p>
+            <p className="text-[10px] tracking-widest" style={{ color: '#3A3A3A' }}>
+              Designed by{' '}
+              <a
+                href="https://codevostudio.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline transition-colors hover:text-white"
+              >
+                CodevoStudio
+              </a>
+            </p>
           </div>
         </div>
       </div>
