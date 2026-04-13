@@ -110,7 +110,7 @@ export function Navbar({ activePage }: NavbarProps) {
                 alt="Strikers Match"
                 height={128}
                 width={128}
-                style={{ width: 'auto', height: 128 }}
+                style={{ width: 'auto', height: 'auto', maxHeight: 128 }}
                 priority
               />
             </a>
