@@ -34,8 +34,7 @@ yarn-error.log*
 .env*
 
 # large video files
-public/Cut-BG-Vid.mp4
-public/SM-RR.mp4
+public/*.mp4
 
 # vercel
 .vercel

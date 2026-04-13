@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
@@ -7,6 +8,37 @@ import { Footer } from '@/components/Footer';
 export default function Home() {
   const { t } = useTranslation('navigation');
   const { t: tCommon } = useTranslation('common');
+  const [heroVisible, setHeroVisible] = useState(true);
+  const fadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasStartedFade = useRef(false);
+
+  // Start 20-second fade timer on mount
+  useEffect(() => {
+    fadeTimer.current = setTimeout(() => {
+      setHeroVisible(false);
+      hasStartedFade.current = true;
+    }, 20000);
+    return () => { if (fadeTimer.current) clearTimeout(fadeTimer.current); };
+  }, []);
+
+  // On scroll or mouse movement, show hero again briefly then re-hide after 4s
+  const handleInteraction = useCallback(() => {
+    if (!hasStartedFade.current) return;
+    setHeroVisible(true);
+    if (fadeTimer.current) clearTimeout(fadeTimer.current);
+    fadeTimer.current = setTimeout(() => setHeroVisible(false), 4000);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleInteraction);
+    window.addEventListener('mousemove', handleInteraction);
+    window.addEventListener('touchstart', handleInteraction);
+    return () => {
+      window.removeEventListener('scroll', handleInteraction);
+      window.removeEventListener('mousemove', handleInteraction);
+      window.removeEventListener('touchstart', handleInteraction);
+    };
+  }, [handleInteraction]);
 
   return (
     <div className="min-h-screen bg-black font-sans flex flex-col relative">
@@ -18,18 +50,24 @@ export default function Home() {
         playsInline
         className="absolute inset-0 w-full h-full object-cover z-0"
       >
-        <source src="https://strikers-match.sfo3.digitaloceanspaces.com/videos/Cut-BG-Vid.mp4" type="video/mp4" />
+        <source src="https://strikers-match.sfo3.digitaloceanspaces.com/videos/STRIKERS.mp4" type="video/mp4" />
       </video>
 
-      {/* Dark overlay for readability */}
-      <div className="absolute inset-0 bg-black/60 z-10" />
+      {/* Dark overlay — fades with hero */}
+      <div
+        className="absolute inset-0 z-10 transition-opacity duration-1000"
+        style={{ background: 'rgba(0,0,0,0.6)', opacity: heroVisible ? 1 : 0.15 }}
+      />
 
       {/* Content */}
       <div className="relative z-20 flex flex-col min-h-screen">
         <Navbar activePage="home" />
 
         <main className="flex-1 flex items-center">
-          <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-20 md:py-32">
+          <div
+            className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-20 md:py-32 transition-opacity duration-1000"
+            style={{ opacity: heroVisible ? 1 : 0, pointerEvents: heroVisible ? 'auto' : 'none' }}
+          >
 
             {/* Eyebrow */}
             <p className="text-xs font-bold tracking-[0.3em] uppercase mb-6" style={{ color: '#C0001E' }}>
