@@ -9,8 +9,6 @@
 import type { ServiceResponse } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
 
-const PRESIGN_THRESHOLD = 4 * 1024 * 1024; // 4 MB
-
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const { data: { session } } = await supabase.auth.getSession();
   if (session?.access_token) {
@@ -26,45 +24,32 @@ export async function uploadFile(
   try {
     const headers = await getAuthHeaders();
 
-    // Large files: get a presigned URL, then PUT directly to DO Spaces
-    if (file.size > PRESIGN_THRESHOLD) {
-      const params = new URLSearchParams({
-        presign: 'true',
-        folder,
-        filename: file.name,
-        contentType: file.type,
-      });
+    // Get a presigned URL, then PUT directly to DO Spaces
+    const params = new URLSearchParams({
+      presign: 'true',
+      folder,
+      filename: file.name,
+      contentType: file.type,
+    });
 
-      const res = await fetch(`/api/storage?${params}`, {
-        method: 'POST',
-        headers,
-      });
-      const json = await res.json();
-      if (!res.ok) return { data: null, error: json.error ?? 'Failed to get presigned URL.' };
-
-      const { presignedUrl, key, url } = json;
-
-      // Upload directly to DO Spaces using the presigned URL
-      const putRes = await fetch(presignedUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': file.type },
-        body: file,
-      });
-
-      if (!putRes.ok) return { data: null, error: 'Direct upload to storage failed.' };
-      return { data: { url, key }, error: null };
-    }
-
-    // Small files: proxy through the API route as before
-    const body = new FormData();
-    body.append('file', file);
-    body.append('folder', folder);
-
-    const res = await fetch('/api/storage', { method: 'POST', headers, body });
+    const res = await fetch(`/api/storage?${params}`, {
+      method: 'POST',
+      headers,
+    });
     const json = await res.json();
+    if (!res.ok) return { data: null, error: json.error ?? 'Failed to get presigned URL.' };
 
-    if (!res.ok) return { data: null, error: json.error ?? 'Upload failed.' };
-    return { data: json, error: null };
+    const { presignedUrl, key, url } = json;
+
+    // Upload directly to DO Spaces using the presigned URL
+    const putRes = await fetch(presignedUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type },
+      body: file,
+    });
+
+    if (!putRes.ok) return { data: null, error: 'Direct upload to storage failed.' };
+    return { data: { url, key }, error: null };
   } catch {
     return { data: null, error: 'An unexpected error occurred.' };
   }
