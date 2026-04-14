@@ -44,7 +44,10 @@ export async function uploadFile(
     // Upload directly to DO Spaces using the presigned URL
     const putRes = await fetch(presignedUrl, {
       method: 'PUT',
-      headers: { 'Content-Type': file.type },
+      headers: {
+        'Content-Type': file.type,
+        'x-amz-acl': 'public-read',
+      },
       body: file,
     });
 

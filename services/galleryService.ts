@@ -3,6 +3,7 @@ import { uploadFile, deleteFile } from '@/lib/storageClient';
 import type { GalleryPhoto, ServiceResponse } from '@/types';
 
 const FOLDER = 'gallery';
+const CDN_BASE = process.env.NEXT_PUBLIC_DO_SPACES_CDN || 'https://strikers-match.sfo3.digitaloceanspaces.com';
 
 export const galleryService = {
   async getAll(): Promise<ServiceResponse<GalleryPhoto[]>> {
@@ -14,10 +15,9 @@ export const galleryService = {
 
       if (error) return { data: null, error: error.message };
 
-      const cdn = process.env.NEXT_PUBLIC_DO_SPACES_CDN;
       const photos: GalleryPhoto[] = (data ?? []).map((photo) => ({
         ...photo,
-        url: cdn ? `${cdn}/${photo.storage_path}` : photo.storage_path,
+        url: `${CDN_BASE}/${photo.storage_path}`,
       }));
 
       return { data: photos, error: null };
