@@ -5,6 +5,7 @@
  */
 
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 const region = process.env.DO_SPACES_REGION!;
 const bucket = process.env.DO_SPACES_BUCKET!;
@@ -39,6 +40,23 @@ export async function uploadToSpaces(
     })
   );
   return getPublicUrl(key);
+}
+
+/**
+ * Generate a presigned PUT URL so the client can upload directly to DO Spaces.
+ * Expires in 10 minutes.
+ */
+export async function createPresignedUploadUrl(
+  key: string,
+  contentType: string
+): Promise<string> {
+  const command = new PutObjectCommand({
+    Bucket: bucket,
+    Key: key,
+    ContentType: contentType,
+    ACL: 'public-read',
+  });
+  return getSignedUrl(s3, command, { expiresIn: 600 });
 }
 
 /**

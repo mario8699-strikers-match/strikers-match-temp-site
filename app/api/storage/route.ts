@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { uploadToSpaces, deleteFromSpaces } from '@/lib/spacesClient';
+import { uploadToSpaces, deleteFromSpaces, createPresignedUploadUrl, getPublicUrl } from '@/lib/spacesClient';
+
+// Allow uploads up to 50 MB (for small files that go through the proxy path)
+export const config = {
+  api: { bodyParser: false },
+  maxDuration: 60,
+};
+
+export const runtime = 'nodejs';
 
 /**
  * Verify the request has a valid Supabase session.
@@ -39,15 +47,34 @@ async function authenticateRequest(req: NextRequest): Promise<string | NextRespo
 /**
  * POST /api/storage — upload a file to DO Spaces
  *
- * Expects multipart/form-data with:
- *  - file: the file blob
- *  - folder: target folder (e.g. "gallery", "flyers", "fighter-photos")
+ * Two modes:
+ * 1. ?presign=true — returns a presigned PUT URL + key + publicUrl (no file in body)
+ *    Query params: folder, filename, contentType
+ * 2. Default — proxy upload via multipart/form-data (file + folder)
  */
 export async function POST(req: NextRequest) {
   try {
     const auth = await authenticateRequest(req);
     if (auth instanceof NextResponse) return auth;
 
+    const { searchParams } = new URL(req.url);
+
+    // ── Presigned URL mode ──────────────────────────────────
+    if (searchParams.get('presign') === 'true') {
+      const folder = searchParams.get('folder') ?? 'uploads';
+      const filename = searchParams.get('filename') ?? 'file';
+      const contentType = searchParams.get('contentType') ?? 'application/octet-stream';
+
+      const ext = filename.split('.').pop();
+      const key = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+      const presignedUrl = await createPresignedUploadUrl(key, contentType);
+      const publicUrl = getPublicUrl(key);
+
+      return NextResponse.json({ presignedUrl, key, url: publicUrl });
+    }
+
+    // ── Direct upload mode (small files) ────────────────────
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
     const folder = (formData.get('folder') as string) ?? 'uploads';

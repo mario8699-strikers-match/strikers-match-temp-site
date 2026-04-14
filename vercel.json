@@ -1,5 +1,11 @@
 {
   "framework": "nextjs",
   "buildCommand": "next build",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "functions": {
+    "app/api/storage/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  }
 }
