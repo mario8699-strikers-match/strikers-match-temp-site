@@ -88,9 +88,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     });
   }, []);
 
-  // Close sidebar on route change (mobile)
+  // Close sidebar on route change (mobile only)
   useEffect(() => {
-    if (window.innerWidth < 1024) setSidebarOpen(false);
+    if (window.innerWidth < 768) setSidebarOpen(false);
   }, [pathname]);
 
   // Close sidebar on outside click
