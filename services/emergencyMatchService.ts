@@ -43,11 +43,12 @@ export async function findEmergencyReplacements(
   const start = performance.now();
 
   try {
-    // Pre-filter: available fighters, prefer short_notice_ready
+    // Pre-filter: available, non-hidden fighters, prefer short_notice_ready
     const { data: fighters, error } = await supabase
       .from('fighters')
       .select('*, profiles(full_name, city, is_banned)')
       .eq('is_available', true)
+      .neq('is_hidden', true)
       .order('short_notice_ready', { ascending: false })
       .limit(100);
 

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { adminService } from '@/services/adminService';
 import type { FighterWithProfile } from '@/types';
 
-type Confirm = { fighterId: string; action: 'verify' | 'unverify' } | null;
+type Confirm = { fighterId: string; action: 'verify' | 'unverify' | 'hide' | 'unhide' } | null;
 
 const REP_LABELS: { key: 'manager' | 'promoter' | 'sponsor'; label: string }[] = [
   { key: 'manager', label: 'Manager' },
@@ -35,20 +35,33 @@ export default function AdminFightersPage() {
     setActing(true);
     setError(null);
 
-    const result =
-      confirm.action === 'verify'
-        ? await adminService.verifyFighter(confirm.fighterId)
-        : await adminService.unverifyFighter(confirm.fighterId);
+    let result;
+    switch (confirm.action) {
+      case 'verify':
+        result = await adminService.verifyFighter(confirm.fighterId);
+        break;
+      case 'unverify':
+        result = await adminService.unverifyFighter(confirm.fighterId);
+        break;
+      case 'hide':
+        result = await adminService.hideFighter(confirm.fighterId);
+        break;
+      case 'unhide':
+        result = await adminService.unhideFighter(confirm.fighterId);
+        break;
+    }
 
     if (result.error) {
       setError(t('admin.errors.generic'));
     } else {
       setFighters((prev) =>
-        prev.map((f) =>
-          f.id === confirm.fighterId
-            ? { ...f, verified: confirm.action === 'verify' }
-            : f
-        )
+        prev.map((f) => {
+          if (f.id !== confirm.fighterId) return f;
+          if (confirm.action === 'verify' || confirm.action === 'unverify') {
+            return { ...f, verified: confirm.action === 'verify' };
+          }
+          return { ...f, is_hidden: confirm.action === 'hide' };
+        })
       );
     }
     setActing(false);
@@ -79,12 +92,12 @@ export default function AdminFightersPage() {
           <table className="min-w-full divide-y divide-zinc-100 text-sm">
             <thead className="bg-zinc-50">
               <tr>
-                {['name', 'email', 'phone', 'city', 'weightClass', 'record', 'available', 'verified', 'rep', 'actions'].map((col) => (
+                {['name', 'email', 'phone', 'city', 'weightClass', 'record', 'available', 'verified', 'visible', 'rep', 'actions'].map((col) => (
                   <th
                     key={col}
                     className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wide"
                   >
-                    {col === 'rep' ? 'Representacion' : col === 'phone' ? 'Telefono' : t(`admin.fighters.${col}`)}
+                    {col === 'rep' ? 'Representacion' : col === 'phone' ? 'Telefono' : col === 'visible' ? 'Visible' : t(`admin.fighters.${col}`)}
                   </th>
                 ))}
               </tr>
@@ -130,6 +143,25 @@ export default function AdminFightersPage() {
                       <span className="text-xs text-zinc-400">{t('admin.fighters.notVerified')}</span>
                     )}
                   </td>
+                  {/* Visibility status */}
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {fighter.is_hidden ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-red-600">
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                        </svg>
+                        Oculto
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        Visible
+                      </span>
+                    )}
+                  </td>
                   {/* Representation badges */}
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex gap-1">
@@ -148,27 +180,44 @@ export default function AdminFightersPage() {
                     )}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    {fighter.verified ? (
-                      <button
-                        onClick={() => setConfirm({ fighterId: fighter.id, action: 'unverify' })}
-                        className="text-xs font-medium text-zinc-500 hover:text-zinc-900 hover:underline"
-                      >
-                        {t('admin.fighters.unverify')}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setConfirm({ fighterId: fighter.id, action: 'verify' })}
-                        className="text-xs font-medium text-emerald-700 hover:underline"
-                      >
-                        {t('admin.fighters.verify')}
-                      </button>
-                    )}
+                    <div className="flex items-center gap-3">
+                      {fighter.verified ? (
+                        <button
+                          onClick={() => setConfirm({ fighterId: fighter.id, action: 'unverify' })}
+                          className="text-xs font-medium text-zinc-500 hover:text-zinc-900 hover:underline"
+                        >
+                          {t('admin.fighters.unverify')}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setConfirm({ fighterId: fighter.id, action: 'verify' })}
+                          className="text-xs font-medium text-emerald-700 hover:underline"
+                        >
+                          {t('admin.fighters.verify')}
+                        </button>
+                      )}
+                      {fighter.is_hidden ? (
+                        <button
+                          onClick={() => setConfirm({ fighterId: fighter.id, action: 'unhide' })}
+                          className="text-xs font-medium text-blue-600 hover:underline"
+                        >
+                          Mostrar
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setConfirm({ fighterId: fighter.id, action: 'hide' })}
+                          className="text-xs font-medium text-red-500 hover:underline"
+                        >
+                          Ocultar
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
                 {/* Expanded representation details */}
                 {expandedId === fighter.id && (
                   <tr className="bg-zinc-50">
-                    <td colSpan={11} className="px-4 py-4">
+                    <td colSpan={12} className="px-4 py-4">
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                         {REP_LABELS.map(({ key, label }) => {
                           const has = fighter[`has_${key}` as keyof typeof fighter] as boolean;
@@ -208,7 +257,11 @@ export default function AdminFightersPage() {
             <p className="text-sm text-zinc-700 mb-6">
               {confirm.action === 'verify'
                 ? t('admin.fighters.confirmVerify')
-                : t('admin.fighters.confirmUnverify')}
+                : confirm.action === 'unverify'
+                ? t('admin.fighters.confirmUnverify')
+                : confirm.action === 'hide'
+                ? 'Este peleador sera ocultado de otros perfiles de peleadores. Solo admin, promotores, managers y sponsors podran verlo.'
+                : 'Este peleador sera visible para todos los usuarios nuevamente.'}
             </p>
             <div className="flex justify-end gap-3">
               <button
@@ -223,7 +276,7 @@ export default function AdminFightersPage() {
                 disabled={acting}
                 className="px-4 py-2 text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 disabled:opacity-50 transition-colors"
               >
-                {acting ? '...' : t(`admin.fighters.${confirm.action}`)}
+                {acting ? '...' : confirm.action === 'hide' ? 'Ocultar' : confirm.action === 'unhide' ? 'Mostrar' : t(`admin.fighters.${confirm.action}`)}
               </button>
             </div>
           </div>

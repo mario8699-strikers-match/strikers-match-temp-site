@@ -116,6 +116,34 @@ export const adminService = {
     }
   },
 
+  async hideFighter(fighterId: string): Promise<ServiceResponse<null>> {
+    try {
+      const { error } = await supabase
+        .from('fighters')
+        .update({ is_hidden: true })
+        .eq('id', fighterId);
+
+      if (error) return { data: null, error: error.message };
+      return { data: null, error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
+  async unhideFighter(fighterId: string): Promise<ServiceResponse<null>> {
+    try {
+      const { error } = await supabase
+        .from('fighters')
+        .update({ is_hidden: false })
+        .eq('id', fighterId);
+
+      if (error) return { data: null, error: error.message };
+      return { data: null, error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
   async getAllEvents(): Promise<ServiceResponse<(Event & { profiles: { full_name: string } })[]>> {
     try {
       const { data, error } = await supabase

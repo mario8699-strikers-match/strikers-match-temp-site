@@ -20,6 +20,8 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Form fields
   const [fullName, setFullName] = useState('');
@@ -58,6 +60,18 @@ export default function ProfilePage() {
       setEditing(false);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    const { error: err } = await authService.deleteAccount();
+    if (err) {
+      setError(err);
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+    } else {
+      window.location.href = '/';
     }
   };
 
@@ -221,6 +235,46 @@ export default function ProfilePage() {
               >
                 {saving ? 'Guardando...' : 'Guardar cambios'}
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Delete Account ── */}
+        <div className="mt-12 border-t border-zinc-100 pt-8">
+          <p className="text-xs font-bold tracking-widest uppercase mb-2 text-red-600">Zona de peligro</p>
+          <p className="text-sm text-zinc-500 mb-4">Eliminar tu cuenta es permanente. Se borrarán todos tus datos y no podrás recuperarlos.</p>
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="px-4 py-2 text-sm font-semibold border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
+          >
+            Eliminar cuenta
+          </button>
+        </div>
+
+        {/* Delete Confirm Modal */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+            <div className="bg-white max-w-sm w-full p-6 shadow-lg">
+              <h3 className="text-lg font-black uppercase mb-2">Eliminar cuenta</h3>
+              <p className="text-sm text-zinc-600 mb-6">
+                Esta acción es irreversible. Se eliminarán tu perfil, datos y toda la información asociada a tu cuenta. ¿Estás seguro?
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={deleting}
+                  className="px-4 py-2 text-sm font-medium border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={deleting}
+                  className="px-4 py-2 text-sm font-bold uppercase tracking-wide text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  {deleting ? 'Eliminando...' : 'Sí, eliminar'}
+                </button>
+              </div>
             </div>
           </div>
         )}

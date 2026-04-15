@@ -152,11 +152,12 @@ export async function getRecommendedFighters(
       targetWeights.push(event.weight_class_needed);
     }
 
-    // Pre-filter query: only available fighters
+    // Pre-filter query: only available, non-hidden fighters
     let query = supabase
       .from('fighters')
       .select('*, profiles(full_name, email, city, is_banned)')
       .eq('is_available', true)
+      .neq('is_hidden', true)
       .limit(100);
 
     // Weight class pre-filter: exact + neighbors

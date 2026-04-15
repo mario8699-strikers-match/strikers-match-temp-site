@@ -42,13 +42,28 @@ export default function FighterDetailPage() {
   const [paywallReason, setPaywallReason] = useState('');
 
   useEffect(() => {
-    fighterService.getById(id).then(({ data }) => {
-      setFighter(data as FighterDetail);
-      setLoading(false);
-    });
-    authService.getSession().then(({ data }) => {
-      const p = data?.profile ?? null;
+    Promise.all([
+      fighterService.getById(id),
+      authService.getSession(),
+    ]).then(([{ data: fighterData }, { data: sessionData }]) => {
+      const p = sessionData?.profile ?? null;
       setProfile(p);
+
+      const f = fighterData as FighterDetail;
+
+      // Block access if fighter is hidden and viewer is a fighter or unauthenticated
+      if (f?.is_hidden) {
+        const privileged = p && ['admin', 'promoter', 'manager', 'sponsor'].includes(p.role);
+        if (!privileged) {
+          setFighter(null);
+          setLoading(false);
+          return;
+        }
+      }
+
+      setFighter(f);
+      setLoading(false);
+
       if (p && (p.role === 'promoter' || p.role === 'manager' || p.role === 'admin')) {
         eventService.getByPromoter(p.id).then(({ data: events }) => setMyEvents(events ?? []));
       }

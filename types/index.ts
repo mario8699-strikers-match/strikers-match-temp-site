@@ -83,6 +83,7 @@ export interface Fighter {
   sponsor_email: string | null;
   sponsor_phone: string | null;
   verified?: boolean;
+  is_hidden?: boolean;
   created_at: string;
 }
 

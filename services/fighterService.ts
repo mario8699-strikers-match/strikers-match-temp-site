@@ -5,13 +5,24 @@ import type { Fighter, FighterSearchFilters, FighterSearchResult, ServiceRespons
 const PAGE_SIZE = 12;
 
 export const fighterService = {
-  async getAll(): Promise<ServiceResponse<Fighter[]>> {
+  /**
+   * Get all fighters. If viewerRole is 'fighter' or absent/null,
+   * hidden fighters are excluded. Admins, promoters, managers, and
+   * sponsors see all fighters.
+   */
+  async getAll(viewerRole?: string | null): Promise<ServiceResponse<Fighter[]>> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('fighters')
         .select('*, profiles(full_name, city)')
         .order('created_at', { ascending: false });
 
+      const privileged = viewerRole && ['admin', 'promoter', 'manager', 'sponsor'].includes(viewerRole);
+      if (!privileged) {
+        query = query.neq('is_hidden', true);
+      }
+
+      const { data, error } = await query;
       if (error) return { data: null, error: error.message };
       return { data: data ?? [], error: null };
     } catch {
@@ -49,14 +60,20 @@ export const fighterService = {
     }
   },
 
-  async getAvailable(): Promise<ServiceResponse<Fighter[]>> {
+  async getAvailable(viewerRole?: string | null): Promise<ServiceResponse<Fighter[]>> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('fighters')
         .select('*, profiles(full_name, city)')
         .eq('is_available', true)
         .order('created_at', { ascending: false });
 
+      const privileged = viewerRole && ['admin', 'promoter', 'manager', 'sponsor'].includes(viewerRole);
+      if (!privileged) {
+        query = query.neq('is_hidden', true);
+      }
+
+      const { data, error } = await query;
       if (error) return { data: null, error: error.message };
       return { data: data ?? [], error: null };
     } catch {
@@ -64,7 +81,7 @@ export const fighterService = {
     }
   },
 
-  async search(filters: FighterSearchFilters): Promise<ServiceResponse<FighterSearchResult>> {
+  async search(filters: FighterSearchFilters, viewerRole?: string | null): Promise<ServiceResponse<FighterSearchResult>> {
     try {
       const pageSize = filters.limit ?? PAGE_SIZE;
       const page = filters.page ?? 1;
@@ -79,6 +96,11 @@ export const fighterService = {
       if (filters.city) query = query.ilike('profiles.city', `%${filters.city}%`);
       if (filters.short_notice_ready === true) query = query.eq('short_notice_ready', true);
       if (filters.is_available === true) query = query.eq('is_available', true);
+
+      const privileged = viewerRole && ['admin', 'promoter', 'manager', 'sponsor'].includes(viewerRole);
+      if (!privileged) {
+        query = query.neq('is_hidden', true);
+      }
 
       const { data, error, count } = await query
         .order('created_at', { ascending: false })

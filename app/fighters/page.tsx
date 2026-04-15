@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { fighterService } from '@/services/fighterService';
+import { authService } from '@/services/authService';
 import { supabase } from '@/lib/supabaseClient';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
@@ -14,18 +15,29 @@ export default function FightersPage() {
   const [fighters, setFighters] = useState<FighterWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'available'>('all');
+  const [viewerRole, setViewerRole] = useState<string | null>(null);
+  const [roleLoaded, setRoleLoaded] = useState(false);
+
+  // Load viewer role once
+  useEffect(() => {
+    authService.getSession().then(({ data }) => {
+      setViewerRole(data?.profile?.role ?? null);
+      setRoleLoaded(true);
+    });
+  }, []);
 
   const loadFighters = useCallback(() => {
+    if (!roleLoaded) return;
     setLoading(true);
     const fetch = filter === 'available'
-      ? fighterService.getAvailable()
-      : fighterService.getAll();
+      ? fighterService.getAvailable(viewerRole)
+      : fighterService.getAll(viewerRole);
 
     fetch.then(({ data }) => {
       setFighters((data as FighterWithProfile[]) ?? []);
       setLoading(false);
     });
-  }, [filter]);
+  }, [filter, viewerRole, roleLoaded]);
 
   useEffect(() => {
     loadFighters();

@@ -1,6 +1,11 @@
 import { supabase } from '@/lib/supabaseClient';
 import type { LoginFormData, RegisterFormData, ServiceResponse, AuthSession } from '@/types';
 
+async function getAccessToken(): Promise<string | null> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ?? null;
+}
+
 export const authService = {
   async login({ email, password }: LoginFormData): Promise<ServiceResponse<AuthSession>> {
     try {
@@ -130,6 +135,34 @@ export const authService = {
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) return { data: null, error: error.message };
+      return { data: null, error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
+  /**
+   * Delete the current user's account via the server-side API route.
+   * The API uses the service role key to delete the auth user.
+   */
+  async deleteAccount(): Promise<ServiceResponse<null>> {
+    try {
+      const token = await getAccessToken();
+      const res = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        return { data: null, error: body.error ?? 'Error al eliminar la cuenta.' };
+      }
+
+      // Sign out locally after successful deletion
+      await supabase.auth.signOut();
       return { data: null, error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
