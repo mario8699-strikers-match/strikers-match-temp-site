@@ -9,6 +9,9 @@
       "dashboard": "Dashboard",
       "users": "Usuarios",
       "fighters": "Atletas",
+      "promoters": "Promotores",
+      "managers": "Managers",
+      "sponsors": "Patrocinadores",
       "events": "Eventos",
       "gallery": "Galería"
     },

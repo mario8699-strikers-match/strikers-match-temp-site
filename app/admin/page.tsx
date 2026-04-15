@@ -48,6 +48,9 @@ export default function AdminDashboardPage() {
         {[
           { href: '/admin/users', label: t('admin.nav.users') },
           { href: '/admin/fighters', label: t('admin.nav.fighters') },
+          { href: '/admin/promoters', label: t('admin.nav.promoters') },
+          { href: '/admin/managers', label: t('admin.nav.managers') },
+          { href: '/admin/sponsors', label: t('admin.nav.sponsors') },
           { href: '/admin/events', label: t('admin.nav.events') },
           /* TEST — REMOVE BEFORE PRODUCTION */
           { href: '/admin/test-flow', label: '⚙ Test Flow' },

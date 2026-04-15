@@ -9,6 +9,9 @@
       "dashboard": "Dashboard",
       "users": "Users",
       "fighters": "Fighters",
+      "promoters": "Promoters",
+      "managers": "Managers",
+      "sponsors": "Sponsors",
       "events": "Events",
       "gallery": "Gallery"
     },
