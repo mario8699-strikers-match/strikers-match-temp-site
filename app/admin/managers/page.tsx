@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { adminService } from '@/services/adminService';
 import type { Profile } from '@/types';
@@ -46,7 +47,7 @@ export default function AdminManagersPage() {
           <table className="min-w-full divide-y divide-zinc-100 text-sm">
             <thead className="bg-zinc-50">
               <tr>
-                {['Nombre', 'Correo', 'Ciudad', 'Teléfono', 'Estado'].map((col) => (
+                {['Nombre', 'Correo', 'Ciudad', 'Teléfono', 'Estado', 'Acciones'].map((col) => (
                   <th key={col} className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wide">
                     {col}
                   </th>
@@ -56,7 +57,11 @@ export default function AdminManagersPage() {
             <tbody className="divide-y divide-zinc-100">
               {profiles.map((p) => (
                 <tr key={p.id} className="hover:bg-zinc-50">
-                  <td className="px-4 py-3 font-medium text-zinc-900 whitespace-nowrap">{p.full_name}</td>
+                  <td className="px-4 py-3 font-medium text-zinc-900 whitespace-nowrap">
+                    <Link href={`/search?manager=${p.id}`} className="text-[#C0001E] hover:underline font-bold">
+                      {p.full_name}
+                    </Link>
+                  </td>
                   <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">{p.email}</td>
                   <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">{p.city ?? '—'}</td>
                   <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">{p.phone ?? '—'}</td>
@@ -66,6 +71,11 @@ export default function AdminManagersPage() {
                     }`}>
                       {p.is_banned ? 'Baneado' : 'Activo'}
                     </span>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <Link href={`/search?manager=${p.id}`} className="text-xs font-medium text-zinc-500 hover:text-zinc-900 hover:underline">
+                      Ver peleadores
+                    </Link>
                   </td>
                 </tr>
               ))}
