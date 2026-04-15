@@ -88,16 +88,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     });
   }, []);
 
-  // Close sidebar on route change
+  // Close sidebar on route change (mobile)
   useEffect(() => {
-    setSidebarOpen(false);
+    if (window.innerWidth < 1024) setSidebarOpen(false);
   }, [pathname]);
 
-  // Close sidebar on outside click (mobile)
+  // Close sidebar on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (sidebarOpen && sidebarRef.current && !sidebarRef.current.contains(e.target as Node)) {
-        setSidebarOpen(false);
+        // On mobile, close on outside click
+        if (window.innerWidth < 1024) setSidebarOpen(false);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -138,7 +139,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         ref={sidebarRef}
         className={`w-56 bg-zinc-950 flex flex-col flex-shrink-0 fixed top-0 left-0 h-full z-30 transition-transform duration-200 ease-in-out ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0`}
+        }`}
       >
         {/* Logo */}
         <div className="px-5 py-5 border-b border-zinc-800 flex items-center justify-between">
@@ -150,10 +151,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               Strikers Match
             </a>
           </div>
-          {/* Close button (mobile only) */}
+          {/* Close button */}
           <button
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
+            className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
             aria-label="Close menu"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -204,20 +205,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* ── Main ───────────────────────────────────────────────────── */}
-      <div className="flex-1 lg:ml-56 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col min-h-screen">
         {/* Top bar */}
         <div className="h-12 bg-white border-b border-zinc-200 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-10">
-          {/* Hamburger (mobile/tablet only) */}
+          {/* Hamburger (always visible) */}
           <button
-            onClick={() => setSidebarOpen(true)}
-            className="lg:hidden w-9 h-9 flex items-center justify-center text-zinc-600 hover:text-zinc-900 transition-colors"
-            aria-label="Open menu"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="w-9 h-9 flex items-center justify-center text-zinc-600 hover:text-zinc-900 transition-colors"
+            aria-label="Toggle menu"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <div className="hidden lg:block" />
           <LanguageSwitcher />
         </div>
 
