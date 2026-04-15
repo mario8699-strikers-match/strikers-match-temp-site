@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabaseClient';
-import type { ManagerFighter, Fighter, ServiceResponse } from '@/types';
+import type { ManagerFighter, ManualFighter, Fighter, ServiceResponse } from '@/types';
 
 type FighterWithProfile = Fighter & { profiles: { full_name: string; city: string | null } };
 
@@ -60,6 +60,55 @@ export const managerService = {
 
       if (error) return { data: null, error: error.message };
       return { data: (data ?? []) as FighterWithProfile[], error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
+  // ── Manual fighters (not registered on platform) ──
+
+  async getManualFighters(managerId: string): Promise<ServiceResponse<ManualFighter[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('manual_fighters')
+        .select('*')
+        .eq('manager_id', managerId)
+        .order('created_at', { ascending: false });
+
+      if (error) return { data: null, error: error.message };
+      return { data: data ?? [], error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
+  async addManualFighter(
+    managerId: string,
+    fighter: Omit<ManualFighter, 'id' | 'manager_id' | 'created_at'>
+  ): Promise<ServiceResponse<ManualFighter>> {
+    try {
+      const { data, error } = await supabase
+        .from('manual_fighters')
+        .insert({ manager_id: managerId, ...fighter })
+        .select()
+        .single();
+
+      if (error) return { data: null, error: error.message };
+      return { data, error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
+  async removeManualFighter(id: string): Promise<ServiceResponse<null>> {
+    try {
+      const { error } = await supabase
+        .from('manual_fighters')
+        .delete()
+        .eq('id', id);
+
+      if (error) return { data: null, error: error.message };
+      return { data: null, error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }

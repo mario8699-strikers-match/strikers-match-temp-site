@@ -8,10 +8,14 @@ import { Footer } from '@/components/Footer';
 import { authService } from '@/services/authService';
 import { managerService } from '@/services/managerService';
 import { fighterService } from '@/services/fighterService';
-import type { Profile, Fighter } from '@/types';
+import type { Profile, Fighter, ManualFighter } from '@/types';
 
 type FighterWithProfile = Fighter & { profiles: { full_name: string; city: string | null } };
 
+const WEIGHT_CLASSES = [
+  'minimosca','mosca','supermosca','gallo','supergallo','pluma','superpluma',
+  'ligero','superligero','welter','superwelter','medio','supermedio','semipesado','crucero','pesado',
+];
 const WEIGHT_LABELS: Record<string, string> = {
   minimosca:'Minimosca',mosca:'Mosca',supermosca:'Supermosca',gallo:'Gallo',supergallo:'Supergallo',
   pluma:'Pluma',superpluma:'Superpluma',ligero:'Ligero',superligero:'Superligero',welter:'Welter',
@@ -32,6 +36,26 @@ export default function ManagerDashboardPage() {
   const [removing, setRemoving] = useState<string | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
 
+  // Manual fighter state
+  const [manualFighters, setManualFighters] = useState<ManualFighter[]>([]);
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [savingManual, setSavingManual] = useState(false);
+  const [manualError, setManualError] = useState<string | null>(null);
+  const [removingManual, setRemovingManual] = useState<string | null>(null);
+  const [mfName, setMfName] = useState('');
+  const [mfNickname, setMfNickname] = useState('');
+  const [mfWeight, setMfWeight] = useState('');
+  const [mfDiscipline, setMfDiscipline] = useState('');
+  const [mfWins, setMfWins] = useState('0');
+  const [mfLosses, setMfLosses] = useState('0');
+  const [mfDraws, setMfDraws] = useState('0');
+  const [mfPhone, setMfPhone] = useState('');
+  const [mfEmail, setMfEmail] = useState('');
+  const [mfCity, setMfCity] = useState('');
+  const [mfGym, setMfGym] = useState('');
+  const [mfLevel, setMfLevel] = useState<'amateur' | 'pro'>('amateur');
+  const [mfNotes, setMfNotes] = useState('');
+
   useEffect(() => {
     authService.getSession().then(({ data }) => {
       const p = data?.profile ?? null;
@@ -42,6 +66,10 @@ export default function ManagerDashboardPage() {
       managerService.getRoster(p.id).then(({ data: fighters }) => {
         setRoster((fighters as FighterWithProfile[]) ?? []);
         setLoading(false);
+      });
+
+      managerService.getManualFighters(p.id).then(({ data: mf }) => {
+        setManualFighters(mf ?? []);
       });
     });
   }, []);
@@ -81,6 +109,52 @@ export default function ManagerDashboardPage() {
     await managerService.removeFighter(profile.id, fighterId);
     setRoster(prev => prev.filter(f => f.id !== fighterId));
     setRemoving(null);
+  };
+
+  const resetManualForm = () => {
+    setMfName(''); setMfNickname(''); setMfWeight(''); setMfDiscipline('');
+    setMfWins('0'); setMfLosses('0'); setMfDraws('0');
+    setMfPhone(''); setMfEmail(''); setMfCity(''); setMfGym('');
+    setMfLevel('amateur'); setMfNotes(''); setManualError(null);
+  };
+
+  const handleAddManual = async () => {
+    if (!profile) return;
+    if (!mfName.trim()) { setManualError('El nombre es obligatorio.'); return; }
+    setSavingManual(true);
+    setManualError(null);
+
+    const { data, error } = await managerService.addManualFighter(profile.id, {
+      full_name: mfName.trim(),
+      nickname: mfNickname.trim() || null,
+      weight_class: mfWeight || null,
+      discipline: mfDiscipline.trim() || null,
+      record_wins: parseInt(mfWins) || 0,
+      record_losses: parseInt(mfLosses) || 0,
+      record_draws: parseInt(mfDraws) || 0,
+      phone: mfPhone.trim() || null,
+      email: mfEmail.trim() || null,
+      city: mfCity.trim() || null,
+      gym_name: mfGym.trim() || null,
+      experience_level: mfLevel,
+      notes: mfNotes.trim() || null,
+    });
+
+    setSavingManual(false);
+    if (error) {
+      setManualError('Error al agregar. Intenta de nuevo.');
+    } else if (data) {
+      setManualFighters(prev => [data, ...prev]);
+      resetManualForm();
+      setShowManualForm(false);
+    }
+  };
+
+  const handleRemoveManual = async (id: string) => {
+    setRemovingManual(id);
+    await managerService.removeManualFighter(id);
+    setManualFighters(prev => prev.filter(f => f.id !== id));
+    setRemovingManual(null);
   };
 
   if (profile === undefined) return <div className="min-h-screen bg-white flex items-center justify-center"><p className="text-sm" style={{ color:'#9A9A9A' }}>...</p></div>;
@@ -184,6 +258,171 @@ export default function ManagerDashboardPage() {
                   <button onClick={() => handleRemove(f.id)} disabled={removing === f.id}
                     className="text-xs text-zinc-400 hover:text-red-600 disabled:opacity-50 transition-colors flex-shrink-0 pt-1">
                     {removing === f.id ? '...' : 'Quitar'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── Add Your Own Fighters ── */}
+        <div className="mt-10 border-t border-zinc-100 pt-8">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-xs font-bold tracking-widest uppercase" style={{ color:'#C0001E' }}>
+              Mis Peleadores ({manualFighters.length})
+            </p>
+            <button
+              onClick={() => { setShowManualForm(!showManualForm); resetManualForm(); }}
+              className="px-4 py-2 text-xs font-bold tracking-widest uppercase text-white transition-colors"
+              style={{ background: showManualForm ? '#5A5A5A' : '#C0001E' }}
+            >
+              {showManualForm ? 'Cancelar' : 'Agregar peleador'}
+            </button>
+          </div>
+          <p className="text-xs text-zinc-400 mb-4">Peleadores que no estan registrados en la plataforma.</p>
+
+          {/* Manual fighter form */}
+          {showManualForm && (
+            <div className="border border-zinc-200 p-6 mb-6 space-y-4">
+              <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color:'#5A5A5A' }}>Nuevo Peleador</p>
+
+              {manualError && <p className="text-xs text-red-600">{manualError}</p>}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Nombre completo *</label>
+                  <input type="text" value={mfName} onChange={e => setMfName(e.target.value)} placeholder="Nombre del peleador"
+                    className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Apodo</label>
+                  <input type="text" value={mfNickname} onChange={e => setMfNickname(e.target.value)} placeholder="Apodo (opcional)"
+                    className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Division</label>
+                  <select value={mfWeight} onChange={e => setMfWeight(e.target.value)}
+                    className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white">
+                    <option value="">Seleccionar...</option>
+                    {WEIGHT_CLASSES.map(w => <option key={w} value={w}>{WEIGHT_LABELS[w]}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Disciplina</label>
+                  <input type="text" value={mfDiscipline} onChange={e => setMfDiscipline(e.target.value)} placeholder="Boxeo, MMA, etc."
+                    className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Victorias</label>
+                  <input type="number" min="0" value={mfWins} onChange={e => setMfWins(e.target.value)}
+                    className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Derrotas</label>
+                  <input type="number" min="0" value={mfLosses} onChange={e => setMfLosses(e.target.value)}
+                    className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Empates</label>
+                  <input type="number" min="0" value={mfDraws} onChange={e => setMfDraws(e.target.value)}
+                    className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Telefono</label>
+                  <input type="tel" value={mfPhone} onChange={e => setMfPhone(e.target.value)} placeholder="+52 000 000 0000"
+                    className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Correo</label>
+                  <input type="email" value={mfEmail} onChange={e => setMfEmail(e.target.value)} placeholder="correo@ejemplo.com"
+                    className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Ciudad</label>
+                  <input type="text" value={mfCity} onChange={e => setMfCity(e.target.value)} placeholder="Ciudad"
+                    className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Gimnasio</label>
+                  <input type="text" value={mfGym} onChange={e => setMfGym(e.target.value)} placeholder="Gimnasio"
+                    className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Nivel</label>
+                  <select value={mfLevel} onChange={e => setMfLevel(e.target.value as 'amateur' | 'pro')}
+                    className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white">
+                    <option value="amateur">Amateur</option>
+                    <option value="pro">Pro</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Notas</label>
+                <textarea value={mfNotes} onChange={e => setMfNotes(e.target.value)} rows={2} placeholder="Notas adicionales (opcional)"
+                  className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+              </div>
+
+              <div className="flex justify-end">
+                <button onClick={handleAddManual} disabled={savingManual}
+                  className="px-6 py-2 text-sm font-bold tracking-wide uppercase text-white disabled:opacity-50"
+                  style={{ background: savingManual ? '#9A9A9A' : '#C0001E' }}>
+                  {savingManual ? 'Guardando...' : 'Guardar peleador'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Manual fighters list */}
+          {manualFighters.length === 0 && !showManualForm ? (
+            <div className="border border-dashed border-zinc-200 py-10 text-center">
+              <p className="text-sm text-zinc-400 mb-3">No tienes peleadores agregados manualmente.</p>
+            </div>
+          ) : manualFighters.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {manualFighters.map(f => (
+                <div key={f.id} className="border border-zinc-200 p-4 flex items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold text-zinc-900">{f.full_name}</p>
+                      {f.nickname && <span className="text-xs text-zinc-400">&ldquo;{f.nickname}&rdquo;</span>}
+                    </div>
+                    <p className="text-xs mt-0.5" style={{ color:'#5A5A5A' }}>
+                      {f.weight_class ? WEIGHT_LABELS[f.weight_class] ?? f.weight_class : '—'} · {f.city ?? '—'}
+                    </p>
+                    <div className="flex gap-1 mt-1">
+                      <span className="text-xs font-bold text-zinc-600">{f.record_wins}V</span>
+                      <span className="text-xs text-zinc-400">–</span>
+                      <span className="text-xs font-bold text-zinc-600">{f.record_losses}D</span>
+                      <span className="text-xs text-zinc-400">–</span>
+                      <span className="text-xs font-bold text-zinc-600">{f.record_draws}E</span>
+                    </div>
+                    <div className="flex gap-2 mt-1.5">
+                      <span className={`text-xs font-bold px-1.5 py-0.5 uppercase tracking-widest ${f.experience_level === 'pro' ? 'bg-[#C0001E] text-white' : 'bg-zinc-100 text-zinc-600'}`}>
+                        {f.experience_level === 'pro' ? 'Pro' : 'Amateur'}
+                      </span>
+                      {f.discipline && <span className="text-xs font-bold px-1.5 py-0.5 uppercase tracking-wide bg-zinc-900 text-white">{f.discipline}</span>}
+                    </div>
+                    {(f.phone || f.email) && (
+                      <p className="text-xs text-zinc-400 mt-1.5">{[f.phone, f.email].filter(Boolean).join(' · ')}</p>
+                    )}
+                    {f.notes && <p className="text-xs text-zinc-400 mt-1 italic">{f.notes}</p>}
+                  </div>
+                  <button onClick={() => handleRemoveManual(f.id)} disabled={removingManual === f.id}
+                    className="text-xs text-zinc-400 hover:text-red-600 disabled:opacity-50 transition-colors flex-shrink-0 pt-1">
+                    {removingManual === f.id ? '...' : 'Quitar'}
                   </button>
                 </div>
               ))}

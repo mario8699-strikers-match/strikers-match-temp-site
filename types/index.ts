@@ -170,6 +170,26 @@ export interface ManagerFighter {
   created_at: string;
 }
 
+// Manual fighter (added by manager, not registered on platform)
+export interface ManualFighter {
+  id: string;
+  manager_id: string;
+  full_name: string;
+  nickname: string | null;
+  weight_class: string | null;
+  discipline: string | null;
+  record_wins: number;
+  record_losses: number;
+  record_draws: number;
+  phone: string | null;
+  email: string | null;
+  city: string | null;
+  gym_name: string | null;
+  experience_level: 'amateur' | 'pro';
+  notes: string | null;
+  created_at: string;
+}
+
 // Sponsorship offer
 export interface SponsorshipOffer {
   id: string;

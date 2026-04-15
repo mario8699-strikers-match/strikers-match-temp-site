@@ -7,7 +7,7 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { authService } from '@/services/authService';
 import { managerService } from '@/services/managerService';
-import type { Profile, Fighter } from '@/types';
+import type { Profile, Fighter, ManualFighter } from '@/types';
 
 type FighterWithProfile = Fighter & { profiles: { full_name: string; city: string | null } };
 
@@ -22,6 +22,7 @@ export default function ManagerProfilePage() {
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [roster, setRoster] = useState<FighterWithProfile[]>([]);
   const [rosterLoading, setRosterLoading] = useState(true);
+  const [manualFighters, setManualFighters] = useState<ManualFighter[]>([]);
 
   // Edit profile state
   const [editing, setEditing] = useState(false);
@@ -47,6 +48,10 @@ export default function ManagerProfilePage() {
       managerService.getRoster(p.id).then(({ data: fighters }) => {
         setRoster((fighters as FighterWithProfile[]) ?? []);
         setRosterLoading(false);
+      });
+
+      managerService.getManualFighters(p.id).then(({ data: mf }) => {
+        setManualFighters(mf ?? []);
       });
     });
   }, []);
@@ -243,6 +248,45 @@ export default function ManagerProfilePage() {
             </div>
           )}
         </div>
+
+        {/* ── Manual Fighters ── */}
+        {manualFighters.length > 0 && (
+          <div className="mt-10 border-t border-zinc-100 pt-8">
+            <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#C0001E' }}>
+              Mis Peleadores ({manualFighters.length})
+            </p>
+            <p className="text-xs text-zinc-400 mb-4">Peleadores no registrados en la plataforma.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {manualFighters.map(f => (
+                <div key={f.id} className="border border-zinc-200 p-4">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-bold text-zinc-900">{f.full_name}</p>
+                    {f.nickname && <span className="text-xs text-zinc-400">&ldquo;{f.nickname}&rdquo;</span>}
+                  </div>
+                  <p className="text-xs mt-0.5" style={{ color: '#5A5A5A' }}>
+                    {f.weight_class ? WEIGHT_LABELS[f.weight_class] ?? f.weight_class : '—'} · {f.city ?? '—'}
+                  </p>
+                  <div className="flex gap-1 mt-1">
+                    <span className="text-xs font-bold text-zinc-600">{f.record_wins}V</span>
+                    <span className="text-xs text-zinc-400">–</span>
+                    <span className="text-xs font-bold text-zinc-600">{f.record_losses}D</span>
+                    <span className="text-xs text-zinc-400">–</span>
+                    <span className="text-xs font-bold text-zinc-600">{f.record_draws}E</span>
+                  </div>
+                  <div className="flex gap-2 mt-1.5">
+                    <span className={`text-xs font-bold px-1.5 py-0.5 uppercase tracking-widest ${f.experience_level === 'pro' ? 'bg-[#C0001E] text-white' : 'bg-zinc-100 text-zinc-600'}`}>
+                      {f.experience_level === 'pro' ? 'Pro' : 'Amateur'}
+                    </span>
+                    {f.discipline && <span className="text-xs font-bold px-1.5 py-0.5 uppercase tracking-wide bg-zinc-900 text-white">{f.discipline}</span>}
+                  </div>
+                  {(f.phone || f.email) && (
+                    <p className="text-xs text-zinc-400 mt-1.5">{[f.phone, f.email].filter(Boolean).join(' · ')}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ── Delete Account ── */}
         <div className="mt-12 border-t border-zinc-100 pt-8">
