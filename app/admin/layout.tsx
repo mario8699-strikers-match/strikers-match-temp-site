@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { authService } from '@/services/authService';
@@ -166,7 +167,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           {NAV_ITEMS.map((item) => (
-            <a
+            <Link
               key={item.href}
               href={item.href}
               className={`flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors ${
@@ -177,7 +178,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             >
               {item.icon}
               {t(item.label)}
-            </a>
+            </Link>
           ))}
         </nav>
 
