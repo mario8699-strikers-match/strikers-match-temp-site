@@ -51,14 +51,11 @@ export default function FighterDetailPage() {
 
       const f = fighterData as FighterDetail;
 
-      // Block access if fighter is hidden and viewer is a fighter or unauthenticated
+      // Block access if fighter is hidden
       if (f?.is_hidden) {
-        const privileged = p && ['admin', 'promoter', 'manager', 'sponsor'].includes(p.role);
-        if (!privileged) {
-          setFighter(null);
-          setLoading(false);
-          return;
-        }
+        setFighter(null);
+        setLoading(false);
+        return;
       }
 
       setFighter(f);
