@@ -144,6 +144,21 @@ export const adminService = {
     }
   },
 
+  async getProfilesByRole(role: string): Promise<ServiceResponse<Profile[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', role)
+        .order('full_name', { ascending: true });
+
+      if (error) return { data: null, error: error.message };
+      return { data: data ?? [], error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
   async getAllEvents(): Promise<ServiceResponse<(Event & { profiles: { full_name: string } })[]>> {
     try {
       const { data, error } = await supabase

@@ -2,24 +2,24 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { supabase } from '@/lib/supabaseClient';
+import { adminService } from '@/services/adminService';
 import type { Profile } from '@/types';
 
 export default function AdminSponsorsPage() {
   const { t } = useTranslation('admin');
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase
-      .from('profiles')
-      .select('*')
-      .eq('role', 'sponsor')
-      .order('full_name', { ascending: true })
-      .then(({ data }) => {
+    adminService.getProfilesByRole('sponsor').then(({ data, error }) => {
+      if (error) {
+        setError(error);
+      } else {
         setProfiles(data ?? []);
-        setLoading(false);
-      });
+      }
+      setLoading(false);
+    });
   }, []);
 
   return (
@@ -28,6 +28,12 @@ export default function AdminSponsorsPage() {
         <h1 className="text-xl font-bold text-zinc-900">{t('admin.nav.sponsors')}</h1>
         <p className="mt-1 text-sm text-zinc-500">Todos los patrocinadores registrados en la plataforma.</p>
       </div>
+
+      {error && (
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
+          {error}
+        </div>
+      )}
 
       {loading ? (
         <div className="py-16 text-center text-zinc-400 text-sm">—</div>
