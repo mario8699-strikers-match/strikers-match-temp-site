@@ -39,8 +39,8 @@ export type PaidAction =
 
 // Which roles can perform which paid actions
 export const ROLE_ALLOWED_ACTIONS: Record<string, PaidAction[]> = {
-  promoter: ['send_fight_request', 'emergency_replacement', 'bulk_actions'],
-  manager: ['send_fight_request', 'emergency_replacement', 'bulk_actions'],
+  promoter: ['send_fight_request', 'emergency_replacement', 'bulk_actions', 'contact_users'],
+  manager: ['send_fight_request', 'emergency_replacement', 'bulk_actions', 'contact_users'],
   sponsor: ['contact_users'],
 };
 

@@ -116,7 +116,7 @@ export default function PricingPage() {
             Precios
           </p>
           <h1 className="text-4xl md:text-5xl font-black uppercase text-white leading-tight" style={{ letterSpacing: '-1px' }}>
-            Planes para promotores, managers y sponsors
+            Planes para promotores, managers y patrocinadores
           </h1>
           <p className="mt-4 text-base text-[#9A9A9A] max-w-lg mx-auto">
             Encuentra peleadores, llena tu cartelera, y haz crecer tu negocio. Promotores y managers reciben 1 solicitud de prueba gratis.
