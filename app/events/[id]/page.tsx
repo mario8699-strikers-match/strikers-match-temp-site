@@ -11,7 +11,7 @@ import { fighterService } from '@/services/fighterService';
 import { supabase } from '@/lib/supabaseClient';
 import { getRecommendedFighters } from '@/services/matchmakingService';
 import { findEmergencyReplacements, sendQuickRequest } from '@/services/emergencyMatchService';
-import { checkCanSendRequest, recordRequestUsed } from '@/services/subscriptionService';
+import { canPerformAction, recordRequestUsed } from '@/services/subscriptionService';
 import { registerForEvent, submitPayment, getFighterRegistration } from '@/services/registrationService';
 import { requestService } from '@/services/requestService';
 import type { Event, EventFormData, EventApplication, Profile, Fighter, MatchResult, EmergencyMatchResult, MatchRequest, EventRegistration } from '@/types';
@@ -392,7 +392,7 @@ export default function EventDetailPage() {
     if (!profile || !event || selectedEmergency.size === 0) return;
 
     // Monetization check
-    const subCheck = await checkCanSendRequest(profile.id);
+    const subCheck = await canPerformAction(profile.id, profile.role, 'emergency_replacement');
     if (!subCheck.allowed) {
       setPaywallReason(subCheck.reason);
       setShowPaywall(true);
@@ -420,7 +420,7 @@ export default function EventDetailPage() {
   const handleSendRecommendedRequest = async (fighterId: string) => {
     if (!profile || !event) return;
 
-    const subCheck = await checkCanSendRequest(profile.id);
+    const subCheck = await canPerformAction(profile.id, profile.role, 'send_fight_request');
     if (!subCheck.allowed) {
       setPaywallReason(subCheck.reason);
       setShowPaywall(true);

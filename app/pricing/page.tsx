@@ -66,7 +66,7 @@ const COMPARISON = [
   { feature: 'Filtros avanzados', basic: 'Si', pro: 'Si', payg: 'Si' },
   { feature: 'Visibilidad prioritaria', basic: '—', pro: 'Si', payg: '—' },
   { feature: 'Soporte prioritario', basic: '—', pro: 'Si', payg: '—' },
-  { feature: 'Solicitud de prueba gratis', basic: '1', pro: '1', payg: '1' },
+  { feature: 'Solicitud de prueba gratis', basic: '1 *', pro: '1 *', payg: '—' },
   { feature: 'Panel de analytics', basic: '—', pro: 'Proximamente', payg: '—' },
 ];
 
@@ -116,10 +116,10 @@ export default function PricingPage() {
             Precios
           </p>
           <h1 className="text-4xl md:text-5xl font-black uppercase text-white leading-tight" style={{ letterSpacing: '-1px' }}>
-            Planes para cada promotor
+            Planes para promotores, managers y sponsors
           </h1>
           <p className="mt-4 text-base text-[#9A9A9A] max-w-lg mx-auto">
-            Encuentra peleadores, llena tu cartelera, y haz crecer tu negocio. Una solicitud de prueba gratis para empezar.
+            Encuentra peleadores, llena tu cartelera, y haz crecer tu negocio. Promotores y managers reciben 1 solicitud de prueba gratis.
           </p>
         </section>
 
@@ -194,7 +194,7 @@ export default function PricingPage() {
 
           {/* Free trial note */}
           <p className="text-center text-xs text-[#5A5A5A] mt-8">
-            Todos los planes incluyen 1 solicitud de prueba gratis. Sin tarjeta de credito.
+            Promotores y managers reciben 1 solicitud de prueba gratis. Sin tarjeta de crédito.
           </p>
         </section>
 
@@ -235,7 +235,7 @@ export default function PricingPage() {
             Empieza a encontrar peleadores hoy
           </h2>
           <p className="text-sm text-[#9A9A9A] mb-8 max-w-md mx-auto">
-            Tu primera solicitud es gratis. Sin compromisos.
+            Promotores y managers: tu primera solicitud es gratis. Sin compromisos.
           </p>
           <a
             href="/register"

@@ -27,6 +27,23 @@ export const VENDOR_ROLES: UserRole[] = [
 // Roles subject to monetization checks
 export const MONETIZED_ROLES: UserRole[] = ['promoter', 'manager', 'sponsor'];
 
+// Roles that get 1 free request (sponsors do NOT)
+export const FREE_REQUEST_ROLES: UserRole[] = ['promoter', 'manager'];
+
+// Paid actions requiring subscription/payment
+export type PaidAction =
+  | 'send_fight_request'
+  | 'emergency_replacement'
+  | 'bulk_actions'
+  | 'contact_users';
+
+// Which roles can perform which paid actions
+export const ROLE_ALLOWED_ACTIONS: Record<string, PaidAction[]> = {
+  promoter: ['send_fight_request', 'emergency_replacement', 'bulk_actions'],
+  manager: ['send_fight_request', 'emergency_replacement', 'bulk_actions'],
+  sponsor: ['contact_users'],
+};
+
 // Profile stored in the "profiles" table
 export interface Profile {
   id: string;
@@ -315,6 +332,7 @@ export interface SubscriptionCheck {
   allowed: boolean;
   reason: string;
   requestsUsed: number;
+  action?: PaidAction;
 }
 
 // Parental consent for minor fighters

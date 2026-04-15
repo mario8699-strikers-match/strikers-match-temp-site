@@ -9,7 +9,7 @@ import { fighterService } from '@/services/fighterService';
 import { eventService } from '@/services/eventService';
 import { requestService } from '@/services/requestService';
 import { authService } from '@/services/authService';
-import { checkCanSendRequest, recordRequestUsed } from '@/services/subscriptionService';
+import { canPerformAction, recordRequestUsed } from '@/services/subscriptionService';
 import { supabase } from '@/lib/supabaseClient';
 import type { Fighter, Profile, Event } from '@/types';
 
@@ -71,7 +71,7 @@ export default function FighterDetailPage() {
     if (!profile || !fighter || !modalEventId) return;
 
     // Monetization check
-    const subCheck = await checkCanSendRequest(profile.id);
+    const subCheck = await canPerformAction(profile.id, profile.role, 'send_fight_request');
     if (!subCheck.allowed) {
       setPaywallReason(subCheck.reason);
       setShowPaywall(true);
