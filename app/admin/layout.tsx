@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
@@ -73,6 +73,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const [authorized, setAuthorized] = useState(IS_DEV);
   const [checking, setChecking] = useState(!IS_DEV);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (IS_DEV) return;
@@ -84,6 +86,31 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       }
       setChecking(false);
     });
+  }, []);
+
+  // Close sidebar on route change
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
+
+  // Close sidebar on outside click (mobile)
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (sidebarOpen && sidebarRef.current && !sidebarRef.current.contains(e.target as Node)) {
+        setSidebarOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [sidebarOpen]);
+
+  // Close sidebar on escape key
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSidebarOpen(false);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
   }, []);
 
   if (checking) {
@@ -101,16 +128,38 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen flex font-sans">
+      {/* ── Mobile overlay ─────────────────────────────────────────── */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/50 z-20 lg:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+
       {/* ── Sidebar ────────────────────────────────────────────────── */}
-      <aside className="w-56 bg-zinc-950 flex flex-col flex-shrink-0 fixed top-0 left-0 h-full z-30">
+      <aside
+        ref={sidebarRef}
+        className={`w-56 bg-zinc-950 flex flex-col flex-shrink-0 fixed top-0 left-0 h-full z-30 transition-transform duration-200 ease-in-out ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } lg:translate-x-0`}
+      >
         {/* Logo */}
-        <div className="px-5 py-5 border-b border-zinc-800">
-          <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest mb-0.5">
-            {t('admin.title')}
-          </p>
-          <a href="/" className="text-base font-bold text-white hover:text-zinc-300 transition-colors">
-            Strikers Match
-          </a>
+        <div className="px-5 py-5 border-b border-zinc-800 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest mb-0.5">
+              {t('admin.title')}
+            </p>
+            <a href="/" className="text-base font-bold text-white hover:text-zinc-300 transition-colors">
+              Strikers Match
+            </a>
+          </div>
+          {/* Close button (mobile only) */}
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
+            aria-label="Close menu"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
         {/* Nav */}
@@ -155,14 +204,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* ── Main ───────────────────────────────────────────────────── */}
-      <div className="flex-1 ml-56 flex flex-col min-h-screen">
+      <div className="flex-1 lg:ml-56 flex flex-col min-h-screen">
         {/* Top bar */}
-        <div className="h-12 bg-white border-b border-zinc-200 flex items-center justify-end px-6">
+        <div className="h-12 bg-white border-b border-zinc-200 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-10">
+          {/* Hamburger (mobile/tablet only) */}
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="lg:hidden w-9 h-9 flex items-center justify-center text-zinc-600 hover:text-zinc-900 transition-colors"
+            aria-label="Open menu"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <div className="hidden lg:block" />
           <LanguageSwitcher />
         </div>
 
         {/* Page content */}
-        <main className="flex-1 bg-zinc-50 p-8">
+        <main className="flex-1 bg-zinc-50 p-4 sm:p-6 lg:p-8">
           {children}
         </main>
       </div>

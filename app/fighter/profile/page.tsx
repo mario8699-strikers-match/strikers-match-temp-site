@@ -575,7 +575,7 @@ export default function FighterProfilePage() {
                     <span className="text-sm font-semibold text-zinc-900">Tengo Manager</span>
                   </label>
                   {hasManager && (
-                    <div className="mt-3 grid grid-cols-3 gap-3">
+                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <p className="text-xs text-zinc-400 mb-1">Nombre</p>
                         <input type="text" value={managerName} onChange={e => setManagerName(e.target.value)} placeholder="Nombre completo"
@@ -603,7 +603,7 @@ export default function FighterProfilePage() {
                     <span className="text-sm font-semibold text-zinc-900">Tengo Promotor</span>
                   </label>
                   {hasPromoter && (
-                    <div className="mt-3 grid grid-cols-3 gap-3">
+                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <p className="text-xs text-zinc-400 mb-1">Nombre</p>
                         <input type="text" value={promoterName} onChange={e => setPromoterName(e.target.value)} placeholder="Nombre completo"
@@ -631,7 +631,7 @@ export default function FighterProfilePage() {
                     <span className="text-sm font-semibold text-zinc-900">Tengo Sponsor</span>
                   </label>
                   {hasSponsor && (
-                    <div className="mt-3 grid grid-cols-3 gap-3">
+                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <p className="text-xs text-zinc-400 mb-1">Nombre</p>
                         <input type="text" value={sponsorName} onChange={e => setSponsorName(e.target.value)} placeholder="Nombre completo"

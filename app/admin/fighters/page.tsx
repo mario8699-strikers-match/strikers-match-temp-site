@@ -169,7 +169,7 @@ export default function AdminFightersPage() {
                 {expandedId === fighter.id && (
                   <tr className="bg-zinc-50">
                     <td colSpan={11} className="px-4 py-4">
-                      <div className="grid grid-cols-3 gap-6 text-sm">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                         {REP_LABELS.map(({ key, label }) => {
                           const has = fighter[`has_${key}` as keyof typeof fighter] as boolean;
                           const name = fighter[`${key}_name` as keyof typeof fighter] as string | null;

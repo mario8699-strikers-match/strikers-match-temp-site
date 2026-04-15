@@ -217,7 +217,7 @@ export default function CreateEventPage() {
           </div>
 
           {/* Date + Time + Status row */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
                 {t('events.fields.event_date')}
@@ -257,7 +257,7 @@ export default function CreateEventPage() {
           </div>
 
           {/* City + Venue row */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
                 {t('events.fields.city')}
@@ -472,7 +472,7 @@ export default function CreateEventPage() {
           </div>
 
           {/* Purse + Signup Fee row */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               {/* Purse with toggle */}
               <div className="flex items-center justify-between mb-1">

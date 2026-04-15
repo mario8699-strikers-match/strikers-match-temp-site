@@ -163,7 +163,7 @@ export default function FighterDetailPage() {
         )}
 
         {/* Details */}
-        <div className="grid grid-cols-2 gap-4 border border-zinc-100 p-6 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border border-zinc-100 p-6 mb-6">
           {[
             { label:'División', value: fighter.weight_class ? (WEIGHT_LABELS[fighter.weight_class] ?? fighter.weight_class) : '—' },
             { label:'Gimnasio', value: fighter.gym_name ?? '—' },

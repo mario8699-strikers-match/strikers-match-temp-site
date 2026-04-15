@@ -152,7 +152,7 @@ export default function PromoterDashboardPage() {
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-3 gap-4 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
           {[
             { label: 'Eventos publicados', value: publishedEvents.length },
             { label: 'Borradores', value: draftEvents.length },
@@ -232,7 +232,7 @@ export default function PromoterDashboardPage() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
                       <a href={`/events/${ev.id}`}
                         className="text-xs font-medium text-zinc-500 border border-zinc-200 px-3 py-1.5 hover:bg-zinc-50 transition-colors">
                         Editar
