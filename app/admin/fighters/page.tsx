@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { adminService } from '@/services/adminService';
 import type { FighterWithProfile } from '@/types';
@@ -107,7 +108,9 @@ export default function AdminFightersPage() {
                 <React.Fragment key={fighter.id}>
                 <tr className="hover:bg-zinc-50">
                   <td className="px-4 py-3 font-medium text-zinc-900 whitespace-nowrap">
-                    {fighter.profiles.full_name}
+                    <Link href={`/fighters/${fighter.id}`} className="text-[#C0001E] hover:underline font-bold">
+                      {fighter.profiles.full_name}
+                    </Link>
                   </td>
                   <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">
                     {fighter.profiles.email}
