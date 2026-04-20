@@ -12,6 +12,7 @@
       "promoters": "Promoters",
       "managers": "Managers",
       "sponsors": "Sponsors",
+      "vendors": "Vendors / Services",
       "events": "Events",
       "gallery": "Gallery"
     },
@@ -43,7 +44,18 @@
         "promoter": "Promoter",
         "manager": "Manager",
         "sponsor": "Sponsor",
-        "admin": "Admin"
+        "admin": "Admin",
+        "ring_card_girl": "Ring Card Girl",
+        "photographer": "Photographer",
+        "videographer": "Videographer",
+        "broadcast_personality": "Broadcast Personality",
+        "catering_vendor": "Catering Vendor",
+        "venue_rental": "Venue Rental",
+        "judge": "Judge / Referee",
+        "ring_rental": "Ring Rental",
+        "ring_announcer": "Ring Announcer",
+        "cutman": "Cutman",
+        "merchandise_vendor": "Merchandise Vendor"
       }
     },
     "fighters": {

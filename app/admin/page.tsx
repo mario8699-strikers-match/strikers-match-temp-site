@@ -51,6 +51,7 @@ export default function AdminDashboardPage() {
           { href: '/admin/promoters', label: t('admin.nav.promoters') },
           { href: '/admin/managers', label: t('admin.nav.managers') },
           { href: '/admin/sponsors', label: t('admin.nav.sponsors') },
+          { href: '/admin/vendors', label: t('admin.nav.vendors') },
           { href: '/admin/events', label: t('admin.nav.events') },
           /* TEST — REMOVE BEFORE PRODUCTION */
           { href: '/admin/test-flow', label: '⚙ Test Flow' },

@@ -75,6 +75,17 @@ const NAV_ITEMS = [
     ),
   },
   {
+    href: '/admin/vendors',
+    label: 'admin.nav.vendors',
+    exact: false,
+    icon: (
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+          d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2M3.41 7h17.18c.79 0 1.41.64 1.41 1.41v0c0 .79-.64 1.41-1.41 1.41H3.41C2.63 9.82 2 9.18 2 8.41v0C2 7.63 2.63 7 3.41 7z" />
+      </svg>
+    ),
+  },
+  {
     href: '/admin/events',
     label: 'admin.nav.events',
     exact: false,

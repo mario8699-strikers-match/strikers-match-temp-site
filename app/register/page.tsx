@@ -7,8 +7,9 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { authService } from '@/services/authService';
 import type { RegisterFormData, UserRole } from '@/types';
+import { VENDOR_ROLES } from '@/types';
 
-const ROLES: UserRole[] = ['promoter', 'fighter', 'manager', 'sponsor'];
+const ROLES: UserRole[] = ['promoter', 'fighter', 'manager', 'sponsor', ...VENDOR_ROLES];
 
 export default function RegisterPage() {
   const { t } = useTranslation('auth');
