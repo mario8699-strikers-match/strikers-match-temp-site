@@ -2,10 +2,15 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /api/
+Disallow: /profile
 Disallow: /profile/
+Disallow: /fighter/profile
 Disallow: /promoter/dashboard
 Disallow: /manager/dashboard
+Disallow: /manager/profile
 Disallow: /sponsor/dashboard
-Disallow: /fighter/profile
+Disallow: /consent
+Disallow: /events/create
+Disallow: /reset-password
 
 Sitemap: https://strikersmatch.com/sitemap.xml
