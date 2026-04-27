@@ -12,5 +12,8 @@ Disallow: /sponsor/dashboard
 Disallow: /consent
 Disallow: /events/create
 Disallow: /reset-password
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
 
 Sitemap: https://strikersmatch.com/sitemap.xml
