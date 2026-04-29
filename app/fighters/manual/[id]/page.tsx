@@ -5,13 +5,13 @@ import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
-import { fighterService } from '@/services/fighterService';
+import { manualFighterService } from '@/services/manualFighterService';
 import { eventService } from '@/services/eventService';
 import { requestService } from '@/services/requestService';
 import { authService } from '@/services/authService';
 import { canPerformAction, recordRequestUsed } from '@/services/subscriptionService';
 import { supabase } from '@/lib/supabaseClient';
-import type { Fighter, Profile, Event } from '@/types';
+import type { ManualFighterWithCreator, Profile, Event } from '@/types';
 
 const WEIGHT_LABELS: Record<string, string> = {
   minimosca:'Minimosca',mosca:'Mosca',supermosca:'Supermosca',gallo:'Gallo',supergallo:'Supergallo',
@@ -19,12 +19,16 @@ const WEIGHT_LABELS: Record<string, string> = {
   superwelter:'Superwelter',medio:'Medio',supermedio:'Supermedio',semipesado:'Semipesado',crucero:'Crucero',pesado:'Pesado',
 };
 
-type FighterDetail = Fighter & { profiles: { full_name: string; city: string | null } };
+const ROLE_LABELS: Record<string, string> = {
+  manager: 'Manager',
+  promoter: 'Promotor',
+  admin: 'Admin',
+};
 
-export default function FighterDetailPage() {
+export default function ManualFighterDetailPage() {
   const { id } = useParams<{ id: string }>();
 
-  const [fighter, setFighter] = useState<FighterDetail | null>(null);
+  const [fighter, setFighter] = useState<ManualFighterWithCreator | null>(null);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [myEvents, setMyEvents] = useState<Event[]>([]);
@@ -43,22 +47,12 @@ export default function FighterDetailPage() {
 
   useEffect(() => {
     Promise.all([
-      fighterService.getById(id),
+      manualFighterService.getById(id),
       authService.getSession(),
     ]).then(([{ data: fighterData }, { data: sessionData }]) => {
       const p = sessionData?.profile ?? null;
       setProfile(p);
-
-      const f = fighterData as FighterDetail;
-
-      // Block access if fighter is hidden
-      if (f?.is_hidden) {
-        setFighter(null);
-        setLoading(false);
-        return;
-      }
-
-      setFighter(f);
+      setFighter(fighterData);
       setLoading(false);
 
       if (p && (p.role === 'promoter' || p.role === 'manager' || p.role === 'admin')) {
@@ -82,8 +76,8 @@ export default function FighterDetailPage() {
     setSendError(null);
     const { error } = await requestService.create({
       event_id: modalEventId,
-      fighter_id: fighter.id,
-      manual_fighter_id: null,
+      fighter_id: null,
+      manual_fighter_id: fighter.id,
       sender_id: profile.id,
       status: 'pending',
       message: modalMessage || null,
@@ -111,6 +105,8 @@ export default function FighterDetailPage() {
   }
 
   const canSendRequest = profile && (profile.role === 'promoter' || profile.role === 'manager' || profile.role === 'admin');
+  const creatorName = fighter.profiles?.full_name ?? '';
+  const creatorRole = fighter.profiles?.role ? (ROLE_LABELS[fighter.profiles.role] ?? fighter.profiles.role) : '';
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -121,7 +117,7 @@ export default function FighterDetailPage() {
         <div className="flex items-start gap-6 mb-8">
           <div className="w-24 h-24 bg-zinc-100 flex-shrink-0 overflow-hidden">
             {fighter.photo_url ? (
-              <Image src={fighter.photo_url} alt={fighter.profiles?.full_name ?? ''} width={96} height={96} className="w-full h-full object-cover" />
+              <Image src={fighter.photo_url} alt={fighter.full_name} width={96} height={96} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <svg className="w-10 h-10 text-zinc-300" fill="currentColor" viewBox="0 0 24 24">
@@ -135,22 +131,29 @@ export default function FighterDetailPage() {
               <div>
                 <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#C0001E' }}>Perfil del Peleador</p>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-3xl font-black uppercase" style={{ letterSpacing:'-1px' }}>{fighter.profiles?.full_name ?? '—'}</h1>
+                  <h1 className="text-3xl font-black uppercase" style={{ letterSpacing:'-1px' }}>{fighter.full_name}</h1>
                   <span className={`text-xs font-bold px-2 py-1 uppercase tracking-widest ${fighter.experience_level === 'pro' ? 'bg-[#C0001E] text-white' : 'bg-zinc-100 text-zinc-600'}`}>
                     {fighter.experience_level === 'pro' ? 'Pro' : 'Amateur'}
                   </span>
                 </div>
                 {fighter.nickname && <p className="text-base font-semibold" style={{ color:'#C0001E' }}>&ldquo;{fighter.nickname}&rdquo;</p>}
-                <p className="text-sm mt-1" style={{ color:'#5A5A5A' }}>{fighter.profiles?.city ?? 'Sin ciudad'}</p>
+                <p className="text-sm mt-1" style={{ color:'#5A5A5A' }}>{fighter.city ?? 'Sin ciudad'}</p>
               </div>
-              {fighter.verified && (
-                <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 bg-emerald-50 text-emerald-700 flex-shrink-0">
-                  <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                  Verificado
-                </span>
-              )}
+              <span className="inline-flex items-center text-xs font-bold uppercase tracking-widest text-amber-800 bg-amber-50 border border-amber-200 px-2 py-1 flex-shrink-0">
+                Roster
+              </span>
             </div>
           </div>
+        </div>
+
+        {/* Roster notice */}
+        <div className="border border-amber-200 bg-amber-50/50 p-4 mb-6">
+          <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#92400E' }}>Peleador sin cuenta</p>
+          <p className="text-sm" style={{ color:'#5A5A5A' }}>
+            Este peleador no tiene cuenta. Toda solicitud se envía a su {creatorRole.toLowerCase() || 'manager'}
+            {creatorName ? <> <span className="font-semibold text-zinc-900">{creatorName}</span></> : null}
+            , quien gestionará el contacto dentro de la plataforma.
+          </p>
         </div>
 
         {/* Record */}
@@ -163,15 +166,11 @@ export default function FighterDetailPage() {
           ))}
         </div>
 
-        {/* Disciplines pills */}
-        {fighter.disciplines && fighter.disciplines.length > 0 && (
+        {/* Discipline pill */}
+        {fighter.discipline && (
           <div className="border border-zinc-100 p-6 mb-6">
-            <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color:'#9A9A9A' }}>Disciplinas</p>
-            <div className="flex flex-wrap gap-2">
-              {fighter.disciplines.map(d => (
-                <span key={d} className="text-xs font-bold px-3 py-1.5 uppercase tracking-wide bg-[#0A0A0A] text-white">{d}</span>
-              ))}
-            </div>
+            <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color:'#9A9A9A' }}>Disciplina</p>
+            <span className="text-xs font-bold px-3 py-1.5 uppercase tracking-wide bg-[#0A0A0A] text-white">{fighter.discipline}</span>
           </div>
         )}
 
@@ -180,7 +179,7 @@ export default function FighterDetailPage() {
           {[
             { label:'División', value: fighter.weight_class ? (WEIGHT_LABELS[fighter.weight_class] ?? fighter.weight_class) : '—' },
             { label:'Gimnasio', value: fighter.gym_name ?? '—' },
-            { label:'Peso exacto', value: fighter.exact_weight ? `${fighter.exact_weight} kg` : '—' },
+            { label:'Estado', value: fighter.state ?? '—' },
             { label:'Estatura', value: fighter.height_cm ? `${fighter.height_cm} cm` : '—' },
             { label:'Envergadura', value: fighter.reach_cm ? `${fighter.reach_cm} cm` : '—' },
           ].map(({label,value}) => (
@@ -201,12 +200,6 @@ export default function FighterDetailPage() {
               {fighter.is_available ? 'Disponible' : 'No disponible'}
             </span>
           </div>
-          <div>
-            <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>Aviso corto</p>
-            <span className={`text-xs font-semibold px-2 py-1 ${fighter.short_notice_ready ? 'bg-amber-50 text-amber-700' : 'bg-zinc-100 text-zinc-500'}`}>
-              {fighter.short_notice_ready ? 'Listo' : 'No'}
-            </span>
-          </div>
         </div>
 
         {/* Bio */}
@@ -222,7 +215,7 @@ export default function FighterDetailPage() {
           <div className="flex justify-end">
             <button onClick={() => setShowModal(true)} className="px-6 py-3 text-sm font-bold tracking-widest uppercase text-white transition-colors"
               style={{ background:'#C0001E' }} onMouseOver={e=>(e.currentTarget.style.background='#9A0018')} onMouseOut={e=>(e.currentTarget.style.background='#C0001E')}>
-              Enviar solicitud de pelea
+              Contactar al manager
             </button>
           </div>
         )}
@@ -238,7 +231,10 @@ export default function FighterDetailPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
           <div className="bg-white w-full max-w-md p-6">
             <h2 className="text-xl font-black uppercase mb-1" style={{ letterSpacing:'-0.5px' }}>Solicitud de Pelea</h2>
-            <p className="text-sm mb-6" style={{ color:'#5A5A5A' }}>Para: <span className="font-semibold text-zinc-900">{fighter.profiles?.full_name}</span></p>
+            <p className="text-sm mb-2" style={{ color:'#5A5A5A' }}>Para: <span className="font-semibold text-zinc-900">{fighter.full_name}</span></p>
+            <p className="text-xs mb-6" style={{ color:'#92400E' }}>
+              La solicitud se envía al {creatorRole.toLowerCase() || 'manager'} del peleador dentro de la plataforma.
+            </p>
             {sendSuccess ? (
               <div className="py-8 text-center"><p className="text-sm font-semibold text-emerald-700">¡Solicitud enviada con éxito!</p></div>
             ) : (

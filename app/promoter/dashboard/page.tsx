@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { ManualFighterManager } from '@/components/ManualFighterManager';
 import { authService } from '@/services/authService';
 import { eventService } from '@/services/eventService';
 import { getEventRegistrations, confirmPayment } from '@/services/registrationService';
@@ -406,6 +407,17 @@ export default function PromoterDashboardPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* ── Manual fighters (roster) ── */}
+        {profile && (
+          <div className="mt-12 border-t border-zinc-100 pt-8">
+            <ManualFighterManager
+              creatorId={profile.id}
+              sectionLabel="Mi Roster"
+              description="Peleadores que no tienen cuenta en la plataforma. Se mostrarán públicamente con la etiqueta Roster; cualquier solicitud de pelea llegará a ti dentro de la app."
+            />
           </div>
         )}
       </main>

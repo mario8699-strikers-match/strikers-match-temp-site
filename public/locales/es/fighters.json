@@ -5,6 +5,7 @@
     "loading": "Cargando atletas...",
     "empty": "No hay atletas registrados",
     "verified": "Verificado",
+    "roster_badge": "Roster",
     "available": "Disponible",
     "unavailable": "No disponible",
     "wins": "Victorias",

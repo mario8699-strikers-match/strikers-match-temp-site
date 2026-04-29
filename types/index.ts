@@ -172,7 +172,8 @@ export interface EventApplication {
 export interface MatchRequest {
   id: string;
   event_id: string;
-  fighter_id: string;
+  fighter_id: string | null;
+  manual_fighter_id: string | null;
   sender_id: string;
   status: 'pending' | 'accepted' | 'declined' | 'cancelled';
   message: string | null;
@@ -187,7 +188,8 @@ export interface ManagerFighter {
   created_at: string;
 }
 
-// Manual fighter (added by manager, not registered on platform)
+// Manual fighter (added by manager/promoter, not registered on platform)
+// manager_id semantically means "creator_id" (manager, promoter, or admin).
 export interface ManualFighter {
   id: string;
   manager_id: string;
@@ -204,7 +206,23 @@ export interface ManualFighter {
   gym_name: string | null;
   experience_level: 'amateur' | 'pro';
   notes: string | null;
+  // Display columns (added for public visibility)
+  photo_url: string | null;
+  bio: string | null;
+  height_cm: number | null;
+  reach_cm: number | null;
+  state: string | null;
+  is_available: boolean;
   created_at: string;
+}
+
+// Manual fighter joined with creator's profile (for admin/public views)
+export interface ManualFighterWithCreator extends ManualFighter {
+  profiles: {
+    full_name: string;
+    email: string;
+    role: UserRole;
+  } | null;
 }
 
 // Sponsorship offer

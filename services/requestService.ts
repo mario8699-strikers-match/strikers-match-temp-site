@@ -17,6 +17,21 @@ export const requestService = {
     }
   },
 
+  async getByManualFighter(manualFighterId: string): Promise<ServiceResponse<MatchRequest[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('match_requests')
+        .select('*, events(title, event_date, city), profiles!sender_id(full_name)')
+        .eq('manual_fighter_id', manualFighterId)
+        .order('created_at', { ascending: false });
+
+      if (error) return { data: null, error: error.message };
+      return { data: data ?? [], error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
   async getByEvent(eventId: string): Promise<ServiceResponse<MatchRequest[]>> {
     try {
       const { data, error } = await supabase

@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabaseClient';
-import type { Profile, FighterWithProfile, Event, ServiceResponse } from '@/types';
+import type { Profile, FighterWithProfile, ManualFighterWithCreator, Event, ServiceResponse } from '@/types';
 
 export interface AdminStats {
   totalUsers: number;
@@ -154,6 +154,20 @@ export const adminService = {
 
       if (error) return { data: null, error: error.message };
       return { data: data ?? [], error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
+  async getAllManualFighters(): Promise<ServiceResponse<ManualFighterWithCreator[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('manual_fighters')
+        .select('*, profiles:manager_id(full_name, email, role)')
+        .order('created_at', { ascending: false });
+
+      if (error) return { data: null, error: error.message };
+      return { data: (data as ManualFighterWithCreator[]) ?? [], error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }

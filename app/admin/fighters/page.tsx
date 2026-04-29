@@ -4,9 +4,10 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { adminService } from '@/services/adminService';
-import type { FighterWithProfile } from '@/types';
+import type { FighterWithProfile, ManualFighterWithCreator } from '@/types';
 
 type Confirm = { fighterId: string; action: 'verify' | 'unverify' | 'hide' | 'unhide' } | null;
+type Tab = 'registered' | 'manual';
 
 const REP_LABELS: { key: 'manager' | 'promoter' | 'sponsor'; label: string }[] = [
   { key: 'manager', label: 'Manager' },
@@ -18,15 +19,21 @@ export default function AdminFightersPage() {
   const { t } = useTranslation('admin');
 
   const [fighters, setFighters] = useState<FighterWithProfile[]>([]);
+  const [manualFighters, setManualFighters] = useState<ManualFighterWithCreator[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [acting, setActing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>('registered');
 
   useEffect(() => {
-    adminService.getAllFighters().then(({ data }) => {
-      setFighters(data ?? []);
+    Promise.all([
+      adminService.getAllFighters(),
+      adminService.getAllManualFighters(),
+    ]).then(([regRes, manRes]) => {
+      setFighters(regRes.data ?? []);
+      setManualFighters(manRes.data ?? []);
       setLoading(false);
     });
   }, []);
@@ -76,6 +83,30 @@ export default function AdminFightersPage() {
         <p className="mt-1 text-sm text-zinc-500">{t('admin.fighters.subtitle')}</p>
       </div>
 
+      {/* Tab switcher */}
+      <div className="mb-6 flex gap-6 border-b border-zinc-200">
+        <button
+          onClick={() => setTab('registered')}
+          className={`pb-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            tab === 'registered'
+              ? 'border-[#C0001E] text-zinc-900'
+              : 'border-transparent text-zinc-500 hover:text-zinc-900'
+          }`}
+        >
+          Registrados <span className="ml-1 text-xs text-zinc-400">({fighters.length})</span>
+        </button>
+        <button
+          onClick={() => setTab('manual')}
+          className={`pb-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            tab === 'manual'
+              ? 'border-[#C0001E] text-zinc-900'
+              : 'border-transparent text-zinc-500 hover:text-zinc-900'
+          }`}
+        >
+          Roster (sin cuenta) <span className="ml-1 text-xs text-zinc-400">({manualFighters.length})</span>
+        </button>
+      </div>
+
       {error && (
         <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
           {error}
@@ -84,7 +115,8 @@ export default function AdminFightersPage() {
 
       {loading ? (
         <div className="py-16 text-center text-zinc-400 text-sm">—</div>
-      ) : fighters.length === 0 ? (
+      ) : tab === 'registered' ? (
+        fighters.length === 0 ? (
         <div className="py-16 text-center border border-dashed border-zinc-200 text-zinc-500 text-sm">
           {t('admin.fighters.noFighters')}
         </div>
@@ -251,6 +283,83 @@ export default function AdminFightersPage() {
             </tbody>
           </table>
         </div>
+      )
+      ) : (
+        manualFighters.length === 0 ? (
+          <div className="py-16 text-center border border-dashed border-zinc-200 text-zinc-500 text-sm">
+            No hay peleadores agregados manualmente por managers o promotores.
+          </div>
+        ) : (
+          <div className="bg-white border border-zinc-200 overflow-x-auto">
+            <table className="min-w-full divide-y divide-zinc-100 text-sm">
+              <thead className="bg-zinc-50">
+                <tr>
+                  {['Nombre', 'Agregado por', 'Rol', 'Correo del creador', 'Peso', 'Record', 'Ciudad', 'Disponible', 'Acciones'].map((col) => (
+                    <th
+                      key={col}
+                      className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wide"
+                    >
+                      {col}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {manualFighters.map((mf) => (
+                  <tr key={mf.id} className="hover:bg-zinc-50">
+                    <td className="px-4 py-3 font-medium text-zinc-900 whitespace-nowrap">
+                      <Link href={`/fighters/manual/${mf.id}`} className="text-[#C0001E] hover:underline font-bold">
+                        {mf.full_name}
+                      </Link>
+                      {mf.nickname && (
+                        <span className="ml-2 text-xs text-zinc-400">“{mf.nickname}”</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-zinc-700 whitespace-nowrap">
+                      {mf.profiles?.full_name ?? '—'}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {mf.profiles?.role === 'manager' && (
+                        <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-50 text-blue-700">Manager</span>
+                      )}
+                      {mf.profiles?.role === 'promoter' && (
+                        <span className="text-xs font-bold px-1.5 py-0.5 bg-purple-50 text-purple-700">Promotor</span>
+                      )}
+                      {!mf.profiles?.role && <span className="text-xs text-zinc-400">—</span>}
+                    </td>
+                    <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">
+                      {mf.profiles?.email ?? '—'}
+                    </td>
+                    <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">
+                      {mf.weight_class ?? '—'}
+                    </td>
+                    <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">
+                      {mf.record_wins}W / {mf.record_losses}L / {mf.record_draws}D
+                    </td>
+                    <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">
+                      {mf.city ?? '—'}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium ${
+                        mf.is_available ? 'bg-emerald-50 text-emerald-700' : 'bg-zinc-100 text-zinc-600'
+                      }`}>
+                        {mf.is_available ? t('admin.fighters.yes') : t('admin.fighters.no')}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <Link
+                        href={`/fighters/manual/${mf.id}`}
+                        className="text-xs font-medium text-zinc-700 hover:text-[#C0001E] hover:underline"
+                      >
+                        Ver perfil
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
       )}
 
       {/* Confirm modal */}
