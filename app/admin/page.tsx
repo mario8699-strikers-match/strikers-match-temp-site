@@ -17,15 +17,38 @@ export default function AdminDashboardPage() {
   const { t } = useTranslation('admin');
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [health, setHealth] = useState<{ orphan_fighters: number; checked_at: string } | null>(null);
+  const [healing, setHealing] = useState(false);
+  const [healMsg, setHealMsg] = useState<string | null>(null);
+
+  const loadHealth = () => {
+    adminService.getHealthChecks().then(({ data }) => setHealth(data));
+  };
 
   useEffect(() => {
     adminService.getStats().then(({ data }) => {
       setStats(data);
       setLoading(false);
     });
+    loadHealth();
   }, []);
 
+  const handleHeal = async () => {
+    setHealing(true);
+    setHealMsg(null);
+    const { data, error } = await adminService.healOrphanFighters();
+    setHealing(false);
+    if (error) {
+      setHealMsg(`Error: ${error}`);
+    } else {
+      setHealMsg(`Healed ${data} orphan profile${data === 1 ? '' : 's'}.`);
+      loadHealth();
+    }
+  };
+
   const val = (n: number | undefined) => (loading ? '—' : (n ?? 0));
+  const orphanCount = health?.orphan_fighters ?? null;
+  const isHealthy = orphanCount === 0;
 
   return (
     <div>
@@ -41,6 +64,54 @@ export default function AdminDashboardPage() {
           label={t('admin.dashboard.pendingVerifications')}
           value={val(stats?.pendingVerifications)}
         />
+      </div>
+
+      {/* System Health */}
+      <div className="mt-10">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-bold tracking-widest uppercase text-zinc-700">System Health</h2>
+          <button
+            onClick={loadHealth}
+            className="text-xs text-zinc-500 hover:text-zinc-900 hover:underline"
+          >
+            Refresh
+          </button>
+        </div>
+        <div
+          className={`border p-4 flex items-center justify-between ${
+            orphanCount === null
+              ? 'bg-zinc-50 border-zinc-200'
+              : isHealthy
+              ? 'bg-emerald-50 border-emerald-200'
+              : 'bg-red-50 border-red-200'
+          }`}
+        >
+          <div>
+            <p className="text-sm font-medium text-zinc-900">
+              Orphan fighter profiles
+              <span className="ml-2 text-xs text-zinc-500 font-normal">
+                (profiles with role=fighter missing a fighters row)
+              </span>
+            </p>
+            <p className="text-xs text-zinc-500 mt-1">
+              {orphanCount === null
+                ? 'Checking…'
+                : isHealthy
+                ? 'All fighter profiles have a matching fighters row. ✓'
+                : `${orphanCount} profile${orphanCount === 1 ? '' : 's'} invisible on /fighters and cannot apply to events.`}
+            </p>
+            {healMsg && <p className="text-xs mt-2 text-zinc-700">{healMsg}</p>}
+          </div>
+          {!isHealthy && orphanCount !== null && orphanCount > 0 && (
+            <button
+              onClick={handleHeal}
+              disabled={healing}
+              className="px-4 py-2 text-xs font-bold uppercase tracking-widest text-white bg-[#C0001E] hover:bg-red-700 disabled:opacity-50 transition-colors"
+            >
+              {healing ? 'Healing…' : 'Heal now'}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Quick links */}

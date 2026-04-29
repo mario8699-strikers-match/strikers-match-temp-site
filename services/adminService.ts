@@ -186,4 +186,26 @@ export const adminService = {
       return { data: null, error: 'An unexpected error occurred.' };
     }
   },
+
+  /** System health check (admin only). */
+  async getHealthChecks(): Promise<ServiceResponse<{ orphan_fighters: number; checked_at: string }>> {
+    try {
+      const { data, error } = await supabase.rpc('admin_health_checks');
+      if (error) return { data: null, error: error.message };
+      return { data: data as { orphan_fighters: number; checked_at: string }, error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
+  /** Create missing fighters rows for orphan fighter profiles. Returns number inserted. */
+  async healOrphanFighters(): Promise<ServiceResponse<number>> {
+    try {
+      const { data, error } = await supabase.rpc('admin_heal_orphan_fighters');
+      if (error) return { data: null, error: error.message };
+      return { data: (data as number) ?? 0, error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
 };
