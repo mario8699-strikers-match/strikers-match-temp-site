@@ -7,11 +7,8 @@ import { ManualFighterManager } from '@/components/ManualFighterManager';
 import { authService } from '@/services/authService';
 import { eventService } from '@/services/eventService';
 import { getEventRegistrations, confirmPayment } from '@/services/registrationService';
-import { seedTestData } from '@/lib/testSeed';
-import { runTestFlow, resetTestSubscription } from '@/lib/testFlow';
 import type { Event, EventApplication, Profile } from '@/types';
 import type { RegistrationWithFighter } from '@/types';
-import type { TestFlowResult } from '@/lib/testFlow';
 
 const STATUS_COLORS: Record<Event['status'], string> = {
   draft:     'bg-zinc-100 text-zinc-600',
@@ -53,13 +50,6 @@ export default function PromoterDashboardPage() {
   const [registrations, setRegistrations] = useState<RegistrationWithFighter[]>([]);
   const [regsLoading, setRegsLoading] = useState(false);
   const [confirmingReg, setConfirmingReg] = useState<string | null>(null);
-
-  // ── DEV ONLY: Test flow state — REMOVE BEFORE PRODUCTION ──
-  const [testRunning, setTestRunning] = useState(false);
-  const [seedRunning, setSeedRunning] = useState(false);
-  const [testResult, setTestResult] = useState<TestFlowResult | null>(null);
-  const [seedLog, setSeedLog] = useState<string[]>([]);
-  const isDev = process.env.NODE_ENV === 'development';
 
   useEffect(() => {
     authService.getSession().then(async ({ data }) => {
@@ -422,130 +412,7 @@ export default function PromoterDashboardPage() {
         )}
       </main>
 
-      {/* ── DEV ONLY: Test Panel — REMOVE BEFORE PRODUCTION ── */}
-      {isDev && (
-        <div className="border-t-4 border-amber-400 bg-amber-50 px-4 sm:px-6 py-8">
-          <div className="max-w-5xl mx-auto">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-xs font-bold tracking-widest uppercase text-amber-700 bg-amber-200 px-2 py-1">DEV ONLY</span>
-              <p className="text-sm font-bold text-amber-900">Testing & Validation Panel</p>
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex flex-wrap gap-3 mb-6">
-              <button
-                onClick={async () => {
-                  setSeedRunning(true);
-                  setSeedLog([]);
-                  const res = await seedTestData();
-                  setSeedLog(res.log);
-                  setSeedRunning(false);
-                }}
-                disabled={seedRunning}
-                className="px-4 py-2 text-xs font-bold tracking-wide uppercase text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-50 transition-colors"
-              >
-                {seedRunning ? 'Seeding...' : 'Seed Test Data'}
-              </button>
-
-              <button
-                onClick={async () => {
-                  setTestRunning(true);
-                  setTestResult(null);
-                  const res = await runTestFlow();
-                  setTestResult(res);
-                  setTestRunning(false);
-                }}
-                disabled={testRunning}
-                className="px-4 py-2 text-xs font-bold tracking-wide uppercase text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors"
-              >
-                {testRunning ? 'Running...' : 'Run Test Flow'}
-              </button>
-
-              <button
-                onClick={async () => {
-                  const res = await resetTestSubscription();
-                  if (res.success) {
-                    setTestResult(null);
-                    alert('Subscription reset. You can run the test again.');
-                  } else {
-                    alert(`Reset failed: ${res.error}`);
-                  }
-                }}
-                className="px-4 py-2 text-xs font-bold tracking-wide uppercase text-amber-700 border border-amber-300 hover:bg-amber-100 transition-colors"
-              >
-                Reset Subscription
-              </button>
-            </div>
-
-            {/* Seed log */}
-            {seedLog.length > 0 && (
-              <div className="mb-6">
-                <p className="text-xs font-bold uppercase text-amber-700 mb-2">Seed Log</p>
-                <div className="bg-white border border-amber-200 p-3 max-h-48 overflow-y-auto font-mono text-xs text-zinc-700 space-y-0.5">
-                  {seedLog.map((line, i) => (
-                    <p key={i} className={line.includes('ERROR') ? 'text-red-600 font-bold' : ''}>{line}</p>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Test results */}
-            {testResult && (
-              <div className="bg-white border border-amber-200 p-4">
-                <p className="text-xs font-bold uppercase text-amber-700 mb-3">Test Flow Results</p>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                  <ResultBadge label="1st Request" value={testResult.first_request} pass={testResult.first_request === 'success'} />
-                  <ResultBadge label="2nd Request" value={testResult.second_request} pass={testResult.second_request === 'blocked'} />
-                  <ResultBadge label="Paywall" value={testResult.paywall_triggered ? 'triggered' : 'not triggered'} pass={testResult.paywall_triggered} />
-                  <ResultBadge label="Fighter Blocked" value={testResult.fighter_blocked ? 'yes' : 'no'} pass={testResult.fighter_blocked} />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="text-xs">
-                    <span className="font-bold text-zinc-500">free_request_used before:</span>{' '}
-                    <span className="font-mono">{String(testResult.free_request_used_before)}</span>
-                  </div>
-                  <div className="text-xs">
-                    <span className="font-bold text-zinc-500">free_request_used after:</span>{' '}
-                    <span className="font-mono">{String(testResult.free_request_used_after)}</span>
-                  </div>
-                </div>
-
-                {testResult.errors.length > 0 && (
-                  <div className="mb-3">
-                    <p className="text-xs font-bold text-red-600 mb-1">Errors:</p>
-                    {testResult.errors.map((e, i) => (
-                      <p key={i} className="text-xs text-red-600 font-mono">{e}</p>
-                    ))}
-                  </div>
-                )}
-
-                <details className="mt-2">
-                  <summary className="text-xs font-bold text-amber-700 cursor-pointer">Full Log ({testResult.log.length} entries)</summary>
-                  <div className="mt-2 bg-zinc-50 border border-zinc-200 p-3 max-h-48 overflow-y-auto font-mono text-xs text-zinc-600 space-y-0.5">
-                    {testResult.log.map((line, i) => (
-                      <p key={i} className={line.includes('FAIL') || line.includes('ERROR') ? 'text-red-600 font-bold' : line.includes('PASS') ? 'text-emerald-600 font-bold' : ''}>{line}</p>
-                    ))}
-                  </div>
-                </details>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       <Footer />
-    </div>
-  );
-}
-
-/* ── DEV ONLY: Result badge component — REMOVE BEFORE PRODUCTION ── */
-function ResultBadge({ label, value, pass }: { label: string; value: string; pass: boolean }) {
-  return (
-    <div className={`border p-3 text-center ${pass ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50'}`}>
-      <p className="text-xs font-bold uppercase text-zinc-500 mb-1">{label}</p>
-      <p className={`text-sm font-bold ${pass ? 'text-emerald-700' : 'text-red-700'}`}>{value}</p>
     </div>
   );
 }
