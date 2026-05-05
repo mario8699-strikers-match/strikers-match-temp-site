@@ -27,20 +27,27 @@ const SITE_URL = 'https://strikersmatch.com';
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Strikers Match - Combat Sports Platform | Boxing & MMA Events in Mexico & Southwest USA',
+    default: 'Strikers Match - Combat Sports Platform | Mexico & US Southwest',
     template: '%s | Strikers Match',
   },
   description:
-    'The premier combat sports platform connecting fighters, promoters, managers, and sponsors across Mexico, California, Nevada, Arizona, Utah, Colorado, and New Mexico. Find boxing, MMA, and kickboxing events near you.',
+    'All-in-one combat sports platform for amateur and pro fighters, promoters, managers, sponsors, and event professionals — photographers, videographers, cutmen, judges, ring announcers, catering, venues and more — across Mexico and the US Southwest.',
   keywords: [
     'combat sports', 'boxing events', 'MMA events', 'kickboxing',
+    'amateur boxing', 'pro boxing', 'combat sports platform',
     'fight promoters', 'boxing Mexico', 'MMA Mexico',
     'boxing California', 'boxing Nevada', 'boxing Arizona',
     'boxing Utah', 'boxing Colorado', 'boxing New Mexico',
     'peleas de boxeo', 'eventos MMA', 'deportes de combate',
     'promotores de boxeo', 'peleadores', 'artes marciales mixtas',
-    'eventos de boxeo Mexico', 'fight card', 'combat sports platform',
+    'eventos de boxeo Mexico', 'fight card',
     'fighter profiles', 'boxing promoter platform',
+    'boxing photographers', 'fight videographers', 'cutman services',
+    'boxing judges', 'ring announcers', 'ring card girls',
+    'fight venue rental', 'boxing ring rental', 'boxing event catering',
+    'merchandise vendors', 'broadcast personalities',
+    'combat sports professionals', 'fotografos de boxeo', 'juez de boxeo',
+    'renta de ring', 'renta de venue', 'catering para eventos',
   ],
   authors: [{ name: 'Strikers Match', url: SITE_URL }],
   creator: 'Strikers Match',
@@ -60,9 +67,9 @@ export const metadata: Metadata = {
     alternateLocale: 'en_US',
     url: SITE_URL,
     siteName: 'Strikers Match',
-    title: 'Strikers Match - Combat Sports Platform',
+    title: 'Strikers Match - All-in-one Combat Sports Platform',
     description:
-      'Connect fighters, promoters, managers & sponsors for combat sports events across Mexico and the US Southwest.',
+      'From amateur and pro fighters to promoters, sponsors, photographers, cutmen, judges and catering — one platform for everyone behind a combat sports event in Mexico and the US Southwest.',
     images: [
       {
         url: '/strikers-logo.png',
@@ -74,9 +81,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Strikers Match - Combat Sports Platform',
+    title: 'Strikers Match - All-in-one Combat Sports Platform',
     description:
-      'The premier platform connecting fighters, promoters & sponsors for combat sports events in Mexico & Southwest USA.',
+      'Fighters, promoters, sponsors and event professionals — all in one place. Mexico & US Southwest.',
     images: ['/strikers-logo.png'],
   },
   alternates: {

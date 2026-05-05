@@ -6,7 +6,7 @@ export function JsonLd() {
     url: 'https://strikersmatch.com',
     logo: 'https://strikersmatch.com/strikers-logo.png',
     description:
-      'The premier combat sports platform connecting fighters, promoters, managers, and sponsors across Mexico and the US Southwest.',
+      'All-in-one combat sports platform connecting amateur and professional fighters, promoters, managers, sponsors, and event service professionals (photographers, videographers, cutmen, judges, ring announcers, catering, venue and ring rental) across Mexico and the US Southwest.',
     email: 'info@strikersmatch.com',
     sameAs: ['https://www.instagram.com/strikersmatch/'],
     contactPoint: {
@@ -37,7 +37,7 @@ export function JsonLd() {
     url: 'https://strikersmatch.com',
     sport: ['Boxing', 'Mixed Martial Arts', 'Kickboxing', 'Muay Thai'],
     description:
-      'Combat sports event platform connecting fighters with promoters for boxing, MMA, and kickboxing events.',
+      'Combat sports event platform for amateur and pro fighters, promoters, managers, sponsors, and event professionals including photographers, videographers, cutmen, judges, ring announcers, catering, venues, and ring rental.',
     areaServed: [
       { '@type': 'Country', name: 'Mexico' },
       { '@type': 'State', name: 'California', containedInPlace: { '@type': 'Country', name: 'United States' } },
