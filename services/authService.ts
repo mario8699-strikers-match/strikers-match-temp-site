@@ -44,6 +44,8 @@ export const authService = {
             phone: formData.phone || null,
             date_of_birth: formData.date_of_birth || null,
             gym_name: formData.gym_name || null,
+            bio: formData.bio || null,
+            instagram: formData.instagram || null,
           },
         },
       });
@@ -76,7 +78,14 @@ export const authService = {
 
   async updateProfile(
     id: string,
-    updates: { full_name?: string; city?: string | null; phone?: string | null }
+    updates: {
+      full_name?: string;
+      city?: string | null;
+      phone?: string | null;
+      bio?: string | null;
+      instagram?: string | null;
+      is_available?: boolean;
+    }
   ): Promise<ServiceResponse<null>> {
     try {
       const { error } = await supabase

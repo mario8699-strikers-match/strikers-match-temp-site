@@ -9,6 +9,7 @@ const NOINDEX_PATHS = [
   '/manager/dashboard',
   '/manager/profile',
   '/sponsor/dashboard',
+  '/vendor/profile',
   '/consent',
   '/events/create',
   '/reset-password',

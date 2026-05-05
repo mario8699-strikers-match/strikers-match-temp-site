@@ -55,6 +55,9 @@ export interface Profile {
   country: string;
   phone: string | null;
   date_of_birth: string | null;
+  bio: string | null;
+  instagram: string | null;
+  is_available: boolean;
   is_banned?: boolean;
   reliability_score?: number;
   total_matches?: number;
@@ -261,6 +264,8 @@ export interface RegisterFormData {
   phone: string;
   date_of_birth: string;
   gym_name: string;
+  bio?: string;
+  instagram?: string;
 }
 
 // Gallery photo

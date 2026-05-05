@@ -5,22 +5,24 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { authService } from '@/services/authService';
+import { VENDOR_ROLES } from '@/types';
 import type { Profile } from '@/types';
 
-type ActivePage = 'home' | 'events' | 'fighters' | 'promoters' | 'managers' | 'sponsors' | 'gallery' | 'pricing' | 'login' | 'register' | null;
+type ActivePage = 'home' | 'events' | 'fighters' | 'professionals' | 'promoters' | 'managers' | 'sponsors' | 'gallery' | 'pricing' | 'login' | 'register' | null;
 
 interface NavbarProps {
   activePage?: ActivePage;
 }
 
 const NAV_LINKS: { href: string; key: ActivePage; label?: string }[] = [
-  { href: '/events',    key: 'events' },
-  { href: '/fighters',  key: 'fighters' },
-  { href: '/promoters', key: 'promoters' },
-  { href: '/managers',  key: 'managers', label: 'Managers' },
-  { href: '/sponsors',  key: 'sponsors' },
-  { href: '/gallery',   key: 'gallery' },
-  { href: '/pricing',   key: 'pricing',  label: 'Precios' },
+  { href: '/events',        key: 'events' },
+  { href: '/fighters',      key: 'fighters' },
+  { href: '/professionals', key: 'professionals', label: 'Profesionales' },
+  { href: '/promoters',     key: 'promoters' },
+  { href: '/managers',      key: 'managers', label: 'Managers' },
+  { href: '/sponsors',      key: 'sponsors' },
+  { href: '/gallery',       key: 'gallery' },
+  { href: '/pricing',       key: 'pricing',  label: 'Precios' },
 ];
 
 function profileLink(role: string): { label: string; href: string }[] {
@@ -30,7 +32,11 @@ function profileLink(role: string): { label: string; href: string }[] {
     case 'manager':  return [{ label: 'Mi Panel', href: '/manager/dashboard' }, { label: 'Mi Perfil', href: '/manager/profile' }];
     case 'sponsor':  return [{ label: 'Mi Panel', href: '/sponsor/dashboard' }, { label: 'Mi Perfil', href: '/profile' }];
     case 'admin':    return [{ label: 'Admin', href: '/admin' }];
-    default:         return [];
+    default:
+      if (VENDOR_ROLES.includes(role as typeof VENDOR_ROLES[number])) {
+        return [{ label: 'Mi Perfil', href: '/vendor/profile' }];
+      }
+      return [];
   }
 }
 

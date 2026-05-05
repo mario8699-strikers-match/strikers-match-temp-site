@@ -7,6 +7,7 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { authService } from '@/services/authService';
 import { isMinor, hasValidConsent } from '@/services/consentService';
+import { VENDOR_ROLES } from '@/types';
 import type { LoginFormData } from '@/types';
 
 export default function LoginPage() {
@@ -50,6 +51,7 @@ export default function LoginPage() {
         window.location.href = '/fighter/profile';
       }
       else if (role === 'sponsor')                        window.location.href = '/sponsor/dashboard';
+      else if (role && VENDOR_ROLES.includes(role))       window.location.href = '/vendor/profile';
       else                                           window.location.href = '/';
     }
   };

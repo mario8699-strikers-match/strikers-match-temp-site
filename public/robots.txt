@@ -15,6 +15,7 @@ Disallow: /reset-password
 Disallow: /login
 Disallow: /register
 Disallow: /forgot-password
+Disallow: /vendor/profile
 Disallow: /_next/static/
 Disallow: /_next/image
 

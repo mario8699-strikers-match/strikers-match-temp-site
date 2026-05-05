@@ -2,19 +2,24 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { authService } from '@/services/authService';
 import type { RegisterFormData, UserRole } from '@/types';
 import { VENDOR_ROLES } from '@/types';
 
-const ROLES: UserRole[] = ['promoter', 'fighter', 'manager', 'sponsor', ...VENDOR_ROLES];
+type AccountType = 'organizer' | 'athlete' | 'professional';
+type Step = 1 | 2 | 3;
+
+const ORGANIZER_ROLES: UserRole[] = ['promoter', 'manager', 'sponsor'];
 
 export default function RegisterPage() {
   const { t } = useTranslation('auth');
   const { t: tNav } = useTranslation('navigation');
   const { t: tLegal } = useTranslation('legal');
+
+  const [step, setStep] = useState<Step>(1);
+  const [accountType, setAccountType] = useState<AccountType | null>(null);
 
   const [formData, setFormData] = useState<RegisterFormData>({
     full_name: '',
@@ -25,6 +30,8 @@ export default function RegisterPage() {
     phone: '',
     date_of_birth: '',
     gym_name: '',
+    bio: '',
+    instagram: '',
   });
   const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -32,6 +39,35 @@ export default function RegisterPage() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  const isVendorRole = !!formData.role && VENDOR_ROLES.includes(formData.role);
+
+  const pickAccountType = (type: AccountType) => {
+    setAccountType(type);
+    if (type === 'athlete') {
+      setFormData((prev) => ({ ...prev, role: 'fighter' }));
+      setStep(3);
+    } else {
+      setFormData((prev) => ({ ...prev, role: '' as UserRole }));
+      setStep(2);
+    }
+  };
+
+  const pickRole = (role: UserRole) => {
+    setFormData((prev) => ({ ...prev, role }));
+    setStep(3);
+  };
+
+  const goBack = () => {
+    if (step === 3 && accountType === 'athlete') {
+      setStep(1);
+    } else if (step === 3) {
+      setStep(2);
+    } else if (step === 2) {
+      setStep(1);
+      setAccountType(null);
+    }
+  };
 
   const validate = (): boolean => {
     const newErrors: typeof errors = {};
@@ -95,19 +131,130 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-white font-sans flex flex-col">
       <Navbar activePage="register" />
 
-      {/* Register Form */}
-      <main className="flex-1 max-w-lg mx-auto px-4 py-16">
+      <main className="flex-1 max-w-lg mx-auto px-4 py-16 w-full">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-zinc-900">{t('auth.register.title')}</h1>
           <p className="mt-2 text-zinc-500 text-sm">{t('auth.register.subtitle')}</p>
+          <div className="mt-4 flex items-center gap-2 text-xs font-medium text-zinc-500 tracking-wide uppercase">
+            <span className={step === 1 ? 'text-zinc-900' : ''}>Paso 1</span>
+            <span>·</span>
+            <span className={step === 2 ? 'text-zinc-900' : ''}>Paso 2</span>
+            <span>·</span>
+            <span className={step === 3 ? 'text-zinc-900' : ''}>Paso 3</span>
+          </div>
         </div>
 
+        {step > 1 && (
+          <button
+            type="button"
+            onClick={goBack}
+            className="mb-4 text-sm text-zinc-500 hover:text-zinc-900"
+          >
+            ← Regresar
+          </button>
+        )}
+
+        {/* STEP 1: Account type picker */}
+        {step === 1 && (
+          <div className="space-y-3">
+            <p className="text-sm text-zinc-700 mb-2">¿Qué tipo de cuenta quieres crear?</p>
+
+            <button
+              type="button"
+              onClick={() => pickAccountType('organizer')}
+              className="w-full text-left border border-zinc-300 hover:border-zinc-900 px-4 py-4 transition-colors"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-zinc-900">Organizo eventos</div>
+                  <div className="text-xs text-zinc-500 mt-0.5">Promotor, Manager o Patrocinador</div>
+                </div>
+                <span className="shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-zinc-900 text-white">
+                  Plan de Organizador
+                </span>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => pickAccountType('athlete')}
+              className="w-full text-left border border-zinc-300 hover:border-zinc-900 px-4 py-4 transition-colors"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-zinc-900">Soy atleta</div>
+                  <div className="text-xs text-zinc-500 mt-0.5">Perfil público en el directorio de atletas</div>
+                </div>
+                <span className="shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Gratis
+                </span>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => pickAccountType('professional')}
+              className="w-full text-left border border-zinc-300 hover:border-zinc-900 px-4 py-4 transition-colors"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-zinc-900">Soy profesional de eventos</div>
+                  <div className="text-xs text-zinc-500 mt-0.5">Fotógrafo, cutman, juez, catering, venue y más</div>
+                </div>
+                <span className="shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Gratis
+                </span>
+              </div>
+            </button>
+          </div>
+        )}
+
+        {/* STEP 2: Sub-role picker */}
+        {step === 2 && accountType === 'organizer' && (
+          <div className="space-y-3">
+            <p className="text-sm text-zinc-700 mb-2">Selecciona tu rol como organizador</p>
+            {ORGANIZER_ROLES.map((role) => (
+              <button
+                key={role}
+                type="button"
+                onClick={() => pickRole(role)}
+                className="w-full text-left border border-zinc-300 hover:border-zinc-900 px-4 py-3 text-sm font-medium text-zinc-900 transition-colors"
+              >
+                {t(`auth.register.${role}`)}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {step === 2 && accountType === 'professional' && (
+          <div className="space-y-2">
+            <p className="text-sm text-zinc-700 mb-2">Selecciona tu especialidad</p>
+            {VENDOR_ROLES.map((role) => (
+              <button
+                key={role}
+                type="button"
+                onClick={() => pickRole(role)}
+                className="w-full text-left border border-zinc-300 hover:border-zinc-900 px-4 py-3 text-sm font-medium text-zinc-900 transition-colors"
+              >
+                {t(`auth.register.${role}`)}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* STEP 3: Profile form */}
+        {step === 3 && (
         <form onSubmit={handleSubmit} noValidate className="space-y-5">
           {serverError && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
               {serverError}
             </div>
           )}
+
+          <div className="text-xs text-zinc-500">
+            Rol seleccionado:{' '}
+            <span className="font-semibold text-zinc-900">{t(`auth.register.${formData.role}`)}</span>
+          </div>
 
           {/* Full Name */}
           <div>
@@ -145,29 +292,6 @@ export default function RegisterPage() {
               }`}
             />
             {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
-          </div>
-
-          {/* Role */}
-          <div>
-            <label htmlFor="role" className="block text-sm font-medium text-zinc-700 mb-1">
-              {t('auth.register.role')}
-            </label>
-            <select
-              id="role"
-              value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-              className={`w-full border px-3 py-2 text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 text-sm bg-white ${
-                errors.role ? 'border-red-400' : 'border-zinc-300'
-              }`}
-            >
-              <option value="">{t('auth.register.rolePlaceholder')}</option>
-              {ROLES.map((role) => (
-                <option key={role} value={role}>
-                  {t(`auth.register.${role}`)}
-                </option>
-              ))}
-            </select>
-            {errors.role && <p className="mt-1 text-xs text-red-500">{errors.role}</p>}
           </div>
 
           {/* Password */}
@@ -257,7 +381,7 @@ export default function RegisterPage() {
             {errors.date_of_birth && <p className="mt-1 text-xs text-red-500">{errors.date_of_birth}</p>}
           </div>
 
-          {/* Gym Name -- fighters only */}
+          {/* Gym Name — fighters only */}
           {formData.role === 'fighter' && (
             <div>
               <label htmlFor="gym_name" className="block text-sm font-medium text-zinc-700 mb-1">
@@ -272,6 +396,38 @@ export default function RegisterPage() {
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 text-sm"
               />
             </div>
+          )}
+
+          {/* Bio + Instagram — professionals only */}
+          {isVendorRole && (
+            <>
+              <div>
+                <label htmlFor="bio" className="block text-sm font-medium text-zinc-700 mb-1">
+                  Descripción <span className="text-zinc-400 font-normal">(opcional)</span>
+                </label>
+                <textarea
+                  id="bio"
+                  rows={3}
+                  value={formData.bio ?? ''}
+                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                  placeholder="Breve descripción de tu servicio y experiencia"
+                  className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 text-sm"
+                />
+              </div>
+              <div>
+                <label htmlFor="instagram" className="block text-sm font-medium text-zinc-700 mb-1">
+                  Instagram <span className="text-zinc-400 font-normal">(opcional)</span>
+                </label>
+                <input
+                  id="instagram"
+                  type="text"
+                  value={formData.instagram ?? ''}
+                  onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
+                  placeholder="@tu_usuario"
+                  className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 text-sm"
+                />
+              </div>
+            </>
           )}
 
           {/* Terms & Privacy acceptance */}
@@ -309,6 +465,7 @@ export default function RegisterPage() {
             {loading ? t('auth.register.submitting') : t('auth.register.submit')}
           </button>
         </form>
+        )}
 
         <p className="mt-6 text-center text-sm text-zinc-500">
           {t('auth.register.hasAccount')}{' '}
