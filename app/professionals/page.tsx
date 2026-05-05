@@ -95,10 +95,10 @@ export default function ProfessionalsPage() {
           <div>
             <p className="text-xs font-bold tracking-[0.25em] uppercase mb-2" style={{ color: '#C0001E' }}>Strikers Match</p>
             <h1 className="font-display font-black uppercase leading-none" style={{ fontSize: 'clamp(2.5rem,6vw,4.5rem)', letterSpacing: '-0.02em', color: '#0A0A0A' }}>
-              Profesionales
+              Servicios de Eventos
             </h1>
             <p className="mt-2 text-sm" style={{ color: '#5A5A5A' }}>
-              Fotógrafos, cutmen, jueces, catering, venues y más profesionales de eventos.
+              Fotógrafos, cutmen, jueces, catering, venues y más profesionales detrás de un evento de combate.
             </p>
           </div>
           <div className="flex gap-0 border border-zinc-200 overflow-hidden">

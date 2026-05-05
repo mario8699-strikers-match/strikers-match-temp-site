@@ -198,7 +198,7 @@ export default function RegisterPage() {
             >
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-sm font-semibold text-zinc-900">Soy profesional de eventos</div>
+                  <div className="text-sm font-semibold text-zinc-900">Ofrezco servicios para eventos</div>
                   <div className="text-xs text-zinc-500 mt-0.5">Fotógrafo, cutman, juez, catering, venue y más</div>
                 </div>
                 <span className="shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -228,7 +228,7 @@ export default function RegisterPage() {
 
         {step === 2 && accountType === 'professional' && (
           <div className="space-y-2">
-            <p className="text-sm text-zinc-700 mb-2">Selecciona tu especialidad</p>
+            <p className="text-sm text-zinc-700 mb-2">Selecciona el servicio que ofreces</p>
             {VENDOR_ROLES.map((role) => (
               <button
                 key={role}
