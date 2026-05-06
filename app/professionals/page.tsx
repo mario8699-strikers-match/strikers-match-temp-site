@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
@@ -145,10 +146,22 @@ export default function ProfessionalsPage() {
                   className="border border-zinc-200 bg-white p-6 hover:border-[#C0001E] transition-colors group"
                 >
                   <div className="flex items-start justify-between mb-3 gap-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-zinc-900 text-white font-bold flex items-center justify-center text-sm">
+                  <div className="flex items-center gap-3">
+                    {p.photo_url ? (
+                      <div className="w-12 h-12 overflow-hidden bg-zinc-100 shrink-0">
+                        <Image
+                          src={p.photo_url}
+                          alt={p.full_name}
+                          width={48}
+                          height={48}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 bg-zinc-900 text-white font-bold flex items-center justify-center text-sm shrink-0">
                         {initials(p.full_name)}
                       </div>
+                    )}
                       <div>
                         <h2 className="font-display font-black uppercase leading-none text-xl group-hover:text-[#C0001E] transition-colors" style={{ color: '#0A0A0A' }}>
                           {p.full_name}

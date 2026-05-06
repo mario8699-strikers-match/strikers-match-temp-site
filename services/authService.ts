@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabaseClient';
+import { uploadFile } from '@/lib/storageClient';
 import type { LoginFormData, RegisterFormData, ServiceResponse, AuthSession } from '@/types';
 
 async function getAccessToken(): Promise<string | null> {
@@ -84,6 +85,7 @@ export const authService = {
       phone?: string | null;
       bio?: string | null;
       instagram?: string | null;
+      photo_url?: string | null;
       is_available?: boolean;
     }
   ): Promise<ServiceResponse<null>> {
@@ -94,6 +96,16 @@ export const authService = {
         .eq('id', id);
       if (error) return { data: null, error: error.message };
       return { data: null, error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
+  async uploadProfilePhoto(file: File): Promise<ServiceResponse<string>> {
+    try {
+      const { data, error } = await uploadFile(file, 'vendor-photos');
+      if (error || !data) return { data: null, error: error ?? 'An unexpected error occurred.' };
+      return { data: data.url, error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }

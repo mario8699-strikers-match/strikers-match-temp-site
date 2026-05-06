@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { authService } from '@/services/authService';
@@ -34,6 +35,10 @@ export default function VendorProfilePage() {
   const [instagram, setInstagram] = useState('');
   const [isAvailable, setIsAvailable] = useState(true);
 
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     authService.getSession().then(({ data }) => {
       const p = data?.profile ?? null;
@@ -57,6 +62,17 @@ export default function VendorProfilePage() {
     setSaveError(null);
     setSaveSuccess(false);
 
+    let photoUrl: string | undefined;
+    if (photoFile) {
+      const { data: url, error: upErr } = await authService.uploadProfilePhoto(photoFile);
+      if (upErr || !url) {
+        setSaveError('Error al subir la foto.');
+        setSaving(false);
+        return;
+      }
+      photoUrl = url;
+    }
+
     const { error } = await authService.updateProfile(profile.id, {
       full_name: fullName.trim(),
       city: city.trim() || null,
@@ -64,6 +80,7 @@ export default function VendorProfilePage() {
       bio: bio.trim() || null,
       instagram: instagram.trim() || null,
       is_available: isAvailable,
+      ...(photoUrl !== undefined ? { photo_url: photoUrl } : {}),
     });
 
     setSaving(false);
@@ -78,10 +95,29 @@ export default function VendorProfilePage() {
         bio: bio.trim() || null,
         instagram: instagram.trim() || null,
         is_available: isAvailable,
+        photo_url: photoUrl ?? profile.photo_url,
       });
+      setPhotoFile(null);
+      setPhotoPreview(null);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     }
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setSaveError('El archivo debe ser una imagen.');
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      setSaveError('La imagen no debe superar 8 MB.');
+      return;
+    }
+    setSaveError(null);
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
   };
 
   if (profile === undefined) {
@@ -131,6 +167,51 @@ export default function VendorProfilePage() {
         )}
 
         <form onSubmit={handleSave} className="space-y-5">
+          {/* Avatar */}
+          <div className="flex items-center gap-5">
+            <div className="relative flex-shrink-0">
+              <div
+                className="w-20 h-20 bg-zinc-100 overflow-hidden cursor-pointer"
+                onClick={() => photoInputRef.current?.click()}
+                title="Cambiar foto"
+              >
+                {photoPreview ? (
+                  <Image src={photoPreview} alt="Foto de perfil" width={80} height={80} className="w-full h-full object-cover" unoptimized />
+                ) : profile.photo_url ? (
+                  <Image src={profile.photo_url} alt="Foto de perfil" width={80} height={80} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <svg className="w-8 h-8 text-zinc-300" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                className="absolute -bottom-1 -right-1 w-6 h-6 bg-zinc-900 text-white flex items-center justify-center"
+              >
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                </svg>
+              </button>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoChange}
+                className="hidden"
+              />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-zinc-700">Foto de perfil</p>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                JPG o PNG, máximo 8 MB. Aparece en el directorio público.
+              </p>
+            </div>
+          </div>
+
           <div>
             <label htmlFor="full_name" className="block text-sm font-medium text-zinc-700 mb-1">
               Nombre Completo

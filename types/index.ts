@@ -57,6 +57,7 @@ export interface Profile {
   date_of_birth: string | null;
   bio: string | null;
   instagram: string | null;
+  photo_url: string | null;
   is_available: boolean;
   is_banned?: boolean;
   reliability_score?: number;
