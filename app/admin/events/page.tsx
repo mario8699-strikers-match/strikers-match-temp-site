@@ -45,14 +45,14 @@ export default function AdminEventsPage() {
 
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-zinc-900">{t('admin.events.title')}</h1>
           <p className="mt-1 text-sm text-zinc-500">{t('admin.events.subtitle')}</p>
         </div>
         <a
           href="/events/create"
-          className="bg-zinc-900 text-white px-4 py-2 text-sm font-medium hover:bg-zinc-800 transition-colors"
+          className="w-full sm:w-auto text-center bg-zinc-900 text-white px-4 py-2 text-sm font-medium hover:bg-zinc-800 transition-colors whitespace-nowrap"
         >
           + {tEvents('events.createEvent')}
         </a>

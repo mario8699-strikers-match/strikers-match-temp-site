@@ -1354,11 +1354,11 @@ export default function EventDetailPage() {
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 text-sm resize-none" />
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button onClick={cancelEdit} className="px-4 py-2 text-sm font-medium text-zinc-700 border border-zinc-300 hover:bg-zinc-50 transition-colors">
+            <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 pt-2">
+              <button onClick={cancelEdit} className="w-full sm:w-auto px-4 py-3 sm:py-2 text-sm font-medium text-zinc-700 border border-zinc-300 hover:bg-zinc-50 transition-colors">
                 {tCommon('common.cancel')}
               </button>
-              <button onClick={handleSave} disabled={saving} className="px-6 py-2 text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+              <button onClick={handleSave} disabled={saving} className="w-full sm:w-auto px-6 py-3 sm:py-2 text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                 {saving ? t('events.saving') : t('events.saveChanges')}
               </button>
             </div>

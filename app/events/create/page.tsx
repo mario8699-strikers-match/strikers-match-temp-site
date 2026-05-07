@@ -595,17 +595,17 @@ export default function CreateEventPage() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-2">
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 pt-2">
             <a
               href="/events"
-              className="px-4 py-2 text-sm font-medium text-zinc-700 border border-zinc-300 hover:bg-zinc-50 transition-colors"
+              className="w-full sm:w-auto text-center px-4 py-3 sm:py-2 text-sm font-medium text-zinc-700 border border-zinc-300 hover:bg-zinc-50 transition-colors"
             >
               {t('common.cancel', { ns: 'common' })}
             </a>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2 text-sm font-semibold text-white bg-brand-red hover:bg-brand-red-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full sm:w-auto px-6 py-3 sm:py-2 text-sm font-semibold text-white bg-brand-red hover:bg-brand-red-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? t('events.creating') : t('events.createEvent')}
             </button>
