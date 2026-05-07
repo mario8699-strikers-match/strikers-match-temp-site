@@ -38,12 +38,13 @@ export type PaidAction =
   | 'send_fight_request'
   | 'emergency_replacement'
   | 'bulk_actions'
-  | 'contact_users';
+  | 'contact_users'
+  | 'analytics_dashboard';
 
 // Which roles can perform which paid actions
 export const ROLE_ALLOWED_ACTIONS: Record<string, PaidAction[]> = {
-  promoter: ['send_fight_request', 'emergency_replacement', 'bulk_actions', 'contact_users'],
-  manager: ['send_fight_request', 'emergency_replacement', 'bulk_actions', 'contact_users'],
+  promoter: ['send_fight_request', 'emergency_replacement', 'bulk_actions', 'contact_users', 'analytics_dashboard'],
+  manager: ['send_fight_request', 'emergency_replacement', 'bulk_actions', 'contact_users', 'analytics_dashboard'],
   sponsor: ['contact_users'],
 };
 

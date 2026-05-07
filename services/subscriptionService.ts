@@ -155,6 +155,19 @@ export async function canPerformAction(
     // ── Plan-specific logic ──
     const { plan_type } = subscription;
 
+    // ANALYTICS DASHBOARD: Pro tier only
+    if (action === 'analytics_dashboard') {
+      if (plan_type === 'pro') {
+        return { allowed: true, reason: '', requestsUsed: subscription.requests_used, action };
+      }
+      return {
+        allowed: false,
+        reason: 'El panel de analytics está disponible solo para el plan Pro.',
+        requestsUsed: subscription.requests_used,
+        action,
+      };
+    }
+
     // PRO: unlimited
     if (plan_type === 'pro') {
       return { allowed: true, reason: '', requestsUsed: subscription.requests_used, action };
