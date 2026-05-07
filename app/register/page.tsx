@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { authService } from '@/services/authService';
+import { redirectAfterAuth } from '@/services/authRedirect';
 import type { RegisterFormData, UserRole } from '@/types';
 import { VENDOR_ROLES } from '@/types';
 
@@ -97,12 +98,25 @@ export default function RegisterPage() {
     setServerError(null);
     setLoading(true);
     const { error } = await authService.register(formData);
-    setLoading(false);
     if (error) {
+      setLoading(false);
       setServerError(error);
-    } else {
-      setSuccess(true);
+      return;
     }
+
+    // Supabase may auto-create a session on signUp when email confirmation is
+    // disabled. In that case the user is already authenticated, so route them
+    // straight to their role landing page instead of showing a 'Sign in'
+    // success card (which would contradict the navbar showing them as logged in).
+    const { data: sessionData } = await authService.getSession();
+    if (sessionData?.profile) {
+      await redirectAfterAuth(sessionData.profile);
+      return;
+    }
+
+    // No session yet (email confirmation flow): show the check-your-inbox card.
+    setLoading(false);
+    setSuccess(true);
   };
 
   if (success) {

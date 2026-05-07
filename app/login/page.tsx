@@ -1,13 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { authService } from '@/services/authService';
-import { isMinor, hasValidConsent } from '@/services/consentService';
-import { VENDOR_ROLES } from '@/types';
+import { redirectAfterAuth } from '@/services/authRedirect';
 import type { LoginFormData } from '@/types';
 
 export default function LoginPage() {
@@ -18,6 +17,24 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<Partial<LoginFormData>>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  // Guard: if a session already exists (e.g., user just registered or never
+  // logged out), bounce to their role-based landing page instead of showing
+  // a login form they don't need.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await authService.getSession();
+      if (cancelled) return;
+      if (data?.profile) {
+        await redirectAfterAuth(data.profile);
+        return;
+      }
+      setCheckingSession(false);
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const validate = (): boolean => {
     const newErrors: Partial<LoginFormData> = {};
@@ -38,23 +55,17 @@ export default function LoginPage() {
     if (error) {
       setServerError(t('auth.errors.invalidCredentials'));
     } else {
-      const role = data?.profile?.role;
-      if (role === 'admin')                          window.location.href = '/admin';
-      else if (role === 'promoter')                      window.location.href = '/events';
-      else if (role === 'manager')                        window.location.href = '/manager/dashboard';
-      else if (role === 'fighter') {
-        // Minor consent gate
-        if (data?.profile && isMinor(data.profile.date_of_birth)) {
-          const consented = await hasValidConsent(data.profile.id);
-          if (!consented) { window.location.href = '/consent'; return; }
-        }
-        window.location.href = '/fighter/profile';
-      }
-      else if (role === 'sponsor')                        window.location.href = '/sponsor/dashboard';
-      else if (role && VENDOR_ROLES.includes(role))       window.location.href = '/vendor/profile';
-      else                                           window.location.href = '/';
+      await redirectAfterAuth(data?.profile ?? null);
     }
   };
+
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen bg-white font-sans flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-zinc-300 border-t-brand-red rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white font-sans flex flex-col">
