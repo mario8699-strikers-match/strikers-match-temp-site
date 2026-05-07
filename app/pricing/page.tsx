@@ -27,6 +27,7 @@ const PLANS: {
       { label: 'Reemplazo de emergencia', value: false },
       { label: 'Filtros avanzados', value: true },
       { label: 'Visibilidad prioritaria', value: false },
+      { label: 'Panel de estadísticas', value: false },
     ],
     cta: 'Elegir Basic',
   },
@@ -41,6 +42,7 @@ const PLANS: {
       { label: 'Reemplazo de emergencia', value: true },
       { label: 'Filtros avanzados', value: true },
       { label: 'Visibilidad prioritaria', value: true },
+      { label: 'Panel de estadísticas', value: true },
     ],
     cta: 'Elegir Pro',
   },
@@ -55,20 +57,27 @@ const PLANS: {
       { label: 'Reemplazo de emergencia', value: '$99 / uso' },
       { label: 'Filtros avanzados', value: true },
       { label: 'Visibilidad prioritaria', value: false },
+      { label: 'Panel de estadísticas', value: false },
     ],
     cta: 'Empezar',
   },
 ];
 
 const COMPARISON = [
+  // Free platform capabilities (apply to every account)
   { feature: 'Publicar eventos', basic: 'Gratis', pro: 'Gratis', payg: 'Gratis' },
+  { feature: 'Registro de peleadores', basic: 'Gratis', pro: 'Gratis', payg: 'Gratis' },
+  { feature: 'Confirmación de pagos del evento', basic: 'Gratis', pro: 'Gratis', payg: 'Gratis' },
+  { feature: 'Aceptación de peleas (2 lados)', basic: 'Gratis', pro: 'Gratis', payg: 'Gratis' },
+  { feature: 'Confiabilidad de peleadores', basic: 'Visible', pro: 'Visible', payg: 'Visible' },
+  // Paid differentiators
   { feature: 'Solicitudes de pelea', basic: '10 / mes', pro: 'Ilimitadas', payg: '$49 c/u' },
   { feature: 'Reemplazo de emergencia', basic: '—', pro: 'Incluido', payg: '$99 / uso' },
-  { feature: 'Filtros avanzados', basic: 'Si', pro: 'Si', payg: 'Si' },
-  { feature: 'Visibilidad prioritaria', basic: '—', pro: 'Si', payg: '—' },
-  { feature: 'Soporte prioritario', basic: '—', pro: 'Si', payg: '—' },
+  { feature: 'Filtros avanzados', basic: 'Sí', pro: 'Sí', payg: 'Sí' },
+  { feature: 'Visibilidad prioritaria', basic: '—', pro: 'Sí', payg: '—' },
+  { feature: 'Soporte prioritario', basic: '—', pro: 'Sí', payg: '—' },
   { feature: 'Solicitud de prueba gratis', basic: '1 *', pro: '1 *', payg: '—' },
-  { feature: 'Panel de analytics', basic: '—', pro: 'Proximamente', payg: '—' },
+  { feature: 'Panel de estadísticas', basic: '—', pro: 'Sí', payg: '—' },
 ];
 
 export default function PricingPage() {
@@ -232,14 +241,17 @@ export default function PricingPage() {
 
         {/* ── Comparison Table ── */}
         <section className="max-w-4xl mx-auto px-4 pb-20">
-          <h2 className="text-2xl font-black uppercase text-white text-center mb-10" style={{ letterSpacing: '-0.5px' }}>
-            Comparacion de planes
+          <h2 className="text-2xl font-black uppercase text-white text-center mb-2" style={{ letterSpacing: '-0.5px' }}>
+            Comparación de planes
           </h2>
+          <p className="text-center text-xs text-[#5A5A5A] mb-10">
+            Las primeras filas son funciones siempre gratis para cualquier cuenta.
+          </p>
           <div className="border border-[#2A2A2A] overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#2A2A2A]">
-                  <th className="text-left px-6 py-4 text-xs font-bold tracking-widest uppercase text-[#9A9A9A]">Caracteristica</th>
+                  <th className="text-left px-6 py-4 text-xs font-bold tracking-widest uppercase text-[#9A9A9A]">Característica</th>
                   <th className="px-6 py-4 text-xs font-bold tracking-widest uppercase text-[#9A9A9A] text-center">Basic</th>
                   <th className="px-6 py-4 text-xs font-bold tracking-widest uppercase text-center">
                     <span className="text-[#C0001E]">Pro</span>
