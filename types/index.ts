@@ -15,13 +15,16 @@ export type UserRole =
   | 'ring_rental'
   | 'ring_announcer'
   | 'cutman'
-  | 'merchandise_vendor';
+  | 'merchandise_vendor'
+  | 'ringside_doctor'
+  | 'ringside_emt';
 
 // Vendor roles (free users that can create profile + be contacted)
 export const VENDOR_ROLES: UserRole[] = [
   'ring_card_girl', 'photographer', 'videographer', 'broadcast_personality',
   'catering_vendor', 'venue_rental', 'judge', 'ring_rental',
   'ring_announcer', 'cutman', 'merchandise_vendor',
+  'ringside_doctor', 'ringside_emt',
 ];
 
 // Roles subject to monetization checks

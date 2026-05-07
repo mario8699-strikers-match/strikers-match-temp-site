@@ -55,7 +55,9 @@
         "ring_rental": "Ring Rental",
         "ring_announcer": "Ring Announcer",
         "cutman": "Cutman",
-        "merchandise_vendor": "Merchandise Vendor"
+        "merchandise_vendor": "Merchandise Vendor",
+        "ringside_doctor": "Ringside Doctor",
+        "ringside_emt": "Ringside EMT"
       }
     },
     "fighters": {

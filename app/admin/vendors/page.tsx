@@ -18,6 +18,8 @@ const ROLE_LABELS: Record<string, string> = {
   ring_announcer: 'Anunciador',
   cutman: 'Cutman',
   merchandise_vendor: 'Mercancía',
+  ringside_doctor: 'Médico Ringside',
+  ringside_emt: 'Técnico Médico Ringside',
 };
 
 export default function AdminVendorsPage() {
