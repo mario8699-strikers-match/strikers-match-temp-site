@@ -65,7 +65,43 @@ export default function AdminEventsPage() {
           {t('admin.events.noEvents')}
         </div>
       ) : (
-        <div className="bg-white border border-zinc-200 overflow-x-auto">
+        <>
+        {/* Mobile card list */}
+        <div className="sm:hidden space-y-3">
+          {events.map((event) => (
+            <div key={event.id} className="bg-white border border-zinc-200 p-4">
+              <a href={`/events/${event.id}`} className="block font-bold text-zinc-900 hover:underline">
+                {event.event_name}
+              </a>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[event.status]}`}>
+                  {tEvents(`events.status.${event.status}`)}
+                </span>
+                {event.weight_class_needed && (
+                  <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-zinc-100 text-zinc-700">
+                    {tEvents(`events.weightClasses.${event.weight_class_needed}`, { defaultValue: event.weight_class_needed })}
+                  </span>
+                )}
+              </div>
+              <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                <dt className="text-zinc-500">{t('admin.events.date')}:</dt>
+                <dd className="text-zinc-700">
+                  {formatDate(event.event_date)}
+                  {event.event_time ? <span className="text-zinc-400 ml-1">{event.event_time.slice(0, 5)}</span> : ''}
+                </dd>
+                <dt className="text-zinc-500">{t('admin.events.city')}:</dt>
+                <dd className="text-zinc-700">{event.city ?? '—'}</dd>
+                <dt className="text-zinc-500">{t('admin.events.promoter')}:</dt>
+                <dd className="text-zinc-700">{event.profiles?.full_name ?? '—'}</dd>
+                <dt className="text-zinc-500">{t('admin.events.purse')}:</dt>
+                <dd className="text-zinc-700">{formatPurse(event.purse_amount)}</dd>
+              </dl>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden sm:block bg-white border border-zinc-200 overflow-x-auto">
           <table className="min-w-full divide-y divide-zinc-100 text-sm">
             <thead className="bg-zinc-50">
               <tr>
@@ -126,6 +162,7 @@ export default function AdminEventsPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

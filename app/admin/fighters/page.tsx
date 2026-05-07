@@ -121,7 +121,60 @@ export default function AdminFightersPage() {
           {t('admin.fighters.noFighters')}
         </div>
       ) : (
-        <div className="bg-white border border-zinc-200 overflow-x-auto">
+        <>
+        {/* Mobile card list - registered */}
+        <div className="sm:hidden space-y-3">
+          {fighters.map((fighter) => (
+            <div key={fighter.id} className="bg-white border border-zinc-200 p-4">
+              <div className="flex items-start justify-between gap-2">
+                <Link href={`/fighters/${fighter.id}`} className="font-bold text-[#C0001E] hover:underline truncate">
+                  {fighter.profiles.full_name}
+                </Link>
+                <div className="flex flex-wrap gap-1 flex-shrink-0">
+                  {fighter.verified && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-emerald-50 text-emerald-700">✓</span>
+                  )}
+                  {fighter.is_hidden && (
+                    <span className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium bg-red-50 text-red-700">Oculto</span>
+                  )}
+                </div>
+              </div>
+              <p className="mt-1 text-xs text-zinc-500 truncate">{fighter.profiles.email}</p>
+              <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                <dt className="text-zinc-500">Teléfono:</dt>
+                <dd className="text-zinc-700">{fighter.profiles.phone ?? '—'}</dd>
+                <dt className="text-zinc-500">Ciudad:</dt>
+                <dd className="text-zinc-700">{fighter.profiles.city ?? '—'}</dd>
+                <dt className="text-zinc-500">{t('admin.fighters.weightClass')}:</dt>
+                <dd className="text-zinc-700">{fighter.weight_class ?? '—'}</dd>
+                <dt className="text-zinc-500">{t('admin.fighters.record')}:</dt>
+                <dd className="text-zinc-700">{fighter.record_wins}W / {fighter.record_losses}L / {fighter.record_draws}D</dd>
+                <dt className="text-zinc-500">{t('admin.fighters.available')}:</dt>
+                <dd className="text-zinc-700">{fighter.is_available ? t('admin.fighters.yes') : t('admin.fighters.no')}</dd>
+              </dl>
+              <div className="mt-3 flex flex-wrap gap-1">
+                {fighter.has_manager && <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-50 text-blue-700">Manager</span>}
+                {fighter.has_promoter && <span className="text-xs font-bold px-1.5 py-0.5 bg-purple-50 text-purple-700">Promotor</span>}
+                {fighter.has_sponsor && <span className="text-xs font-bold px-1.5 py-0.5 bg-amber-50 text-amber-700">Sponsor</span>}
+              </div>
+              <div className="mt-3 pt-3 border-t border-zinc-100 flex flex-wrap gap-4">
+                {fighter.verified ? (
+                  <button onClick={() => setConfirm({ fighterId: fighter.id, action: 'unverify' })} className="text-xs font-medium text-zinc-500 hover:underline">{t('admin.fighters.unverify')}</button>
+                ) : (
+                  <button onClick={() => setConfirm({ fighterId: fighter.id, action: 'verify' })} className="text-xs font-medium text-emerald-700 hover:underline">{t('admin.fighters.verify')}</button>
+                )}
+                {fighter.is_hidden ? (
+                  <button onClick={() => setConfirm({ fighterId: fighter.id, action: 'unhide' })} className="text-xs font-medium text-blue-600 hover:underline">Mostrar</button>
+                ) : (
+                  <button onClick={() => setConfirm({ fighterId: fighter.id, action: 'hide' })} className="text-xs font-medium text-red-500 hover:underline">Ocultar</button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop table - registered */}
+        <div className="hidden sm:block bg-white border border-zinc-200 overflow-x-auto">
           <table className="min-w-full divide-y divide-zinc-100 text-sm">
             <thead className="bg-zinc-50">
               <tr>
@@ -283,6 +336,7 @@ export default function AdminFightersPage() {
             </tbody>
           </table>
         </div>
+        </>
       )
       ) : (
         manualFighters.length === 0 ? (
@@ -290,7 +344,44 @@ export default function AdminFightersPage() {
             No hay peleadores agregados manualmente por managers o promotores.
           </div>
         ) : (
-          <div className="bg-white border border-zinc-200 overflow-x-auto">
+          <>
+          {/* Mobile card list - manual */}
+          <div className="sm:hidden space-y-3">
+            {manualFighters.map((mf) => (
+              <div key={mf.id} className="bg-white border border-zinc-200 p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <Link href={`/fighters/manual/${mf.id}`} className="font-bold text-[#C0001E] hover:underline truncate">
+                    {mf.full_name}
+                  </Link>
+                  {mf.profiles?.role === 'manager' && (
+                    <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-50 text-blue-700 flex-shrink-0">Manager</span>
+                  )}
+                  {mf.profiles?.role === 'promoter' && (
+                    <span className="text-xs font-bold px-1.5 py-0.5 bg-purple-50 text-purple-700 flex-shrink-0">Promotor</span>
+                  )}
+                </div>
+                {mf.nickname && <p className="mt-1 text-xs text-zinc-400">“{mf.nickname}”</p>}
+                <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                  <dt className="text-zinc-500">Agregado por:</dt>
+                  <dd className="text-zinc-700">{mf.profiles?.full_name ?? '—'}</dd>
+                  <dt className="text-zinc-500">Peso:</dt>
+                  <dd className="text-zinc-700">{mf.weight_class ?? '—'}</dd>
+                  <dt className="text-zinc-500">Record:</dt>
+                  <dd className="text-zinc-700">{mf.record_wins}W / {mf.record_losses}L / {mf.record_draws}D</dd>
+                  <dt className="text-zinc-500">Ciudad:</dt>
+                  <dd className="text-zinc-700">{mf.city ?? '—'}</dd>
+                </dl>
+                <div className="mt-3 pt-3 border-t border-zinc-100">
+                  <Link href={`/fighters/manual/${mf.id}`} className="text-xs font-medium text-zinc-700 hover:text-[#C0001E] hover:underline">
+                    Ver perfil →
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table - manual */}
+          <div className="hidden sm:block bg-white border border-zinc-200 overflow-x-auto">
             <table className="min-w-full divide-y divide-zinc-100 text-sm">
               <thead className="bg-zinc-50">
                 <tr>
@@ -359,6 +450,7 @@ export default function AdminFightersPage() {
               </tbody>
             </table>
           </div>
+          </>
         )
       )}
 

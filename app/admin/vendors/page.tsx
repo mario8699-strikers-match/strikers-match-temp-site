@@ -108,7 +108,49 @@ export default function AdminVendorsPage() {
           No hay vendors registrados{filterRole !== 'all' ? ` con el rol ${ROLE_LABELS[filterRole] ?? filterRole}` : ''}.
         </div>
       ) : (
-        <div className="bg-white border border-zinc-200 overflow-x-auto">
+        <>
+        {/* Mobile card list */}
+        <div className="sm:hidden space-y-3">
+          {filtered.map((p) => (
+            <div key={p.id} className="bg-white border border-zinc-200 p-4">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-bold text-[#C0001E] truncate">{p.full_name}</p>
+                  <p className="text-xs text-zinc-500 truncate">{p.email}</p>
+                </div>
+                <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium flex-shrink-0 ${
+                  p.is_banned ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'
+                }`}>
+                  {p.is_banned ? 'Baneado' : 'Activo'}
+                </span>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-1">
+                <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-zinc-100 text-zinc-700">
+                  {ROLE_LABELS[p.role] ?? p.role}
+                </span>
+                {(p.additional_roles ?? [])
+                  .filter((r) => r !== p.role)
+                  .map((r) => (
+                    <span
+                      key={r}
+                      className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-white border border-zinc-200 text-zinc-600"
+                    >
+                      + {ROLE_LABELS[r] ?? r}
+                    </span>
+                  ))}
+              </div>
+              <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                <dt className="text-zinc-500">Ciudad:</dt>
+                <dd className="text-zinc-700">{p.city ?? '—'}</dd>
+                <dt className="text-zinc-500">Teléfono:</dt>
+                <dd className="text-zinc-700">{p.phone ?? '—'}</dd>
+              </dl>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden sm:block bg-white border border-zinc-200 overflow-x-auto">
           <table className="min-w-full divide-y divide-zinc-100 text-sm">
             <thead className="bg-zinc-50">
               <tr>
@@ -157,6 +199,7 @@ export default function AdminVendorsPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );
