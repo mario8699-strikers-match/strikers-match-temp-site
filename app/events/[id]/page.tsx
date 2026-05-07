@@ -1234,18 +1234,18 @@ export default function EventDetailPage() {
                                   rec.fighter.profiles?.reliability_score,
                                   rec.fighter.profiles?.total_matches
                                 );
-                                if (tier.label === 'Unknown') return null;
+                                if (tier.key === 'unknown') return null;
                                 const tone = tier.tone === 'emerald' ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                   : tier.tone === 'amber' ? 'bg-amber-50 text-amber-700 border-amber-200'
                                   : tier.tone === 'zinc' ? 'bg-zinc-50 text-zinc-600 border-zinc-200'
                                   : 'bg-red-50 text-red-700 border-red-200';
-                                const isNew = tier.label === 'New';
+                                const isNew = tier.key === 'new';
                                 return (
                                   <div className="mt-1">
                                     <span className={`inline-block text-[10px] font-bold px-2 py-0.5 border ${tone}`}>
                                       {isNew
                                         ? 'Atleta Nuevo'
-                                        : `Reliability ${rec.fighter.profiles?.reliability_score} · ${tier.label}`}
+                                        : `Confiabilidad ${rec.fighter.profiles?.reliability_score} · ${tier.label}`}
                                     </span>
                                   </div>
                                 );

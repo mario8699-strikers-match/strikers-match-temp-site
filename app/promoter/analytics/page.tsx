@@ -59,9 +59,9 @@ export default function AnalyticsPage() {
   if (!profile) {
     return (
       <Shell>
-        <h1 className="text-2xl font-bold text-zinc-900 mb-2">Analytics</h1>
+        <h1 className="text-2xl font-bold text-zinc-900 mb-2">Estadísticas</h1>
         <p className="text-sm text-zinc-500">
-          <a href="/login" className="underline">Inicia sesión</a> para ver el panel de analytics.
+          <a href="/login" className="underline">Inicia sesión</a> para ver el panel de estadísticas.
         </p>
       </Shell>
     );
@@ -70,7 +70,7 @@ export default function AnalyticsPage() {
   if (allowed === false) {
     return (
       <Shell>
-        <h1 className="text-2xl font-bold text-zinc-900 mb-2">Analytics</h1>
+        <h1 className="text-2xl font-bold text-zinc-900 mb-2">Estadísticas</h1>
         <div className="border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           {paywallReason || 'Esta función requiere el plan Pro.'}
         </div>
@@ -95,7 +95,7 @@ export default function AnalyticsPage() {
   if (events.length === 0) {
     return (
       <Shell>
-        <h1 className="text-2xl font-bold text-zinc-900 mb-2">Analytics</h1>
+        <h1 className="text-2xl font-bold text-zinc-900 mb-2">Estadísticas</h1>
         <p className="text-sm text-zinc-500">Aún no tienes eventos para analizar.</p>
       </Shell>
     );
@@ -104,7 +104,7 @@ export default function AnalyticsPage() {
   return (
     <Shell>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-zinc-900">Analytics — Salud del Evento</h1>
+        <h1 className="text-2xl font-bold text-zinc-900">Estadísticas — Salud del Evento</h1>
         <p className="text-sm text-zinc-500 mt-1">
           Métricas operativas: pagos confirmados, peleas armadas, clases de peso faltantes y riesgo de no-show.
         </p>

@@ -145,18 +145,18 @@ export default function FighterMatchesPage() {
           </p>
           {(() => {
             const tier = reliabilityTier(profile.reliability_score, profile.total_matches);
-            if (tier.label === 'Unknown') return null;
+            if (tier.key === 'unknown') return null;
             const tone = tier.tone === 'emerald' ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
               : tier.tone === 'amber' ? 'bg-amber-50 text-amber-700 border-amber-200'
               : tier.tone === 'zinc' ? 'bg-zinc-50 text-zinc-600 border-zinc-200'
               : 'bg-red-50 text-red-700 border-red-200';
-            const isNew = tier.label === 'New';
+            const isNew = tier.key === 'new';
             return (
               <div className="mt-3 flex items-center gap-2">
                 <span className={`inline-block text-xs font-bold px-2 py-1 border ${tone}`}>
                   {isNew
                     ? 'Atleta Nuevo · sin historial'
-                    : `Reliability ${profile.reliability_score} · ${tier.label}`}
+                    : `Confiabilidad ${profile.reliability_score} · ${tier.label}`}
                 </span>
                 <span className="text-xs text-zinc-400">
                   {profile.total_matches ?? 0} peleas · {profile.cancellations ?? 0} cancelaciones · {profile.no_shows ?? 0} no-show

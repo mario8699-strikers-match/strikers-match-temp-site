@@ -162,7 +162,7 @@ export async function canPerformAction(
       }
       return {
         allowed: false,
-        reason: 'El panel de analytics está disponible solo para el plan Pro.',
+        reason: 'El panel de estadísticas está disponible solo para el plan Pro.',
         requestsUsed: subscription.requests_used,
         action,
       };

@@ -70,17 +70,18 @@ export async function applyDeltaToFighters(
  */
 export const MIN_MATCHES_FOR_SCORE = 3;
 
-/** Tier label for UI badges. */
+/** Tier label for UI badges. Spanish-facing strings (see also tier.key for stable identifiers). */
 export function reliabilityTier(
   score: number | null | undefined,
   totalMatches: number | null | undefined = null
 ): {
-  label: 'High' | 'Solid' | 'Low' | 'New' | 'Unknown';
+  key: 'high' | 'solid' | 'low' | 'new' | 'unknown';
+  label: 'Alta' | 'Sólida' | 'Baja' | 'Nuevo' | 'Desconocido';
   tone: 'emerald' | 'amber' | 'red' | 'zinc';
 } {
-  if (score == null) return { label: 'Unknown', tone: 'zinc' };
-  if ((totalMatches ?? 0) < MIN_MATCHES_FOR_SCORE) return { label: 'New', tone: 'zinc' };
-  if (score >= 85) return { label: 'High', tone: 'emerald' };
-  if (score >= 60) return { label: 'Solid', tone: 'amber' };
-  return { label: 'Low', tone: 'red' };
+  if (score == null) return { key: 'unknown', label: 'Desconocido', tone: 'zinc' };
+  if ((totalMatches ?? 0) < MIN_MATCHES_FOR_SCORE) return { key: 'new', label: 'Nuevo', tone: 'zinc' };
+  if (score >= 85) return { key: 'high', label: 'Alta', tone: 'emerald' };
+  if (score >= 60) return { key: 'solid', label: 'Sólida', tone: 'amber' };
+  return { key: 'low', label: 'Baja', tone: 'red' };
 }

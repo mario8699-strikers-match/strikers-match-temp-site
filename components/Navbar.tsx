@@ -28,8 +28,8 @@ const NAV_LINKS: { href: string; key: ActivePage; label?: string }[] = [
 function profileLink(role: string): { label: string; href: string }[] {
   switch (role) {
     case 'fighter':  return [{ label: 'Mi Perfil', href: '/fighter/profile' }, { label: 'Mis Peleas', href: '/fighter/matches' }];
-    case 'promoter': return [{ label: 'Mi Panel', href: '/promoter/dashboard' }, { label: 'Analytics', href: '/promoter/analytics' }, { label: 'Mi Perfil', href: '/profile' }];
-    case 'manager':  return [{ label: 'Mi Panel', href: '/manager/dashboard' }, { label: 'Analytics', href: '/promoter/analytics' }, { label: 'Mi Perfil', href: '/manager/profile' }];
+    case 'promoter': return [{ label: 'Mi Panel', href: '/promoter/dashboard' }, { label: 'Estadísticas', href: '/promoter/analytics' }, { label: 'Mi Perfil', href: '/profile' }];
+    case 'manager':  return [{ label: 'Mi Panel', href: '/manager/dashboard' }, { label: 'Estadísticas', href: '/promoter/analytics' }, { label: 'Mi Perfil', href: '/manager/profile' }];
     case 'sponsor':  return [{ label: 'Mi Panel', href: '/sponsor/dashboard' }, { label: 'Mi Perfil', href: '/profile' }];
     case 'admin':    return [{ label: 'Admin', href: '/admin' }];
     default:
