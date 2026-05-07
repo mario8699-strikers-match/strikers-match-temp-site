@@ -4,6 +4,7 @@ import "./globals.css";
 import { I18nProvider } from "@/components/I18nProvider";
 import { QueryProvider } from "@/components/QueryProvider";
 import { CookieBanner } from "@/components/CookieBanner";
+import { WhatsNewModal } from "@/components/WhatsNewModal";
 import { JsonLd } from "@/components/JsonLd";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -128,6 +129,7 @@ export default function RootLayout({
           <QueryProvider>
             {children}
             <CookieBanner />
+            <WhatsNewModal />
             <Analytics />
             <SpeedInsights />
           </QueryProvider>
