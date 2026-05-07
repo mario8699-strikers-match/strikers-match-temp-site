@@ -102,9 +102,12 @@ export const authService = {
     }
   },
 
-  async uploadProfilePhoto(file: File): Promise<ServiceResponse<string>> {
+  async uploadProfilePhoto(
+    file: File,
+    folder: string = 'vendor-photos'
+  ): Promise<ServiceResponse<string>> {
     try {
-      const { data, error } = await uploadFile(file, 'vendor-photos');
+      const { data, error } = await uploadFile(file, folder);
       if (error || !data) return { data: null, error: error ?? 'An unexpected error occurred.' };
       return { data: data.url, error: null };
     } catch {

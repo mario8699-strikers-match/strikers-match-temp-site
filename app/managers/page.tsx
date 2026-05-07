@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Pagination } from '@/components/Pagination';
@@ -92,8 +93,16 @@ export default function ManagersPage() {
 
                 {/* Avatar + name */}
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-zinc-200 flex items-center justify-center flex-shrink-0">
-                    {manager.full_name ? (
+                  <div className="w-12 h-12 bg-zinc-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {manager.photo_url ? (
+                      <Image
+                        src={manager.photo_url}
+                        alt={manager.full_name ?? 'Manager'}
+                        width={48}
+                        height={48}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : manager.full_name ? (
                       <span className="text-zinc-700 font-bold text-lg">{manager.full_name.charAt(0).toUpperCase()}</span>
                     ) : (
                       <svg className="w-6 h-6 text-zinc-400" fill="currentColor" viewBox="0 0 24 24">

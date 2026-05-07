@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { userService } from '@/services/userService';
 import { authService } from '@/services/authService';
@@ -118,8 +119,16 @@ export default function PromotersPage() {
                 <div className="p-5">
                   {/* Avatar + name */}
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-zinc-200 flex items-center justify-center flex-shrink-0">
-                      {promoter.full_name ? (
+                    <div className="w-10 h-10 bg-zinc-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {promoter.photo_url ? (
+                        <Image
+                          src={promoter.photo_url}
+                          alt={promoter.full_name ?? 'Promotor'}
+                          width={40}
+                          height={40}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : promoter.full_name ? (
                         <span className="text-zinc-700 font-bold text-sm">{promoter.full_name.charAt(0).toUpperCase()}</span>
                       ) : (
                         <svg className="w-5 h-5 text-zinc-400" fill="currentColor" viewBox="0 0 24 24">
