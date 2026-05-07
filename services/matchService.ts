@@ -14,6 +14,7 @@
 
 import { supabase } from '@/lib/supabaseClient';
 import type { ServiceResponse } from '@/types';
+import { applyDeltaToFighters } from '@/services/reliabilityService';
 
 export type MatchSide = 'a' | 'b';
 
@@ -139,7 +140,7 @@ async function updateFighterStatus(
 ): Promise<ServiceResponse<Match>> {
   const { data: match, error: fetchErr } = await supabase
     .from('matches')
-    .select('id, fighter_a_id, fighter_b_id, match_status')
+    .select('id, fighter_a_id, fighter_b_id, fighter_a_status, fighter_b_status, match_status')
     .eq('id', matchId)
     .single();
 
@@ -162,6 +163,7 @@ async function updateFighterStatus(
     return { data: null, error: 'No formas parte de esta propuesta.' };
   }
 
+  const wasConfirmed = match.match_status === 'confirmed';
   const patch =
     side === 'a' ? { fighter_a_status: status } : { fighter_b_status: status };
 
@@ -173,11 +175,32 @@ async function updateFighterStatus(
     .single();
 
   if (error) return { data: null, error: error.message };
+
+  // ─ Reliability side-effects ─
+  // accept/decline: apply to acting fighter only
+  if (status === 'accepted') {
+    await applyDeltaToFighters([fighterId], 'match_accepted', matchId);
+  } else if (status === 'declined') {
+    if (wasConfirmed) {
+      // Decline after confirmation = cancel-after-accept
+      await applyDeltaToFighters([fighterId], 'cancel_after_accept', matchId);
+    } else {
+      await applyDeltaToFighters([fighterId], 'match_declined', matchId);
+    }
+  }
+
   return { data: data as Match, error: null };
 }
 
 // ── Promoter: cancel a confirmed/pending match ──
 export async function cancelMatch(matchId: string): Promise<ServiceResponse<Match>> {
+  // Snapshot pre-cancel state for reliability scoring
+  const { data: pre } = await supabase
+    .from('matches')
+    .select('fighter_a_id, fighter_b_id, match_status')
+    .eq('id', matchId)
+    .single();
+
   const { data, error } = await supabase
     .from('matches')
     .update({ match_status: 'cancelled' })
@@ -186,6 +209,16 @@ export async function cancelMatch(matchId: string): Promise<ServiceResponse<Matc
     .single();
 
   if (error) return { data: null, error: error.message };
+
+  // If the match had been confirmed, both fighters get the cancel-after-accept hit
+  if (pre && pre.match_status === 'confirmed') {
+    await applyDeltaToFighters(
+      [pre.fighter_a_id, pre.fighter_b_id],
+      'cancel_after_accept',
+      matchId
+    );
+  }
+
   return { data: data as Match, error: null };
 }
 

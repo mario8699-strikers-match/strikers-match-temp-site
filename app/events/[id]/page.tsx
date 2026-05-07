@@ -20,6 +20,7 @@ import {
   getMatchesForEvent,
   type MatchWithContext,
 } from '@/services/matchService';
+import { reliabilityTier } from '@/services/reliabilityService';
 import type { Event, EventFormData, EventApplication, Profile, Fighter, MatchResult, EmergencyMatchResult, MatchRequest, EventRegistration } from '@/types';
 
 const WEIGHT_CLASSES = [
@@ -1228,6 +1229,20 @@ export default function EventDetailPage() {
                               <p className="text-xs text-zinc-500">
                                 {rec.fighter.weight_class ?? '—'} · {rec.fighter.profiles?.city ?? '—'} · {rec.fighter.record_wins}W-{rec.fighter.record_losses}L-{rec.fighter.record_draws}D
                               </p>
+                              {(() => {
+                                const tier = reliabilityTier(rec.fighter.profiles?.reliability_score);
+                                if (tier.label === 'Unknown') return null;
+                                const tone = tier.tone === 'emerald' ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                  : tier.tone === 'amber' ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                  : 'bg-red-50 text-red-700 border-red-200';
+                                return (
+                                  <div className="mt-1">
+                                    <span className={`inline-block text-[10px] font-bold px-2 py-0.5 border ${tone}`}>
+                                      Reliability {rec.fighter.profiles?.reliability_score} · {tier.label}
+                                    </span>
+                                  </div>
+                                );
+                              })()}
                               {rec.match_reasons.length > 0 && (
                                 <div className="flex flex-wrap gap-1 mt-2">
                                   {rec.match_reasons.map((reason, i) => (

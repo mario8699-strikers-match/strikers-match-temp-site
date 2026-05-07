@@ -120,6 +120,10 @@ export interface FighterWithProfile extends Fighter {
     city: string | null;
     phone: string | null;
     is_banned?: boolean;
+    reliability_score?: number;
+    total_matches?: number;
+    cancellations?: number;
+    no_shows?: number;
   };
 }
 

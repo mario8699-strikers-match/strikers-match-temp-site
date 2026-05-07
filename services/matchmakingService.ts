@@ -155,7 +155,7 @@ export async function getRecommendedFighters(
     // Pre-filter query: only available, non-hidden fighters
     let query = supabase
       .from('fighters')
-      .select('*, profiles(full_name, email, city, is_banned)')
+      .select('*, profiles(full_name, email, city, is_banned, reliability_score, total_matches, cancellations, no_shows)')
       .eq('is_available', true)
       .neq('is_hidden', true)
       .limit(100);
