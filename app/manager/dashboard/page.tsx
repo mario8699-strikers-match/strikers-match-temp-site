@@ -92,10 +92,28 @@ export default function ManagerDashboardPage() {
       <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-10 w-full">
 
         {/* Header */}
-        <div className="mb-8">
-          <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#C0001E' }}>Panel del Manager</p>
-          <h1 className="text-3xl font-black uppercase" style={{ letterSpacing:'-1px' }}>{profile!.full_name}</h1>
-          <p className="text-sm mt-1" style={{ color:'#5A5A5A' }}>{profile!.city ?? ''}</p>
+        <div className="mb-8 flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#C0001E' }}>Panel del Manager</p>
+            <h1 className="text-3xl font-black uppercase" style={{ letterSpacing:'-1px' }}>{profile!.full_name}</h1>
+            <p className="text-sm mt-1" style={{ color:'#5A5A5A' }}>{profile!.city ?? ''}</p>
+          </div>
+          <a href="/events/create"
+            className="px-5 py-2.5 text-xs font-bold tracking-widest uppercase text-white transition-colors flex-shrink-0"
+            style={{ background:'#C0001E' }}
+            onMouseOver={(e) => (e.currentTarget.style.background = '#9A0018')}
+            onMouseOut={(e) => (e.currentTarget.style.background = '#C0001E')}>
+            + Nuevo evento
+          </a>
+        </div>
+
+        {/* Always-free posting note */}
+        <div className="mb-8 -mt-4 flex items-center gap-2 text-xs text-emerald-700">
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+          </svg>
+          <span className="font-semibold">Publicar eventos siempre es gratis.</span>
+          <span className="text-emerald-600">Sin tarjeta, sin límite.</span>
         </div>
 
         {/* Search + Add fighters */}

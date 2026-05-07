@@ -192,6 +192,17 @@ export default function CreateEventPage() {
           <h1 className="text-2xl font-bold text-zinc-900">{t('events.createEvent')}</h1>
         </div>
 
+        {/* Free posting reassurance banner */}
+        <div className="mb-6 border border-emerald-200 bg-emerald-50 p-4 flex items-start gap-3">
+          <svg className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+          </svg>
+          <div>
+            <p className="text-sm font-bold text-emerald-900">{t('events.freeBanner.title')}</p>
+            <p className="text-xs text-emerald-800 mt-0.5">{t('events.freeBanner.body')}</p>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} noValidate className="space-y-6">
           {serverError && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">

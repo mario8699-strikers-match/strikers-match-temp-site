@@ -12,6 +12,11 @@
     "confirmDelete": "¿Estás seguro de que deseas eliminar este evento? Esta acción no se puede deshacer.",
     "noEvents": "No hay eventos registrados",
     "noEventsSubtitle": "Crea tu primer evento para empezar a conectar con atletas.",
+    "freeBanner": {
+      "title": "Publicar eventos siempre es gratis",
+      "body": "Promotores y managers pueden publicar eventos ilimitados sin tarjeta, sin cuotas y sin suscripción."
+    },
+    "freeBadge": "Siempre gratis",
     "loginToCreate": "Inicia sesión para crear un evento",
     "backToEvents": "Volver a Eventos",
     "fields": {

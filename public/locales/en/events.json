@@ -14,6 +14,11 @@
     "noEventsSubtitle": "Create your first event to start connecting with fighters.",
     "loginToCreate": "Sign in to create an event",
     "backToEvents": "Back to Events",
+    "freeBanner": {
+      "title": "Posting events is always free",
+      "body": "Promoters and managers can publish unlimited events with no card required, no fees, and no subscription."
+    },
+    "freeBadge": "Always free",
     "fields": {
       "event_name": "Event Name",
       "event_namePlaceholder": "e.g. Grand Boxing Prix Mexico City",

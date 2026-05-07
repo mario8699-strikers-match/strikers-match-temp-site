@@ -61,6 +61,7 @@ const PLANS: {
 ];
 
 const COMPARISON = [
+  { feature: 'Publicar eventos', basic: 'Gratis', pro: 'Gratis', payg: 'Gratis' },
   { feature: 'Solicitudes de pelea', basic: '10 / mes', pro: 'Ilimitadas', payg: '$49 c/u' },
   { feature: 'Reemplazo de emergencia', basic: '—', pro: 'Incluido', payg: '$99 / uso' },
   { feature: 'Filtros avanzados', basic: 'Si', pro: 'Si', payg: 'Si' },
@@ -111,7 +112,7 @@ export default function PricingPage() {
 
       <main className="flex-1">
         {/* ── Hero ── */}
-        <section className="pt-20 pb-16 px-4 text-center">
+        <section className="pt-20 pb-10 px-4 text-center">
           <p className="text-xs font-bold tracking-[0.3em] uppercase text-[#C0001E] mb-4">
             Precios
           </p>
@@ -120,6 +121,37 @@ export default function PricingPage() {
           </h1>
           <p className="mt-4 text-base text-[#9A9A9A] max-w-lg mx-auto">
             Encuentra peleadores, llena tu cartelera, y haz crecer tu negocio. Promotores y managers reciben 1 solicitud de prueba gratis.
+          </p>
+        </section>
+
+        {/* ── Always Free banner ── */}
+        <section className="max-w-5xl mx-auto px-4 pb-12">
+          <div className="border border-emerald-700/40 bg-emerald-900/10 p-6 sm:p-8">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-500/15 flex items-center justify-center">
+                <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-bold tracking-[0.3em] uppercase text-emerald-400 mb-1">Siempre gratis</p>
+                <h2 className="text-xl sm:text-2xl font-black text-white mb-2">Publicar eventos no cuesta nada</h2>
+                <p className="text-sm text-[#B5B5B5] mb-4">
+                  Promotores y managers pueden crear y publicar eventos ilimitados. Sin tarjeta, sin cuotas, sin límite.
+                </p>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm text-[#D5D5D5]">
+                  <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span>Publicar eventos</li>
+                  <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span>Registro de peleadores</li>
+                  <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span>Explorar la plataforma</li>
+                  <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span>Perfiles de peleadores</li>
+                  <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span>Descubrir eventos</li>
+                  <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span>Galería pública</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <p className="text-center text-xs text-[#5A5A5A] mt-4">
+            Los planes de abajo son solo para funciones premium: solicitudes a peleadores, reemplazo de emergencia, filtros avanzados y analíticas.
           </p>
         </section>
 

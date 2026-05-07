@@ -142,6 +142,15 @@ export default function PromoterDashboardPage() {
           </a>
         </div>
 
+        {/* Always-free posting note */}
+        <div className="mb-8 -mt-4 flex items-center gap-2 text-xs text-emerald-700">
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+          </svg>
+          <span className="font-semibold">Publicar eventos siempre es gratis.</span>
+          <span className="text-emerald-600">Sin tarjeta, sin límite.</span>
+        </div>
+
         {/* Stats row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
           {[
@@ -167,7 +176,8 @@ export default function PromoterDashboardPage() {
           <p className="text-sm text-zinc-400 py-8">Cargando...</p>
         ) : events.length === 0 ? (
           <div className="border border-dashed border-zinc-200 py-16 text-center">
-            <p className="text-sm text-zinc-400 mb-4">No has creado ningún evento todavía.</p>
+            <p className="text-sm text-zinc-400 mb-2">No has creado ningún evento todavía.</p>
+            <p className="text-xs text-emerald-700 font-semibold mb-4">Publicar eventos es gratis. Sin tarjeta, sin cuotas.</p>
             <a href="/events/create" className="text-xs font-bold tracking-widest uppercase text-white px-5 py-2.5 transition-colors"
               style={{ background: '#C0001E' }}>
               Crear primer evento
