@@ -50,7 +50,7 @@ export default function Home() {
         playsInline
         className="absolute inset-0 w-full h-full object-cover z-0"
       >
-        <source src="https://strikers-match.sfo3.digitaloceanspaces.com/videos/STRIKERS-new.mp4" type="video/mp4" />
+        <source src="https://strikers-match.sfo3.digitaloceanspaces.com/videos/STRIKERS-new.mp4?v=2" type="video/mp4" />
       </video>
 
       {/* Dark overlay — fades with hero */}
