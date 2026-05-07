@@ -2,30 +2,41 @@
 
 import { useEffect, useState } from 'react';
 import { authService } from '@/services/authService';
-import { VENDOR_ROLES } from '@/types';
 
 /**
  * Bump the version suffix every time you change HIGHLIGHTS so previously
  * dismissed users see the new announcement once.
  */
-const WHATS_NEW_KEY = 'sm_vendor_whats_new_v1';
+const WHATS_NEW_KEY = 'sm_whats_new_v2';
 
 const HIGHLIGHTS: { title: string; body: string }[] = [
   {
-    title: 'Foto de perfil',
-    body: 'Sube una foto y aparece en tu tarjeta del directorio público de Servicios.',
+    title: 'Publicar eventos gratis',
+    body: 'Promotores y managers pueden crear y publicar carteleras ilimitadas. Sin tarjeta, sin cuotas.',
   },
   {
-    title: 'Múltiples especialidades',
-    body: 'Si ofreces más de un servicio (cutman + EMT, fotógrafo + videógrafo, etc.), añádelos en tu perfil.',
+    title: 'Aceptación de peleas en 2 lados',
+    body: 'Los peleadores ahora aceptan o rechazan cada propuesta antes de quedar agendados. Menos no-shows, más certeza.',
   },
   {
-    title: 'Nuevos roles médicos',
-    body: 'Médico de Ringside y Técnico Médico de Ringside ya están disponibles.',
+    title: 'Confiabilidad de peleadores',
+    body: 'Cada perfil muestra su nivel de confiabilidad. Los nuevos aparecen como “Atleta Nuevo” hasta acumular historial real (3+ peleas).',
   },
   {
-    title: 'Directorio público',
-    body: 'Tu perfil aparece en /professionals para que promotores te encuentren.',
+    title: 'Panel de estadísticas (Pro)',
+    body: 'Mide tasa de aceptación, riesgos de no-show y peleadores confiables desde tu cuenta promoter o manager con plan Pro.',
+  },
+  {
+    title: 'Confirmación de pagos del evento',
+    body: 'Flujo claro para que peleadores confirmen su pago externo (transferencia, efectivo) y queden agendados.',
+  },
+  {
+    title: 'Directorio de profesionales protegido',
+    body: 'Los datos de contacto de cutmen, fotógrafos y médicos solo se muestran a usuarios con sesión iniciada.',
+  },
+  {
+    title: 'Interfaz 100% en español',
+    body: 'Toda la plataforma está localizada para audiencia mexicana, incluyendo etiquetas de confiabilidad y estadísticas.',
   },
 ];
 
@@ -40,8 +51,9 @@ export function WhatsNewModal() {
     authService.getSession().then(({ data }) => {
       if (cancelled) return;
       const role = data?.profile?.role;
+      // Show to any signed-in user; the highlights cover platform-wide updates
+      // that affect promoters, managers, fighters, sponsors, and vendors.
       if (!role) return;
-      if (!VENDOR_ROLES.includes(role as typeof VENDOR_ROLES[number])) return;
       setOpen(true);
     });
 
@@ -94,7 +106,7 @@ export function WhatsNewModal() {
             ¿Qué hay de nuevo?
           </h2>
           <p className="mt-2 text-xs sm:text-sm text-[#9A9A9A]">
-            Mejoras recientes para profesionales y servicios.
+            Mejoras recientes en toda la plataforma: peleas, pagos, confiabilidad y estadísticas.
           </p>
         </div>
 
@@ -119,11 +131,11 @@ export function WhatsNewModal() {
         {/* Footer actions */}
         <div className="border-t border-zinc-100 p-4 sm:p-5 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 sm:justify-between sm:items-center">
           <a
-            href="/vendor/profile"
+            href="/pricing"
             onClick={dismiss}
             className="text-xs sm:text-sm text-center text-zinc-600 hover:text-zinc-900 underline px-2 py-2"
           >
-            Editar mi perfil
+            Ver planes y precios
           </a>
           <button
             type="button"
