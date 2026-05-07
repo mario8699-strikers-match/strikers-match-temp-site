@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { Pagination } from '@/components/Pagination';
 import { fighterService } from '@/services/fighterService';
 import { manualFighterService } from '@/services/manualFighterService';
 import { supabase } from '@/lib/supabaseClient';
@@ -26,6 +27,7 @@ const WEIGHT_LABELS: Record<string, string> = {
 };
 
 const PAGE_SIZE = 12;
+const ROSTER_PAGE_SIZE = 12;
 
 export default function SearchPage() {
   const router = useRouter();
@@ -38,6 +40,7 @@ export default function SearchPage() {
   const [shortNotice, setShortNotice] = useState(false);
   const [available, setAvailable] = useState(false);
   const [page, setPage] = useState(1);
+  const [rosterPage, setRosterPage] = useState(1);
 
   // ── Debounce city input (400ms) ───────────
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -87,14 +90,29 @@ export default function SearchPage() {
     },
   });
 
-  const manualFighters = (manualAll ?? []).filter((m) => {
-    if (weightClass && m.weight_class !== weightClass) return false;
-    if (debouncedCity && !(m.city ?? '').toLowerCase().includes(debouncedCity.toLowerCase())) return false;
-    if (available && !m.is_available) return false;
-    // short_notice_ready not tracked on manual fighters — exclude when set
-    if (shortNotice) return false;
-    return true;
-  });
+  const manualFighters = useMemo(
+    () =>
+      (manualAll ?? []).filter((m) => {
+        if (weightClass && m.weight_class !== weightClass) return false;
+        if (debouncedCity && !(m.city ?? '').toLowerCase().includes(debouncedCity.toLowerCase())) return false;
+        if (available && !m.is_available) return false;
+        // short_notice_ready not tracked on manual fighters — exclude when set
+        if (shortNotice) return false;
+        return true;
+      }),
+    [manualAll, weightClass, debouncedCity, available, shortNotice]
+  );
+
+  const rosterTotalPages = Math.ceil(manualFighters.length / ROSTER_PAGE_SIZE);
+  const pageRoster = useMemo(
+    () => manualFighters.slice((rosterPage - 1) * ROSTER_PAGE_SIZE, rosterPage * ROSTER_PAGE_SIZE),
+    [manualFighters, rosterPage]
+  );
+
+  // Reset roster page when filters change
+  useEffect(() => {
+    setRosterPage(1);
+  }, [weightClass, debouncedCity, available, shortNotice]);
 
   const fighters = (data?.fighters ?? []) as (FighterWithProfile & { profiles: { full_name: string; city: string | null } })[];
   const total = data?.count ?? 0;
@@ -331,38 +349,7 @@ export default function SearchPage() {
         )}
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-center gap-2 mt-10">
-            <button
-              onClick={() => handlePage(page - 1)}
-              disabled={page === 1}
-              className="px-3 py-2 text-sm font-medium border border-zinc-300 text-zinc-700 disabled:opacity-40 hover:bg-zinc-50 transition-colors"
-            >
-              Anterior
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                onClick={() => handlePage(p)}
-                className="px-3 py-2 text-sm font-medium border transition-colors"
-                style={{
-                  borderColor: p === page ? '#C0001E' : '#D4D4D8',
-                  background: p === page ? '#C0001E' : 'white',
-                  color: p === page ? 'white' : '#3F3F46',
-                }}
-              >
-                {p}
-              </button>
-            ))}
-            <button
-              onClick={() => handlePage(page + 1)}
-              disabled={page === totalPages}
-              className="px-3 py-2 text-sm font-medium border border-zinc-300 text-zinc-700 disabled:opacity-40 hover:bg-zinc-50 transition-colors"
-            >
-              Siguiente
-            </button>
-          </div>
-        )}
+        <Pagination page={page} totalPages={totalPages} onPageChange={handlePage} />
 
         {/* Roster (manual fighters added by managers/promoters) */}
         {manualFighters.length > 0 && (
@@ -375,7 +362,7 @@ export default function SearchPage() {
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {manualFighters.map((mf) => (
+              {pageRoster.map((mf) => (
                 <div
                   key={mf.id}
                   onClick={() => router.push(`/fighters/manual/${mf.id}`)}
@@ -432,6 +419,14 @@ export default function SearchPage() {
                 </div>
               ))}
             </div>
+            <Pagination
+              page={rosterPage}
+              totalPages={rosterTotalPages}
+              onPageChange={(p) => {
+                setRosterPage(p);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
           </section>
         )}
       </main>

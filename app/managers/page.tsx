@@ -1,12 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { Pagination } from '@/components/Pagination';
 import { userService } from '@/services/userService';
 import { authService } from '@/services/authService';
 import { supabase } from '@/lib/supabaseClient';
 import type { Profile } from '@/types';
+
+const PAGE_SIZE = 12;
 
 type ManagerWithRoster = Profile & { rosterCount: number };
 
@@ -14,6 +17,7 @@ export default function ManagersPage() {
   const [managers, setManagers] = useState<ManagerWithRoster[]>([]);
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     const load = async () => {
@@ -51,6 +55,12 @@ export default function ManagersPage() {
     load();
   }, []);
 
+  const totalPages = Math.ceil(managers.length / PAGE_SIZE);
+  const pageManagers = useMemo(
+    () => managers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [managers, page]
+  );
+
   return (
     <div className="min-h-screen bg-white font-sans flex flex-col">
       <Navbar activePage="managers" />
@@ -75,8 +85,9 @@ export default function ManagersPage() {
             </a>
           </div>
         ) : (
+          <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {managers.map((manager) => (
+            {pageManagers.map((manager) => (
               <div key={manager.id} className="border border-zinc-200 bg-white p-6 hover:border-zinc-400 transition-colors">
 
                 {/* Avatar + name */}
@@ -123,6 +134,8 @@ export default function ManagersPage() {
               </div>
             ))}
           </div>
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          </>
         )}
       </main>
 

@@ -5,8 +5,11 @@ import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { Pagination } from '@/components/Pagination';
 import { VENDOR_ROLES } from '@/types';
 import type { Profile } from '@/types';
+
+const PAGE_SIZE = 12;
 
 const ROLE_LABELS: Record<string, string> = {
   ring_card_girl: 'Ring Card Girl',
@@ -34,6 +37,7 @@ export default function ProfessionalsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'available'>('all');
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
 
   const loadAll = useCallback(() => {
     setLoading(true);
@@ -88,6 +92,17 @@ export default function ProfessionalsPage() {
     return list;
   }, [profiles, filter, search]);
 
+  // Reset page when filter or search changes
+  useEffect(() => {
+    setPage(1);
+  }, [filter, search]);
+
+  const totalPages = Math.ceil(visible.length / PAGE_SIZE);
+  const pageItems = useMemo(
+    () => visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [visible, page]
+  );
+
   return (
     <div className="min-h-screen bg-white font-sans flex flex-col">
       <Navbar activePage="professionals" />
@@ -139,8 +154,9 @@ export default function ProfessionalsPage() {
             <p className="text-zinc-500 text-sm">No hay profesionales registrados todavía.</p>
           </div>
         ) : (
+          <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {visible.map((p) => {
+            {pageItems.map((p) => {
               const mailHref = `mailto:${p.email}`;
               return (
                 <div
@@ -227,6 +243,8 @@ export default function ProfessionalsPage() {
               );
             })}
           </div>
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          </>
         )}
       </main>
 

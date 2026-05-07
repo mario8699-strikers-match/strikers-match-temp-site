@@ -1,14 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { userService } from '@/services/userService';
 import { authService } from '@/services/authService';
 import { supabase } from '@/lib/supabaseClient';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { Pagination } from '@/components/Pagination';
 import type { Profile } from '@/types';
+
+const PAGE_SIZE = 12;
 
 type PromoterWithFlyer = Profile & { latestFlyer: string | null; eventCount: number };
 
@@ -18,6 +20,7 @@ export default function PromotersPage() {
   const [promoters, setPromoters] = useState<PromoterWithFlyer[]>([]);
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     const load = async () => {
@@ -64,6 +67,12 @@ export default function PromotersPage() {
     load();
   }, []);
 
+  const totalPages = Math.ceil(promoters.length / PAGE_SIZE);
+  const pagePromoters = useMemo(
+    () => promoters.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [promoters, page]
+  );
+
   return (
     <div className="min-h-screen bg-white font-sans flex flex-col">
       <Navbar activePage="promoters" />
@@ -84,8 +93,9 @@ export default function PromotersPage() {
             <p className="text-zinc-500 text-sm">{t('promoters.empty')}</p>
           </div>
         ) : (
+          <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {promoters.map((promoter) => (
+            {pagePromoters.map((promoter) => (
               <div key={promoter.id} className="border border-zinc-200 bg-white overflow-hidden hover:border-zinc-400 transition-colors">
 
                 {/* Flyer image — always publicly visible */}
@@ -151,6 +161,8 @@ export default function PromotersPage() {
               </div>
             ))}
           </div>
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} labels={{ prev: t('promoters.previous', { defaultValue: 'Anterior' }), next: t('promoters.next', { defaultValue: 'Siguiente' }) }} />
+          </>
         )}
       </main>
 

@@ -1,13 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { Pagination } from '@/components/Pagination';
 import { eventService } from '@/services/eventService';
 import { authService } from '@/services/authService';
 import type { Event, Profile } from '@/types';
+
+const PAGE_SIZE = 15;
 
 const STATUS_COLORS: Record<Event['status'], string> = {
   draft: 'bg-zinc-100 text-zinc-600',
@@ -23,6 +26,7 @@ export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [page, setPage] = useState(1);
 
   const canCreateEvent = profile?.role === 'promoter' || profile?.role === 'manager' || profile?.role === 'admin';
 
@@ -50,6 +54,12 @@ export default function EventsPage() {
       style: 'currency', currency: 'MXN', maximumFractionDigits: 0,
     }).format(amount);
   };
+
+  const totalPages = Math.ceil(events.length / PAGE_SIZE);
+  const pageEvents = useMemo(
+    () => events.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [events, page]
+  );
 
   return (
     <div className="min-h-screen bg-white font-sans flex flex-col">
@@ -100,8 +110,9 @@ export default function EventsPage() {
             )}
           </div>
         ) : (
+          <>
           <div className="border border-zinc-200 divide-y divide-zinc-100">
-            {events.map((event) => {
+            {pageEvents.map((event) => {
               const isLoggedIn = !!profile;
 
               const inner = (
@@ -214,6 +225,8 @@ export default function EventsPage() {
               );
             })}
           </div>
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} labels={{ prev: t('common.previous', { ns: 'common', defaultValue: 'Anterior' }), next: t('common.next', { ns: 'common', defaultValue: 'Siguiente' }) }} />
+          </>
         )}
       </main>
 

@@ -1,17 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { Pagination } from '@/components/Pagination';
 import { galleryService } from '@/services/galleryService';
 import type { GalleryPhoto } from '@/types';
+
+const PAGE_SIZE = 18;
 
 export default function GalleryPage() {
   const { t } = useTranslation('gallery');
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<GalleryPhoto | null>(null);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     galleryService.getAll().then(({ data }) => {
@@ -19,6 +23,12 @@ export default function GalleryPage() {
       setLoading(false);
     });
   }, []);
+
+  const totalPages = Math.ceil(photos.length / PAGE_SIZE);
+  const pagePhotos = useMemo(
+    () => photos.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [photos, page]
+  );
 
   return (
     <div className="min-h-screen bg-white font-sans flex flex-col">
@@ -38,8 +48,9 @@ export default function GalleryPage() {
             <p className="mt-1 text-sm text-zinc-500">{t('gallery.emptySubtitle')}</p>
           </div>
         ) : (
+          <>
           <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
-            {photos.map((photo) => (
+            {pagePhotos.map((photo) => (
               <div
                 key={photo.id}
                 className="break-inside-avoid border border-zinc-200 overflow-hidden hover:border-zinc-400 transition-colors cursor-pointer group"
@@ -65,6 +76,8 @@ export default function GalleryPage() {
               </div>
             ))}
           </div>
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          </>
         )}
       </main>
 

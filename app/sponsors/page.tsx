@@ -1,17 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { Pagination } from '@/components/Pagination';
 import { userService } from '@/services/userService';
 import type { Profile } from '@/types';
+
+const PAGE_SIZE = 12;
 
 export default function SponsorsPage() {
   const { t } = useTranslation('sponsors');
 
   const [sponsors, setSponsors] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     userService.listByRole('sponsor').then(({ data }) => {
@@ -19,6 +23,12 @@ export default function SponsorsPage() {
       setLoading(false);
     });
   }, []);
+
+  const totalPages = Math.ceil(sponsors.length / PAGE_SIZE);
+  const pageSponsors = useMemo(
+    () => sponsors.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [sponsors, page]
+  );
 
   return (
     <div className="min-h-screen bg-white font-sans flex flex-col">
@@ -47,8 +57,9 @@ export default function SponsorsPage() {
             </a>
           </div>
         ) : (
+          <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sponsors.map((sponsor) => (
+            {pageSponsors.map((sponsor) => (
               <div key={sponsor.id} className="border border-zinc-200 bg-white p-6 hover:border-zinc-400 transition-colors">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 bg-zinc-100 flex items-center justify-center text-zinc-500 font-bold text-lg flex-shrink-0">
@@ -75,6 +86,8 @@ export default function SponsorsPage() {
               </div>
             ))}
           </div>
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          </>
         )}
       </main>
 

@@ -1,13 +1,16 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { fighterService } from '@/services/fighterService';
 import { manualFighterService } from '@/services/manualFighterService';
 import { supabase } from '@/lib/supabaseClient';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { Pagination } from '@/components/Pagination';
 import type { FighterWithProfile, ManualFighterWithCreator } from '@/types';
+
+const PAGE_SIZE = 12;
 
 // Unified card entry discriminated by `kind`
 type Entry =
@@ -20,6 +23,7 @@ export default function FightersPage() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'available'>('all');
+  const [page, setPage] = useState(1);
 
   const loadAll = useCallback(() => {
     setLoading(true);
@@ -93,6 +97,17 @@ export default function FightersPage() {
     }
   };
 
+  // Reset page when filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [filter]);
+
+  const totalPages = Math.ceil(entries.length / PAGE_SIZE);
+  const pageEntries = useMemo(
+    () => entries.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [entries, page]
+  );
+
   return (
     <div className="min-h-screen bg-white font-sans flex flex-col">
       <Navbar activePage="fighters" />
@@ -132,8 +147,9 @@ export default function FightersPage() {
             <p className="text-zinc-500 text-sm">{t('fighters.empty')}</p>
           </div>
         ) : (
+          <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {entries.map((entry) => {
+            {pageEntries.map((entry) => {
               const isManual = entry.kind === 'manual';
               const name = isManual
                 ? entry.data.full_name
@@ -217,6 +233,8 @@ export default function FightersPage() {
               );
             })}
           </div>
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          </>
         )}
       </main>
 
