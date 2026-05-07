@@ -7,9 +7,13 @@ import { authService } from '@/services/authService';
  * Bump the version suffix every time you change HIGHLIGHTS so previously
  * dismissed users see the new announcement once.
  */
-const WHATS_NEW_KEY = 'sm_whats_new_v2';
+const WHATS_NEW_KEY = 'sm_whats_new_v3';
 
 const HIGHLIGHTS: { title: string; body: string }[] = [
+  {
+    title: 'Foto de perfil y logo de promotora',
+    body: 'Promotores y managers ya pueden subir su foto de perfil o logo de la empresa. Aparece en el directorio público y en tus eventos.',
+  },
   {
     title: 'Publicar eventos gratis',
     body: 'Promotores y managers pueden crear y publicar carteleras ilimitadas. Sin tarjeta, sin cuotas.',
