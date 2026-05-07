@@ -62,12 +62,24 @@ export async function applyDeltaToFighters(
   );
 }
 
+/**
+ * Minimum completed matches required before the score is treated as earned.
+ * Below this threshold, fighters render as 'New' (neutral) regardless of their
+ * default 80 baseline, so promoters don't mistake an unproven athlete for a
+ * vetted one.
+ */
+export const MIN_MATCHES_FOR_SCORE = 3;
+
 /** Tier label for UI badges. */
-export function reliabilityTier(score: number | null | undefined): {
-  label: 'High' | 'Solid' | 'Low' | 'Unknown';
+export function reliabilityTier(
+  score: number | null | undefined,
+  totalMatches: number | null | undefined = null
+): {
+  label: 'High' | 'Solid' | 'Low' | 'New' | 'Unknown';
   tone: 'emerald' | 'amber' | 'red' | 'zinc';
 } {
   if (score == null) return { label: 'Unknown', tone: 'zinc' };
+  if ((totalMatches ?? 0) < MIN_MATCHES_FOR_SCORE) return { label: 'New', tone: 'zinc' };
   if (score >= 85) return { label: 'High', tone: 'emerald' };
   if (score >= 60) return { label: 'Solid', tone: 'amber' };
   return { label: 'Low', tone: 'red' };

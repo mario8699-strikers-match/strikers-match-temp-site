@@ -8,6 +8,7 @@
  */
 
 import { supabase } from '@/lib/supabaseClient';
+import { MIN_MATCHES_FOR_SCORE } from '@/services/reliabilityService';
 import type { ServiceResponse } from '@/types';
 
 export interface EventHealth {
@@ -59,7 +60,7 @@ export async function getEventHealth(
         id,
         weight_class,
         profile_id,
-        profiles:profile_id ( reliability_score )
+        profiles:profile_id ( reliability_score, total_matches )
       )
     `)
     .eq('event_id', eventId);
@@ -76,7 +77,7 @@ export async function getEventHealth(
       id: string;
       weight_class: string | null;
       profile_id: string | null;
-      profiles: { reliability_score: number | null } | null;
+      profiles: { reliability_score: number | null; total_matches: number | null } | null;
     } | null;
   };
 
@@ -133,12 +134,16 @@ export async function getEventHealth(
     (w: string) => !weightClassesCovered.includes(w)
   );
 
-  // Reliability buckets among confirmed
+  // Reliability buckets among confirmed.
+  // Only count fighters with enough completed matches (>= MIN_MATCHES_FOR_SCORE)
+  // so the default 80 baseline doesn't inflate either bucket for unproven athletes.
   let highReliabilityFighters = 0;
   let noShowRisks = 0;
   for (const r of confirmedRows) {
     const score = r.fighters?.profiles?.reliability_score;
+    const totalMatches = r.fighters?.profiles?.total_matches ?? 0;
     if (score == null) continue;
+    if (totalMatches < MIN_MATCHES_FOR_SCORE) continue; // 'New' fighter — no track record yet
     if (score >= 85) highReliabilityFighters++;
     else if (score < 60) noShowRisks++;
   }
