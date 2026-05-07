@@ -12,8 +12,14 @@ import { supabase } from '@/lib/supabaseClient';
 import { getRecommendedFighters } from '@/services/matchmakingService';
 import { findEmergencyReplacements, sendQuickRequest } from '@/services/emergencyMatchService';
 import { canPerformAction, recordRequestUsed } from '@/services/subscriptionService';
-import { registerForEvent, submitPayment, getFighterRegistration } from '@/services/registrationService';
+import { registerForEvent, submitPayment, getFighterRegistration, getEventRegistrations } from '@/services/registrationService';
 import { requestService } from '@/services/requestService';
+import {
+  proposeMatch,
+  cancelMatch,
+  getMatchesForEvent,
+  type MatchWithContext,
+} from '@/services/matchService';
 import type { Event, EventFormData, EventApplication, Profile, Fighter, MatchResult, EmergencyMatchResult, MatchRequest, EventRegistration } from '@/types';
 
 const WEIGHT_CLASSES = [
@@ -302,6 +308,15 @@ export default function EventDetailPage() {
   const [submittingPayment, setSubmittingPayment] = useState(false);
   const [regError, setRegError] = useState<string | null>(null);
 
+  // Promoter: matches for this event
+  const [eventMatches, setEventMatches] = useState<MatchWithContext[]>([]);
+  const [proposeFighterA, setProposeFighterA] = useState<string>('');
+  const [proposeFighterB, setProposeFighterB] = useState<string>('');
+  const [proposingMatch, setProposingMatch] = useState(false);
+  const [proposeFeedback, setProposeFeedback] = useState<string | null>(null);
+  const [proposeError, setProposeError] = useState<string | null>(null);
+  const [confirmedRegistrations, setConfirmedRegistrations] = useState<{ id: string; name: string; weight: string | null }[]>([]);
+
   useEffect(() => {
     if (!id) return;
     Promise.all([
@@ -345,6 +360,10 @@ export default function EventDetailPage() {
         // Load existing match requests for this event
         const { data: reqs } = await requestService.getByEvent(id);
         setEventRequests((reqs ?? []) as MatchRequest[]);
+
+        // Load proposed matches + confirmed-paid registrations for pairing UI
+        await reloadEventMatches(id);
+        await reloadConfirmedRegistrations(id);
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -414,6 +433,47 @@ export default function EventDetailPage() {
     setSelectedEmergency(new Set());
     setEmergencyConfirm(false);
     setEmergencyFeedback(`${sentCount} solicitud${sentCount !== 1 ? 'es' : ''} enviada${sentCount !== 1 ? 's' : ''} con exito.`);
+  };
+
+  // ── Promoter: load proposed matches + confirmed-paid roster ──
+  const reloadEventMatches = useCallback(async (eventId: string) => {
+    const { data } = await getMatchesForEvent(eventId);
+    setEventMatches(data ?? []);
+  }, []);
+
+  const reloadConfirmedRegistrations = useCallback(async (eventId: string) => {
+    const { data } = await getEventRegistrations(eventId);
+    const confirmed = (data ?? [])
+      .filter((r) => r.payment_status === 'confirmed')
+      .map((r) => ({
+        id: r.fighters?.id ?? r.fighter_id,
+        name: r.fighters?.profiles?.full_name ?? '—',
+        weight: r.fighters?.weight_class ?? null,
+      }));
+    setConfirmedRegistrations(confirmed);
+  }, []);
+
+  const handleProposeMatch = async () => {
+    if (!event || !proposeFighterA || !proposeFighterB) return;
+    setProposingMatch(true);
+    setProposeError(null);
+    setProposeFeedback(null);
+    const { error } = await proposeMatch(event.id, proposeFighterA, proposeFighterB);
+    if (error) {
+      setProposeError(error);
+    } else {
+      setProposeFeedback(t('events.matches.proposalSent'));
+      setProposeFighterA('');
+      setProposeFighterB('');
+      await reloadEventMatches(event.id);
+    }
+    setProposingMatch(false);
+  };
+
+  const handleCancelMatch = async (matchId: string) => {
+    if (!event) return;
+    const { error } = await cancelMatch(matchId);
+    if (!error) await reloadEventMatches(event.id);
   };
 
   // ── Monetized request send (for recommended fighters) ──
@@ -1214,6 +1274,114 @@ export default function EventDetailPage() {
                   </svg>
                   Encontrar Reemplazo de Ultimo Momento
                 </button>
+
+                {/* ── Propose Match (two-sided) ── */}
+                <div className="mt-10 border-t border-zinc-100 pt-8">
+                  <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#C0001E' }}>
+                    {t('events.matches.propose')}
+                  </p>
+                  <p className="text-xs text-zinc-500 mb-4">{t('events.matches.proposeHint')}</p>
+
+                  {confirmedRegistrations.length < 2 ? (
+                    <div className="border border-dashed border-zinc-200 py-6 text-center">
+                      <p className="text-xs text-zinc-400">
+                        Necesitas al menos 2 peleadores con pago confirmado para proponer una pelea.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                        <select
+                          value={proposeFighterA}
+                          onChange={(e) => setProposeFighterA(e.target.value)}
+                          className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                        >
+                          <option value="">{t('events.matches.selectFirst')}</option>
+                          {confirmedRegistrations.map((r) => (
+                            <option key={r.id} value={r.id}>
+                              {r.name}{r.weight ? ` · ${r.weight}` : ''}
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          value={proposeFighterB}
+                          onChange={(e) => setProposeFighterB(e.target.value)}
+                          className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                        >
+                          <option value="">{t('events.matches.selectSecond')}</option>
+                          {confirmedRegistrations
+                            .filter((r) => r.id !== proposeFighterA)
+                            .map((r) => (
+                              <option key={r.id} value={r.id}>
+                                {r.name}{r.weight ? ` · ${r.weight}` : ''}
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                      <button
+                        onClick={handleProposeMatch}
+                        disabled={!proposeFighterA || !proposeFighterB || proposingMatch}
+                        className="w-full px-4 py-3 text-xs font-bold tracking-widest uppercase text-white bg-zinc-900 hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {proposingMatch ? t('events.matches.sendingProposal') : t('events.matches.sendProposal')}
+                      </button>
+                      {proposeError && (
+                        <p className="mt-2 text-xs text-red-600">{proposeError}</p>
+                      )}
+                      {proposeFeedback && (
+                        <p className="mt-2 text-xs text-emerald-700">{proposeFeedback}</p>
+                      )}
+                    </>
+                  )}
+
+                  {/* Existing proposed matches */}
+                  <div className="mt-6">
+                    <p className="text-xs font-bold tracking-widest uppercase text-zinc-700 mb-3">
+                      {t('events.matches.proposedMatches')}
+                    </p>
+                    {eventMatches.length === 0 ? (
+                      <div className="border border-dashed border-zinc-200 py-6 text-center">
+                        <p className="text-xs text-zinc-400">{t('events.matches.noProposedMatches')}</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {eventMatches.map((m) => {
+                          const tone =
+                            m.match_status === 'confirmed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                            m.match_status === 'cancelled' ? 'bg-red-50 text-red-700 border-red-200' :
+                            'bg-amber-50 text-amber-700 border-amber-200';
+                          const label =
+                            m.match_status === 'confirmed' ? t('events.matches.statusConfirmed') :
+                            m.match_status === 'cancelled' ? t('events.matches.statusCancelled') :
+                            'Pendiente';
+                          return (
+                            <div key={m.id} className="border border-zinc-200 p-3 flex items-center justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-zinc-900 truncate">
+                                  {m.fighter_a?.profiles?.full_name ?? '—'} vs {m.fighter_b?.profiles?.full_name ?? '—'}
+                                </p>
+                                <p className="text-xs text-zinc-500 mt-0.5">
+                                  A: {m.fighter_a_status} · B: {m.fighter_b_status}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <span className={`text-xs font-bold px-2 py-1 border ${tone}`}>{label}</span>
+                                {m.match_status !== 'cancelled' && (
+                                  <button
+                                    onClick={() => handleCancelMatch(m.id)}
+                                    className="text-xs font-bold text-zinc-500 hover:text-red-600 underline"
+                                  >
+                                    {t('events.matches.cancelMatch')}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>
