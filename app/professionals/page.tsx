@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
+import { authService } from '@/services/authService';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Pagination } from '@/components/Pagination';
@@ -35,9 +36,20 @@ function initials(name: string): string {
 export default function ProfessionalsPage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [filter, setFilter] = useState<'all' | 'available'>('all');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+
+  // Resolve auth state once on mount so we can gate contact info.
+  useEffect(() => {
+    let cancelled = false;
+    authService.getSession().then(({ data }) => {
+      if (cancelled) return;
+      setIsLoggedIn(!!data?.profile);
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   const loadAll = useCallback(() => {
     setLoading(true);
@@ -218,27 +230,39 @@ export default function ProfessionalsPage() {
                     <p className="text-sm text-zinc-600 mb-4 line-clamp-3">{p.bio}</p>
                   )}
 
-                  {/* Meta + contact */}
-                  <div className="flex items-center justify-between gap-2 pt-3 border-t border-zinc-100">
-                    {p.instagram ? (
+                  {/* Contact — locked unless logged in (mirrors /managers gating). */}
+                  {isLoggedIn ? (
+                    <div className="flex items-center justify-between gap-2 pt-3 border-t border-zinc-100">
+                      {p.instagram ? (
+                        <a
+                          href={`https://instagram.com/${p.instagram.replace(/^@/, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-zinc-500 hover:text-zinc-900"
+                        >
+                          {p.instagram.startsWith('@') ? p.instagram : `@${p.instagram}`}
+                        </a>
+                      ) : (
+                        <span className="text-xs text-zinc-300">—</span>
+                      )}
                       <a
-                        href={`https://instagram.com/${p.instagram.replace(/^@/, '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-zinc-500 hover:text-zinc-900"
+                        href={mailHref}
+                        className="text-xs font-bold uppercase tracking-widest bg-[#0A0A0A] text-white px-3 py-1.5 hover:bg-[#C0001E] transition-colors"
                       >
-                        {p.instagram.startsWith('@') ? p.instagram : `@${p.instagram}`}
+                        Contactar
                       </a>
-                    ) : (
-                      <span className="text-xs text-zinc-300">—</span>
-                    )}
+                    </div>
+                  ) : (
                     <a
-                      href={mailHref}
-                      className="text-xs font-bold uppercase tracking-widest bg-[#0A0A0A] text-white px-3 py-1.5 hover:bg-[#C0001E] transition-colors"
+                      href="/login"
+                      className="flex items-center justify-center gap-1.5 w-full text-center text-xs font-medium text-zinc-400 bg-zinc-50 border border-dashed border-zinc-200 px-4 py-2.5 hover:bg-zinc-100 transition-colors"
                     >
-                      Contactar
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                      </svg>
+                      Inicia sesión para ver
                     </a>
-                  </div>
+                  )}
                 </div>
               );
             })}
