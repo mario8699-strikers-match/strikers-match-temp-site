@@ -62,6 +62,7 @@ export interface Profile {
   instagram: string | null;
   photo_url: string | null;
   is_available: boolean;
+  additional_roles: UserRole[];
   is_banned?: boolean;
   reliability_score?: number;
   total_matches?: number;

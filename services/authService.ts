@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 import { uploadFile } from '@/lib/storageClient';
-import type { LoginFormData, RegisterFormData, ServiceResponse, AuthSession } from '@/types';
+import type { LoginFormData, RegisterFormData, ServiceResponse, AuthSession, UserRole } from '@/types';
 
 async function getAccessToken(): Promise<string | null> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -87,6 +87,7 @@ export const authService = {
       instagram?: string | null;
       photo_url?: string | null;
       is_available?: boolean;
+      additional_roles?: UserRole[];
     }
   ): Promise<ServiceResponse<null>> {
     try {

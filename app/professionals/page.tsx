@@ -180,11 +180,21 @@ export default function ProfessionalsPage() {
                     )}
                   </div>
 
-                  {/* Role badge */}
-                  <div className="mb-3">
+                  {/* Role badge(s) */}
+                  <div className="mb-3 flex flex-wrap gap-1.5">
                     <span className="inline-flex items-center text-xs font-bold uppercase tracking-widest px-2 py-1 bg-zinc-100 text-zinc-700">
                       {ROLE_LABELS[p.role] ?? p.role}
                     </span>
+                    {(p.additional_roles ?? [])
+                      .filter((r) => r !== p.role)
+                      .map((r) => (
+                        <span
+                          key={r}
+                          className="inline-flex items-center text-xs font-bold uppercase tracking-widest px-2 py-1 bg-white border border-zinc-200 text-zinc-600"
+                        >
+                          + {ROLE_LABELS[r] ?? r}
+                        </span>
+                      ))}
                   </div>
 
                   {/* Bio */}

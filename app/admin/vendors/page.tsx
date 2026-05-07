@@ -48,9 +48,12 @@ export default function AdminVendorsPage() {
     });
   }, []);
 
+  const matchesRole = (p: Profile, role: string) =>
+    p.role === role || (p.additional_roles ?? []).includes(role as Profile['role']);
+
   const filtered = filterRole === 'all'
     ? profiles
-    : profiles.filter((p) => p.role === filterRole);
+    : profiles.filter((p) => matchesRole(p, filterRole));
 
   return (
     <div>
@@ -80,7 +83,7 @@ export default function AdminVendorsPage() {
           Todos ({profiles.length})
         </button>
         {VENDOR_ROLES.map((role) => {
-          const count = profiles.filter((p) => p.role === role).length;
+          const count = profiles.filter((p) => matchesRole(p, role)).length;
           if (count === 0) return null;
           return (
             <button
@@ -124,9 +127,21 @@ export default function AdminVendorsPage() {
                   </td>
                   <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">{p.email}</td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-zinc-100 text-zinc-700">
-                      {ROLE_LABELS[p.role] ?? p.role}
-                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-zinc-100 text-zinc-700">
+                        {ROLE_LABELS[p.role] ?? p.role}
+                      </span>
+                      {(p.additional_roles ?? [])
+                        .filter((r) => r !== p.role)
+                        .map((r) => (
+                          <span
+                            key={r}
+                            className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-white border border-zinc-200 text-zinc-600"
+                          >
+                            + {ROLE_LABELS[r] ?? r}
+                          </span>
+                        ))}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">{p.city ?? '—'}</td>
                   <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">{p.phone ?? '—'}</td>

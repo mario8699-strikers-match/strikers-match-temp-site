@@ -6,7 +6,7 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { authService } from '@/services/authService';
 import { VENDOR_ROLES } from '@/types';
-import type { Profile } from '@/types';
+import type { Profile, UserRole } from '@/types';
 
 const ROLE_LABELS: Record<string, string> = {
   ring_card_girl: 'Ring Card Girl',
@@ -36,6 +36,7 @@ export default function VendorProfilePage() {
   const [bio, setBio] = useState('');
   const [instagram, setInstagram] = useState('');
   const [isAvailable, setIsAvailable] = useState(true);
+  const [additionalRoles, setAdditionalRoles] = useState<UserRole[]>([]);
 
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -53,8 +54,15 @@ export default function VendorProfilePage() {
       setBio(p.bio ?? '');
       setInstagram(p.instagram ?? '');
       setIsAvailable(p.is_available ?? true);
+      setAdditionalRoles((p.additional_roles ?? []).filter((r) => r !== p.role));
     });
   }, []);
+
+  const toggleAdditionalRole = (role: UserRole) => {
+    setAdditionalRoles((prev) =>
+      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
+    );
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,6 +90,7 @@ export default function VendorProfilePage() {
       bio: bio.trim() || null,
       instagram: instagram.trim() || null,
       is_available: isAvailable,
+      additional_roles: additionalRoles.filter((r) => r !== profile.role),
       ...(photoUrl !== undefined ? { photo_url: photoUrl } : {}),
     });
 
@@ -98,6 +107,7 @@ export default function VendorProfilePage() {
         instagram: instagram.trim() || null,
         is_available: isAvailable,
         photo_url: photoUrl ?? profile.photo_url,
+        additional_roles: additionalRoles.filter((r) => r !== profile.role),
       });
       setPhotoFile(null);
       setPhotoPreview(null);
@@ -289,6 +299,38 @@ export default function VendorProfilePage() {
               placeholder="@tu_usuario"
               className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 text-sm"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 mb-1">
+              Otros servicios que ofreces <span className="text-zinc-400 font-normal">(opcional)</span>
+            </label>
+            <p className="text-xs text-zinc-500 mb-3">
+              Selecciona todos los que apliquen. Por ejemplo, un cutman también certificado como EMT.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {VENDOR_ROLES.filter((r) => r !== profile.role).map((role) => {
+                const checked = additionalRoles.includes(role);
+                return (
+                  <label
+                    key={role}
+                    className={`flex items-center gap-2 px-3 py-2 border cursor-pointer transition-colors ${
+                      checked
+                        ? 'border-zinc-900 bg-zinc-50'
+                        : 'border-zinc-200 hover:border-zinc-400'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleAdditionalRole(role)}
+                      className="w-4 h-4 border-zinc-300 text-zinc-900 focus:ring-zinc-900"
+                    />
+                    <span className="text-xs text-zinc-700">{ROLE_LABELS[role] ?? role}</span>
+                  </label>
+                );
+              })}
+            </div>
           </div>
 
           <label className="flex items-center gap-2 cursor-pointer pt-2">
