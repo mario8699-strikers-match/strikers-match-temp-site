@@ -44,7 +44,9 @@ export function Navbar({ activePage }: NavbarProps) {
   const { t } = useTranslation('navigation');
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     authService.getSession().then(({ data }) => {
@@ -58,6 +60,9 @@ export function Navbar({ activePage }: NavbarProps) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMobileOpen(false);
       }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -68,6 +73,13 @@ export function Navbar({ activePage }: NavbarProps) {
     const handleResize = () => { if (window.innerWidth >= 768) setMobileOpen(false); };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Close user dropdown on Escape
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setUserMenuOpen(false); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
   }, []);
 
   const handleLogout = async () => {
@@ -137,21 +149,66 @@ export function Navbar({ activePage }: NavbarProps) {
             <div className="flex items-center gap-3">
               {isLoggedIn ? (
                 <>
-                  {/* Desktop logged-in: inline profile links + logout */}
-                  <div className="hidden md:flex items-center gap-3">
+                  {/* Desktop logged-in: avatar/name dropdown */}
+                  <div className="hidden md:flex items-center gap-3" ref={userMenuRef}>
                     <LanguageSwitcher variant="dark" />
-                    <span className="text-xs text-[#5A5A5A]">
-                      {profile.full_name || profile.role}
-                      <span className="ml-1 text-[#3A3A3A]">({profile.role})</span>
-                    </span>
-                    {profileLink(profile.role).map(({ label, href }) => (
-                      <a key={href} href={href} className="text-sm font-semibold text-[#9A9A9A] hover:text-white transition-colors">
-                        {label}
-                      </a>
-                    ))}
-                    <button onClick={handleLogout} className="text-sm font-semibold text-[#C0001E] hover:text-red-400 transition-colors">
-                      {t('nav.logout')}
-                    </button>
+                    <div className="relative">
+                      <button
+                        onClick={() => setUserMenuOpen((o) => !o)}
+                        aria-expanded={userMenuOpen}
+                        aria-haspopup="menu"
+                        className="flex items-center gap-2 px-3 py-1.5 border border-[#3A3A3A] hover:border-[#5A5A5A] transition-colors"
+                      >
+                        <span className="flex items-center justify-center w-7 h-7 bg-[#C0001E] text-white text-xs font-bold uppercase">
+                          {(profile.full_name || profile.role || '?').trim().charAt(0)}
+                        </span>
+                        <span className="text-sm font-semibold text-white max-w-[140px] truncate">
+                          {profile.full_name || profile.role}
+                        </span>
+                        <svg
+                          className={`w-3 h-3 text-[#9A9A9A] transition-transform ${userMenuOpen ? 'rotate-180' : ''}`}
+                          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+
+                      {userMenuOpen && (
+                        <div
+                          role="menu"
+                          className="absolute right-0 top-full mt-2 min-w-[220px] bg-[#0A0A0A] border border-[#2A2A2A] shadow-2xl z-50"
+                        >
+                          <div className="px-4 py-3 border-b border-[#1A1A1A]">
+                            <p className="text-sm font-semibold text-white truncate">
+                              {profile.full_name || profile.role}
+                            </p>
+                            <p className="text-xs text-[#5A5A5A] uppercase tracking-widest mt-0.5">
+                              {profile.role}
+                            </p>
+                          </div>
+                          <div className="py-1">
+                            {profileLink(profile.role).map(({ label, href }) => (
+                              <a
+                                key={href}
+                                href={href}
+                                onClick={() => setUserMenuOpen(false)}
+                                className="block px-4 py-2.5 text-sm font-semibold text-[#CCCCCC] hover:text-white hover:bg-[#1A1A1A] transition-colors"
+                              >
+                                {label}
+                              </a>
+                            ))}
+                          </div>
+                          <div className="border-t border-[#1A1A1A] py-1">
+                            <button
+                              onClick={() => { setUserMenuOpen(false); handleLogout(); }}
+                              className="w-full text-left px-4 py-2.5 text-sm font-semibold text-[#C0001E] hover:bg-[#1A1A1A] transition-colors"
+                            >
+                              {t('nav.logout')}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   {/* Mobile logged-in: hamburger only */}
                   <div className="flex md:hidden">
