@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { fighterService } from '@/services/fighterService';
@@ -21,6 +22,8 @@ const WEIGHT_LABELS: Record<string, string> = {
 
 type FighterDetail = Fighter & { profiles: { full_name: string; city: string | null } };
 
+type Neighbor = { id: string; name: string };
+
 export default function FighterDetailPage() {
   const { id } = useParams<{ id: string }>();
 
@@ -28,6 +31,7 @@ export default function FighterDetailPage() {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [myEvents, setMyEvents] = useState<Event[]>([]);
+  const [neighbors, setNeighbors] = useState<{ prev: Neighbor | null; next: Neighbor | null }>({ prev: null, next: null });
 
   // Modal state
   const [showModal, setShowModal] = useState(false);
@@ -65,6 +69,34 @@ export default function FighterDetailPage() {
         eventService.getByPromoter(p.id).then(({ data: events }) => setMyEvents(events ?? []));
       }
     });
+  }, [id]);
+
+  // Compute prev/next neighbors from the visible (non-hidden) fighters list.
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    supabase
+      .from('fighters')
+      .select('id, profiles(full_name)')
+      .neq('is_hidden', true)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (cancelled || !data) return;
+        const list = data as unknown as Array<{ id: string; profiles: { full_name: string } | null }>;
+        const idx = list.findIndex((f) => f.id === id);
+        if (idx < 0) {
+          setNeighbors({ prev: null, next: null });
+          return;
+        }
+        const prev = idx > 0
+          ? { id: list[idx - 1].id, name: list[idx - 1].profiles?.full_name ?? 'Anterior' }
+          : null;
+        const next = idx < list.length - 1
+          ? { id: list[idx + 1].id, name: list[idx + 1].profiles?.full_name ?? 'Siguiente' }
+          : null;
+        setNeighbors({ prev, next });
+      });
+    return () => { cancelled = true; };
   }, [id]);
 
   const handleSendRequest = async () => {
@@ -116,6 +148,15 @@ export default function FighterDetailPage() {
     <div className="min-h-screen bg-white flex flex-col">
       <Navbar activePage="fighters" />
       <main className="flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-10 w-full">
+
+        {/* Back to list */}
+        <Link
+          href="/fighters"
+          className="inline-flex items-center gap-1.5 mb-6 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-[#C0001E] transition-colors"
+        >
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
+          Atletas
+        </Link>
 
         {/* Header: photo + name */}
         <div className="flex items-start gap-6 mb-8">
@@ -230,6 +271,30 @@ export default function FighterDetailPage() {
           <div className="border border-dashed border-zinc-200 p-6 text-center">
             <p className="text-sm text-zinc-500"><a href="/login" className="font-semibold" style={{ color:'#C0001E' }}>Inicia sesión</a> como promotor para enviar una solicitud.</p>
           </div>
+        )}
+
+        {/* Prev / Next navigation */}
+        {(neighbors.prev || neighbors.next) && (
+          <nav className="mt-10 pt-6 border-t border-zinc-200 grid grid-cols-2 gap-3">
+            {neighbors.prev ? (
+              <Link
+                href={`/fighters/${neighbors.prev.id}`}
+                className="group flex flex-col items-start gap-1 p-4 border border-zinc-200 hover:border-[#C0001E] transition-colors"
+              >
+                <span className="text-xs font-bold uppercase tracking-widest text-zinc-400 group-hover:text-[#C0001E]">← Anterior</span>
+                <span className="text-sm font-semibold text-zinc-900 truncate w-full">{neighbors.prev.name}</span>
+              </Link>
+            ) : <span />}
+            {neighbors.next ? (
+              <Link
+                href={`/fighters/${neighbors.next.id}`}
+                className="group flex flex-col items-end gap-1 p-4 border border-zinc-200 hover:border-[#C0001E] transition-colors text-right"
+              >
+                <span className="text-xs font-bold uppercase tracking-widest text-zinc-400 group-hover:text-[#C0001E]">Siguiente →</span>
+                <span className="text-sm font-semibold text-zinc-900 truncate w-full">{neighbors.next.name}</span>
+              </Link>
+            ) : <span />}
+          </nav>
         )}
       </main>
 
