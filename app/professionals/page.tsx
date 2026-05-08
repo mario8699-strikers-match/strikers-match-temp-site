@@ -170,7 +170,6 @@ export default function ProfessionalsPage() {
           <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {pageItems.map((p) => {
-              const mailHref = `mailto:${p.email}`;
               return (
                 <div
                   key={p.id}
@@ -246,12 +245,12 @@ export default function ProfessionalsPage() {
                       ) : (
                         <span className="text-xs text-zinc-300">—</span>
                       )}
-                      <a
-                        href={mailHref}
+                      <Link
+                        href={`/professionals/${p.id}`}
                         className="text-xs font-bold uppercase tracking-widest bg-[#0A0A0A] text-white px-3 py-1.5 hover:bg-[#C0001E] transition-colors"
                       >
                         Contactar
-                      </a>
+                      </Link>
                     </div>
                   ) : (
                     <a
