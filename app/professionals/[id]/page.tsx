@@ -39,6 +39,10 @@ export default function ProfessionalDetailPage() {
   const [notFound, setNotFound] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [viewerRole, setViewerRole] = useState<string | null>(null);
+  const [neighbors, setNeighbors] = useState<{
+    prev: { id: string; name: string } | null;
+    next: { id: string; name: string } | null;
+  }>({ prev: null, next: null });
 
   useEffect(() => {
     if (!id) return;
@@ -71,6 +75,36 @@ export default function ProfessionalDetailPage() {
       setLoading(false);
     });
 
+    return () => { cancelled = true; };
+  }, [id]);
+
+  // Prev/Next neighbors from the same list /professionals shows:
+  // role in VENDOR_ROLES, not banned, ordered by created_at desc.
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    supabase
+      .from('profiles')
+      .select('id, full_name')
+      .in('role', VENDOR_ROLES)
+      .eq('is_banned', false)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (cancelled || !data) return;
+        const list = data as Array<{ id: string; full_name: string | null }>;
+        const idx = list.findIndex((p) => p.id === id);
+        if (idx < 0) {
+          setNeighbors({ prev: null, next: null });
+          return;
+        }
+        const prev = idx > 0
+          ? { id: list[idx - 1].id, name: list[idx - 1].full_name ?? 'Anterior' }
+          : null;
+        const next = idx < list.length - 1
+          ? { id: list[idx + 1].id, name: list[idx + 1].full_name ?? 'Siguiente' }
+          : null;
+        setNeighbors({ prev, next });
+      });
     return () => { cancelled = true; };
   }, [id]);
 
@@ -256,6 +290,30 @@ export default function ProfessionalDetailPage() {
                 </div>
               )}
             </section>
+
+            {/* Prev / Next navigation */}
+            {(neighbors.prev || neighbors.next) && (
+              <nav className="mt-10 pt-6 border-t border-zinc-200 grid grid-cols-2 gap-3">
+                {neighbors.prev ? (
+                  <Link
+                    href={`/professionals/${neighbors.prev.id}`}
+                    className="group flex flex-col items-start gap-1 p-4 border border-zinc-200 hover:border-[#C0001E] transition-colors"
+                  >
+                    <span className="text-xs font-bold uppercase tracking-widest text-zinc-400 group-hover:text-[#C0001E]">← Anterior</span>
+                    <span className="text-sm font-semibold text-zinc-900 truncate w-full">{neighbors.prev.name}</span>
+                  </Link>
+                ) : <span />}
+                {neighbors.next ? (
+                  <Link
+                    href={`/professionals/${neighbors.next.id}`}
+                    className="group flex flex-col items-end gap-1 p-4 border border-zinc-200 hover:border-[#C0001E] transition-colors text-right"
+                  >
+                    <span className="text-xs font-bold uppercase tracking-widest text-zinc-400 group-hover:text-[#C0001E]">Siguiente →</span>
+                    <span className="text-sm font-semibold text-zinc-900 truncate w-full">{neighbors.next.name}</span>
+                  </Link>
+                ) : <span />}
+              </nav>
+            )}
           </>
         )}
       </main>
