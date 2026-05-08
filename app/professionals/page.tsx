@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { authService } from '@/services/authService';
 import { Navbar } from '@/components/Navbar';
@@ -176,7 +177,7 @@ export default function ProfessionalsPage() {
                   className="border border-zinc-200 bg-white p-6 hover:border-[#C0001E] transition-colors group"
                 >
                   <div className="flex items-start justify-between mb-3 gap-2">
-                  <div className="flex items-center gap-3">
+                  <Link href={`/professionals/${p.id}`} className="flex items-center gap-3 min-w-0">
                     {p.photo_url ? (
                       <div className="w-12 h-12 overflow-hidden bg-zinc-100 shrink-0">
                         <Image
@@ -192,13 +193,13 @@ export default function ProfessionalsPage() {
                         {initials(p.full_name)}
                       </div>
                     )}
-                      <div>
-                        <h2 className="font-display font-black uppercase leading-none text-xl group-hover:text-[#C0001E] transition-colors" style={{ color: '#0A0A0A' }}>
+                      <div className="min-w-0">
+                        <h2 className="font-display font-black uppercase leading-none text-xl group-hover:text-[#C0001E] transition-colors truncate" style={{ color: '#0A0A0A' }}>
                           {p.full_name}
                         </h2>
                         <p className="text-xs mt-1" style={{ color: '#9A9A9A' }}>{p.city ?? '—'}</p>
                       </div>
-                    </div>
+                    </Link>
                     {p.is_available && (
                       <span
                         aria-label="Disponible"

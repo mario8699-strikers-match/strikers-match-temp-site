@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { adminService } from '@/services/adminService';
 import { VENDOR_ROLES } from '@/types';
@@ -115,7 +116,9 @@ export default function AdminVendorsPage() {
             <div key={p.id} className="bg-white border border-zinc-200 p-4">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="font-bold text-[#C0001E] truncate">{p.full_name}</p>
+                  <Link href={`/professionals/${p.id}`} className="font-bold text-[#C0001E] truncate hover:underline block">
+                    {p.full_name}
+                  </Link>
                   <p className="text-xs text-zinc-500 truncate">{p.email}</p>
                 </div>
                 <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium flex-shrink-0 ${
@@ -165,7 +168,9 @@ export default function AdminVendorsPage() {
               {filtered.map((p) => (
                 <tr key={p.id} className="hover:bg-zinc-50">
                   <td className="px-4 py-3 font-bold text-[#C0001E] whitespace-nowrap">
-                    {p.full_name}
+                    <Link href={`/professionals/${p.id}`} className="hover:underline">
+                      {p.full_name}
+                    </Link>
                   </td>
                   <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">{p.email}</td>
                   <td className="px-4 py-3 whitespace-nowrap">
