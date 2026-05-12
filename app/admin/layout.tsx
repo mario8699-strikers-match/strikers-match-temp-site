@@ -108,7 +108,7 @@ const NAV_ITEMS = [
     ),
   },
   {
-    href: '/promoter/analytics',
+    href: '/admin/analytics',
     label: 'admin.nav.analytics',
     exact: false,
     icon: (
