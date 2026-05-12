@@ -142,10 +142,22 @@ function HealthDashboard({ h }: { h: EventHealth }) {
   return (
     <div className="space-y-8">
       <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Kpi label="Registrados" value={h.totalRegistered} />
+        <Kpi label="Solicitudes" value={h.totalApplications} />
+        <Kpi label="Registrados (pago)" value={h.totalRegistered} />
         <Kpi label="Pago confirmado" value={h.confirmed} tone="emerald" />
-        <Kpi label="Pago pendiente" value={h.pending + h.submitted} tone={h.submitted > 0 ? 'amber' : 'zinc'} />
         <Kpi label="Sin pareja" value={h.unmatchedConfirmed} tone={h.unmatchedConfirmed > 0 ? 'amber' : 'emerald'} />
+      </section>
+
+      <section>
+        <SectionTitle>Solicitudes de Peleadores</SectionTitle>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <Kpi label="Pendientes" value={h.applicationsPending} tone={h.applicationsPending > 0 ? 'amber' : 'zinc'} />
+          <Kpi label="Aceptadas" value={h.applicationsAccepted} tone="emerald" />
+          <Kpi label="Rechazadas" value={h.applicationsDeclined} />
+        </div>
+        <p className="text-xs text-zinc-500 mt-2">
+          Aplicaciones son la intención de participar. Se convierten en “Registrados” cuando inicias el flujo de pago.
+        </p>
       </section>
 
       <section>

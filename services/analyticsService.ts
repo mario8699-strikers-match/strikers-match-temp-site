@@ -16,6 +16,11 @@ export interface EventHealth {
   event_name: string;
   event_date: string | null;
 
+  totalApplications: number;     // total rows in event_applications
+  applicationsPending: number;
+  applicationsAccepted: number;
+  applicationsDeclined: number;
+
   totalRegistered: number;
   pending: number;       // not yet submitted payment
   submitted: number;     // payment submitted, awaiting promoter confirmation
@@ -82,6 +87,22 @@ export async function getEventHealth(
   };
 
   const rows = (regs ?? []) as unknown as RegRow[];
+
+  // Applications (separate pipeline — fighter intent, not payment)
+  const { data: apps, error: appErr } = await supabase
+    .from('event_applications')
+    .select('id, status')
+    .eq('event_id', eventId);
+
+  if (appErr) {
+    return { data: null, error: appErr.message };
+  }
+
+  const appRows = apps ?? [];
+  const totalApplications = appRows.length;
+  const applicationsPending = appRows.filter((a) => a.status === 'pending').length;
+  const applicationsAccepted = appRows.filter((a) => a.status === 'accepted').length;
+  const applicationsDeclined = appRows.filter((a) => a.status === 'declined').length;
 
   const confirmedRows = rows.filter((r) => r.payment_status === 'confirmed');
   const pending = rows.filter((r) => r.payment_status === 'pending').length;
@@ -157,6 +178,10 @@ export async function getEventHealth(
       event_id: event.id,
       event_name: event.event_name,
       event_date: event.event_date,
+      totalApplications,
+      applicationsPending,
+      applicationsAccepted,
+      applicationsDeclined,
       totalRegistered: rows.length,
       pending,
       submitted,
