@@ -107,6 +107,17 @@ const NAV_ITEMS = [
       </svg>
     ),
   },
+  {
+    href: '/promoter/analytics',
+    label: 'admin.nav.analytics',
+    exact: false,
+    icon: (
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+          d="M9 19V9m4 10V5m4 14v-7M5 21h14" />
+      </svg>
+    ),
+  },
 ];
 
 // Dev bypass: when Supabase URL is still a placeholder, skip auth check
