@@ -188,3 +188,31 @@ export async function getPromoterEvents(
   if (error) return { data: null, error: error.message };
   return { data: data ?? [], error: null };
 }
+
+/**
+ * List events created by any admin — used by the admin analytics view so
+ * admins share visibility on admin-owned events (not on regular promoter
+ * events, which remain private to their promoter).
+ */
+export async function getAdminAnalyticsEvents(): Promise<
+  ServiceResponse<{ id: string; event_name: string; event_date: string | null; status: string }[]>
+> {
+  // Step 1: resolve admin profile ids (small set).
+  const { data: admins, error: aErr } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('role', 'admin');
+  if (aErr) return { data: null, error: aErr.message };
+  const adminIds = (admins ?? []).map((r) => r.id);
+  if (adminIds.length === 0) return { data: [], error: null };
+
+  // Step 2: fetch events owned by any of those admins.
+  const { data, error } = await supabase
+    .from('events')
+    .select('id, event_name, event_date, status')
+    .in('promoter_id', adminIds)
+    .order('event_date', { ascending: false, nullsFirst: false });
+
+  if (error) return { data: null, error: error.message };
+  return { data: data ?? [], error: null };
+}

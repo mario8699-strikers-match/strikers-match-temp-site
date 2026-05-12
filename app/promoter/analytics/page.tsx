@@ -6,7 +6,7 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { authService } from '@/services/authService';
 import { canPerformAction } from '@/services/subscriptionService';
-import { getEventHealth, getPromoterEvents, type EventHealth } from '@/services/analyticsService';
+import { getEventHealth, getPromoterEvents, getAdminAnalyticsEvents, type EventHealth } from '@/services/analyticsService';
 import type { Profile } from '@/types';
 
 export default function AnalyticsPage() {
@@ -33,7 +33,10 @@ export default function AnalyticsPage() {
       setPaywallReason(check.reason);
       if (!check.allowed) return;
 
-      const { data: evs } = await getPromoterEvents(p.id);
+      // Admins see events created by any admin; promoters see only their own.
+      const { data: evs } = p.role === 'admin'
+        ? await getAdminAnalyticsEvents()
+        : await getPromoterEvents(p.id);
       setEvents(evs ?? []);
       if (evs && evs.length > 0) setSelected(evs[0].id);
     })();
