@@ -184,32 +184,50 @@ function HealthDashboard({ h }: { h: EventHealth }) {
       </section>
 
       <section>
-        <SectionTitle>Cobertura por Categoría de Peso</SectionTitle>
+        <div className="flex items-baseline justify-between mb-3">
+          <SectionTitle>Cobertura por Categoría de Peso</SectionTitle>
+          {h.weightClassesNeeded.length > 0 && (
+            <span className="text-xs text-zinc-500">
+              <strong className="text-zinc-900">{h.weightClassesCovered.length}</strong>
+              {' / '}
+              {h.weightClassesNeeded.length} cubiertas
+            </span>
+          )}
+        </div>
         {h.weightClassesNeeded.length === 0 ? (
           <p className="text-xs text-zinc-500">No se definieron categorías para este evento.</p>
         ) : (
-          <div className="space-y-2">
-            {h.weightClassesNeeded.map((w) => {
-              const covered = h.weightClassesCovered.includes(w);
-              return (
-                <div key={w} className="flex items-center justify-between text-sm border border-zinc-200 px-3 py-2">
-                  <span className="text-zinc-900">{w}</span>
-                  <span className={`text-xs font-bold px-2 py-0.5 border ${
-                    covered
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                      : 'bg-red-50 text-red-700 border-red-200'
-                  }`}>
-                    {covered ? 'Cubierto' : 'Faltante'}
-                  </span>
-                </div>
-              );
-            })}
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+              {h.weightClassesNeeded.map((w) => {
+                const covered = h.weightClassesCovered.includes(w);
+                return (
+                  <div
+                    key={w}
+                    className={`flex items-center justify-between gap-2 px-2.5 py-1.5 text-xs border ${
+                      covered
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                        : 'bg-white border-zinc-200 text-zinc-700'
+                    }`}
+                    title={covered ? 'Cubierto' : 'Faltante'}
+                  >
+                    <span className="truncate font-medium">{w}</span>
+                    <span
+                      className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${
+                        covered ? 'bg-emerald-500' : 'bg-red-400'
+                      }`}
+                      aria-hidden="true"
+                    />
+                  </div>
+                );
+              })}
+            </div>
             {h.missingWeightClasses.length > 0 && (
-              <p className="text-xs text-amber-700 mt-2">
+              <p className="text-xs text-amber-700 mt-3">
                 Faltan {h.missingWeightClasses.length} categorías por cubrir.
               </p>
             )}
-          </div>
+          </>
         )}
       </section>
 
