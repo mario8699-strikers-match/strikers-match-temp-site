@@ -13,6 +13,7 @@
     "settings": "Settings",
     "logout": "Logout",
     "login": "Login",
-    "register": "Register"
+    "register": "Register",
+    "createEvent": "Create Event"
   }
 }

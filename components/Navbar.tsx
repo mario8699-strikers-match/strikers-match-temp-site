@@ -275,6 +275,15 @@ export function Navbar({ activePage }: NavbarProps) {
                     {label}
                   </a>
                 ))}
+                {(profile.role === 'promoter' || profile.role === 'manager' || profile.role === 'admin') && (
+                  <a
+                    href="/events/create"
+                    onClick={() => setMobileOpen(false)}
+                    className="block px-6 py-3 text-sm font-bold text-[#C0001E] hover:bg-[#1A1A1A] transition-colors"
+                  >
+                    + {t('nav.createEvent')}
+                  </a>
+                )}
               </div>
               {/* Logout */}
               <div className="border-t border-[#1A1A1A] py-2">

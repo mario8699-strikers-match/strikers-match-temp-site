@@ -78,7 +78,7 @@ export default function EventsPage() {
           {canCreateEvent && (
             <a
               href="/events/create"
-              className="hidden sm:inline-block bg-brand-red text-white px-4 py-2 text-sm font-semibold hover:bg-brand-red-dark transition-colors"
+              className="inline-block bg-brand-red text-white px-3 py-2 text-xs sm:text-sm sm:px-4 font-semibold hover:bg-brand-red-dark transition-colors whitespace-nowrap"
             >
               + {t('events.createEvent')}
             </a>

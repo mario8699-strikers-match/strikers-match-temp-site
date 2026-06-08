@@ -13,6 +13,7 @@
     "settings": "Configuración",
     "logout": "Cerrar Sesión",
     "login": "Iniciar Sesión",
-    "register": "Registrarse"
+    "register": "Registrarse",
+    "createEvent": "Crear Evento"
   }
 }
