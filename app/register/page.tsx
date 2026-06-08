@@ -81,11 +81,11 @@ export default function RegisterPage() {
     if (!formData.role) newErrors.role = t('auth.errors.roleRequired');
     if (!acceptedTerms) newErrors.terms = tLegal('legal.register.termsRequired');
     if (!formData.date_of_birth) {
-      newErrors.date_of_birth = 'Fecha de nacimiento requerida';
+      newErrors.date_of_birth = t('auth.errors.dobRequired');
     } else {
       const dob = new Date(formData.date_of_birth);
       if (isNaN(dob.getTime()) || dob > new Date()) {
-        newErrors.date_of_birth = 'Fecha invalida';
+        newErrors.date_of_birth = t('auth.errors.dobInvalid');
       }
     }
     setErrors(newErrors);
@@ -150,11 +150,11 @@ export default function RegisterPage() {
           <h1 className="text-3xl font-bold text-zinc-900">{t('auth.register.title')}</h1>
           <p className="mt-2 text-zinc-500 text-sm">{t('auth.register.subtitle')}</p>
           <div className="mt-4 flex items-center gap-2 text-xs font-medium text-zinc-500 tracking-wide uppercase">
-            <span className={step === 1 ? 'text-zinc-900' : ''}>Paso 1</span>
+            <span className={step === 1 ? 'text-zinc-900' : ''}>{t('auth.register.step')} 1</span>
             <span>·</span>
-            <span className={step === 2 ? 'text-zinc-900' : ''}>Paso 2</span>
+            <span className={step === 2 ? 'text-zinc-900' : ''}>{t('auth.register.step')} 2</span>
             <span>·</span>
-            <span className={step === 3 ? 'text-zinc-900' : ''}>Paso 3</span>
+            <span className={step === 3 ? 'text-zinc-900' : ''}>{t('auth.register.step')} 3</span>
           </div>
         </div>
 
@@ -164,14 +164,14 @@ export default function RegisterPage() {
             onClick={goBack}
             className="mb-4 text-sm text-zinc-500 hover:text-zinc-900"
           >
-            ← Regresar
+            {t('auth.register.goBack')}
           </button>
         )}
 
         {/* STEP 1: Account type picker */}
         {step === 1 && (
           <div className="space-y-3">
-            <p className="text-sm text-zinc-700 mb-2">¿Qué tipo de cuenta quieres crear?</p>
+            <p className="text-sm text-zinc-700 mb-2">{t('auth.register.accountTypePrompt')}</p>
 
             <button
               type="button"
@@ -180,11 +180,11 @@ export default function RegisterPage() {
             >
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-sm font-semibold text-zinc-900">Organizo eventos</div>
-                  <div className="text-xs text-zinc-500 mt-0.5">Promotor, Manager o Patrocinador</div>
+                  <div className="text-sm font-semibold text-zinc-900">{t('auth.register.organizeEvents')}</div>
+                  <div className="text-xs text-zinc-500 mt-0.5">{t('auth.register.organizerDesc')}</div>
                 </div>
                 <span className="shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-zinc-900 text-white">
-                  Plan de Organizador
+                  {t('auth.register.organizerPlan')}
                 </span>
               </div>
             </button>
@@ -196,11 +196,11 @@ export default function RegisterPage() {
             >
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-sm font-semibold text-zinc-900">Soy atleta</div>
-                  <div className="text-xs text-zinc-500 mt-0.5">Perfil público en el directorio de atletas</div>
+                  <div className="text-sm font-semibold text-zinc-900">{t('auth.register.imAthlete')}</div>
+                  <div className="text-xs text-zinc-500 mt-0.5">{t('auth.register.athleteDesc')}</div>
                 </div>
                 <span className="shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  Gratis
+                  {t('auth.register.free')}
                 </span>
               </div>
             </button>
@@ -212,11 +212,11 @@ export default function RegisterPage() {
             >
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-sm font-semibold text-zinc-900">Ofrezco servicios para eventos</div>
-                  <div className="text-xs text-zinc-500 mt-0.5">Fotógrafo, cutman, juez, catering, venue y más</div>
+                  <div className="text-sm font-semibold text-zinc-900">{t('auth.register.offerServices')}</div>
+                  <div className="text-xs text-zinc-500 mt-0.5">{t('auth.register.professionalDesc')}</div>
                 </div>
                 <span className="shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  Gratis
+                  {t('auth.register.free')}
                 </span>
               </div>
             </button>
@@ -226,7 +226,7 @@ export default function RegisterPage() {
         {/* STEP 2: Sub-role picker */}
         {step === 2 && accountType === 'organizer' && (
           <div className="space-y-3">
-            <p className="text-sm text-zinc-700 mb-2">Selecciona tu rol como organizador</p>
+            <p className="text-sm text-zinc-700 mb-2">{t('auth.register.selectOrganizerRole')}</p>
             {ORGANIZER_ROLES.map((role) => (
               <button
                 key={role}
@@ -242,7 +242,7 @@ export default function RegisterPage() {
 
         {step === 2 && accountType === 'professional' && (
           <div className="space-y-2">
-            <p className="text-sm text-zinc-700 mb-2">Selecciona el servicio que ofreces</p>
+            <p className="text-sm text-zinc-700 mb-2">{t('auth.register.selectServiceRole')}</p>
             {VENDOR_ROLES.map((role) => (
               <button
                 key={role}
@@ -266,7 +266,7 @@ export default function RegisterPage() {
           )}
 
           <div className="text-xs text-zinc-500">
-            Rol seleccionado:{' '}
+            {t('auth.register.selectedRole')}{' '}
             <span className="font-semibold text-zinc-900">{t(`auth.register.${formData.role}`)}</span>
           </div>
 
@@ -380,7 +380,7 @@ export default function RegisterPage() {
           {/* Date of Birth */}
           <div>
             <label htmlFor="date_of_birth" className="block text-sm font-medium text-zinc-700 mb-1">
-              Fecha de Nacimiento
+              {t('auth.register.dateOfBirth')}
             </label>
             <input
               id="date_of_birth"
@@ -399,14 +399,14 @@ export default function RegisterPage() {
           {formData.role === 'fighter' && (
             <div>
               <label htmlFor="gym_name" className="block text-sm font-medium text-zinc-700 mb-1">
-                Gimnasio Actual
+                {t('auth.register.currentGym')}
               </label>
               <input
                 id="gym_name"
                 type="text"
                 value={formData.gym_name}
                 onChange={(e) => setFormData({ ...formData, gym_name: e.target.value })}
-                placeholder="Nombre del gimnasio donde entrenas"
+                placeholder={t('auth.register.gymPlaceholder')}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 text-sm"
               />
             </div>
@@ -417,27 +417,27 @@ export default function RegisterPage() {
             <>
               <div>
                 <label htmlFor="bio" className="block text-sm font-medium text-zinc-700 mb-1">
-                  Descripción <span className="text-zinc-400 font-normal">(opcional)</span>
+                  {t('auth.register.description')} <span className="text-zinc-400 font-normal">{t('auth.register.optional')}</span>
                 </label>
                 <textarea
                   id="bio"
                   rows={3}
                   value={formData.bio ?? ''}
                   onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                  placeholder="Breve descripción de tu servicio y experiencia"
+                  placeholder={t('auth.register.bioPlaceholder')}
                   className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 text-sm"
                 />
               </div>
               <div>
                 <label htmlFor="instagram" className="block text-sm font-medium text-zinc-700 mb-1">
-                  Instagram <span className="text-zinc-400 font-normal">(opcional)</span>
+                  Instagram <span className="text-zinc-400 font-normal">{t('auth.register.optional')}</span>
                 </label>
                 <input
                   id="instagram"
                   type="text"
                   value={formData.instagram ?? ''}
                   onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
-                  placeholder="@tu_usuario"
+                  placeholder={t('auth.register.instagramPlaceholder')}
                   className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 text-sm"
                 />
               </div>
