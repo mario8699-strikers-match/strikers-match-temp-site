@@ -22,6 +22,14 @@ DROP POLICY IF EXISTS "manual_fighters_delete" ON public.manual_fighters;
 
 -- ── New policies ──
 
+-- Drop any existing incarnations first so re-running the migration is safe.
+DROP POLICY IF EXISTS "manual_fighters_select_all"      ON public.manual_fighters;
+DROP POLICY IF EXISTS "manual_fighters_insert_creator"  ON public.manual_fighters;
+DROP POLICY IF EXISTS "manual_fighters_update_own"      ON public.manual_fighters;
+DROP POLICY IF EXISTS "manual_fighters_update_admin"    ON public.manual_fighters;
+DROP POLICY IF EXISTS "manual_fighters_delete_own"      ON public.manual_fighters;
+DROP POLICY IF EXISTS "manual_fighters_delete_admin"    ON public.manual_fighters;
+
 -- Public read
 CREATE POLICY "manual_fighters_select_all" ON public.manual_fighters
   FOR SELECT USING (true);
