@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { adminService } from '@/services/adminService';
+import { eventService } from '@/services/eventService';
 import type { Event } from '@/types';
 
 type EventWithPromoter = Event & { profiles: { full_name: string } };
@@ -22,9 +23,11 @@ export default function AdminEventsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    adminService.getAllEvents().then(({ data }) => {
-      setEvents((data as EventWithPromoter[]) ?? []);
-      setLoading(false);
+    eventService.autoCompletePastEvents().then(() => {
+      adminService.getAllEvents().then(({ data }) => {
+        setEvents((data as EventWithPromoter[]) ?? []);
+        setLoading(false);
+      });
     });
   }, []);
 

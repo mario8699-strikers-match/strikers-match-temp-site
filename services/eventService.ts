@@ -275,4 +275,31 @@ export const eventService = {
       return {};
     }
   },
+
+  /**
+   * Auto-complete published events whose date has passed.
+   * Returns the number of events updated.
+   */
+  async autoCompletePastEvents(): Promise<number> {
+    try {
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const { data: pastEvents, error } = await supabase
+        .from('events')
+        .select('id')
+        .eq('status', 'published')
+        .lt('event_date', today)
+        .not('event_date', 'is', null);
+      if (error || !pastEvents || pastEvents.length === 0) return 0;
+
+      const ids = pastEvents.map((e: { id: string }) => e.id);
+      const { error: updateError } = await supabase
+        .from('events')
+        .update({ status: 'completed' })
+        .in('id', ids);
+      if (updateError) return 0;
+      return ids.length;
+    } catch {
+      return 0;
+    }
+  },
 };

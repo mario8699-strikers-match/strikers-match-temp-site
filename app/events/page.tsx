@@ -32,7 +32,12 @@ export default function EventsPage() {
 
   useEffect(() => {
     eventService.getAll().then(({ data }) => {
-      setEvents(data ?? []);
+      // Filter out published events whose date has already passed
+      const today = new Date().toISOString().split('T')[0];
+      const filtered = (data ?? []).filter(
+        (e) => !e.event_date || e.status !== 'published' || e.event_date >= today
+      );
+      setEvents(filtered);
       setLoading(false);
     });
     authService.getSession().then(({ data }) => {

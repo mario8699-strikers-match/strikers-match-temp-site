@@ -58,6 +58,9 @@ export default function PromoterDashboardPage() {
       if (!p) { window.location.href = '/login'; return; }
       if (p.role !== 'promoter' && p.role !== 'admin') { window.location.href = '/'; return; }
 
+      // Auto-complete past events first
+      await eventService.autoCompletePastEvents();
+
       const [{ data: evs }, counts] = await Promise.all([
         eventService.getByPromoter(p.id),
         eventService.getApplicationCountsForPromoter(p.id),
