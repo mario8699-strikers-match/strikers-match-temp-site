@@ -49,7 +49,7 @@ export default function VendorProfilePage() {
       const canEditDirectoryProfile =
         VENDOR_ROLES.includes(p.role) ||
         (p.additional_roles ?? []).some((role) => VENDOR_ROLES.includes(role));
-      if (!canEditDirectoryProfile) { window.location.href = '/gallery'; return; }
+      if (!canEditDirectoryProfile) { window.location.href = '/directorio'; return; }
       setProfile(p);
       setFullName(p.full_name ?? '');
       setCity(p.city ?? '');
@@ -159,7 +159,7 @@ export default function VendorProfilePage() {
           <h1 className="text-3xl font-bold text-zinc-900">Mi Perfil</h1>
           <p className="mt-2 text-sm text-zinc-500">
             Actualiza tu información. Tu perfil aparece en el{' '}
-            <a href="/gallery" className="font-medium text-zinc-900 underline hover:text-[#C0001E]">
+            <a href="/directorio" className="font-medium text-zinc-900 underline hover:text-[#C0001E]">
               Directorio
             </a>.
           </p>

@@ -266,13 +266,13 @@ export default function GalleryPage() {
             ) : (
               <>
                 <Link
-                  href={`/login?next=${encodeURIComponent('/gallery')}`}
+                  href={`/login?next=${encodeURIComponent('/directorio')}`}
                   className="min-h-11 border border-zinc-300 px-5 py-3 text-center text-xs font-bold uppercase tracking-widest text-zinc-800 transition-colors hover:bg-zinc-50"
                 >
                   {t('gallery.form.signIn')}
                 </Link>
                 <Link
-                  href={`/register?account=professional&next=${encodeURIComponent('/gallery')}`}
+                  href={`/register?account=professional&next=${encodeURIComponent('/directorio')}`}
                   className="min-h-11 bg-[#C0001E] px-5 py-3 text-center text-xs font-bold uppercase tracking-widest text-white transition-colors hover:bg-[#9A0018]"
                 >
                   {t('gallery.form.createAccount')}

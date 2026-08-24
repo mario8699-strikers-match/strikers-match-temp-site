@@ -19,7 +19,7 @@ const ADMIN_NAV_ITEMS = [
   { href: '/admin/vendors', label: 'admin.nav.vendors', exact: false },
   { href: '/admin/events', label: 'admin.nav.events', exact: false },
   { href: '/admin/matches', label: 'admin.nav.matches', exact: false },
-  { href: '/admin/gallery', label: 'admin.nav.gallery', exact: false },
+  { href: '/admin/directorio', label: 'admin.nav.gallery', exact: false },
   { href: '/admin/analytics', label: 'admin.nav.analytics', exact: false },
 ];
 

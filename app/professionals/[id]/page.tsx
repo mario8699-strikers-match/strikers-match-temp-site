@@ -136,7 +136,7 @@ export default function ProfessionalDetailPage() {
           <div className="py-24 text-center border border-dashed border-zinc-200">
             <p className="text-zinc-500 text-sm">Perfil no encontrado o no disponible.</p>
             <Link
-              href="/gallery"
+              href="/directorio"
               className="inline-block mt-4 text-xs font-bold uppercase tracking-widest text-[#C0001E] hover:underline"
             >
               ← Ver Directorio
@@ -146,7 +146,7 @@ export default function ProfessionalDetailPage() {
           <>
             {/* Back link */}
             <Link
-              href="/gallery"
+              href="/directorio"
               className="inline-block mb-6 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-[#C0001E]"
             >
               ← Directorio

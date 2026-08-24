@@ -28,7 +28,7 @@ export default function PlatformStatusPage() {
               Ver eventos
             </Link>
             <Link
-              href="/gallery"
+              href="/directorio"
               className="block w-full py-3 text-sm font-bold tracking-widest uppercase text-white border border-[#3A3A3A] hover:border-white transition-colors"
             >
               Ir al Directorio

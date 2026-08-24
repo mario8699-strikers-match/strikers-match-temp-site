@@ -30,6 +30,20 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: '/gallery',
+        destination: '/directorio',
+        permanent: true,
+      },
+      {
+        source: '/admin/gallery',
+        destination: '/admin/directorio',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

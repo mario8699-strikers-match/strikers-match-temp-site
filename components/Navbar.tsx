@@ -17,7 +17,7 @@ interface NavbarProps {
 const NAV_LINKS: { href: string; key: ActivePage; label?: string }[] = [
   { href: '/events',        key: 'events' },
   { href: '/fighters',      key: 'fighters' },
-  { href: '/gallery',       key: 'gallery', label: 'Servicios' },
+  { href: '/directorio',    key: 'gallery' },
   { href: '/promoters',     key: 'promoters' },
   { href: '/managers',      key: 'managers', label: 'Representantes' },
   { href: '/sponsors',      key: 'sponsors' },

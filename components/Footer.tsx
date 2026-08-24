@@ -65,7 +65,7 @@ export function Footer() {
               { href: '/promoters', label: 'Promotores' },
               { href: '/managers',  label: 'Representantes' },
               { href: '/sponsors',  label: 'Patrocinadores' },
-              { href: '/gallery',   label: 'Directorio' },
+              { href: '/directorio', label: 'Directorio' },
             ].map(({ href, label }) => (
               <Link
                 key={href}

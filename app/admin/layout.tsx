@@ -103,7 +103,7 @@ const NAV_ITEMS = [
     icon: null,
   },
   {
-    href: '/admin/gallery',
+    href: '/admin/directorio',
     label: 'admin.nav.gallery',
     exact: false,
     icon: (

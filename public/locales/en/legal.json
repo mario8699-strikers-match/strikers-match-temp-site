@@ -15,7 +15,7 @@
       "section4Title": "4. Contact Information Privacy",
       "section4Text": "Fighter contact information (phone number and email address) is strictly restricted to platform administrators. Promoters, managers, sponsors, and other users cannot access fighter contact details. All communication between users must occur through the platform's built-in systems.",
       "section5Title": "5. Data Storage and Security",
-      "section5Text": "Your data is stored securely using industry-standard practices. Account data is managed through Supabase with Row Level Security (RLS) policies enforced at the database level. Uploaded files (photos, flyers, gallery images) are stored on DigitalOcean Spaces with access controls. We use HTTPS encryption for all data in transit.",
+      "section5Text": "Your data is stored securely using industry-standard practices. Account data is managed through Supabase with Row Level Security (RLS) policies enforced at the database level. Uploaded files (photos, flyers, directory listing images) are stored on DigitalOcean Spaces with access controls. We use HTTPS encryption for all data in transit.",
       "section6Title": "6. Minor Protection",
       "section6Text": "Users under 18 years of age require parental or legal guardian consent to use the platform. A digital consent form with a legally-binding signature is required before minors can access fighter profile features. Parent/guardian information is securely stored and accessible only to the minor and platform administrators.",
       "section7Title": "7. Your Rights",

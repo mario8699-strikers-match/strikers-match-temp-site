@@ -104,7 +104,7 @@ export default function PricingPage() {
               Ver eventos
             </Link>
             <Link
-              href="/gallery"
+              href="/directorio"
               className="min-h-11 border border-[#3A3A3A] px-6 py-3 text-center text-xs font-bold uppercase tracking-widest text-white transition-colors hover:bg-[#1A1A1A]"
             >
               Ver Directorio
