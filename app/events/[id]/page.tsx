@@ -673,7 +673,7 @@ export default function EventDetailPage() {
 
   return (
     <EventManageFrame>
-      <div className="mx-auto w-full max-w-2xl">
+      <div className="mx-auto w-full max-w-6xl">
         {/* Breadcrumb */}
         <div className="mb-6">
           <Link href="/events" className="text-sm text-zinc-500 hover:text-zinc-900 flex items-center gap-1">
@@ -685,37 +685,41 @@ export default function EventDetailPage() {
         </div>
 
         {/* Title row */}
-        <div className="flex flex-col items-stretch justify-between mb-8 gap-4 sm:flex-row sm:items-start">
-          <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-bold text-zinc-900">{event.event_name}</h1>
+        <div className="mb-8 space-y-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <h1 className="max-w-3xl break-words font-display text-3xl font-black uppercase leading-none text-zinc-900 sm:text-4xl">
+                {event.event_name}
+              </h1>
+            </div>
             <span className={`px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[event.status]}`}>
               {t(`events.status.${event.status}`)}
             </span>
           </div>
           {canManageEvent && !editing && (
-            <div className="flex flex-col items-stretch gap-2 flex-shrink-0 sm:flex-row sm:items-center">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
               {eventToolAccess.settings && (
-                <a href={`/events/${event.id}/manage/settings`} className="min-h-11 border border-zinc-300 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-zinc-800">
+                <a href={`/events/${event.id}/manage/settings`} className="flex min-h-11 items-center justify-center border border-zinc-300 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-zinc-800">
                   {t('events.engine.nav.settings')}
                 </a>
               )}
               {eventToolAccess.matchmaking && (
-                <a href={`/events/${event.id}/manage/matchmaking`} className="min-h-11 bg-zinc-900 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-white">
+                <a href={`/events/${event.id}/manage/matchmaking`} className="flex min-h-11 items-center justify-center bg-zinc-900 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-white">
                   {t('events.engine.nav.matchmaking')}
                 </a>
               )}
               {eventToolAccess.bouts && (
-                <a href={`/events/${event.id}/manage/bouts`} className="min-h-11 border border-zinc-300 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-zinc-800">
+                <a href={`/events/${event.id}/manage/bouts`} className="flex min-h-11 items-center justify-center border border-zinc-300 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-zinc-800">
                   {t('events.engine.nav.bouts')}
                 </a>
               )}
               {eventToolAccess.print && (
-                <a href={`/events/${event.id}/manage/print`} className="min-h-11 border border-zinc-300 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-zinc-800">
+                <a href={`/events/${event.id}/manage/print`} className="flex min-h-11 items-center justify-center border border-zinc-300 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-zinc-800">
                   {t('events.engine.nav.print')}
                 </a>
               )}
               {eventToolAccess.operation && (
-                <a href={`/events/${event.id}/manage/live`} className="min-h-11 border border-zinc-300 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-zinc-800">
+                <a href={`/events/${event.id}/manage/live`} className="flex min-h-11 items-center justify-center border border-zinc-300 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-zinc-800">
                   {t('events.engine.nav.live')}
                 </a>
               )}
@@ -723,17 +727,17 @@ export default function EventDetailPage() {
                 <button
                   type="button"
                   disabled
-                  className="min-h-11 cursor-not-allowed border border-zinc-200 bg-zinc-100 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-zinc-400"
+                  className="flex min-h-11 cursor-not-allowed items-center justify-center border border-zinc-200 bg-zinc-100 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-zinc-400"
                 >
                   {t('events.engine.nav.streaming')} · {t('events.engine.streaming.comingSoon')}
                 </button>
               )}
               {canEditEvent && (
                 <>
-                  <button onClick={enterEdit} className="min-h-11 px-3 py-2 text-sm font-medium text-zinc-700 border border-zinc-300 hover:bg-zinc-50 transition-colors">
+                  <button onClick={enterEdit} className="min-h-11 border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50">
                     {t('events.editEvent')}
                   </button>
-                  <button onClick={() => setShowDeleteConfirm(true)} className="min-h-11 px-3 py-2 text-sm font-medium text-red-600 border border-red-200 hover:bg-red-50 transition-colors">
+                  <button onClick={() => setShowDeleteConfirm(true)} className="min-h-11 border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50">
                     {t('events.deleteEvent')}
                   </button>
                 </>

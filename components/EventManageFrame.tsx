@@ -47,6 +47,14 @@ export function EventManageFrame({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const setInitialSidebarState = () => {
+      setSidebarOpen(window.innerWidth >= 1024);
+    };
+
+    setInitialSidebarState();
+  }, []);
+
+  useEffect(() => {
     window.requestAnimationFrame(() => {
       if (window.innerWidth < 768) setSidebarOpen(false);
     });
@@ -97,7 +105,7 @@ export function EventManageFrame({ children }: { children: ReactNode }) {
           ref={sidebarRef}
           className={`fixed left-0 top-0 z-30 flex h-full w-56 flex-shrink-0 flex-col bg-zinc-950 transition-transform duration-200 ease-in-out ${
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          } lg:translate-x-0`}
+          }`}
         >
           <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-5">
             <div>
@@ -148,7 +156,7 @@ export function EventManageFrame({ children }: { children: ReactNode }) {
           </div>
         </aside>
 
-        <div className="flex min-h-screen flex-1 flex-col lg:pl-56">
+        <div className={`flex min-h-screen flex-1 flex-col transition-[padding] duration-200 ease-in-out ${sidebarOpen ? 'lg:pl-56' : 'lg:pl-0'}`}>
           <div className="sticky top-0 z-10 flex h-12 items-center justify-between border-b border-zinc-200 bg-white px-4 sm:px-6">
             <button
               type="button"

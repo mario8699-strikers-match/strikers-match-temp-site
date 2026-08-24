@@ -161,10 +161,6 @@
         {
           "title": "Gestiona perfiles",
           "body": "Revisa peleadores, representantes, promotores, patrocinadores y profesionales desde las secciones de administración."
-        },
-        {
-          "title": "Evita cambios manuales innecesarios",
-          "body": "Las acciones críticas deben pasar por servicios, RPCs y políticas RLS para mantener consistencia."
         }
       ]
     },

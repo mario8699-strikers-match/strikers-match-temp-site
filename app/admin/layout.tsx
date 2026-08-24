@@ -166,6 +166,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return () => { active = false; };
   }, []);
 
+  useEffect(() => {
+    const setInitialSidebarState = () => {
+      setSidebarOpen(window.innerWidth >= 1024);
+    };
+
+    setInitialSidebarState();
+  }, []);
+
   // Close sidebar on route change (mobile only)
   useEffect(() => {
     if (window.innerWidth < 768) setSidebarOpen(false);
@@ -295,7 +303,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* ── Main ───────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className={`flex-1 flex flex-col min-h-screen transition-[padding] duration-200 ease-in-out ${sidebarOpen ? 'lg:pl-56' : 'lg:pl-0'}`}>
         {/* Top bar */}
         <div className="h-12 bg-white border-b border-zinc-200 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-10">
           {/* Hamburger (always visible) */}

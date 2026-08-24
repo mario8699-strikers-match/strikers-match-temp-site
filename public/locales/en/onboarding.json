@@ -161,10 +161,6 @@
         {
           "title": "Manage profiles",
           "body": "Review fighters, managers, promoters, sponsors, and professionals from the admin sections."
-        },
-        {
-          "title": "Avoid unnecessary manual changes",
-          "body": "Critical actions should go through services, RPCs, and RLS policies to keep data consistent."
         }
       ]
     },
