@@ -86,10 +86,10 @@ export default function PricingPage() {
         </section>
 
         <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6">
-          <div className="border border-[#2A2A2A] bg-[#0F0F0F] p-6 sm:p-8">
-            <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-[#C0001E]">Studio</p>
-            <h2 className="font-display text-3xl font-black uppercase text-white">Próximamente</h2>
-            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-[#B5B5B5]">
+          <div className="border border-[#3A3A3A] bg-[#151515] p-6 opacity-45 grayscale sm:p-8">
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-[#9A9A9A]">Studio</p>
+            <h2 className="font-display text-3xl font-black uppercase text-[#B5B5B5]">Próximamente</h2>
+            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-[#9A9A9A]">
               Herramientas de producción para preparar cámaras locales, gráficos y operación de transmisión desde el evento.
             </p>
           </div>

@@ -298,6 +298,12 @@
       "streaming": {
         "title": "Studio del evento",
         "premiumFeature": "Studio",
+        "comingSoon": "Próximamente",
+        "disabledTitle": "Studio no disponible todavía",
+        "disabledBody": "Esta sección está pausada hasta que la infraestructura de video esté lista. Por ahora no se pueden operar cámaras, grabación local, destinos simultáneos ni salida en vivo desde Studio.",
+        "disabledDestinations": "La conexión simultánea a Facebook, Instagram, TikTok, YouTube y RTMP personalizado está desactivada.",
+        "disabledCameras": "Los enlaces de cámara y el flujo multicámara están desactivados hasta la siguiente fase de infraestructura.",
+        "disabledLocalCapture": "La captura y grabación local quedan desactivadas para evitar usar una función incompleta.",
         "studioStatus": "Studio",
         "enabled": "Studio disponible",
         "enabledBody": "Este evento tiene acceso a Studio. La salida pública en vivo se conectará cuando esté configurada la infraestructura operativa.",

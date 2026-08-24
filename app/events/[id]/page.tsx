@@ -720,9 +720,13 @@ export default function EventDetailPage() {
                 </a>
               )}
               {eventToolAccess.production && (
-                <a href={`/events/${event.id}/manage/streaming`} className="min-h-11 border border-zinc-300 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-zinc-800">
-                  {t('events.engine.nav.streaming')}
-                </a>
+                <button
+                  type="button"
+                  disabled
+                  className="min-h-11 cursor-not-allowed border border-zinc-200 bg-zinc-100 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-zinc-400"
+                >
+                  {t('events.engine.nav.streaming')} · {t('events.engine.streaming.comingSoon')}
+                </button>
               )}
               {canEditEvent && (
                 <>

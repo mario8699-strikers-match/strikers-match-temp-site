@@ -21,6 +21,7 @@ const CAMERA_SLOTS = [
 ] as const;
 
 const STREAM_DESTINATIONS = ['facebook', 'instagram', 'tiktok', 'youtube', 'customRtmp'] as const;
+const STUDIO_DISABLED = true;
 
 type CameraSlot = (typeof CAMERA_SLOTS)[number];
 
@@ -296,6 +297,49 @@ export default function EventStreamingPage() {
         <Link href={`/events/${eventId}`} className="mt-6 inline-block min-h-11 border border-zinc-300 px-4 py-3 text-sm font-bold text-zinc-800">
           {t('events.engine.nav.backToEvent')}
         </Link>
+      </Frame>
+    );
+  }
+
+  if (STUDIO_DISABLED) {
+    return (
+      <Frame>
+        <header className="flex flex-col gap-4 border-b border-zinc-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-zinc-400">{t('events.engine.brand')}</p>
+            <h1 className="mt-2 text-4xl font-black uppercase text-zinc-400 sm:text-5xl">{t('events.engine.streaming.title')}</h1>
+            <p className="mt-2 text-sm text-zinc-500">{event?.event_name}</p>
+          </div>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-5">
+            <Link href={`/events/${eventId}/manage/settings`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">{t('events.engine.nav.settings')}</Link>
+            <Link href={`/events/${eventId}/manage/matchmaking`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">{t('events.engine.nav.matchmaking')}</Link>
+            <Link href={`/events/${eventId}/manage/bouts`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">{t('events.engine.nav.bouts')}</Link>
+            <Link href={`/events/${eventId}/manage/print`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">{t('events.engine.nav.print')}</Link>
+            <Link href={`/events/${eventId}`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">{t('events.engine.nav.event')}</Link>
+          </div>
+        </header>
+
+        <section className="border border-zinc-200 bg-zinc-50 p-5 text-zinc-500 sm:p-6">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-zinc-400">{t('events.engine.streaming.comingSoon')}</p>
+          <h2 className="mt-2 text-3xl font-black uppercase text-zinc-500">{t('events.engine.streaming.disabledTitle')}</h2>
+          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-zinc-500">{t('events.engine.streaming.disabledBody')}</p>
+        </section>
+
+        <section className="pointer-events-none select-none opacity-40 grayscale">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+            <DisabledStudioBlock title={t('events.engine.streaming.destinations.title')} body={t('events.engine.streaming.disabledDestinations')} />
+            <DisabledStudioBlock title={t('events.engine.streaming.cameras.title')} body={t('events.engine.streaming.disabledCameras')} />
+            <DisabledStudioBlock title={t('events.engine.streaming.localCapture')} body={t('events.engine.streaming.disabledLocalCapture')} />
+          </div>
+          <div className="mt-5 border border-zinc-300 bg-white p-4">
+            <div className="aspect-video bg-zinc-900" />
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="h-11 border border-zinc-300 bg-zinc-100" />
+              <div className="h-11 border border-zinc-300 bg-zinc-100" />
+              <div className="h-11 border border-zinc-300 bg-zinc-100" />
+            </div>
+          </div>
+        </section>
       </Frame>
     );
   }
@@ -657,6 +701,15 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
       <h2 className="border-b border-zinc-200 pb-3 text-sm font-black uppercase tracking-widest text-zinc-900">{title}</h2>
       <div className="pt-4">{children}</div>
     </section>
+  );
+}
+
+function DisabledStudioBlock({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="border border-zinc-300 bg-white p-4">
+      <h2 className="border-b border-zinc-200 pb-3 text-sm font-black uppercase tracking-widest text-zinc-500">{title}</h2>
+      <p className="pt-4 text-sm leading-relaxed text-zinc-500">{body}</p>
+    </div>
   );
 }
 

@@ -300,6 +300,12 @@
       "streaming": {
         "title": "Event Studio",
         "premiumFeature": "Studio",
+        "comingSoon": "Coming soon",
+        "disabledTitle": "Studio is not available yet",
+        "disabledBody": "This section is paused until the video infrastructure is ready. Camera operation, local recording, simultaneous destinations, and live output cannot be used from Studio right now.",
+        "disabledDestinations": "Simultaneous output to Facebook, Instagram, TikTok, YouTube, and custom RTMP is disabled.",
+        "disabledCameras": "Camera links and the multi-camera workflow are disabled until the next infrastructure phase.",
+        "disabledLocalCapture": "Local capture and recording are disabled to avoid exposing an incomplete feature.",
         "studioStatus": "Studio",
         "enabled": "Studio available",
         "enabledBody": "This event has Studio access. Public live output will connect when the operational infrastructure is configured.",
