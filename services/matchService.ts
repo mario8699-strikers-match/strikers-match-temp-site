@@ -26,6 +26,11 @@ export interface Match {
   fighter_a_status: 'pending' | 'accepted' | 'declined';
   fighter_b_status: 'pending' | 'accepted' | 'declined';
   match_status: 'pending' | 'confirmed' | 'cancelled';
+  compatibility_score?: number | null;
+  score_breakdown?: Record<string, number>;
+  warnings?: string[];
+  rule_version?: number | null;
+  approved_at?: string | null;
   created_at: string;
 }
 
@@ -55,63 +60,31 @@ const SELECT_WITH_CONTEXT = `
   fighter_b:fighter_b_id ( id, weight_class, profiles ( full_name, city ) )
 `;
 
-/** Order ids so fighter_a_id < fighter_b_id (DB constraint). */
-function orderPair(idX: string, idY: string): { a: string; b: string } {
-  return idX < idY ? { a: idX, b: idY } : { a: idY, b: idX };
-}
-
 // ── Promoter: propose a match between two confirmed fighters ──
 export async function proposeMatch(
   eventId: string,
   fighterIdX: string,
-  fighterIdY: string
+  fighterIdY: string,
+  compatibility?: {
+    score: number;
+    scoreBreakdown: Record<string, number>;
+    warnings: string[];
+    ruleVersion: number;
+  }
 ): Promise<ServiceResponse<Match>> {
   if (fighterIdX === fighterIdY) {
     return { data: null, error: 'No se puede emparejar a un peleador consigo mismo.' };
   }
 
-  const { a, b } = orderPair(fighterIdX, fighterIdY);
-
-  // Both must be confirmed-paid for this event
-  const { data: regs, error: regErr } = await supabase
-    .from('event_registrations')
-    .select('fighter_id, payment_status')
-    .eq('event_id', eventId)
-    .in('fighter_id', [a, b]);
-
-  if (regErr) return { data: null, error: regErr.message };
-
-  const okA = regs?.find((r) => r.fighter_id === a)?.payment_status === 'confirmed';
-  const okB = regs?.find((r) => r.fighter_id === b)?.payment_status === 'confirmed';
-  if (!okA || !okB) {
-    return { data: null, error: 'Ambos peleadores deben tener pago confirmado para emparejarse.' };
-  }
-
-  // Block duplicate pairings (DB constraint also enforces this)
-  const { data: existing } = await supabase
-    .from('matches')
-    .select('id, match_status')
-    .eq('event_id', eventId)
-    .eq('fighter_a_id', a)
-    .eq('fighter_b_id', b)
-    .maybeSingle();
-
-  if (existing && existing.match_status !== 'cancelled') {
-    return { data: null, error: 'Ya existe una propuesta de pelea para estos atletas.' };
-  }
-
-  const { data, error } = await supabase
-    .from('matches')
-    .insert({
-      event_id: eventId,
-      fighter_a_id: a,
-      fighter_b_id: b,
-      fighter_a_status: 'pending',
-      fighter_b_status: 'pending',
-      match_status: 'pending',
-    })
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc('propose_event_match', {
+    target_event_id: eventId,
+    fighter_x_id: fighterIdX,
+    fighter_y_id: fighterIdY,
+    next_compatibility_score: compatibility?.score ?? null,
+    next_score_breakdown: compatibility?.scoreBreakdown ?? {},
+    next_warnings: compatibility?.warnings ?? [],
+    next_rule_version: compatibility?.ruleVersion ?? null,
+  });
 
   if (error) return { data: null, error: error.message };
   return { data: data as Match, error: null };

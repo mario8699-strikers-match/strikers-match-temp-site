@@ -1,13 +1,16 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, type FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { fighterService } from '@/services/fighterService';
+import { fighterFollowService } from '@/services/fighterFollowService';
 import { manualFighterService } from '@/services/manualFighterService';
 import { supabase } from '@/lib/supabaseClient';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Pagination } from '@/components/Pagination';
+import { RecordValue } from '@/components/CombatRecord';
 import type { FighterWithProfile, ManualFighterWithCreator } from '@/types';
 
 const PAGE_SIZE = 12;
@@ -19,44 +22,47 @@ type Entry =
 
 export default function FightersPage() {
   const { t } = useTranslation('fighters');
+  const router = useRouter();
 
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'available'>('all');
+  const [searchDraft, setSearchDraft] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
+  const [followerCounts, setFollowerCounts] = useState<Record<string, number>>({});
 
-  const loadAll = useCallback(() => {
-    setLoading(true);
+  const loadAll = useCallback(async () => {
     const registeredPromise = filter === 'available'
       ? fighterService.getAvailable()
       : fighterService.getAll();
 
-    Promise.all([registeredPromise, manualFighterService.getAllPublic()]).then(
-      ([regRes, manualRes]) => {
-        const registered: Entry[] = ((regRes.data as FighterWithProfile[]) ?? [])
-          .map((f) => ({ kind: 'registered' as const, data: f }));
+    try {
+      const [regRes, manualRes] = await Promise.all([registeredPromise, manualFighterService.getAllPublic()]);
+      const registered: Entry[] = ((regRes.data as FighterWithProfile[]) ?? [])
+        .map((f) => ({ kind: 'registered' as const, data: f }));
 
-        let manual: Entry[] = (manualRes.data ?? [])
-          .map((m) => ({ kind: 'manual' as const, data: m }));
+      let manual: Entry[] = (manualRes.data ?? [])
+        .map((m) => ({ kind: 'manual' as const, data: m }));
 
-        if (filter === 'available') {
-          manual = manual.filter((e) => e.data.is_available);
-        }
-
-        // Interleave by creation date desc — both already sorted desc from backend
-        const combined = [...registered, ...manual].sort((a, b) => {
-          const da = new Date(a.data.created_at).getTime();
-          const db = new Date(b.data.created_at).getTime();
-          return db - da;
-        });
-        setEntries(combined);
-        setLoading(false);
+      if (filter === 'available') {
+        manual = manual.filter((e) => e.data.is_available);
       }
-    );
+
+      // Interleave by creation date desc — both already sorted desc from backend
+      const combined = [...registered, ...manual].sort((a, b) => {
+        const da = new Date(a.data.created_at).getTime();
+        const db = new Date(b.data.created_at).getTime();
+        return db - da;
+      });
+      setEntries(combined);
+    } finally {
+      setLoading(false);
+    }
   }, [filter]);
 
   useEffect(() => {
-    loadAll();
+    void loadAll();
   }, [loadAll]);
 
   // Supabase Realtime: auto-refresh when availability changes
@@ -73,14 +79,16 @@ export default function FightersPage() {
             old.is_available !== updated.is_available ||
             old.short_notice_ready !== updated.short_notice_ready
           ) {
-            loadAll();
+            void loadAll();
           }
         }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'manual_fighters' },
-        () => loadAll()
+        () => {
+          void loadAll();
+        }
       )
       .subscribe();
 
@@ -91,22 +99,61 @@ export default function FightersPage() {
 
   const goTo = (entry: Entry) => {
     if (entry.kind === 'manual') {
-      window.location.href = `/fighters/manual/${entry.data.id}`;
+      router.push(`/fighters/manual/${entry.data.id}`);
     } else {
-      window.location.href = `/fighters/${entry.data.id}`;
+      router.push(`/fighters/${entry.data.id}`);
     }
   };
 
-  // Reset page when filter changes
-  useEffect(() => {
-    setPage(1);
-  }, [filter]);
+  const filteredEntries = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return entries;
 
-  const totalPages = Math.ceil(entries.length / PAGE_SIZE);
+    return entries.filter((entry) => {
+      const isManual = entry.kind === 'manual';
+      const name = isManual ? entry.data.full_name : (entry.data.profiles?.full_name ?? '');
+      const city = isManual ? (entry.data.city ?? '') : (entry.data.profiles?.city ?? '');
+      const weightClass = entry.data.weight_class ?? '';
+      const gym = entry.data.gym_name ?? '';
+      const disciplines = isManual
+        ? (entry.data.discipline ? [entry.data.discipline] : [])
+        : (entry.data.disciplines ?? []);
+      return [name, city, weightClass, gym, ...disciplines]
+        .some((value) => value.toLowerCase().includes(query));
+    });
+  }, [entries, searchQuery]);
+
+  const totalPages = Math.ceil(filteredEntries.length / PAGE_SIZE);
   const pageEntries = useMemo(
-    () => entries.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [entries, page]
+    () => filteredEntries.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filteredEntries, page]
   );
+  const pageRegisteredFighterIds = useMemo(
+    () => pageEntries
+      .filter((entry): entry is { kind: 'registered'; data: FighterWithProfile } => entry.kind === 'registered')
+      .map((entry) => entry.data.id),
+    [pageEntries]
+  );
+  const pageRegisteredFighterIdsKey = pageRegisteredFighterIds.join(',');
+
+  useEffect(() => {
+    if (!pageRegisteredFighterIdsKey) return;
+    let cancelled = false;
+
+    fighterFollowService.getFollowerCounts(pageRegisteredFighterIds).then(({ data }) => {
+      if (!cancelled && data) {
+        setFollowerCounts((current) => ({ ...current, ...data }));
+      }
+    });
+
+    return () => { cancelled = true; };
+  }, [pageRegisteredFighterIds, pageRegisteredFighterIdsKey]);
+
+  const runSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setPage(1);
+    setSearchQuery(searchDraft);
+  };
 
   return (
     <div className="min-h-screen bg-white font-sans flex flex-col">
@@ -115,7 +162,7 @@ export default function FightersPage() {
       {/* Page content */}
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Title + filters */}
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-10">
+        <div className="flex flex-col gap-6 mb-10">
           <div>
             <p className="text-xs font-bold tracking-[0.25em] uppercase mb-2" style={{ color: '#C0001E' }}>Strikers Match</p>
             <h1 className="font-display font-black uppercase leading-none" style={{ fontSize: 'clamp(2.5rem,6vw,4.5rem)', letterSpacing: '-0.02em', color: '#0A0A0A' }}>
@@ -123,28 +170,51 @@ export default function FightersPage() {
             </h1>
             <p className="mt-2 text-sm" style={{ color: '#5A5A5A' }}>{t('fighters.subtitle')}</p>
           </div>
-          <div className="flex gap-0 border border-zinc-200 overflow-hidden">
-            {(['all', 'available'] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => { setLoading(true); setFilter(f); }}
-                className={`px-4 py-2 text-xs font-bold tracking-widest uppercase transition-colors ${
-                  filter === f
-                    ? 'bg-[#0A0A0A] text-white'
-                    : 'bg-white text-[#5A5A5A] hover:bg-zinc-50'
-                }`}
-              >
-                {t(`fighters.filter.${f}`)}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+            <form onSubmit={runSearch} className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+              <label className="block">
+                <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-700">{t('fighters.search.label')}</span>
+                <input
+                  type="search"
+                  value={searchDraft}
+                  onChange={(event) => setSearchDraft(event.target.value)}
+                  placeholder={t('fighters.search.placeholder')}
+                  className="min-h-12 w-full border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 outline-none focus:border-zinc-900"
+                />
+              </label>
+              <button type="submit" className="min-h-12 border border-zinc-900 bg-zinc-900 px-6 py-3 text-xs font-black uppercase tracking-widest text-white sm:self-end">
+                {t('fighters.search.button')}
               </button>
-            ))}
+            </form>
+
+            <div className="flex gap-0 overflow-hidden border border-zinc-200">
+              {(['all', 'available'] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => {
+                    if (filter === f) return;
+                    setPage(1);
+                    setLoading(true);
+                    setFilter(f);
+                  }}
+                  className={`min-h-12 px-4 py-2 text-xs font-bold tracking-widest uppercase transition-colors ${
+                    filter === f
+                      ? 'bg-[#0A0A0A] text-white'
+                      : 'bg-white text-[#5A5A5A] hover:bg-zinc-50'
+                  }`}
+                >
+                  {t(`fighters.filter.${f}`)}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
         {loading ? (
           <div className="py-24 text-center text-zinc-400 text-sm">{t('fighters.loading')}</div>
-        ) : entries.length === 0 ? (
+        ) : filteredEntries.length === 0 ? (
           <div className="py-24 text-center border border-dashed border-zinc-200">
-            <p className="text-zinc-500 text-sm">{t('fighters.empty')}</p>
+            <p className="text-zinc-500 text-sm">{searchQuery ? t('fighters.search.empty') : t('fighters.empty')}</p>
           </div>
         ) : (
           <>
@@ -157,6 +227,7 @@ export default function FightersPage() {
               const city = isManual
                 ? entry.data.city
                 : entry.data.profiles?.city;
+              const age = isManual ? null : getAge(entry.data.profiles?.date_of_birth);
               const verified = !isManual && entry.data.verified;
               const weightClass = entry.data.weight_class;
               const disciplines = isManual
@@ -169,13 +240,28 @@ export default function FightersPage() {
               const isAvailable = isManual
                 ? entry.data.is_available
                 : entry.data.is_available;
+              const followers = isManual ? null : (followerCounts[entry.data.id] ?? 0);
+              const photoUrl = entry.data.photo_url;
+              const initials = getInitials(name);
 
               return (
                 <div
                   key={`${entry.kind}-${entry.data.id}`}
-                  className="border border-zinc-200 bg-white p-6 hover:border-[#C0001E] transition-colors group cursor-pointer"
+                  className="border border-zinc-200 bg-white hover:border-[#C0001E] transition-colors group cursor-pointer overflow-hidden"
                   onClick={() => goTo(entry)}
                 >
+                  <div className="aspect-[4/3] w-full bg-zinc-100">
+                    {photoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={photoUrl} alt={name} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-zinc-100">
+                        <span className="text-4xl font-black uppercase text-zinc-400">{initials}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-6">
                   {/* Name + verified/roster badge */}
                   <div className="flex items-start justify-between mb-3 gap-2">
                     <div>
@@ -201,23 +287,33 @@ export default function FightersPage() {
                   {/* Stats */}
                   <div className="grid grid-cols-3 gap-2 mb-4 text-center">
                     <div className="bg-zinc-50 py-2">
-                      <p className="text-lg font-bold text-zinc-900">{wins}</p>
+                      <p className="text-lg font-bold"><RecordValue part="wins" value={wins} /></p>
                       <p className="text-xs text-zinc-500">{t('fighters.wins')}</p>
                     </div>
                     <div className="bg-zinc-50 py-2">
-                      <p className="text-lg font-bold text-zinc-900">{losses}</p>
+                      <p className="text-lg font-bold"><RecordValue part="losses" value={losses} /></p>
                       <p className="text-xs text-zinc-500">{t('fighters.losses')}</p>
                     </div>
                     <div className="bg-zinc-50 py-2">
-                      <p className="text-lg font-bold text-zinc-900">{draws}</p>
+                      <p className="text-lg font-bold"><RecordValue part="draws" value={draws} /></p>
                       <p className="text-xs text-zinc-500">{t('fighters.draws')}</p>
                     </div>
                   </div>
 
                   {/* Meta */}
                   <div className="flex flex-wrap gap-2">
+                    {age !== null && (
+                      <span className="text-xs bg-zinc-100 text-zinc-700 px-2 py-1">
+                        {t('fighters.age')}: {age}
+                      </span>
+                    )}
                     {weightClass && (
                       <span className="text-xs bg-zinc-100 text-zinc-700 px-2 py-1">{weightClass}</span>
+                    )}
+                    {followers !== null && (
+                      <span className="text-xs bg-zinc-100 text-zinc-700 px-2 py-1">
+                        {followers} {followers === 1 ? t('fighters.follower') : t('fighters.followers')}
+                      </span>
                     )}
                     {disciplines.map(d => (
                       <span key={d} className="text-xs font-bold px-2 py-1 uppercase tracking-wide bg-[#0A0A0A] text-white">{d}</span>
@@ -228,6 +324,7 @@ export default function FightersPage() {
                     <span className={`text-xs px-2 py-1 ${isAvailable ? 'bg-emerald-50 text-emerald-700' : 'bg-zinc-100 text-zinc-500'}`}>
                       {isAvailable ? t('fighters.available') : t('fighters.unavailable')}
                     </span>
+                  </div>
                   </div>
                 </div>
               );
@@ -241,4 +338,28 @@ export default function FightersPage() {
       <Footer />
     </div>
   );
+}
+
+function getInitials(name: string) {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || 'SM';
+}
+
+function getAge(dateOfBirth?: string | null): number | null {
+  if (!dateOfBirth) return null;
+  const birthDate = new Date(dateOfBirth);
+  if (Number.isNaN(birthDate.getTime())) return null;
+
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age -= 1;
+  }
+
+  return age >= 0 ? age : null;
 }

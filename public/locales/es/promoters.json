@@ -7,6 +7,23 @@
     "events": "eventos",
     "city": "Ciudad",
     "contact": "Contactar",
-    "viewEvents": "Ver Eventos"
+    "viewEvents": "Ver Eventos",
+    "loginToViewEvents": "Inicia sesión para ver eventos",
+    "flyerAlt": "Cartel de {{name}}",
+    "federation": {
+      "profileLabel": "Clasificación del promotor",
+      "profileHelp": "Usa Federado solo si tu promotora trabaja bajo una federación o asociación reconocida. Los promotores actuales quedan como Independientes hasta que se actualicen.",
+      "updateFailed": "No se pudo actualizar la clasificación del promotor.",
+      "federated": "Federado",
+      "independent": "Independiente",
+      "filter": {
+        "federated": "Federados",
+        "independent": "Independientes"
+      },
+      "empty": {
+        "federated": "No hay promotores federados registrados.",
+        "independent": "No hay promotores independientes registrados."
+      }
+    }
   }
 }

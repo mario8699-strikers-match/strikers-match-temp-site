@@ -1,32 +1,117 @@
 import { supabase } from '@/lib/supabaseClient';
 import { uploadFile } from '@/lib/storageClient';
-import type { LoginFormData, RegisterFormData, ServiceResponse, AuthSession, UserRole } from '@/types';
+import type { LoginFormData, RegisterFormData, ServiceResponse, AuthSession, UserRole, PromoterFederationStatus, Profile } from '@/types';
+
+const SESSION_PROFILE_COLUMNS = `
+  id, full_name, email, role, city, state, country, phone, date_of_birth,
+  bio, instagram, photo_url, promoter_federation_status, is_available, additional_roles, is_banned,
+  created_at, updated_at
+`;
+
+const SESSION_CACHE_MS = 30_000;
+const PROFILE_RETRY_DELAYS_MS = [250, 500, 1000];
+let sessionCache: { expiresAt: number; response: ServiceResponse<AuthSession> } | null = null;
+let sessionRequest: Promise<ServiceResponse<AuthSession>> | null = null;
+
+export const AUTH_PROFILE_MISSING_ERROR = 'AUTH_PROFILE_MISSING';
+export const AUTH_PROFILE_UNAVAILABLE_ERROR = 'AUTH_PROFILE_UNAVAILABLE';
+
+function clearSessionCache() {
+  sessionCache = null;
+  sessionRequest = null;
+}
+
+function cacheSessionResponse(response: ServiceResponse<AuthSession>) {
+  if (response.data?.user && response.data.profile) {
+    sessionCache = {
+      expiresAt: Date.now() + SESSION_CACHE_MS,
+      response,
+    };
+  } else {
+    sessionCache = null;
+  }
+  return response;
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 async function getAccessToken(): Promise<string | null> {
   const { data: { session } } = await supabase.auth.getSession();
   return session?.access_token ?? null;
 }
 
+async function fetchProfileByUserId(
+  userId: string,
+  options: { retry?: boolean } = {}
+): Promise<{ profile: Profile | null; error: string | null }> {
+  const retryDelays = options.retry ? PROFILE_RETRY_DELAYS_MS : [];
+  let lastError: string | null = null;
+
+  for (let attempt = 0; attempt <= retryDelays.length; attempt += 1) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select(SESSION_PROFILE_COLUMNS)
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (!error && data) return { profile: data as Profile, error: null };
+    if (error) lastError = error.message;
+
+    const delay = retryDelays[attempt];
+    if (delay) await wait(delay);
+  }
+
+  return { profile: null, error: lastError };
+}
+
+async function fetchSessionWithProfile(): Promise<ServiceResponse<AuthSession>> {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error || !session) return { data: null, error: error?.message ?? null };
+
+    const { profile, error: profileError } = await fetchProfileByUserId(session.user.id);
+
+    return {
+      data: {
+        user: { id: session.user.id, email: session.user.email! },
+        profile,
+      },
+      error: profileError ? AUTH_PROFILE_UNAVAILABLE_ERROR : null,
+    };
+  } catch {
+    return { data: null, error: 'An unexpected error occurred.' };
+  }
+}
+
 export const authService = {
   async login({ email, password }: LoginFormData): Promise<ServiceResponse<AuthSession>> {
     try {
+      clearSessionCache();
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) return { data: null, error: error.message };
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', data.user.id)
-        .single();
+      const { profile, error: profileError } = await fetchProfileByUserId(data.user.id, { retry: true });
 
-      return {
+      if (profileError) {
+        await supabase.auth.signOut();
+        return { data: null, error: AUTH_PROFILE_UNAVAILABLE_ERROR };
+      }
+
+      if (!profile) {
+        await supabase.auth.signOut();
+        return { data: null, error: AUTH_PROFILE_MISSING_ERROR };
+      }
+
+      return cacheSessionResponse({
         data: {
           user: { id: data.user.id, email: data.user.email! },
-          profile: profile ?? null,
+          profile,
         },
         error: null,
-      };
+      });
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }
@@ -54,7 +139,42 @@ export const authService = {
       if (error) return { data: null, error: error.message };
       if (!data.user) return { data: null, error: 'Registration failed.' };
 
-      // Profile is created automatically by the on_auth_user_created trigger
+      if (data.session) {
+        const { profile, error: profileError } = await fetchProfileByUserId(data.user.id, { retry: true });
+
+        if (profileError) {
+          await supabase.auth.signOut();
+          return {
+            data: {
+              user: { id: data.user.id, email: data.user.email! },
+              profile: null,
+            },
+            error: AUTH_PROFILE_UNAVAILABLE_ERROR,
+          };
+        }
+
+        if (!profile) {
+          await supabase.auth.signOut();
+          return {
+            data: {
+              user: { id: data.user.id, email: data.user.email! },
+              profile: null,
+            },
+            error: AUTH_PROFILE_MISSING_ERROR,
+          };
+        }
+
+        return cacheSessionResponse({
+          data: {
+            user: { id: data.user.id, email: data.user.email! },
+            profile,
+          },
+          error: null,
+        });
+      }
+
+      // Profile is created automatically by the on_auth_user_created trigger.
+      // No session means Supabase email confirmation is enabled.
       return {
         data: {
           user: { id: data.user.id, email: data.user.email! },
@@ -69,6 +189,7 @@ export const authService = {
 
   async logout(): Promise<ServiceResponse<null>> {
     try {
+      clearSessionCache();
       const { error } = await supabase.auth.signOut();
       if (error) return { data: null, error: error.message };
       return { data: null, error: null };
@@ -86,6 +207,7 @@ export const authService = {
       bio?: string | null;
       instagram?: string | null;
       photo_url?: string | null;
+      promoter_federation_status?: PromoterFederationStatus;
       is_available?: boolean;
       additional_roles?: UserRole[];
     }
@@ -96,6 +218,7 @@ export const authService = {
         .update(updates)
         .eq('id', id);
       if (error) return { data: null, error: error.message };
+      clearSessionCache();
       return { data: null, error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
@@ -116,26 +239,21 @@ export const authService = {
   },
 
   async getSession(): Promise<ServiceResponse<AuthSession>> {
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session) return { data: null, error: error?.message ?? null };
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-
-      return {
-        data: {
-          user: { id: session.user.id, email: session.user.email! },
-          profile: profile ?? null,
-        },
-        error: null,
-      };
-    } catch {
-      return { data: null, error: 'An unexpected error occurred.' };
+    if (sessionCache && sessionCache.expiresAt > Date.now()) {
+      return sessionCache.response;
     }
+
+    if (sessionRequest) {
+      return sessionRequest;
+    }
+
+    sessionRequest = fetchSessionWithProfile()
+      .then(cacheSessionResponse)
+      .finally(() => {
+        sessionRequest = null;
+      });
+
+    return sessionRequest;
   },
 
   /**
@@ -187,6 +305,7 @@ export const authService = {
       }
 
       // Sign out locally after successful deletion
+      clearSessionCache();
       await supabase.auth.signOut();
       return { data: null, error: null };
     } catch {

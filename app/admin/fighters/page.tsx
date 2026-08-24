@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
+import { InlineCombatRecord } from '@/components/CombatRecord';
 import { adminService } from '@/services/adminService';
 import type { FighterWithProfile, ManualFighterWithCreator } from '@/types';
 
@@ -10,9 +11,9 @@ type Confirm = { fighterId: string; action: 'verify' | 'unverify' | 'hide' | 'un
 type Tab = 'registered' | 'manual';
 
 const REP_LABELS: { key: 'manager' | 'promoter' | 'sponsor'; label: string }[] = [
-  { key: 'manager', label: 'Manager' },
+  { key: 'manager', label: 'Representante' },
   { key: 'promoter', label: 'Promotor' },
-  { key: 'sponsor', label: 'Sponsor' },
+  { key: 'sponsor', label: 'Patrocinador' },
 ];
 
 export default function AdminFightersPage() {
@@ -148,14 +149,14 @@ export default function AdminFightersPage() {
                 <dt className="text-zinc-500">{t('admin.fighters.weightClass')}:</dt>
                 <dd className="text-zinc-700">{fighter.weight_class ?? '—'}</dd>
                 <dt className="text-zinc-500">{t('admin.fighters.record')}:</dt>
-                <dd className="text-zinc-700">{fighter.record_wins}W / {fighter.record_losses}L / {fighter.record_draws}D</dd>
+                <dd className="text-zinc-700"><InlineCombatRecord wins={fighter.record_wins} losses={fighter.record_losses} draws={fighter.record_draws} winLabel="W" lossLabel="L" drawLabel="D" /></dd>
                 <dt className="text-zinc-500">{t('admin.fighters.available')}:</dt>
                 <dd className="text-zinc-700">{fighter.is_available ? t('admin.fighters.yes') : t('admin.fighters.no')}</dd>
               </dl>
               <div className="mt-3 flex flex-wrap gap-1">
-                {fighter.has_manager && <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-50 text-blue-700">Manager</span>}
+                {fighter.has_manager && <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-50 text-blue-700">Representante</span>}
                 {fighter.has_promoter && <span className="text-xs font-bold px-1.5 py-0.5 bg-purple-50 text-purple-700">Promotor</span>}
-                {fighter.has_sponsor && <span className="text-xs font-bold px-1.5 py-0.5 bg-amber-50 text-amber-700">Sponsor</span>}
+                {fighter.has_sponsor && <span className="text-xs font-bold px-1.5 py-0.5 bg-amber-50 text-amber-700">Patrocinador</span>}
               </div>
               <div className="mt-3 pt-3 border-t border-zinc-100 flex flex-wrap gap-4">
                 {fighter.verified ? (
@@ -210,7 +211,7 @@ export default function AdminFightersPage() {
                     {fighter.weight_class ?? '—'}
                   </td>
                   <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">
-                    {fighter.record_wins}W / {fighter.record_losses}L / {fighter.record_draws}D
+                    <InlineCombatRecord wins={fighter.record_wins} losses={fighter.record_losses} draws={fighter.record_draws} winLabel="W" lossLabel="L" drawLabel="D" />
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium ${
@@ -341,7 +342,7 @@ export default function AdminFightersPage() {
       ) : (
         manualFighters.length === 0 ? (
           <div className="py-16 text-center border border-dashed border-zinc-200 text-zinc-500 text-sm">
-            No hay peleadores agregados manualmente por managers o promotores.
+            No hay peleadores agregados manualmente por representantes o promotores.
           </div>
         ) : (
           <>
@@ -354,7 +355,7 @@ export default function AdminFightersPage() {
                     {mf.full_name}
                   </Link>
                   {mf.profiles?.role === 'manager' && (
-                    <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-50 text-blue-700 flex-shrink-0">Manager</span>
+                    <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-50 text-blue-700 flex-shrink-0">Representante</span>
                   )}
                   {mf.profiles?.role === 'promoter' && (
                     <span className="text-xs font-bold px-1.5 py-0.5 bg-purple-50 text-purple-700 flex-shrink-0">Promotor</span>
@@ -367,7 +368,7 @@ export default function AdminFightersPage() {
                   <dt className="text-zinc-500">Peso:</dt>
                   <dd className="text-zinc-700">{mf.weight_class ?? '—'}</dd>
                   <dt className="text-zinc-500">Record:</dt>
-                  <dd className="text-zinc-700">{mf.record_wins}W / {mf.record_losses}L / {mf.record_draws}D</dd>
+                  <dd className="text-zinc-700"><InlineCombatRecord wins={mf.record_wins} losses={mf.record_losses} draws={mf.record_draws} winLabel="W" lossLabel="L" drawLabel="D" /></dd>
                   <dt className="text-zinc-500">Ciudad:</dt>
                   <dd className="text-zinc-700">{mf.city ?? '—'}</dd>
                 </dl>
@@ -411,7 +412,7 @@ export default function AdminFightersPage() {
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       {mf.profiles?.role === 'manager' && (
-                        <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-50 text-blue-700">Manager</span>
+                        <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-50 text-blue-700">Representante</span>
                       )}
                       {mf.profiles?.role === 'promoter' && (
                         <span className="text-xs font-bold px-1.5 py-0.5 bg-purple-50 text-purple-700">Promotor</span>
@@ -425,7 +426,7 @@ export default function AdminFightersPage() {
                       {mf.weight_class ?? '—'}
                     </td>
                     <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">
-                      {mf.record_wins}W / {mf.record_losses}L / {mf.record_draws}D
+                      <InlineCombatRecord wins={mf.record_wins} losses={mf.record_losses} draws={mf.record_draws} winLabel="W" lossLabel="L" drawLabel="D" />
                     </td>
                     <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">
                       {mf.city ?? '—'}
@@ -464,7 +465,7 @@ export default function AdminFightersPage() {
                 : confirm.action === 'unverify'
                 ? t('admin.fighters.confirmUnverify')
                 : confirm.action === 'hide'
-                ? 'Este peleador sera ocultado de otros perfiles de peleadores. Solo admin, promotores, managers y sponsors podran verlo.'
+                ? 'Este peleador sera ocultado de otros perfiles de peleadores. Solo administradores, promotores, representantes y patrocinadores podran verlo.'
                 : 'Este peleador sera visible para todos los usuarios nuevamente.'}
             </p>
             <div className="flex justify-end gap-3">

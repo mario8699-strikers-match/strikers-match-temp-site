@@ -11,6 +11,15 @@
     "wins": "Wins",
     "losses": "Losses",
     "draws": "Draws",
+    "follower": "follower",
+    "followers": "followers",
+    "age": "Age",
+    "search": {
+      "label": "Search fighter",
+      "placeholder": "Name, city, gym, weight, or discipline",
+      "button": "Search",
+      "empty": "No fighters matched that search"
+    },
     "filter": {
       "all": "All",
       "available": "Available"

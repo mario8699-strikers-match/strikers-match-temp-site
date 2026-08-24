@@ -1,22 +1,108 @@
 {
   "gallery": {
-    "title": "Event Gallery",
-    "subtitle": "Official photos from our combat sports events",
-    "loading": "Loading photos...",
-    "empty": "No photos in the gallery yet.",
-    "emptySubtitle": "Event photos will appear here soon.",
-    "uploadTitle": "Upload Photo",
-    "uploadFile": "Select file",
-    "uploadCaption": "Caption (optional)",
-    "uploadCaptionPlaceholder": "Describe the photo...",
-    "uploadEventName": "Event name (optional)",
-    "uploadEventNamePlaceholder": "E.g. Fight Night Monterrey...",
-    "uploadSubmit": "Upload photo",
-    "uploading": "Uploading...",
-    "uploadSuccess": "Photo uploaded successfully.",
-    "deleteConfirm": "Delete this photo? This action cannot be undone.",
-    "delete": "Delete",
-    "adminTitle": "Gallery Management",
-    "adminSubtitle": "Upload and manage official event photos."
+    "title": "Directory",
+    "subtitle": "Profiles, services, and businesses for the sports community: gyms, recovery, gear, local businesses, and event providers.",
+    "loading": "Loading directory...",
+    "empty": "No listings are published in this category.",
+    "emptySubtitle": "Approved businesses and services will appear here.",
+    "featured": "Featured",
+    "categories": {
+      "all": "All",
+      "profiles": "Service profiles",
+      "gyms_academies": "Gyms and academies",
+      "recovery_wellness": "Recovery and wellness",
+      "event_services": "Event services",
+      "gear_apparel": "Gear and apparel",
+      "nutrition_supplements": "Nutrition and supplements",
+      "local_business": "Local businesses",
+      "other": "Other services"
+    },
+    "contact": {
+      "phone": "Phone",
+      "email": "Email",
+      "website": "Website",
+      "instagram": "Instagram",
+      "viewProfile": "View profile"
+    },
+    "form": {
+      "open": "Post listing",
+      "close": "Close form",
+      "signIn": "Sign in",
+      "createAccount": "Create account",
+      "title": "Post in the Directory",
+      "subtitle": "Submit your business or service for review. It will be published once approved by admin.",
+      "success": "Listing submitted for review. It will be published once approved.",
+      "submit": "Submit for review",
+      "submitting": "Submitting...",
+      "cancel": "Cancel",
+      "fields": {
+        "title": "Business or service name",
+        "category": "Category",
+        "description": "Description",
+        "city": "City",
+        "state": "State",
+        "phone": "Phone",
+        "email": "Email",
+        "website": "Website",
+        "instagram": "Instagram",
+        "image": "Image or logo"
+      },
+      "errors": {
+        "titleRequired": "The business or service name is required."
+      }
+    },
+    "profileSelector": {
+      "eyebrow": "Directory profile",
+      "title": "Select your services",
+      "body": "Choose the services you offer so your profile appears in the Directory. You can select more than one option.",
+      "editProfile": "Edit profile",
+      "save": "Save selection",
+      "saving": "Saving...",
+      "success": "Selection saved. Your profile appears in the Directory.",
+      "activeHint": "Your profile is already configured to appear as a service provider.",
+      "inactiveHint": "Select at least one service to activate your profile in the Directory.",
+      "errors": {
+        "roleRequired": "Select at least one service."
+      }
+    },
+    "serviceRoles": {
+      "ring_card_girl": "Ring Card Girl",
+      "photographer": "Photographer",
+      "videographer": "Videographer",
+      "broadcast_personality": "Broadcast Personality",
+      "catering_vendor": "Catering / Food",
+      "venue_rental": "Venue Rental",
+      "judge": "Judge / Referee",
+      "ring_rental": "Ring Rental",
+      "ring_announcer": "Ring Announcer",
+      "cutman": "Cutman",
+      "merchandise_vendor": "Merchandise Vendor",
+      "ringside_doctor": "Ringside Doctor",
+      "ringside_emt": "Ringside EMT"
+    },
+    "adminTitle": "Directory Management",
+    "adminSubtitle": "Review, publish, and manage business and service listings.",
+    "admin": {
+      "empty": "No listings with this status.",
+      "deleteConfirm": "Delete this listing? This action cannot be undone.",
+      "status": {
+        "all": "All",
+        "draft": "Draft",
+        "pending_review": "Pending",
+        "published": "Published",
+        "rejected": "Rejected",
+        "expired": "Expired"
+      },
+      "actions": {
+        "publish": "Publish",
+        "reject": "Reject",
+        "feature": "Feature",
+        "unfeature": "Remove feature",
+        "delete": "Delete"
+      },
+      "errors": {
+        "updateFailed": "The listing could not be updated."
+      }
+    }
   }
 }

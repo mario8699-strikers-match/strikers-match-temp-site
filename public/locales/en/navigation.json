@@ -7,13 +7,14 @@
     "professionals": "Services",
     "promoters": "Promoters",
     "sponsors": "Sponsors",
-    "gallery": "Gallery",
+    "gallery": "Directory",
     "managers": "Managers",
     "profile": "Profile",
     "settings": "Settings",
     "logout": "Logout",
     "login": "Login",
     "register": "Register",
-    "createEvent": "Create Event"
+    "createEvent": "Create Event",
+    "pricing": "Platform"
   }
 }

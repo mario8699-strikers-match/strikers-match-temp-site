@@ -3,18 +3,21 @@
     "title": "Administración",
     "backToSite": "← Volver al sitio",
     "logout": "Cerrar sesión",
+    "closeMenu": "Cerrar menú",
+    "toggleMenu": "Abrir o cerrar menú",
     "unauthorized": "No tienes permiso para acceder a esta sección.",
     "devMode": "Modo desarrollo — la protección de rol se activa cuando conectes Supabase.",
     "nav": {
-      "dashboard": "Dashboard",
+      "dashboard": "Panel",
       "users": "Usuarios",
       "fighters": "Atletas",
       "promoters": "Promotores",
-      "managers": "Managers",
+      "managers": "Representantes",
       "sponsors": "Patrocinadores",
-      "vendors": "Vendors / Servicios",
+      "vendors": "Servicios profesionales",
       "events": "Eventos",
-      "gallery": "Galería",
+      "matches": "Combates y propuestas",
+      "gallery": "Directorio",
       "analytics": "Estadísticas"
     },
     "dashboard": {
@@ -42,23 +45,24 @@
       "noUsers": "No hay usuarios registrados.",
       "roles": {
         "fighter": "Atleta",
+        "spectator": "Espectador",
         "promoter": "Promotor",
-        "manager": "Manager",
+        "manager": "Representante",
         "sponsor": "Patrocinador",
         "admin": "Admin",
-        "ring_card_girl": "Ring Card Girl",
+        "ring_card_girl": "Edición de tarjetas",
         "photographer": "Fotógrafo",
         "videographer": "Videógrafo",
-        "broadcast_personality": "Personalidad de Transmisión",
+        "broadcast_personality": "Presentador / Comentarista",
         "catering_vendor": "Catering / Alimentos",
-        "venue_rental": "Renta de Venue",
+        "venue_rental": "Renta de sede",
         "judge": "Juez / Réferi",
         "ring_rental": "Renta de Ring",
         "ring_announcer": "Anunciador de Ring",
-        "cutman": "Cutman",
+        "cutman": "Auxiliar de esquina",
         "merchandise_vendor": "Vendedor de Mercancía",
-        "ringside_doctor": "Médico de Ringside",
-        "ringside_emt": "Técnico Médico de Ringside"
+        "ringside_doctor": "Médico junto al área de combate",
+        "ringside_emt": "Paramédico junto al área de combate"
       }
     },
     "fighters": {
@@ -92,6 +96,142 @@
       "weightClass": "Categoría",
       "purse": "Bolsa",
       "noEvents": "No hay eventos registrados."
+    },
+    "matchesPage": {
+      "title": "Combates y propuestas",
+      "subtitle": "Todas las propuestas y combates creados en la plataforma.",
+      "proposals": "Propuestas",
+      "bouts": "Combates",
+      "search": "Buscar",
+      "searchPlaceholder": "Evento o peleador",
+      "status": "Estado",
+      "all": "Todos",
+      "loading": "Cargando...",
+      "noProposals": "No se encontraron propuestas.",
+      "noBouts": "No se encontraron combates.",
+      "event": "Evento",
+      "fighters": "Peleadores",
+      "responses": "Respuestas",
+      "compatibility": "Compatibilidad",
+      "created": "Creado",
+      "area": "Área",
+      "division": "División",
+      "method": "Método",
+      "result": "Resultado",
+      "combat": "Combate",
+      "noArea": "Sin área",
+      "stateLine": "A: {{a}} · B: {{b}}",
+      "statusLabels": {
+        "proposed": "propuesta",
+        "pending": "pendiente",
+        "confirmed": "confirmado",
+        "declined": "rechazado",
+        "cancelled": "cancelado",
+        "approved": "aprobado",
+        "ready": "listo",
+        "in_progress": "en curso",
+        "completed": "completado",
+        "no_show": "ausente",
+        "all": "Todos"
+      }
+    },
+    "analyticsPage": {
+      "eyebrow": "Panel operativo",
+      "title": "Salud del evento",
+      "subtitle": "Vista ejecutiva para revisar pagos, emparejamiento, cobertura por categoría, confiabilidad y pendientes antes del evento.",
+      "event": "Evento",
+      "loading": "Cargando...",
+      "checking": "Verificando acceso...",
+      "loadingMetrics": "Cargando métricas...",
+      "loginRequired": "Inicia sesión para ver el panel de estadísticas.",
+      "login": "Iniciar sesión",
+      "permission": "Esta sección está disponible para promotores, representantes y administradores.",
+      "noEvents": "Aún no hay eventos para analizar.",
+      "readiness": {
+        "title": "Preparación del evento",
+        "points": "puntos",
+        "eventStatus": "Estado",
+        "help": "El puntaje combina pagos confirmados, peleadores con pareja, cobertura por categoría y riesgo operativo."
+      },
+      "kpis": {
+        "applications": "Solicitudes",
+        "intent": "intención de participar",
+        "registered": "Registrados",
+        "paymentFlow": "en flujo de pago",
+        "confirmedPaid": "Pago confirmado",
+        "unmatched": "Sin pareja",
+        "paired": "con pareja"
+      },
+      "sections": {
+        "pipeline": "Flujo del evento",
+        "eventFlow": "Estado general",
+        "needsAttention": "Pendientes críticos",
+        "payments": "Pagos",
+        "applications": "Solicitudes de peleadores",
+        "matchmaking": "Emparejamiento",
+        "reliability": "Confiabilidad",
+        "weightCoverage": "Cobertura por categoría de peso"
+      },
+      "metrics": {
+        "paymentHealth": "Pagos confirmados",
+        "paymentHelper": "{{confirmed}} de {{total}} registros con pago confirmado.",
+        "matchmakingHealth": "Peleadores con pareja",
+        "matchmakingHelper": "{{paired}} de {{confirmed}} peleadores confirmados ya tienen pareja.",
+        "categoryCoverage": "Cobertura de categorías",
+        "categoryHelper": "{{covered}} de {{total}} categorías cubiertas.",
+        "noCategories": "No hay categorías requeridas definidas para este evento."
+      },
+      "actions": {
+        "clearTitle": "Sin pendientes críticos",
+        "clearBody": "El evento no tiene alertas operativas principales en este momento.",
+        "confirmPayments": "Confirmaciones de pago por revisar",
+        "matchFighters": "Peleadores confirmados sin pareja",
+        "coverWeights": "Categorías sin cobertura",
+        "reviewApplications": "Solicitudes pendientes",
+        "noShowRisk": "Riesgo de no-show",
+        "viewDetail": "Ver detalle"
+      },
+      "modals": {
+        "unmatchedTitle": "Peleadores confirmados sin pareja",
+        "unmatchedBody": "Estos peleadores ya tienen pago confirmado, pero todavía no aparecen en una propuesta confirmada ni en un combate activo.",
+        "close": "Cerrar",
+        "noUnmatched": "No hay peleadores confirmados sin pareja.",
+        "weight": "Peso",
+        "city": "Ciudad",
+        "reliability": "Confiabilidad",
+        "viewProfile": "Ver perfil"
+      },
+      "payments": {
+        "confirmed": "Confirmados",
+        "submitted": "Por confirmar",
+        "pending": "Pendientes",
+        "empty": "Aún no hay registros."
+      },
+      "applications": {
+        "accepted": "Aceptadas",
+        "pending": "Pendientes",
+        "declined": "Rechazadas",
+        "empty": "Aún no hay solicitudes.",
+        "help": "Las solicitudes son intención de participar. Se convierten en registros cuando inicia el flujo de pago."
+      },
+      "matches": {
+        "active": "Propuestas activas",
+        "confirmed": "Confirmadas",
+        "unmatched": "Confirmados sin pareja"
+      },
+      "reliability": {
+        "high": "Alta confiabilidad",
+        "risk": "Riesgo de no-show",
+        "score": "Perfil de asistencia",
+        "helper": "Solo se consideran peleadores con historial suficiente para evitar inflar el puntaje."
+      },
+      "weight": {
+        "covered": "Categorías cubiertas",
+        "noDefined": "No se definieron categorías para este evento.",
+        "missing": "Faltan {{count}} categorías por cubrir.",
+        "coveredStatus": "Cubierta",
+        "missingStatus": "Faltante"
+      }
     },
     "errors": {
       "generic": "Algo salió mal. Inténtalo de nuevo.",

@@ -12,7 +12,7 @@ const ROLE_LABELS: Record<string, string> = {
   ring_card_girl: 'Ring Card Girl',
   photographer: 'Fotógrafo',
   videographer: 'Videógrafo',
-  broadcast_personality: 'Personalidad de Transmisión',
+  broadcast_personality: 'Presentador / Comentarista',
   catering_vendor: 'Catering / Alimentos',
   venue_rental: 'Renta de Venue',
   judge: 'Juez / Réferi',
@@ -46,7 +46,10 @@ export default function VendorProfilePage() {
     authService.getSession().then(({ data }) => {
       const p = data?.profile ?? null;
       if (!p) { window.location.href = '/login'; return; }
-      if (!VENDOR_ROLES.includes(p.role)) { window.location.href = '/'; return; }
+      const canEditDirectoryProfile =
+        VENDOR_ROLES.includes(p.role) ||
+        (p.additional_roles ?? []).some((role) => VENDOR_ROLES.includes(role));
+      if (!canEditDirectoryProfile) { window.location.href = '/gallery'; return; }
       setProfile(p);
       setFullName(p.full_name ?? '');
       setCity(p.city ?? '');
@@ -155,9 +158,9 @@ export default function VendorProfilePage() {
           <p className="text-xs font-bold tracking-[0.25em] uppercase mb-2" style={{ color: '#C0001E' }}>Strikers Match</p>
           <h1 className="text-3xl font-bold text-zinc-900">Mi Perfil</h1>
           <p className="mt-2 text-sm text-zinc-500">
-            Actualiza tu información. Tu perfil aparece en el directorio de{' '}
-            <a href="/professionals" className="font-medium text-zinc-900 underline hover:text-[#C0001E]">
-              Servicios de Eventos
+            Actualiza tu información. Tu perfil aparece en el{' '}
+            <a href="/gallery" className="font-medium text-zinc-900 underline hover:text-[#C0001E]">
+              Directorio
             </a>.
           </p>
           <div className="mt-3">

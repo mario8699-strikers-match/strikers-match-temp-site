@@ -4,29 +4,52 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
-import { authService } from '@/services/authService';
-import { redirectAfterAuth } from '@/services/authRedirect';
+import { AUTH_PROFILE_MISSING_ERROR, AUTH_PROFILE_UNAVAILABLE_ERROR, authService } from '@/services/authService';
+import { getSafeAuthNextPath, redirectAfterAuth } from '@/services/authRedirect';
 import type { RegisterFormData, UserRole } from '@/types';
 import { VENDOR_ROLES } from '@/types';
 
-type AccountType = 'organizer' | 'athlete' | 'professional';
+type AccountType = 'organizer' | 'athlete' | 'spectator' | 'professional';
 type Step = 1 | 2 | 3;
 
 const ORGANIZER_ROLES: UserRole[] = ['promoter', 'manager', 'sponsor'];
+
+function resolveRegisterError(error: string, t: (key: string) => string): string {
+  if (error === AUTH_PROFILE_MISSING_ERROR) return t('auth.errors.profileMissing');
+  if (error === AUTH_PROFILE_UNAVAILABLE_ERROR) return t('auth.errors.profileUnavailable');
+
+  const normalized = error.toLowerCase();
+  if (normalized.includes('already registered') || normalized.includes('already exists')) {
+    return t('auth.errors.emailAlreadyRegistered');
+  }
+  return error;
+}
 
 export default function RegisterPage() {
   const { t } = useTranslation('auth');
   const { t: tNav } = useTranslation('navigation');
   const { t: tLegal } = useTranslation('legal');
+  const nextPath = typeof window === 'undefined'
+    ? null
+    : getSafeAuthNextPath(new URLSearchParams(window.location.search).get('next'));
+  const requestedAccountType = typeof window === 'undefined'
+    ? null
+    : new URLSearchParams(window.location.search).get('account');
+  const initialAccountType: AccountType | null =
+    requestedAccountType === 'professional' || requestedAccountType === 'spectator'
+      ? requestedAccountType
+      : null;
+  const initialStep: Step = initialAccountType === 'professional' ? 2 : initialAccountType === 'spectator' ? 3 : 1;
+  const loginHref = nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : '/login';
 
-  const [step, setStep] = useState<Step>(1);
-  const [accountType, setAccountType] = useState<AccountType | null>(null);
+  const [step, setStep] = useState<Step>(initialStep);
+  const [accountType, setAccountType] = useState<AccountType | null>(initialAccountType);
 
   const [formData, setFormData] = useState<RegisterFormData>({
     full_name: '',
     email: '',
     password: '',
-    role: '' as UserRole,
+    role: initialAccountType === 'spectator' ? 'spectator' : '' as UserRole,
     city: '',
     phone: '',
     date_of_birth: '',
@@ -48,6 +71,9 @@ export default function RegisterPage() {
     if (type === 'athlete') {
       setFormData((prev) => ({ ...prev, role: 'fighter' }));
       setStep(3);
+    } else if (type === 'spectator') {
+      setFormData((prev) => ({ ...prev, role: 'spectator', gym_name: '' }));
+      setStep(3);
     } else {
       setFormData((prev) => ({ ...prev, role: '' as UserRole }));
       setStep(2);
@@ -60,7 +86,7 @@ export default function RegisterPage() {
   };
 
   const goBack = () => {
-    if (step === 3 && accountType === 'athlete') {
+    if (step === 3 && (accountType === 'athlete' || accountType === 'spectator')) {
       setStep(1);
     } else if (step === 3) {
       setStep(2);
@@ -100,7 +126,7 @@ export default function RegisterPage() {
     const { error } = await authService.register(formData);
     if (error) {
       setLoading(false);
-      setServerError(error);
+      setServerError(resolveRegisterError(error, t));
       return;
     }
 
@@ -110,7 +136,7 @@ export default function RegisterPage() {
     // success card (which would contradict the navbar showing them as logged in).
     const { data: sessionData } = await authService.getSession();
     if (sessionData?.profile) {
-      await redirectAfterAuth(sessionData.profile);
+      await redirectAfterAuth(sessionData.profile, nextPath);
       return;
     }
 
@@ -131,7 +157,7 @@ export default function RegisterPage() {
           <h2 className="text-2xl font-bold text-zinc-900 mb-2">{t('auth.register.successTitle')}</h2>
           <p className="text-zinc-500 text-sm mb-6">{t('auth.register.successMessage')}</p>
           <a
-            href="/login"
+            href={loginHref}
             className="inline-block bg-brand-red text-white px-6 py-2.5 text-sm font-semibold hover:bg-brand-red-dark transition-colors"
           >
             {tNav('nav.login')}
@@ -201,6 +227,22 @@ export default function RegisterPage() {
                 </div>
                 <span className="shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-200">
                   {t('auth.register.free')}
+                </span>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => pickAccountType('spectator')}
+              className="w-full text-left border border-zinc-300 hover:border-zinc-900 px-4 py-4 transition-colors"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-zinc-900">{t('auth.register.followFighters')}</div>
+                  <div className="text-xs text-zinc-500 mt-0.5">{t('auth.register.spectatorDesc')}</div>
+                </div>
+                <span className="shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-zinc-100 text-zinc-700">
+                  {t('auth.register.spectator')}
                 </span>
               </div>
             </button>

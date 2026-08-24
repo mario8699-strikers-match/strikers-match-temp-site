@@ -13,6 +13,8 @@ create table if not exists public.profiles (
   role        text not null check (role in ('fighter','promoter','manager','sponsor','admin')),
   city        text,
   phone       text,
+  promoter_federation_status text not null default 'independent'
+              check (promoter_federation_status in ('federated','independent')),
   is_banned   boolean not null default false,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
@@ -58,6 +60,39 @@ create table if not exists public.match_requests (
                 check (status in ('pending','accepted','declined','cancelled')),
   message     text,
   created_at  timestamptz not null default now()
+);
+
+-- ── business listings / Directorio ───────────
+create table if not exists public.business_listings (
+  id uuid primary key default uuid_generate_v4(),
+  owner_profile_id uuid references public.profiles(id) on delete set null,
+  title text not null,
+  category text not null check (category in (
+    'gyms_academies',
+    'recovery_wellness',
+    'event_services',
+    'gear_apparel',
+    'nutrition_supplements',
+    'local_business',
+    'other'
+  )),
+  description text,
+  city text,
+  state text,
+  phone text,
+  email text,
+  website_url text,
+  instagram text,
+  image_url text,
+  image_storage_path text,
+  status text not null default 'pending_review'
+    check (status in ('draft','pending_review','published','rejected','expired')),
+  is_featured boolean not null default false,
+  starts_at timestamptz,
+  ends_at timestamptz,
+  rejection_reason text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 -- ── updated_at trigger ────────────────────────

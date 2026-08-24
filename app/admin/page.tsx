@@ -30,7 +30,6 @@ export default function AdminDashboardPage() {
       setStats(data);
       setLoading(false);
     });
-    loadHealth();
   }, []);
 
   const handleHeal = async () => {
@@ -56,7 +55,7 @@ export default function AdminDashboardPage() {
         <h1 className="text-xl font-bold text-zinc-900">{t('admin.dashboard.title')}</h1>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard label={t('admin.dashboard.totalUsers')} value={val(stats?.totalUsers)} />
         <StatCard label={t('admin.dashboard.totalFighters')} value={val(stats?.totalFighters)} />
         <StatCard label={t('admin.dashboard.totalEvents')} value={val(stats?.totalEvents)} />
@@ -64,6 +63,8 @@ export default function AdminDashboardPage() {
           label={t('admin.dashboard.pendingVerifications')}
           value={val(stats?.pendingVerifications)}
         />
+        <StatCard label="Propuestas de pelea" value={val(stats?.totalMatches)} />
+        <StatCard label="Combates" value={val(stats?.totalBouts)} />
       </div>
 
       {/* System Health */}
@@ -95,7 +96,7 @@ export default function AdminDashboardPage() {
             </p>
             <p className="text-xs text-zinc-500 mt-1">
               {orphanCount === null
-                ? 'Checking…'
+                ? 'Click Refresh to run this check.'
                 : isHealthy
                 ? 'All fighter profiles have a matching fighters row. ✓'
                 : `${orphanCount} profile${orphanCount === 1 ? '' : 's'} invisible on /fighters and cannot apply to events.`}
@@ -124,6 +125,7 @@ export default function AdminDashboardPage() {
           { href: '/admin/sponsors', label: t('admin.nav.sponsors') },
           { href: '/admin/vendors', label: t('admin.nav.vendors') },
           { href: '/admin/events', label: t('admin.nav.events') },
+          { href: '/admin/matches', label: t('admin.nav.matches') },
         ].map((link) => (
           <a
             key={link.href}
@@ -133,9 +135,6 @@ export default function AdminDashboardPage() {
             <span className="text-sm font-medium text-zinc-700 group-hover:text-zinc-900">
               {link.label}
             </span>
-            <svg className="w-4 h-4 text-zinc-400 group-hover:text-zinc-700 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
           </a>
         ))}
       </div>

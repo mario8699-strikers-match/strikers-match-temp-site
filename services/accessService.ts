@@ -3,13 +3,12 @@
  *
  * Rules:
  *   - fighter: cannot send requests, can receive requests
- *   - promoter / manager: full access (subject to subscription)
- *   - sponsor: can browse and contact, cannot send fight requests
+ *   - promoter / manager: full access to operational tools
+ *   - sponsor / spectator: can browse, cannot send fight requests
  *   - vendors: can create profile, can be contacted, cannot initiate contact
  *   - admin: full access
  *
- * Monetization checks apply ONLY to: promoter, manager, sponsor
- * Fighters and vendors are FREE users.
+ * Restricted-action checks apply only to specific actions, not general role access.
  */
 
 import type { UserRole } from '@/types';
@@ -39,11 +38,11 @@ const FEATURE_RULES: Record<Feature, (role: UserRole) => boolean> = {
   emergency_replacement: (role) => role === 'promoter' || role === 'manager' || role === 'admin',
 
   /**
-   * contact_vendor — promoter, manager, sponsor can contact vendors.
+   * contact_vendor — promoter, manager, sponsor, spectator can contact vendors.
    * Vendors cannot initiate contact. Fighters cannot.
    */
   contact_vendor: (role) =>
-    role === 'promoter' || role === 'manager' || role === 'sponsor' || role === 'admin',
+    role === 'promoter' || role === 'manager' || role === 'sponsor' || role === 'spectator' || role === 'admin',
 
   /**
    * view_profiles — everyone can view profiles (browsing is free).
@@ -51,10 +50,11 @@ const FEATURE_RULES: Record<Feature, (role: UserRole) => boolean> = {
   view_profiles: () => true,
 
   /**
-   * create_profile — fighters, vendors, and all paid roles can create profiles.
+   * create_profile — core account roles and vendors can create profiles.
    */
   create_profile: (role) =>
     role === 'fighter' ||
+    role === 'spectator' ||
     role === 'promoter' ||
     role === 'manager' ||
     role === 'sponsor' ||
@@ -73,11 +73,9 @@ export function canAccessFeature(user: UserForAccess, feature: Feature): boolean
 }
 
 /**
- * Check if a role requires monetization/subscription checks.
- * Only promoter, manager, and sponsor are monetized.
- * Fighters, vendors, and admins are free.
+ * Check if a role can hit legacy restricted-action checks.
  */
 export function requiresSubscription(role: UserRole): boolean {
   if (role === 'admin') return false;
-  return role === 'promoter' || role === 'manager' || role === 'sponsor';
+  return role === 'promoter' || role === 'manager';
 }

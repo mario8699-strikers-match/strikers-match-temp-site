@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { InlineCombatRecord } from '@/components/CombatRecord';
 import { authService } from '@/services/authService';
 import { sponsorService } from '@/services/sponsorService';
 import type { Profile, Fighter, SponsorshipOffer } from '@/types';
@@ -160,13 +161,7 @@ export default function SponsorDashboardPage() {
                     <p className="text-xs mt-0.5 mb-3" style={{ color:'#5A5A5A' }}>
                       {f.weight_class ? WEIGHT_LABELS[f.weight_class] ?? f.weight_class : '—'} · {f.profiles?.city ?? '—'}
                     </p>
-                    <div className="flex gap-1 mb-3">
-                      <span className="text-xs font-bold text-zinc-600">{f.record_wins}V</span>
-                      <span className="text-xs text-zinc-400">–</span>
-                      <span className="text-xs font-bold text-zinc-600">{f.record_losses}D</span>
-                      <span className="text-xs text-zinc-400">–</span>
-                      <span className="text-xs font-bold text-zinc-600">{f.record_draws}E</span>
-                    </div>
+                    <InlineCombatRecord wins={f.record_wins} losses={f.record_losses} draws={f.record_draws} className="mb-3 text-xs" />
                     <button onClick={() => setSelectedFighter(f)}
                       className="w-full py-2 text-xs font-bold tracking-widest uppercase text-white transition-colors" style={{ background:'#C0001E' }}
                       onMouseOver={e=>(e.currentTarget.style.background='#9A0018')} onMouseOut={e=>(e.currentTarget.style.background='#C0001E')}>

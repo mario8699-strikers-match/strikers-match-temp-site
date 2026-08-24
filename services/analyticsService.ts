@@ -11,6 +11,15 @@ import { supabase } from '@/lib/supabaseClient';
 import { MIN_MATCHES_FOR_SCORE } from '@/services/reliabilityService';
 import type { ServiceResponse } from '@/types';
 
+export interface AnalyticsFighterSummary {
+  id: string;
+  name: string;
+  city: string | null;
+  weight_class: string | null;
+  reliability_score: number | null;
+  total_matches: number | null;
+}
+
 export interface EventHealth {
   event_id: string;
   event_name: string;
@@ -29,6 +38,7 @@ export interface EventHealth {
   matchesProposed: number;
   matchesConfirmed: number;
   unmatchedConfirmed: number; // confirmed fighters with no confirmed match yet
+  unmatchedConfirmedFighters: AnalyticsFighterSummary[];
 
   weightClassesNeeded: string[];
   weightClassesCovered: string[]; // weight classes present among confirmed-paid fighters
@@ -65,7 +75,7 @@ export async function getEventHealth(
         id,
         weight_class,
         profile_id,
-        profiles:profile_id ( reliability_score, total_matches )
+        profiles:profile_id ( full_name, city, reliability_score, total_matches )
       )
     `)
     .eq('event_id', eventId);
@@ -82,7 +92,12 @@ export async function getEventHealth(
       id: string;
       weight_class: string | null;
       profile_id: string | null;
-      profiles: { reliability_score: number | null; total_matches: number | null } | null;
+      profiles: {
+        full_name: string | null;
+        city: string | null;
+        reliability_score: number | null;
+        total_matches: number | null;
+      } | null;
     } | null;
   };
 
@@ -130,10 +145,45 @@ export async function getEventHealth(
     fightersInConfirmedMatches.add(m.fighter_b_id);
   });
 
+  const { data: bouts, error: boutErr } = await supabase
+    .from('bouts')
+    .select('id, status, fighter_a_id, fighter_b_id')
+    .eq('event_id', eventId);
+
+  if (boutErr) {
+    return { data: null, error: boutErr.message };
+  }
+
+  (bouts ?? [])
+    .filter((bout) => bout.status !== 'cancelled')
+    .forEach((bout) => {
+      if (bout.fighter_a_id) fightersInConfirmedMatches.add(bout.fighter_a_id);
+      if (bout.fighter_b_id) fightersInConfirmedMatches.add(bout.fighter_b_id);
+    });
+
   const confirmedFighterIds = new Set(confirmedRows.map((r) => r.fighter_id));
-  const unmatchedConfirmed = [...confirmedFighterIds].filter(
+  const unmatchedConfirmedIds = [...confirmedFighterIds].filter(
     (id) => !fightersInConfirmedMatches.has(id)
-  ).length;
+  );
+  const unmatchedConfirmed = unmatchedConfirmedIds.length;
+  const unmatchedConfirmedFighters = Array.from(
+    confirmedRows
+      .filter((row) => unmatchedConfirmedIds.includes(row.fighter_id))
+      .reduce((map, row) => {
+        if (!row.fighters) return map;
+        map.set(row.fighter_id, {
+          id: row.fighter_id,
+          name: row.fighters.profiles?.full_name ?? '—',
+          city: row.fighters.profiles?.city ?? null,
+          weight_class: row.fighters.weight_class ?? null,
+          reliability_score: row.fighters.profiles?.reliability_score ?? null,
+          total_matches: row.fighters.profiles?.total_matches ?? null,
+        });
+        return map;
+      }, new Map<string, AnalyticsFighterSummary>())
+      .values()
+  );
+
 
   // Weight class coverage (against confirmed-paid roster)
   const weightClassesNeeded: string[] =
@@ -189,6 +239,7 @@ export async function getEventHealth(
       matchesProposed,
       matchesConfirmed,
       unmatchedConfirmed,
+      unmatchedConfirmedFighters,
       weightClassesNeeded,
       weightClassesCovered,
       missingWeightClasses,

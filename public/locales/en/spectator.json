@@ -1,0 +1,61 @@
+{
+  "spectator": {
+    "loading": "Loading...",
+    "eyebrow": "Spectator account",
+    "title": "My athletes",
+    "subtitle": "Follow fighters, review their record, and keep track of their progress inside Strikers Match.",
+    "findFighters": "Find athletes",
+    "followedTitle": "Followed athletes",
+    "fighterFallback": "Athlete",
+    "noPhoto": "No photo",
+    "registered": "Registered",
+    "recordTabs": {
+      "amateur": "box-am",
+      "all": "all"
+    },
+    "profileStats": {
+      "division": "division",
+      "discipline": "discipline",
+      "bouts": "bouts",
+      "gym": "gym",
+      "age": "age",
+      "city": "city",
+      "height": "height",
+      "reach": "reach",
+      "weight": "weight",
+      "status": "status",
+      "followers": "followers"
+    },
+    "levelPro": "Pro",
+    "levelAmateur": "Amateur",
+    "available": "Available",
+    "unavailable": "Unavailable",
+    "unfollow": "Unfollow",
+    "viewProfile": "View profile",
+    "createAccount": "Create a spectator account",
+    "createAccountTail": "to follow athletes, or",
+    "signIn": "sign in",
+    "followError": "The follow status could not be updated.",
+    "emptyTitle": "You are not following athletes yet",
+    "emptyBody": "Visit the athlete directory and follow the fighters you want to monitor.",
+    "stats": {
+      "following": "Following",
+      "available": "Available",
+      "cities": "Cities",
+      "disciplines": "Disciplines"
+    },
+    "record": {
+      "label": "Record",
+      "wins": "W",
+      "losses": "L",
+      "draws": "Draws"
+    },
+    "followCard": {
+      "eyebrow": "Following",
+      "body": "Follow this athlete to see them in your spectator dashboard.",
+      "follow": "Follow athlete",
+      "following": "Following",
+      "saving": "Saving..."
+    }
+  }
+}

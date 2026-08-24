@@ -11,7 +11,7 @@ const ROLE_LABELS: Record<string, string> = {
   ring_card_girl: 'Ring Card Girl',
   photographer: 'Fotógrafo',
   videographer: 'Videógrafo',
-  broadcast_personality: 'Transmisión',
+  broadcast_personality: 'Presentador',
   catering_vendor: 'Catering',
   venue_rental: 'Venue',
   judge: 'Juez / Réferi',

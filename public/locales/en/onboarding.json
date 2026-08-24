@@ -1,0 +1,220 @@
+{
+  "actions": {
+    "close": "Close",
+    "doNotShowAgain": "Do not show again"
+  },
+  "roles": {
+    "fighter": {
+      "eyebrow": "Fighter account",
+      "title": "How to use Strikers Match",
+      "intro": "Your account keeps your fighter profile ready, lets you apply to events, confirm payments, and respond to fight proposals.",
+      "primaryHref": "/fighter/profile",
+      "primaryLabel": "Complete my profile",
+      "steps": [
+        {
+          "title": "Complete your profile",
+          "body": "Add weight, discipline, record, gym, availability, and medical details when required.",
+          "href": "/fighter/profile",
+          "action": "Go to my profile"
+        },
+        {
+          "title": "Find events",
+          "body": "Review published events and apply only to the ones that match your discipline, weight, and availability.",
+          "href": "/events",
+          "action": "View events"
+        },
+        {
+          "title": "Confirm your registration",
+          "body": "Once the promoter confirms your payment, you enter that event's matchmaking pool."
+        },
+        {
+          "title": "Respond to proposals",
+          "body": "Each proposal requires both fighters to respond before it can become a bout."
+        }
+      ]
+    },
+    "spectator": {
+      "eyebrow": "Spectator account",
+      "title": "Follow athletes",
+      "intro": "Your account lets you follow fighters, review their record, and track progress from your own dashboard.",
+      "primaryHref": "/spectator/dashboard",
+      "primaryLabel": "Go to my dashboard",
+      "steps": [
+        {
+          "title": "Find athletes",
+          "body": "Explore the athlete directory and open the profiles you want to follow.",
+          "href": "/fighters",
+          "action": "View athletes"
+        },
+        {
+          "title": "Follow fighters",
+          "body": "On each athlete profile, use Follow athlete to add them to your dashboard."
+        },
+        {
+          "title": "Review progress",
+          "body": "Your dashboard shows record, availability, and quick access to the profiles you follow.",
+          "href": "/spectator/dashboard",
+          "action": "Open my dashboard"
+        }
+      ]
+    },
+    "promoter": {
+      "eyebrow": "Promoter account",
+      "title": "Event workflow",
+      "intro": "Your account controls the full workflow: event, registrations, matchmaking, bouts, printing, and event-day operations.",
+      "primaryHref": "/events/create",
+      "primaryLabel": "Create event",
+      "steps": [
+        {
+          "title": "Create or publish an event",
+          "body": "Set the city, date, disciplines, and fight-card needs.",
+          "href": "/events/create",
+          "action": "Create event"
+        },
+        {
+          "title": "Review applications and payments",
+          "body": "Accept fighters, confirm external payments, and prepare the registration pool."
+        },
+        {
+          "title": "Use matchmaking",
+          "body": "Suggestions only allow fighters compatible by discipline, weight, age, level, and rules."
+        },
+        {
+          "title": "Generate bouts and sheets",
+          "body": "Approve permanent bouts, order mats, and use print or live mode on event day."
+        }
+      ]
+    },
+    "manager": {
+      "eyebrow": "Manager account",
+      "title": "Fighter and event management",
+      "intro": "Your account lets you manage a roster, add manual fighters, create your own events, and operate those event workflows.",
+      "primaryHref": "/manager/dashboard",
+      "primaryLabel": "Go to my dashboard",
+      "steps": [
+        {
+          "title": "Build your roster",
+          "body": "Add existing fighters or register manual fighters under your account.",
+          "href": "/manager/dashboard",
+          "action": "View my dashboard"
+        },
+        {
+          "title": "Create your own events",
+          "body": "Managers can create events and manage their registration and matchmaking workflow.",
+          "href": "/events/create",
+          "action": "Create event"
+        },
+        {
+          "title": "Send requests",
+          "body": "You can contact fighters for opportunities and replacements when the event workflow requires it."
+        },
+        {
+          "title": "Operate events assigned to your account",
+          "body": "For events you create, you have access to settings, matchmaking, bouts, print, and live mode."
+        }
+      ]
+    },
+    "sponsor": {
+      "eyebrow": "Sponsor account",
+      "title": "Sponsorships and contacts",
+      "intro": "Your account helps you find fighters, promoters, and services connected to combat sports events.",
+      "primaryHref": "/fighters",
+      "primaryLabel": "Find fighters",
+      "steps": [
+        {
+          "title": "Find fighters",
+          "body": "Filter profiles by city, availability, discipline, and public details.",
+          "href": "/fighters",
+          "action": "View fighters"
+        },
+        {
+          "title": "Review promoters and events",
+          "body": "Identify active events and organizers with a public presence.",
+          "href": "/events",
+          "action": "View events"
+        },
+        {
+          "title": "Contact relevant profiles",
+          "body": "Protected contact details require a session and permissions based on the contact type."
+        }
+      ]
+    },
+    "admin": {
+      "eyebrow": "Admin account",
+      "title": "Platform control",
+      "intro": "Your account has operational visibility across users, events, fighters, proposals, bouts, and platform status.",
+      "primaryHref": "/admin",
+      "primaryLabel": "Open admin",
+      "steps": [
+        {
+          "title": "Review the dashboard",
+          "body": "Monitor users, fighters, events, matches, and bouts from the main panel.",
+          "href": "/admin",
+          "action": "Go to admin"
+        },
+        {
+          "title": "Audit matches and bouts",
+          "body": "The matches/bouts page shows proposals and permanent event records.",
+          "href": "/admin/matches",
+          "action": "View matches/bouts"
+        },
+        {
+          "title": "Manage profiles",
+          "body": "Review fighters, managers, promoters, sponsors, and professionals from the admin sections."
+        },
+        {
+          "title": "Avoid unnecessary manual changes",
+          "body": "Critical actions should go through services, RPCs, and RLS policies to keep data consistent."
+        }
+      ]
+    },
+    "vendor": {
+      "eyebrow": "Professional account",
+      "title": "Service profile",
+      "intro": "Your account lets you appear in the services directory and receive contacts from signed-in users.",
+      "primaryHref": "/vendor/profile",
+      "primaryLabel": "Complete profile",
+      "steps": [
+        {
+          "title": "Complete your public profile",
+          "body": "Add city, experience, availability, photo, and a clear service description.",
+          "href": "/vendor/profile",
+          "action": "Edit profile"
+        },
+        {
+          "title": "Appear in the Directory",
+          "body": "Your profile can be found by promoters, managers, sponsors, and other users.",
+          "href": "/gallery",
+          "action": "View directory"
+        },
+        {
+          "title": "Keep details updated",
+          "body": "Protected contacts depend on your information being accurate and available."
+        }
+      ]
+    },
+    "default": {
+      "eyebrow": "Strikers Match",
+      "title": "How the platform works",
+      "intro": "The platform connects profiles, events, requests, registrations, matchmaking, and event-day operations.",
+      "primaryHref": "/events",
+      "primaryLabel": "View events",
+      "steps": [
+        {
+          "title": "Explore events",
+          "body": "Events are the center of registrations, fights, and results.",
+          "href": "/events",
+          "action": "View events"
+        },
+        {
+          "title": "Complete your profile",
+          "body": "Each account type has different actions depending on its role."
+        },
+        {
+          "title": "Use the correct dashboard",
+          "body": "The user menu takes you to the dashboard that matches your profile."
+        }
+      ]
+    }
+  }
+}

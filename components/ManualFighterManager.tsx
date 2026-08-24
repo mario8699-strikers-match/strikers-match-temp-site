@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { InlineCombatRecord } from '@/components/CombatRecord';
 import { manualFighterService } from '@/services/manualFighterService';
 import type { ManualFighter } from '@/types';
 
@@ -173,7 +174,7 @@ export function ManualFighterManager({
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
             </div>
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Empates</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Draws</label>
               <input type="number" min="0" value={draws} onChange={(e) => setDraws(e.target.value)}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
             </div>
@@ -277,13 +278,7 @@ export function ManualFighterManager({
                 <p className="text-xs mt-0.5" style={{ color: '#5A5A5A' }}>
                   {f.weight_class ? WEIGHT_LABELS[f.weight_class] ?? f.weight_class : '—'} · {f.city ?? '—'}
                 </p>
-                <div className="flex gap-1 mt-1">
-                  <span className="text-xs font-bold text-zinc-600">{f.record_wins}V</span>
-                  <span className="text-xs text-zinc-400">–</span>
-                  <span className="text-xs font-bold text-zinc-600">{f.record_losses}D</span>
-                  <span className="text-xs text-zinc-400">–</span>
-                  <span className="text-xs font-bold text-zinc-600">{f.record_draws}E</span>
-                </div>
+                <InlineCombatRecord wins={f.record_wins} losses={f.record_losses} draws={f.record_draws} className="mt-1 text-xs" />
                 <div className="flex gap-2 mt-1.5 flex-wrap">
                   <span className={`text-xs font-bold px-1.5 py-0.5 uppercase tracking-widest ${f.experience_level === 'pro' ? 'bg-[#C0001E] text-white' : 'bg-zinc-100 text-zinc-600'}`}>
                     {f.experience_level === 'pro' ? 'Pro' : 'Amateur'}

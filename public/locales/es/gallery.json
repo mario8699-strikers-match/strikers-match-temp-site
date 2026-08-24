@@ -1,22 +1,108 @@
 {
   "gallery": {
-    "title": "Galería de Eventos",
-    "subtitle": "Fotos oficiales de nuestros eventos de deportes de combate",
-    "loading": "Cargando fotos...",
-    "empty": "No hay fotos en la galería aún.",
-    "emptySubtitle": "Las fotos de eventos aparecerán aquí próximamente.",
-    "uploadTitle": "Subir Foto",
-    "uploadFile": "Seleccionar archivo",
-    "uploadCaption": "Descripción (opcional)",
-    "uploadCaptionPlaceholder": "Describe la foto...",
-    "uploadEventName": "Nombre del evento (opcional)",
-    "uploadEventNamePlaceholder": "Ej. Fight Night Monterrey...",
-    "uploadSubmit": "Subir foto",
-    "uploading": "Subiendo...",
-    "uploadSuccess": "Foto subida exitosamente.",
-    "deleteConfirm": "¿Eliminar esta foto? Esta acción no se puede deshacer.",
-    "delete": "Eliminar",
-    "adminTitle": "Gestión de Galería",
-    "adminSubtitle": "Sube y administra las fotos oficiales de eventos."
+    "title": "Directorio",
+    "subtitle": "Perfiles, servicios y negocios para la comunidad deportiva: gimnasios, recuperación, equipo, negocios locales y proveedores para eventos.",
+    "loading": "Cargando directorio...",
+    "empty": "No hay publicaciones en esta categoría.",
+    "emptySubtitle": "Los negocios y servicios aprobados aparecerán aquí.",
+    "featured": "Destacado",
+    "categories": {
+      "all": "Todos",
+      "profiles": "Perfiles de servicio",
+      "gyms_academies": "Gimnasios y academias",
+      "recovery_wellness": "Recuperación y bienestar",
+      "event_services": "Servicios para eventos",
+      "gear_apparel": "Ropa y equipo",
+      "nutrition_supplements": "Nutrición y suplementos",
+      "local_business": "Negocios locales",
+      "other": "Otros servicios"
+    },
+    "contact": {
+      "phone": "Teléfono",
+      "email": "Email",
+      "website": "Sitio web",
+      "instagram": "Instagram",
+      "viewProfile": "Ver perfil"
+    },
+    "form": {
+      "open": "Publicar en Directorio",
+      "close": "Cerrar formulario",
+      "signIn": "Iniciar sesión",
+      "createAccount": "Crear cuenta",
+      "title": "Publicar en el Directorio",
+      "subtitle": "Envía tu negocio o servicio para revisión. Se publicará cuando sea aprobado por administración.",
+      "success": "Publicación enviada para revisión. Se publicará cuando sea aprobada.",
+      "submit": "Enviar a revisión",
+      "submitting": "Enviando...",
+      "cancel": "Cancelar",
+      "fields": {
+        "title": "Nombre del negocio o servicio",
+        "category": "Categoría",
+        "description": "Descripción",
+        "city": "Ciudad",
+        "state": "Estado",
+        "phone": "Teléfono",
+        "email": "Email",
+        "website": "Sitio web",
+        "instagram": "Instagram",
+        "image": "Imagen o logo"
+      },
+      "errors": {
+        "titleRequired": "El nombre del negocio o servicio es obligatorio."
+      }
+    },
+    "profileSelector": {
+      "eyebrow": "Perfil del Directorio",
+      "title": "Selecciona tus servicios",
+      "body": "Elige los servicios que ofreces para que tu perfil aparezca en el Directorio. Puedes seleccionar más de una opción.",
+      "editProfile": "Editar perfil",
+      "save": "Guardar selección",
+      "saving": "Guardando...",
+      "success": "Selección guardada. Tu perfil aparece en el Directorio.",
+      "activeHint": "Tu perfil ya está configurado para aparecer como proveedor de servicio.",
+      "inactiveHint": "Selecciona al menos un servicio para activar tu perfil en el Directorio.",
+      "errors": {
+        "roleRequired": "Selecciona al menos un servicio."
+      }
+    },
+    "serviceRoles": {
+      "ring_card_girl": "Edición de tarjetas",
+      "photographer": "Fotógrafo",
+      "videographer": "Videógrafo",
+      "broadcast_personality": "Presentador / Comentarista",
+      "catering_vendor": "Catering / Alimentos",
+      "venue_rental": "Renta de sede",
+      "judge": "Juez / Réferi",
+      "ring_rental": "Renta de ring",
+      "ring_announcer": "Anunciador de ring",
+      "cutman": "Auxiliar de esquina",
+      "merchandise_vendor": "Venta de mercancía",
+      "ringside_doctor": "Médico junto al área de combate",
+      "ringside_emt": "Paramédico junto al área de combate"
+    },
+    "adminTitle": "Gestión del Directorio",
+    "adminSubtitle": "Revisa, publica y administra publicaciones de negocios y servicios.",
+    "admin": {
+      "empty": "No hay publicaciones con este estado.",
+      "deleteConfirm": "¿Eliminar esta publicación? Esta acción no se puede deshacer.",
+      "status": {
+        "all": "Todos",
+        "draft": "Borrador",
+        "pending_review": "Pendiente",
+        "published": "Publicado",
+        "rejected": "Rechazado",
+        "expired": "Expirado"
+      },
+      "actions": {
+        "publish": "Publicar",
+        "reject": "Rechazar",
+        "feature": "Destacar",
+        "unfeature": "Quitar destacado",
+        "delete": "Eliminar"
+      },
+      "errors": {
+        "updateFailed": "No se pudo actualizar la publicación."
+      }
+    }
   }
 }

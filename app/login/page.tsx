@@ -2,16 +2,41 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
-import { authService } from '@/services/authService';
-import { redirectAfterAuth } from '@/services/authRedirect';
+import { AUTH_PROFILE_MISSING_ERROR, AUTH_PROFILE_UNAVAILABLE_ERROR, authService } from '@/services/authService';
+import { getSafeAuthNextPath, redirectAfterAuth } from '@/services/authRedirect';
 import type { LoginFormData } from '@/types';
+
+const SESSION_TIMEOUT_MS = 8000;
+const LOGIN_TIMEOUT_MS = 15000;
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timeoutId = window.setTimeout(() => reject(new Error(message)), timeoutMs);
+    promise
+      .then(resolve, reject)
+      .finally(() => window.clearTimeout(timeoutId));
+  });
+}
+
+function resolveLoginError(error: string | null | undefined, t: (key: string) => string): string {
+  if (!error) return t('auth.errors.invalidCredentials');
+  if (error === AUTH_PROFILE_MISSING_ERROR) return t('auth.errors.profileMissing');
+  if (error === AUTH_PROFILE_UNAVAILABLE_ERROR) return t('auth.errors.profileUnavailable');
+
+  const normalized = error.toLowerCase();
+  if (normalized.includes('email not confirmed')) return t('auth.errors.emailNotConfirmed');
+  if (normalized.includes('invalid login credentials')) return t('auth.errors.invalidCredentials');
+  return error;
+}
 
 export default function LoginPage() {
   const { t } = useTranslation('auth');
-  const { t: tNav } = useTranslation('navigation');
+  const nextPath = typeof window === 'undefined'
+    ? null
+    : getSafeAuthNextPath(new URLSearchParams(window.location.search).get('next'));
+  const registerHref = nextPath ? `/register?next=${encodeURIComponent(nextPath)}` : '/register';
 
   const [formData, setFormData] = useState<LoginFormData>({ email: '', password: '' });
   const [errors, setErrors] = useState<Partial<LoginFormData>>({});
@@ -25,16 +50,25 @@ export default function LoginPage() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await authService.getSession();
-      if (cancelled) return;
-      if (data?.profile) {
-        await redirectAfterAuth(data.profile);
-        return;
+      try {
+        const { data } = await withTimeout(
+          authService.getSession(),
+          SESSION_TIMEOUT_MS,
+          'No se pudo verificar la sesión. Intenta iniciar sesión de nuevo.'
+        );
+        if (cancelled) return;
+        if (data?.profile) {
+          await redirectAfterAuth(data.profile, nextPath);
+          return;
+        }
+      } catch (error) {
+        if (cancelled) return;
+        setServerError(error instanceof Error ? error.message : 'No se pudo verificar la sesión.');
       }
       setCheckingSession(false);
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [nextPath]);
 
   const validate = (): boolean => {
     const newErrors: Partial<LoginFormData> = {};
@@ -50,12 +84,21 @@ export default function LoginPage() {
     if (!validate()) return;
     setServerError(null);
     setLoading(true);
-    const { data, error } = await authService.login(formData);
-    setLoading(false);
-    if (error) {
-      setServerError(t('auth.errors.invalidCredentials'));
-    } else {
-      await redirectAfterAuth(data?.profile ?? null);
+    try {
+      const { data, error } = await withTimeout(
+        authService.login(formData),
+        LOGIN_TIMEOUT_MS,
+        'El inicio de sesión tardó demasiado. Intenta de nuevo.'
+      );
+      if (error) {
+        setServerError(resolveLoginError(error, t));
+      } else {
+        await redirectAfterAuth(data?.profile ?? null, nextPath);
+      }
+    } catch (error) {
+      setServerError(error instanceof Error ? error.message : t('auth.errors.invalidCredentials'));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -141,7 +184,7 @@ export default function LoginPage() {
 
         <p className="mt-6 text-center text-sm text-zinc-500">
           {t('auth.login.noAccount')}{' '}
-          <a href="/register" className="font-medium text-zinc-900 hover:underline">
+          <a href={registerHref} className="font-medium text-zinc-900 hover:underline">
             {t('auth.login.registerLink')}
           </a>
         </p>

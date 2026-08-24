@@ -14,6 +14,8 @@ import esPromoters from '@/public/locales/es/promoters.json';
 import esSponsors from '@/public/locales/es/sponsors.json';
 import esGallery from '@/public/locales/es/gallery.json';
 import esLegal from '@/public/locales/es/legal.json';
+import esOnboarding from '@/public/locales/es/onboarding.json';
+import esSpectator from '@/public/locales/es/spectator.json';
 
 import enCommon from '@/public/locales/en/common.json';
 import enNavigation from '@/public/locales/en/navigation.json';
@@ -26,6 +28,8 @@ import enPromoters from '@/public/locales/en/promoters.json';
 import enSponsors from '@/public/locales/en/sponsors.json';
 import enGallery from '@/public/locales/en/gallery.json';
 import enLegal from '@/public/locales/en/legal.json';
+import enOnboarding from '@/public/locales/en/onboarding.json';
+import enSpectator from '@/public/locales/en/spectator.json';
 
 i18n
   .use(LanguageDetector)
@@ -34,13 +38,13 @@ i18n
     missingKeyHandler: false,
     saveMissing: false,
     debug: false,
-    // suppress i18next Locize promotional message
+    showSupportNotice: false,
     initImmediate: false,
     lng: i18nConfig.defaultLocale,
     fallbackLng: i18nConfig.defaultLocale,
     supportedLngs: i18nConfig.locales,
     defaultNS: 'common',
-    ns: ['common', 'navigation', 'auth', 'dashboard', 'events', 'admin', 'fighters', 'promoters', 'sponsors', 'gallery', 'legal'],
+    ns: ['common', 'navigation', 'auth', 'dashboard', 'events', 'admin', 'fighters', 'promoters', 'sponsors', 'gallery', 'legal', 'onboarding', 'spectator'],
     resources: {
       es: {
         common: esCommon,
@@ -54,6 +58,8 @@ i18n
         sponsors: esSponsors,
         gallery: esGallery,
         legal: esLegal,
+        onboarding: esOnboarding,
+        spectator: esSpectator,
       },
       en: {
         common: enCommon,
@@ -67,6 +73,8 @@ i18n
         sponsors: enSponsors,
         gallery: enGallery,
         legal: enLegal,
+        onboarding: enOnboarding,
+        spectator: enSpectator,
       },
     },
     detection: {

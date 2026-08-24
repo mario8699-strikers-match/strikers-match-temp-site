@@ -3,14 +3,17 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Pagination } from '@/components/Pagination';
+import { RecordValue } from '@/components/CombatRecord';
 import { fighterService } from '@/services/fighterService';
+import { fighterFollowService } from '@/services/fighterFollowService';
 import { manualFighterService } from '@/services/manualFighterService';
 import { supabase } from '@/lib/supabaseClient';
-import type { FighterWithProfile, ManualFighterWithCreator } from '@/types';
+import type { FighterWithProfile, ManualFighter } from '@/types';
 
 const WEIGHT_CLASSES = [
   'minimosca', 'mosca', 'supermosca', 'gallo', 'supergallo',
@@ -32,6 +35,11 @@ const ROSTER_PAGE_SIZE = 12;
 export default function SearchPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { t } = useTranslation('fighters');
+  const managerId = useMemo(() => {
+    if (typeof window === 'undefined') return null;
+    return new URLSearchParams(window.location.search).get('manager');
+  }, []);
 
   // ── Filter state ──────────────────────────
   const [weightClass, setWeightClass] = useState('');
@@ -45,14 +53,19 @@ export default function SearchPage() {
   // ── Debounce city input (400ms) ───────────
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const resetResultPages = useCallback(() => {
+    setPage(1);
+    setRosterPage(1);
+  }, []);
+
   const handleCityChange = useCallback((value: string) => {
     setCity(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setDebouncedCity(value);
-      setPage(1);
+      resetResultPages();
     }, 400);
-  }, []);
+  }, [resetResultPages]);
 
   // Clean up debounce timer
   useEffect(() => {
@@ -67,6 +80,7 @@ export default function SearchPage() {
     city: debouncedCity || undefined,
     short_notice_ready: shortNotice || undefined,
     is_available: available || undefined,
+    manager_id: managerId ?? undefined,
     page,
   };
 
@@ -82,17 +96,20 @@ export default function SearchPage() {
 
   // Manual fighters (roster) — fetched once, filtered client-side
   const { data: manualAll } = useQuery({
-    queryKey: ['manual-fighters-public'],
+    queryKey: ['manual-fighters-public', managerId],
     queryFn: async () => {
-      const { data: result, error } = await manualFighterService.getAllPublic();
+      const { data: result, error } = managerId
+        ? await manualFighterService.getByCreator(managerId)
+        : await manualFighterService.getAllPublic();
       if (error) throw new Error(error);
-      return (result ?? []) as ManualFighterWithCreator[];
+      return (result ?? []) as ManualFighter[];
     },
   });
 
   const manualFighters = useMemo(
     () =>
       (manualAll ?? []).filter((m) => {
+        if (managerId && m.manager_id !== managerId) return false;
         if (weightClass && m.weight_class !== weightClass) return false;
         if (debouncedCity && !(m.city ?? '').toLowerCase().includes(debouncedCity.toLowerCase())) return false;
         if (available && !m.is_available) return false;
@@ -100,7 +117,7 @@ export default function SearchPage() {
         if (shortNotice) return false;
         return true;
       }),
-    [manualAll, weightClass, debouncedCity, available, shortNotice]
+    [manualAll, managerId, weightClass, debouncedCity, available, shortNotice]
   );
 
   const rosterTotalPages = Math.ceil(manualFighters.length / ROSTER_PAGE_SIZE);
@@ -109,19 +126,21 @@ export default function SearchPage() {
     [manualFighters, rosterPage]
   );
 
-  // Reset roster page when filters change
-  useEffect(() => {
-    setRosterPage(1);
-  }, [weightClass, debouncedCity, available, shortNotice]);
-
   const fighters = (data?.fighters ?? []) as (FighterWithProfile & { profiles: { full_name: string; city: string | null } })[];
   const total = data?.count ?? 0;
   const totalPages = Math.ceil(total / PAGE_SIZE);
+  const resultTotal = managerId ? total + manualFighters.length : total;
+  const fighterIdsKey = fighters.map((fighter) => fighter.id).join(',');
 
-  // ── Reset page on filter change ───────────
-  useEffect(() => {
-    setPage(1);
-  }, [weightClass, shortNotice, available]);
+  const { data: followerCounts = {} } = useQuery({
+    queryKey: ['fighter-follower-counts', fighterIdsKey],
+    queryFn: async () => {
+      const { data: result, error } = await fighterFollowService.getFollowerCounts(fighters.map((fighter) => fighter.id));
+      if (error) throw new Error(error);
+      return result ?? {};
+    },
+    enabled: fighterIdsKey.length > 0,
+  });
 
   // ── Supabase Realtime: refresh on fighter availability changes ──
   useEffect(() => {
@@ -154,7 +173,7 @@ export default function SearchPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setDebouncedCity(city);
-    setPage(1);
+    resetResultPages();
   };
 
   const handlePage = (p: number) => {
@@ -190,7 +209,10 @@ export default function SearchPage() {
             </label>
             <select
               value={weightClass}
-              onChange={(e) => setWeightClass(e.target.value)}
+              onChange={(e) => {
+                setWeightClass(e.target.value);
+                resetResultPages();
+              }}
               className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900"
             >
               <option value="">Todas las divisiones</option>
@@ -220,7 +242,10 @@ export default function SearchPage() {
               <input
                 type="checkbox"
                 checked={available}
-                onChange={(e) => setAvailable(e.target.checked)}
+                onChange={(e) => {
+                  setAvailable(e.target.checked);
+                  resetResultPages();
+                }}
                 className="w-4 h-4 accent-[#C0001E]"
               />
               <span className="text-sm font-medium text-zinc-700">Solo disponibles</span>
@@ -229,7 +254,10 @@ export default function SearchPage() {
               <input
                 type="checkbox"
                 checked={shortNotice}
-                onChange={(e) => setShortNotice(e.target.checked)}
+                onChange={(e) => {
+                  setShortNotice(e.target.checked);
+                  resetResultPages();
+                }}
                 className="w-4 h-4 accent-[#C0001E]"
               />
               <span className="text-sm font-medium text-zinc-700">Aviso corto</span>
@@ -254,7 +282,7 @@ export default function SearchPage() {
         {!isLoading && (
           <div className="flex items-center gap-2 mb-4">
             <p className="text-xs font-bold tracking-widest uppercase" style={{ color: '#9A9A9A' }}>
-              {total} peleador{total !== 1 ? 'es' : ''} encontrado{total !== 1 ? 's' : ''}
+              {resultTotal} peleador{resultTotal !== 1 ? 'es' : ''} encontrado{resultTotal !== 1 ? 's' : ''}
             </p>
             {isFetching && (
               <span className="text-xs text-zinc-400 animate-pulse">Actualizando...</span>
@@ -265,11 +293,11 @@ export default function SearchPage() {
         {/* Cards */}
         {isLoading ? (
           <div className="py-24 text-center text-zinc-400 text-sm">Buscando...</div>
-        ) : fighters.length === 0 ? (
+        ) : fighters.length === 0 && manualFighters.length === 0 ? (
           <div className="py-24 text-center border border-dashed border-zinc-200">
             <p className="text-zinc-500 text-sm">No se encontraron peleadores con esos filtros.</p>
           </div>
-        ) : (
+        ) : fighters.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {fighters.map((fighter) => (
               <div
@@ -317,12 +345,12 @@ export default function SearchPage() {
                   {/* Record */}
                   <div className="grid grid-cols-3 gap-1 text-center mb-3">
                     {[
-                      { label: 'V', value: fighter.record_wins },
-                      { label: 'D', value: fighter.record_losses },
-                      { label: 'E', value: fighter.record_draws },
-                    ].map(({ label, value }) => (
+                      { label: 'V', value: fighter.record_wins, part: 'wins' as const },
+                      { label: 'D', value: fighter.record_losses, part: 'losses' as const },
+                      { label: 'E', value: fighter.record_draws, part: 'draws' as const },
+                    ].map(({ label, value, part }) => (
                       <div key={label} className="bg-zinc-50 py-1">
-                        <p className="text-base font-black text-zinc-900">{value}</p>
+                        <p className="text-base font-black"><RecordValue part={part} value={value} /></p>
                         <p className="text-xs" style={{ color: '#9A9A9A' }}>{label}</p>
                       </div>
                     ))}
@@ -335,6 +363,9 @@ export default function SearchPage() {
                         {WEIGHT_LABELS[fighter.weight_class] ?? fighter.weight_class}
                       </span>
                     )}
+                    <span className="text-xs bg-zinc-100 text-zinc-700 px-2 py-0.5">
+                      {followerCounts[fighter.id] ?? 0} {(followerCounts[fighter.id] ?? 0) === 1 ? t('fighters.follower') : t('fighters.followers')}
+                    </span>
                     {fighter.is_available && (
                       <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5">Disponible</span>
                     )}
@@ -346,6 +377,8 @@ export default function SearchPage() {
               </div>
             ))}
           </div>
+        ) : (
+          null
         )}
 
         {/* Pagination */}
@@ -358,7 +391,7 @@ export default function SearchPage() {
               <h2 className="text-lg font-black uppercase tracking-widest" style={{ color: '#0A0A0A' }}>Roster</h2>
               <span className="text-xs font-bold uppercase tracking-widest text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5">Sin cuenta</span>
               <p className="text-xs" style={{ color: '#9A9A9A' }}>
-                {manualFighters.length} peleador{manualFighters.length !== 1 ? 'es' : ''} gestionado{manualFighters.length !== 1 ? 's' : ''} por manager/promotor
+                {manualFighters.length} peleador{manualFighters.length !== 1 ? 'es' : ''} gestionado{manualFighters.length !== 1 ? 's' : ''} por representante/promotor
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -395,12 +428,12 @@ export default function SearchPage() {
                     </div>
                     <div className="grid grid-cols-3 gap-1 text-center mb-3">
                       {[
-                        { label: 'V', value: mf.record_wins },
-                        { label: 'D', value: mf.record_losses },
-                        { label: 'E', value: mf.record_draws },
-                      ].map(({ label, value }) => (
+                        { label: 'V', value: mf.record_wins, part: 'wins' as const },
+                        { label: 'D', value: mf.record_losses, part: 'losses' as const },
+                        { label: 'E', value: mf.record_draws, part: 'draws' as const },
+                      ].map(({ label, value, part }) => (
                         <div key={label} className="bg-zinc-50 py-1">
-                          <p className="text-base font-black text-zinc-900">{value}</p>
+                          <p className="text-base font-black"><RecordValue part={part} value={value} /></p>
                           <p className="text-xs" style={{ color: '#9A9A9A' }}>{label}</p>
                         </div>
                       ))}

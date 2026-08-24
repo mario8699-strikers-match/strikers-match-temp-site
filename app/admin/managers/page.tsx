@@ -27,7 +27,7 @@ export default function AdminManagersPage() {
     <div>
       <div className="mb-8">
         <h1 className="text-xl font-bold text-zinc-900">{t('admin.nav.managers')}</h1>
-        <p className="mt-1 text-sm text-zinc-500">Todos los managers registrados en la plataforma.</p>
+        <p className="mt-1 text-sm text-zinc-500">Todos los representantes registrados en la plataforma.</p>
       </div>
 
       {error && (
@@ -40,7 +40,7 @@ export default function AdminManagersPage() {
         <div className="py-16 text-center text-zinc-400 text-sm">—</div>
       ) : profiles.length === 0 ? (
         <div className="py-16 text-center border border-dashed border-zinc-200 text-zinc-500 text-sm">
-          No hay managers registrados.
+          No hay representantes registrados.
         </div>
       ) : (
         <>

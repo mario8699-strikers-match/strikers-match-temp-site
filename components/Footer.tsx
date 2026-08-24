@@ -1,7 +1,9 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 export function Footer() {
   const { t } = useTranslation('legal');
@@ -45,7 +47,7 @@ export function Footer() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-8">
 
           {/* Logo image */}
-          <a href="/" className="flex-shrink-0">
+          <Link href="/" className="flex-shrink-0">
             <Image
               src="/strikers-logo.png"
               alt="Strikers Match"
@@ -53,7 +55,7 @@ export function Footer() {
               width={128}
               style={{ width: 'auto', height: 'auto', maxHeight: 128 }}
             />
-          </a>
+          </Link>
 
           {/* Links */}
           <nav className="flex flex-wrap gap-x-6 gap-y-2">
@@ -61,23 +63,26 @@ export function Footer() {
               { href: '/events',    label: 'Eventos' },
               { href: '/fighters',  label: 'Atletas' },
               { href: '/promoters', label: 'Promotores' },
-              { href: '/managers',  label: 'Managers' },
+              { href: '/managers',  label: 'Representantes' },
               { href: '/sponsors',  label: 'Patrocinadores' },
-              { href: '/gallery',   label: 'Galería' },
+              { href: '/gallery',   label: 'Directorio' },
             ].map(({ href, label }) => (
-              <a
+              <Link
                 key={href}
                 href={href}
                 className="text-xs font-semibold tracking-widest uppercase transition-colors hover:text-white"
                 style={{ color: '#5A5A5A' }}
               >
                 {label}
-              </a>
+              </Link>
             ))}
           </nav>
 
           {/* Social + Copyright + Legal + Contact */}
           <div className="flex flex-col items-start sm:items-end gap-2">
+            <div className="mb-2">
+              <LanguageSwitcher variant="dark" />
+            </div>
             {/* Instagram */}
             <a
               href="https://www.instagram.com/strikersmatch/"

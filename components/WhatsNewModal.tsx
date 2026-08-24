@@ -8,15 +8,26 @@ import { authService } from '@/services/authService';
  * dismissed users see the new announcement once.
  */
 const WHATS_NEW_KEY = 'sm_whats_new_v3';
+const ONBOARDING_ACTIVE_KEY = 'sm_onboarding_active';
+const ONBOARDING_SHOWN_SESSION_KEY = 'sm_onboarding_shown_session';
+
+function isOnboardingActive() {
+  try {
+    return sessionStorage.getItem(ONBOARDING_ACTIVE_KEY) === '1'
+      || sessionStorage.getItem(ONBOARDING_SHOWN_SESSION_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
 
 const HIGHLIGHTS: { title: string; body: string }[] = [
   {
     title: 'Foto de perfil y logo de promotora',
-    body: 'Promotores y managers ya pueden subir su foto de perfil o logo de la empresa. Aparece en el directorio público y en tus eventos.',
+    body: 'Promotores y representantes ya pueden subir su foto de perfil o logo de la empresa. Aparece en el directorio público y en tus eventos.',
   },
   {
-    title: 'Publicar eventos gratis',
-    body: 'Promotores y managers pueden crear y publicar carteleras ilimitadas. Sin tarjeta, sin cuotas.',
+    title: 'Publicar eventos',
+    body: 'Promotores y representantes pueden crear y publicar carteleras ilimitadas desde su panel.',
   },
   {
     title: 'Aceptación de peleas en 2 lados',
@@ -27,8 +38,8 @@ const HIGHLIGHTS: { title: string; body: string }[] = [
     body: 'Cada perfil muestra su nivel de confiabilidad. Los nuevos aparecen como “Atleta Nuevo” hasta acumular historial real (3+ peleas).',
   },
   {
-    title: 'Panel de estadísticas (Pro)',
-    body: 'Mide tasa de aceptación, riesgos de no-show y peleadores confiables desde tu cuenta promoter o manager con plan Pro.',
+    title: 'Panel de estadísticas',
+    body: 'Mide tasa de aceptación, riesgos de ausencia y peleadores confiables desde tu cuenta de promotor o representante sin pagar por esa sección.',
   },
   {
     title: 'Confirmación de pagos del evento',
@@ -52,16 +63,31 @@ export function WhatsNewModal() {
     if (localStorage.getItem(WHATS_NEW_KEY) === 'dismissed') return;
 
     let cancelled = false;
-    authService.getSession().then(({ data }) => {
-      if (cancelled) return;
-      const role = data?.profile?.role;
-      // Show to any signed-in user; the highlights cover platform-wide updates
-      // that affect promoters, managers, fighters, sponsors, and vendors.
-      if (!role) return;
-      setOpen(true);
-    });
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
-    return () => { cancelled = true; };
+    const maybeOpen = () => {
+      if (cancelled) return;
+      if (isOnboardingActive()) {
+        retryTimer = setTimeout(maybeOpen, 600);
+        return;
+      }
+
+      authService.getSession().then(({ data }) => {
+        if (cancelled || isOnboardingActive()) return;
+        const role = data?.profile?.role;
+        // Show to any signed-in user; the highlights cover platform-wide updates
+        // that affect promoters, managers, fighters, sponsors, and vendors.
+        if (!role) return;
+        setOpen(true);
+      });
+    };
+
+    maybeOpen();
+
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+    };
   }, []);
 
   const dismiss = () => {
@@ -139,7 +165,7 @@ export function WhatsNewModal() {
             onClick={dismiss}
             className="text-xs sm:text-sm text-center text-zinc-600 hover:text-zinc-900 underline px-2 py-2"
           >
-            Ver planes y precios
+            Ver herramientas
           </a>
           <button
             type="button"

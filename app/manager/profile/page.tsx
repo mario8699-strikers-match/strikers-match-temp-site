@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { InlineCombatRecord } from '@/components/CombatRecord';
 import { authService } from '@/services/authService';
 import { managerService } from '@/services/managerService';
 import type { Profile, Fighter, ManualFighter } from '@/types';
@@ -155,7 +156,7 @@ export default function ManagerProfilePage() {
               </div>
             )}
             <div className="min-w-0">
-              <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#C0001E' }}>Perfil del Manager</p>
+              <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#C0001E' }}>Perfil del Representante</p>
               <h1 className="text-2xl sm:text-3xl font-black uppercase truncate" style={{ letterSpacing: '-1px' }}>{profile!.full_name || 'Sin nombre'}</h1>
               {profile!.city && <p className="text-sm mt-1" style={{ color: '#5A5A5A' }}>{profile!.city}</p>}
             </div>
@@ -247,7 +248,7 @@ export default function ManagerProfilePage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-zinc-700">Foto de perfil</p>
-                <p className="text-xs text-zinc-500 mt-0.5">JPG o PNG, máximo 8 MB. Aparece en el directorio de Managers.</p>
+                <p className="text-xs text-zinc-500 mt-0.5">JPG o PNG, máximo 8 MB. Aparece en el directorio de representantes.</p>
               </div>
             </div>
 
@@ -328,13 +329,7 @@ export default function ManagerProfilePage() {
                     <p className="text-xs mt-0.5" style={{ color: '#5A5A5A' }}>
                       {f.weight_class ? WEIGHT_LABELS[f.weight_class] ?? f.weight_class : '—'} · {f.profiles?.city ?? '—'}
                     </p>
-                    <div className="flex gap-1 mt-1">
-                      <span className="text-xs font-bold text-zinc-600">{f.record_wins}V</span>
-                      <span className="text-xs text-zinc-400">–</span>
-                      <span className="text-xs font-bold text-zinc-600">{f.record_losses}D</span>
-                      <span className="text-xs text-zinc-400">–</span>
-                      <span className="text-xs font-bold text-zinc-600">{f.record_draws}E</span>
-                    </div>
+                    <InlineCombatRecord wins={f.record_wins} losses={f.record_losses} draws={f.record_draws} className="mt-1 text-xs" />
                     <span className={`inline-block mt-1 text-xs font-bold px-1.5 py-0.5 uppercase tracking-widest ${f.experience_level === 'pro' ? 'bg-[#C0001E] text-white' : 'bg-zinc-100 text-zinc-600'}`}>
                       {f.experience_level === 'pro' ? 'Pro' : 'Amateur'}
                     </span>
@@ -362,13 +357,7 @@ export default function ManagerProfilePage() {
                   <p className="text-xs mt-0.5" style={{ color: '#5A5A5A' }}>
                     {f.weight_class ? WEIGHT_LABELS[f.weight_class] ?? f.weight_class : '—'} · {f.city ?? '—'}
                   </p>
-                  <div className="flex gap-1 mt-1">
-                    <span className="text-xs font-bold text-zinc-600">{f.record_wins}V</span>
-                    <span className="text-xs text-zinc-400">–</span>
-                    <span className="text-xs font-bold text-zinc-600">{f.record_losses}D</span>
-                    <span className="text-xs text-zinc-400">–</span>
-                    <span className="text-xs font-bold text-zinc-600">{f.record_draws}E</span>
-                  </div>
+                  <InlineCombatRecord wins={f.record_wins} losses={f.record_losses} draws={f.record_draws} className="mt-1 text-xs" />
                   <div className="flex gap-2 mt-1.5">
                     <span className={`text-xs font-bold px-1.5 py-0.5 uppercase tracking-widest ${f.experience_level === 'pro' ? 'bg-[#C0001E] text-white' : 'bg-zinc-100 text-zinc-600'}`}>
                       {f.experience_level === 'pro' ? 'Pro' : 'Amateur'}

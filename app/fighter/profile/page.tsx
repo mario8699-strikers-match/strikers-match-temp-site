@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { RecordValue } from '@/components/CombatRecord';
 import { authService } from '@/services/authService';
 import { fighterService } from '@/services/fighterService';
 import { requestService } from '@/services/requestService';
@@ -183,7 +185,6 @@ export default function FighterProfilePage() {
         }
       });
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -352,9 +353,13 @@ export default function FighterProfilePage() {
           <div className="space-y-6">
             {/* Record */}
             <div className="grid grid-cols-3 gap-4 border border-zinc-100 p-6 text-center">
-              {[{label:'Victorias',value:fighter.record_wins},{label:'Derrotas',value:fighter.record_losses},{label:'Empates',value:fighter.record_draws}].map(({label,value}) => (
+              {[
+                { label:'Victorias', value:fighter.record_wins, part:'wins' as const },
+                { label:'Derrotas', value:fighter.record_losses, part:'losses' as const },
+                { label:'Draws', value:fighter.record_draws, part:'draws' as const },
+              ].map(({label,value,part}) => (
                 <div key={label}>
-                  <p className="text-3xl font-black" style={{ fontFamily:'var(--font-barlow-condensed)', letterSpacing:'-1px' }}>{value}</p>
+                  <p className="text-3xl font-black" style={{ fontFamily:'var(--font-barlow-condensed)', letterSpacing:'-1px' }}><RecordValue part={part} value={value} /></p>
                   <p className="text-xs font-bold tracking-widest uppercase mt-1" style={{ color:'#5A5A5A' }}>{label}</p>
                 </div>
               ))}
@@ -379,7 +384,7 @@ export default function FighterProfilePage() {
                 { label:'Gimnasio', value: fighter.gym_name ?? '—' },
                 { label:'Peso exacto', value: fighter.exact_weight ? `${fighter.exact_weight} kg` : '—' },
                 { label:'Estatura', value: fighter.height_cm ? `${fighter.height_cm} cm` : '—' },
-                { label:'Envergadura', value: fighter.reach_cm ? `${fighter.reach_cm} cm` : '—' },
+                { label:'Alcance', value: fighter.reach_cm ? `${fighter.reach_cm} cm` : '—' },
               ].map(({label,value}) => (
                 <div key={label}>
                   <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>{label}</p>
@@ -489,7 +494,7 @@ export default function FighterProfilePage() {
                 {[
                   { label:'Peso (kg)', val:exactWeight, set:setExactWeight, step:'0.1' },
                   { label:'Estatura (cm)', val:heightCm, set:setHeightCm, step:'1' },
-                  { label:'Envergadura (cm)', val:reachCm, set:setReachCm, step:'1' },
+                  { label:'Alcance (cm)', val:reachCm, set:setReachCm, step:'1' },
                 ].map(({ label, val, set: setter, step }) => (
                   <div key={label}>
                     <p className="text-xs text-zinc-400 mb-1">{label}</p>
@@ -504,7 +509,7 @@ export default function FighterProfilePage() {
             <div>
               <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Récord (V – D – E)</label>
               <div className="grid grid-cols-3 gap-3">
-                {[{label:'Victorias',val:wins,set:setWins},{label:'Derrotas',val:losses,set:setLosses},{label:'Empates',val:draws,set:setDraws}].map(({ label, val, set: setter }) => (
+                {[{label:'Victorias',val:wins,set:setWins},{label:'Derrotas',val:losses,set:setLosses},{label:'Draws',val:draws,set:setDraws}].map(({ label, val, set: setter }) => (
                   <div key={label}>
                     <p className="text-xs text-zinc-400 mb-1">{label}</p>
                     <input type="number" min="0" value={val} onChange={e => setter(e.target.value)}
@@ -586,7 +591,7 @@ export default function FighterProfilePage() {
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={hasManager} onChange={e => setHasManager(e.target.checked)}
                       className="w-4 h-4 border-zinc-300 text-[#C0001E] focus:ring-[#C0001E]" />
-                    <span className="text-sm font-semibold text-zinc-900">Tengo Manager</span>
+                    <span className="text-sm font-semibold text-zinc-900">Tengo representante</span>
                   </label>
                   {hasManager && (
                     <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -642,7 +647,7 @@ export default function FighterProfilePage() {
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={hasSponsor} onChange={e => setHasSponsor(e.target.checked)}
                       className="w-4 h-4 border-zinc-300 text-[#C0001E] focus:ring-[#C0001E]" />
-                    <span className="text-sm font-semibold text-zinc-900">Tengo Sponsor</span>
+                    <span className="text-sm font-semibold text-zinc-900">Tengo patrocinador</span>
                   </label>
                   {hasSponsor && (
                     <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -739,9 +744,9 @@ export default function FighterProfilePage() {
               ) : myApplications.length === 0 ? (
                 <div className="border border-dashed border-zinc-200 py-8 text-center">
                   <p className="text-sm text-zinc-400">No has aplicado a ningún evento aún.</p>
-                  <a href="/events" className="mt-3 inline-block text-xs font-bold tracking-widest uppercase text-white px-4 py-2 transition-colors" style={{ background:'#C0001E' }}>
+                  <Link href="/events" className="mt-3 inline-block text-xs font-bold tracking-widest uppercase text-white px-4 py-2 transition-colors" style={{ background:'#C0001E' }}>
                     Ver eventos
-                  </a>
+                  </Link>
                 </div>
               ) : (
                 <div className="space-y-3">

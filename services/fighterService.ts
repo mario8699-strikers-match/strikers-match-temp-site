@@ -13,7 +13,7 @@ export const fighterService = {
     try {
       const { data, error } = await supabase
         .from('fighters')
-        .select('*, profiles(full_name, city)')
+        .select('*, profiles(full_name, city, date_of_birth)')
         .neq('is_hidden', true)
         .order('created_at', { ascending: false });
 
@@ -28,7 +28,7 @@ export const fighterService = {
     try {
       const { data, error } = await supabase
         .from('fighters')
-        .select('*, profiles(full_name, city)')
+        .select('*, profiles(full_name, city, date_of_birth)')
         .eq('id', id)
         .single();
 
@@ -58,7 +58,7 @@ export const fighterService = {
     try {
       const { data, error } = await supabase
         .from('fighters')
-        .select('*, profiles(full_name, city)')
+        .select('*, profiles(full_name, city, date_of_birth)')
         .eq('is_available', true)
         .neq('is_hidden', true)
         .order('created_at', { ascending: false });
@@ -79,7 +79,24 @@ export const fighterService = {
 
       let query = supabase
         .from('fighters')
-        .select('*, profiles(full_name, city, is_banned)', { count: 'exact' });
+        .select('*, profiles(full_name, city, date_of_birth, is_banned)', { count: 'exact' });
+
+      if (filters.manager_id) {
+        const { data: rosterRows, error: rosterError } = await supabase
+          .rpc('get_public_manager_fighter_ids', { target_manager_id: filters.manager_id });
+
+        if (rosterError) return { data: null, error: rosterError.message };
+
+        const fighterIds = ((rosterRows ?? []) as { fighter_id: string | null }[])
+          .map((row) => row.fighter_id)
+          .filter((fighterId): fighterId is string => Boolean(fighterId));
+
+        if (fighterIds.length === 0) {
+          return { data: { fighters: [], count: 0 }, error: null };
+        }
+
+        query = query.in('id', fighterIds);
+      }
 
       if (filters.weight_class) query = query.eq('weight_class', filters.weight_class);
       if (filters.city) query = query.ilike('profiles.city', `%${filters.city}%`);

@@ -2,16 +2,17 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import { Navbar } from '@/components/Navbar';
-import { Footer } from '@/components/Footer';
+import { EventManageFrame } from '@/components/EventManageFrame';
+import { InlineCombatRecord } from '@/components/CombatRecord';
 import { eventService } from '@/services/eventService';
 import { authService } from '@/services/authService';
+import { canAccessEventTools, canUseEventFeature } from '@/services/eventStaffService';
 import { fighterService } from '@/services/fighterService';
 import { supabase } from '@/lib/supabaseClient';
 import { getRecommendedFighters } from '@/services/matchmakingService';
 import { findEmergencyReplacements, sendQuickRequest } from '@/services/emergencyMatchService';
-import { canPerformAction, recordRequestUsed } from '@/services/subscriptionService';
 import { registerForEvent, submitPayment, getFighterRegistration, getEventRegistrations } from '@/services/registrationService';
 import { requestService } from '@/services/requestService';
 import {
@@ -299,10 +300,6 @@ export default function EventDetailPage() {
   // Realtime fight requests
   const [eventRequests, setEventRequests] = useState<MatchRequest[]>([]);
 
-  // Monetization paywall
-  const [showPaywall, setShowPaywall] = useState(false);
-  const [paywallReason, setPaywallReason] = useState('');
-
   // Event registration (payment tracking)
   const [myRegistration, setMyRegistration] = useState<EventRegistration | null>(null);
   const [registering, setRegistering] = useState(false);
@@ -317,6 +314,15 @@ export default function EventDetailPage() {
   const [proposeFeedback, setProposeFeedback] = useState<string | null>(null);
   const [proposeError, setProposeError] = useState<string | null>(null);
   const [confirmedRegistrations, setConfirmedRegistrations] = useState<{ id: string; name: string; weight: string | null }[]>([]);
+  const [canOperateThisEvent, setCanOperateThisEvent] = useState(false);
+  const [eventToolAccess, setEventToolAccess] = useState({
+    settings: false,
+    matchmaking: false,
+    bouts: false,
+    print: false,
+    operation: false,
+    production: false,
+  });
 
   useEffect(() => {
     if (!id) return;
@@ -330,6 +336,24 @@ export default function EventDetailPage() {
 
       const p = session?.profile ?? null;
       setProfile(p);
+      const [toolsAllowed, settingsAllowed, matchmakingAllowed, boutsAllowed, printAllowed, operationAllowed, productionAllowed] = await Promise.all([
+        canAccessEventTools(id, p, ev),
+        canUseEventFeature(id, 'settings', p, ev),
+        canUseEventFeature(id, 'matchmaking', p, ev),
+        canUseEventFeature(id, 'bouts', p, ev),
+        canUseEventFeature(id, 'print', p, ev),
+        canUseEventFeature(id, 'operation', p, ev),
+        canUseEventFeature(id, 'production', p, ev),
+      ]);
+      setCanOperateThisEvent(toolsAllowed);
+      setEventToolAccess({
+        settings: settingsAllowed,
+        matchmaking: matchmakingAllowed,
+        bouts: boutsAllowed,
+        print: printAllowed,
+        operation: operationAllowed,
+        production: productionAllowed,
+      });
 
       if (p?.role === 'fighter') {
         // Get fighter record + existing application
@@ -337,7 +361,18 @@ export default function EventDetailPage() {
         setMyFighter(f ?? null);
         if (f) {
           const { data: app } = await eventService.getMyApplicationForEvent(id, f.id);
-          setMyApplication(app ?? null);
+          const currentApplication = app ?? null;
+          setMyApplication(currentApplication);
+
+          const wantsToParticipate = typeof window !== 'undefined' &&
+            new URLSearchParams(window.location.search).get('action') === 'participate';
+          if (
+            wantsToParticipate &&
+            ev.status === 'published' &&
+            (!currentApplication || currentApplication.status === 'withdrawn')
+          ) {
+            setApplyOpen(true);
+          }
 
           // Check event registration (payment tracking)
           const { data: reg } = await getFighterRegistration(id, f.id);
@@ -345,7 +380,7 @@ export default function EventDetailPage() {
         }
       }
 
-      if (p && (ev.promoter_id === p.id || p.role === 'admin')) {
+      if (matchmakingAllowed || boutsAllowed) {
         // Load applicants
         setAppsLoading(true);
         const { data: apps } = await eventService.getApplicationsForEvent(id);
@@ -411,14 +446,6 @@ export default function EventDetailPage() {
   const handleBatchEmergencySend = async () => {
     if (!profile || !event || selectedEmergency.size === 0) return;
 
-    // Monetization check
-    const subCheck = await canPerformAction(profile.id, profile.role, 'emergency_replacement');
-    if (!subCheck.allowed) {
-      setPaywallReason(subCheck.reason);
-      setShowPaywall(true);
-      return;
-    }
-
     setSendingEmergency(true);
     let sentCount = 0;
     for (const fighterId of selectedEmergency) {
@@ -427,7 +454,6 @@ export default function EventDetailPage() {
       if (!error) {
         sentCount++;
         setEmergencySentIds((prev) => new Set(prev).add(fighterId));
-        await recordRequestUsed(profile.id);
       }
     }
     setSendingEmergency(false);
@@ -477,20 +503,12 @@ export default function EventDetailPage() {
     if (!error) await reloadEventMatches(event.id);
   };
 
-  // ── Monetized request send (for recommended fighters) ──
+  // ── Request send for recommended fighters ──
   const handleSendRecommendedRequest = async (fighterId: string) => {
     if (!profile || !event) return;
 
-    const subCheck = await canPerformAction(profile.id, profile.role, 'send_fight_request');
-    if (!subCheck.allowed) {
-      setPaywallReason(subCheck.reason);
-      setShowPaywall(true);
-      return;
-    }
-
     const { error } = await sendQuickRequest(fighterId, event.id, profile.id);
     if (!error) {
-      await recordRequestUsed(profile.id);
       // Refresh requests
       const { data: reqs } = await requestService.getByEvent(event.id);
       setEventRequests((reqs ?? []) as MatchRequest[]);
@@ -628,19 +646,20 @@ export default function EventDetailPage() {
     return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(amount);
   };
 
-  if (loading) return <div className="min-h-screen bg-white flex items-center justify-center"><p className="text-zinc-400 text-sm">{tCommon('common.loading')}</p></div>;
+  if (loading) return <EventManageFrame><p className="text-sm text-zinc-400">{tCommon('common.loading')}</p></EventManageFrame>;
   if (loadError || !event) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+      <EventManageFrame>
         <div className="text-center">
           <p className="text-zinc-900 font-medium">{loadError ?? t('events.errors.loadFailed')}</p>
-          <a href="/events" className="mt-4 inline-block text-sm text-zinc-500 hover:text-zinc-900 underline">{t('events.backToEvents')}</a>
+          <Link href="/events" className="mt-4 inline-block text-sm text-zinc-500 hover:text-zinc-900 underline">{t('events.backToEvents')}</Link>
         </div>
-      </div>
+      </EventManageFrame>
     );
   }
 
-  const isOwner = profile && (event.promoter_id === profile.id || profile.role === 'admin');
+  const canManageEvent = canOperateThisEvent;
+  const canEditEvent = profile && (event.promoter_id === profile.id || profile.role === 'admin');
   const isFighter = profile?.role === 'fighter';
 
   // Discipline mismatch warning for fighters
@@ -648,38 +667,73 @@ export default function EventDetailPage() {
   const fighterDisciplines = myFighter?.disciplines ?? [];
   const hasMismatch = isFighter && myFighter && eventDisciplines.length > 0 &&
     !fighterDisciplines.some((d) => eventDisciplines.includes(d));
+  const participatePath = `/events/${event.id}?action=participate`;
+  const participateLoginHref = `/login?next=${encodeURIComponent(participatePath)}`;
+  const participateRegisterHref = `/register?next=${encodeURIComponent(participatePath)}`;
 
   return (
-    <div className="min-h-screen bg-white font-sans flex flex-col">
-      <Navbar activePage="events" />
-
-      <main className="flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-10 w-full">
+    <EventManageFrame>
+      <div className="mx-auto w-full max-w-2xl">
         {/* Breadcrumb */}
         <div className="mb-6">
-          <a href="/events" className="text-sm text-zinc-500 hover:text-zinc-900 flex items-center gap-1">
+          <Link href="/events" className="text-sm text-zinc-500 hover:text-zinc-900 flex items-center gap-1">
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             {t('events.backToEvents')}
-          </a>
+          </Link>
         </div>
 
         {/* Title row */}
-        <div className="flex items-start justify-between mb-8 gap-4">
+        <div className="flex flex-col items-stretch justify-between mb-8 gap-4 sm:flex-row sm:items-start">
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-bold text-zinc-900">{event.event_name}</h1>
             <span className={`px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[event.status]}`}>
               {t(`events.status.${event.status}`)}
             </span>
           </div>
-          {isOwner && !editing && (
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <button onClick={enterEdit} className="px-3 py-1.5 text-sm font-medium text-zinc-700 border border-zinc-300 hover:bg-zinc-50 transition-colors">
-                {t('events.editEvent')}
-              </button>
-              <button onClick={() => setShowDeleteConfirm(true)} className="px-3 py-1.5 text-sm font-medium text-red-600 border border-red-200 hover:bg-red-50 transition-colors">
-                {t('events.deleteEvent')}
-              </button>
+          {canManageEvent && !editing && (
+            <div className="flex flex-col items-stretch gap-2 flex-shrink-0 sm:flex-row sm:items-center">
+              {eventToolAccess.settings && (
+                <a href={`/events/${event.id}/manage/settings`} className="min-h-11 border border-zinc-300 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-zinc-800">
+                  {t('events.engine.nav.settings')}
+                </a>
+              )}
+              {eventToolAccess.matchmaking && (
+                <a href={`/events/${event.id}/manage/matchmaking`} className="min-h-11 bg-zinc-900 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-white">
+                  {t('events.engine.nav.matchmaking')}
+                </a>
+              )}
+              {eventToolAccess.bouts && (
+                <a href={`/events/${event.id}/manage/bouts`} className="min-h-11 border border-zinc-300 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-zinc-800">
+                  {t('events.engine.nav.bouts')}
+                </a>
+              )}
+              {eventToolAccess.print && (
+                <a href={`/events/${event.id}/manage/print`} className="min-h-11 border border-zinc-300 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-zinc-800">
+                  {t('events.engine.nav.print')}
+                </a>
+              )}
+              {eventToolAccess.operation && (
+                <a href={`/events/${event.id}/manage/live`} className="min-h-11 border border-zinc-300 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-zinc-800">
+                  {t('events.engine.nav.live')}
+                </a>
+              )}
+              {eventToolAccess.production && (
+                <a href={`/events/${event.id}/manage/streaming`} className="min-h-11 border border-zinc-300 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-zinc-800">
+                  {t('events.engine.nav.streaming')}
+                </a>
+              )}
+              {canEditEvent && (
+                <>
+                  <button onClick={enterEdit} className="min-h-11 px-3 py-2 text-sm font-medium text-zinc-700 border border-zinc-300 hover:bg-zinc-50 transition-colors">
+                    {t('events.editEvent')}
+                  </button>
+                  <button onClick={() => setShowDeleteConfirm(true)} className="min-h-11 px-3 py-2 text-sm font-medium text-red-600 border border-red-200 hover:bg-red-50 transition-colors">
+                    {t('events.deleteEvent')}
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -1083,14 +1137,24 @@ export default function EventDetailPage() {
             {!profile && event.status === 'published' && (
               <div className="border border-dashed border-zinc-200 p-6 text-center">
                 <p className="text-sm text-zinc-500">
-                  <a href="/login" className="font-semibold" style={{ color: '#C0001E' }}>Inicia sesión</a> como peleador para aplicar a este evento.
+                  <a href={participateLoginHref} className="font-semibold" style={{ color: '#C0001E' }}>
+                    {t('events.public.signIn')}
+                  </a>
+                  {' '}
+                  {t('events.public.or')}
+                  {' '}
+                  <a href={participateRegisterHref} className="font-semibold" style={{ color: '#C0001E' }}>
+                    {t('events.public.createAccount')}
+                  </a>
+                  {' '}
+                  {t('events.public.authPromptTail')}
                 </p>
               </div>
             )}
 
             {/* ── Promoter: Applications ── */}
             {/* ── Promoter: Realtime Fight Requests ── */}
-            {isOwner && eventRequests.length > 0 && (
+            {canManageEvent && eventRequests.length > 0 && (
               <div className="border-t border-zinc-100 pt-8">
                 <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color: '#C0001E' }}>
                   Solicitudes de pelea ({eventRequests.length})
@@ -1119,7 +1183,7 @@ export default function EventDetailPage() {
               </div>
             )}
 
-            {isOwner && (
+            {canManageEvent && (
               <div className="border-t border-zinc-100 pt-8">
                 <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color: '#C0001E' }}>
                   Solicitudes ({applications.length})
@@ -1193,7 +1257,7 @@ export default function EventDetailPage() {
             )}
 
             {/* ── Promoter: Recommended Fighters ── */}
-            {isOwner && (
+            {canManageEvent && (
               <div className="border-t border-zinc-100 pt-8">
                 <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color: '#C0001E' }}>
                   Peleadores Recomendados
@@ -1227,7 +1291,15 @@ export default function EventDetailPage() {
                                 </span>
                               </div>
                               <p className="text-xs text-zinc-500">
-                                {rec.fighter.weight_class ?? '—'} · {rec.fighter.profiles?.city ?? '—'} · {rec.fighter.record_wins}W-{rec.fighter.record_losses}L-{rec.fighter.record_draws}D
+                                {rec.fighter.weight_class ?? '—'} · {rec.fighter.profiles?.city ?? '—'} ·{' '}
+                                <InlineCombatRecord
+                                  wins={rec.fighter.record_wins}
+                                  losses={rec.fighter.record_losses}
+                                  draws={rec.fighter.record_draws}
+                                  winLabel="W"
+                                  lossLabel="L"
+                                  drawLabel="D"
+                                />
                               </p>
                               {(() => {
                                 const tier = reliabilityTier(
@@ -1554,9 +1626,7 @@ export default function EventDetailPage() {
             </div>
           </div>
         )}
-      </main>
-
-      <Footer />
+      </div>
 
       {/* ── Emergency Replacement Modal ── */}
       {emergencyOpen && (
@@ -1658,44 +1728,6 @@ export default function EventDetailPage() {
         </div>
       )}
 
-      {/* ── Paywall Modal ── */}
-      {showPaywall && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
-          <div className="bg-white max-w-md w-full p-6 shadow-xl">
-            <h2 className="text-base font-bold text-zinc-900 mb-2">Limite alcanzado</h2>
-            <p className="text-sm text-zinc-500 mb-6">{paywallReason}</p>
-            <div className="space-y-3 mb-6">
-              <button
-                onClick={async () => {
-                  const { data: { session } } = await supabase.auth.getSession();
-                  if (!session) { window.location.href = '/login'; return; }
-                  const res = await fetch('/api/checkout', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-                    body: JSON.stringify({ plan: 'per_request' }),
-                  });
-                  const data = await res.json();
-                  if (data.url) window.location.href = data.url;
-                }}
-                className="w-full px-4 py-3 text-sm font-bold tracking-wide uppercase border-2 border-[#C0001E] text-[#C0001E] hover:bg-red-50 transition-colors"
-              >
-                Pago por solicitud — $49 MXN
-              </button>
-              <a
-                href="/pricing"
-                className="block w-full px-4 py-3 text-sm font-bold tracking-wide uppercase text-white text-center transition-colors"
-                style={{ background: '#C0001E' }}
-              >
-                Ver planes mensuales
-              </a>
-            </div>
-            <button onClick={() => setShowPaywall(false)} className="w-full text-center text-sm text-zinc-400 hover:text-zinc-700 transition-colors">
-              Cerrar
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
@@ -1715,7 +1747,7 @@ export default function EventDetailPage() {
           </div>
         </div>
       )}
-    </div>
+    </EventManageFrame>
   );
 }
 

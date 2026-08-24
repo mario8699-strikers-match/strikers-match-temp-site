@@ -4,13 +4,15 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { RecordValue } from '@/components/CombatRecord';
 import { fighterService } from '@/services/fighterService';
 import { eventService } from '@/services/eventService';
 import { requestService } from '@/services/requestService';
 import { authService } from '@/services/authService';
-import { canPerformAction, recordRequestUsed } from '@/services/subscriptionService';
+import { fighterFollowService } from '@/services/fighterFollowService';
 import { supabase } from '@/lib/supabaseClient';
 import type { Fighter, Profile, Event } from '@/types';
 
@@ -20,11 +22,12 @@ const WEIGHT_LABELS: Record<string, string> = {
   superwelter:'Superwelter',medio:'Medio',supermedio:'Supermedio',semipesado:'Semipesado',crucero:'Crucero',pesado:'Pesado',
 };
 
-type FighterDetail = Fighter & { profiles: { full_name: string; city: string | null } };
+type FighterDetail = Fighter & { profiles: { full_name: string; city: string | null; date_of_birth?: string | null } };
 
 type Neighbor = { id: string; name: string };
 
 export default function FighterDetailPage() {
+  const { t } = useTranslation('spectator');
   const { id } = useParams<{ id: string }>();
 
   const [fighter, setFighter] = useState<FighterDetail | null>(null);
@@ -32,6 +35,10 @@ export default function FighterDetailPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [myEvents, setMyEvents] = useState<Event[]>([]);
   const [neighbors, setNeighbors] = useState<{ prev: Neighbor | null; next: Neighbor | null }>({ prev: null, next: null });
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followSaving, setFollowSaving] = useState(false);
+  const [followError, setFollowError] = useState<string | null>(null);
 
   // Modal state
   const [showModal, setShowModal] = useState(false);
@@ -40,10 +47,6 @@ export default function FighterDetailPage() {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [sendSuccess, setSendSuccess] = useState(false);
-
-  // Paywall
-  const [showPaywall, setShowPaywall] = useState(false);
-  const [paywallReason, setPaywallReason] = useState('');
 
   useEffect(() => {
     Promise.all([
@@ -67,6 +70,14 @@ export default function FighterDetailPage() {
 
       if (p && (p.role === 'promoter' || p.role === 'manager' || p.role === 'admin')) {
         eventService.getByPromoter(p.id).then(({ data: events }) => setMyEvents(events ?? []));
+      }
+      if (p?.role === 'spectator' && f?.id) {
+        fighterFollowService.isFollowing(p.id, f.id).then(({ data }) => setIsFollowing(!!data));
+      }
+      if (f?.id) {
+        fighterFollowService.getFollowerCounts([f.id]).then(({ data }) => {
+          setFollowerCount(data?.[f.id] ?? 0);
+        });
       }
     });
   }, [id]);
@@ -102,14 +113,6 @@ export default function FighterDetailPage() {
   const handleSendRequest = async () => {
     if (!profile || !fighter || !modalEventId) return;
 
-    // Monetization check
-    const subCheck = await canPerformAction(profile.id, profile.role, 'send_fight_request');
-    if (!subCheck.allowed) {
-      setPaywallReason(subCheck.reason);
-      setShowPaywall(true);
-      return;
-    }
-
     setSending(true);
     setSendError(null);
     const { error } = await requestService.create({
@@ -124,10 +127,25 @@ export default function FighterDetailPage() {
     if (error) {
       setSendError('No se pudo enviar la solicitud.');
     } else {
-      await recordRequestUsed(profile.id);
       setSendSuccess(true);
       setTimeout(() => { setShowModal(false); setSendSuccess(false); setModalMessage(''); setModalEventId(''); }, 1500);
     }
+  };
+
+  const handleToggleFollow = async () => {
+    if (!profile || !fighter || profile.role !== 'spectator') return;
+    setFollowSaving(true);
+    setFollowError(null);
+    const { error } = isFollowing
+      ? await fighterFollowService.unfollow(profile.id, fighter.id)
+      : await fighterFollowService.follow(profile.id, fighter.id);
+    setFollowSaving(false);
+    if (error) {
+      setFollowError(t('spectator.followError'));
+      return;
+    }
+    setFollowerCount((count) => Math.max(0, count + (isFollowing ? -1 : 1)));
+    setIsFollowing((value) => !value);
   };
 
   if (loading) return <div className="min-h-screen bg-white flex items-center justify-center"><p className="text-sm" style={{ color:'#9A9A9A' }}>Cargando...</p></div>;
@@ -143,6 +161,7 @@ export default function FighterDetailPage() {
   }
 
   const canSendRequest = profile && (profile.role === 'promoter' || profile.role === 'manager' || profile.role === 'admin');
+  const age = getAge(fighter.profiles?.date_of_birth);
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -196,9 +215,13 @@ export default function FighterDetailPage() {
 
         {/* Record */}
         <div className="grid grid-cols-3 gap-4 border border-zinc-100 p-6 text-center mb-6">
-          {[{label:'Victorias',value:fighter.record_wins},{label:'Derrotas',value:fighter.record_losses},{label:'Empates',value:fighter.record_draws}].map(({label,value}) => (
+          {[
+            { label:'Victorias', value:fighter.record_wins, part:'wins' as const },
+            { label:'Derrotas', value:fighter.record_losses, part:'losses' as const },
+            { label:'Draws', value:fighter.record_draws, part:'draws' as const },
+          ].map(({label,value,part}) => (
             <div key={label}>
-              <p className="text-3xl font-black" style={{ fontFamily:'var(--font-barlow-condensed)', letterSpacing:'-1px' }}>{value}</p>
+              <p className="text-3xl font-black" style={{ fontFamily:'var(--font-barlow-condensed)', letterSpacing:'-1px' }}><RecordValue part={part} value={value} /></p>
               <p className="text-xs font-bold tracking-widest uppercase mt-1" style={{ color:'#5A5A5A' }}>{label}</p>
             </div>
           ))}
@@ -220,10 +243,12 @@ export default function FighterDetailPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border border-zinc-100 p-6 mb-6">
           {[
             { label:'División', value: fighter.weight_class ? (WEIGHT_LABELS[fighter.weight_class] ?? fighter.weight_class) : '—' },
+            { label:'Edad', value: age !== null ? `${age}` : '—' },
+            { label:'Seguidores', value: `${followerCount}` },
             { label:'Gimnasio', value: fighter.gym_name ?? '—' },
             { label:'Peso exacto', value: fighter.exact_weight ? `${fighter.exact_weight} kg` : '—' },
             { label:'Estatura', value: fighter.height_cm ? `${fighter.height_cm} cm` : '—' },
-            { label:'Envergadura', value: fighter.reach_cm ? `${fighter.reach_cm} cm` : '—' },
+            { label:'Alcance', value: fighter.reach_cm ? `${fighter.reach_cm} cm` : '—' },
           ].map(({label,value}) => (
             <div key={label}>
               <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>{label}</p>
@@ -259,6 +284,37 @@ export default function FighterDetailPage() {
         )}
 
         {/* CTA */}
+        {profile?.role === 'spectator' && (
+          <div className="mb-6 border border-zinc-200 p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-[#C0001E]">
+                  {t('spectator.followCard.eyebrow')}
+                </p>
+                <p className="mt-1 text-sm text-zinc-600">
+                  {t('spectator.followCard.body')}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleToggleFollow}
+                disabled={followSaving}
+                className={`min-h-11 px-5 py-3 text-xs font-bold uppercase tracking-widest transition-colors disabled:opacity-50 ${
+                  isFollowing
+                    ? 'border border-zinc-300 text-zinc-800 hover:border-zinc-900'
+                    : 'bg-[#C0001E] text-white hover:bg-[#9A0018]'
+                }`}
+              >
+                {followSaving
+                  ? t('spectator.followCard.saving')
+                  : isFollowing
+                    ? t('spectator.followCard.following')
+                    : t('spectator.followCard.follow')}
+              </button>
+            </div>
+            {followError && <p className="mt-3 text-xs text-red-600">{followError}</p>}
+          </div>
+        )}
         {canSendRequest && (
           <div className="flex justify-end">
             <button onClick={() => setShowModal(true)} className="px-6 py-3 text-sm font-bold tracking-widest uppercase text-white transition-colors"
@@ -269,7 +325,15 @@ export default function FighterDetailPage() {
         )}
         {!profile && (
           <div className="border border-dashed border-zinc-200 p-6 text-center">
-            <p className="text-sm text-zinc-500"><a href="/login" className="font-semibold" style={{ color:'#C0001E' }}>Inicia sesión</a> como promotor para enviar una solicitud.</p>
+            <p className="text-sm text-zinc-500">
+              <Link href={`/register?account=spectator&next=${encodeURIComponent(`/fighters/${fighter.id}`)}`} className="font-semibold" style={{ color:'#C0001E' }}>
+                {t('spectator.createAccount')}
+              </Link>{' '}
+              {t('spectator.createAccountTail')}{' '}
+              <Link href="/login" className="font-semibold" style={{ color:'#C0001E' }}>
+                {t('spectator.signIn')}
+              </Link>.
+            </p>
           </div>
         )}
 
@@ -311,7 +375,7 @@ export default function FighterDetailPage() {
                 <div>
                   <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Evento *</label>
                   {myEvents.length === 0 ? (
-                    <p className="text-sm text-zinc-400">No tienes eventos. <a href="/events/create" className="underline" style={{ color:'#C0001E' }}>Crea uno</a>.</p>
+                    <p className="text-sm text-zinc-400">No tienes eventos. <Link href="/events/create" className="underline" style={{ color:'#C0001E' }}>Crea uno</Link>.</p>
                   ) : (
                     <select value={modalEventId} onChange={e => setModalEventId(e.target.value)}
                       className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white">
@@ -337,44 +401,22 @@ export default function FighterDetailPage() {
           </div>
         </div>
       )}
-      {/* Paywall Modal */}
-      {showPaywall && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
-          <div className="bg-white max-w-md w-full p-6 shadow-xl">
-            <h2 className="text-base font-bold text-zinc-900 mb-2">Limite alcanzado</h2>
-            <p className="text-sm text-zinc-500 mb-6">{paywallReason}</p>
-            <div className="space-y-3 mb-6">
-              <button
-                onClick={async () => {
-                  const { data: { session } } = await supabase.auth.getSession();
-                  if (!session) { window.location.href = '/login'; return; }
-                  const res = await fetch('/api/checkout', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-                    body: JSON.stringify({ plan: 'per_request' }),
-                  });
-                  const data = await res.json();
-                  if (data.url) window.location.href = data.url;
-                }}
-                className="w-full px-4 py-3 text-sm font-bold tracking-wide uppercase border-2 border-[#C0001E] text-[#C0001E] hover:bg-red-50 transition-colors"
-              >
-                Pago por solicitud — $49 MXN
-              </button>
-              <a
-                href="/pricing"
-                className="block w-full px-4 py-3 text-sm font-bold tracking-wide uppercase text-white text-center transition-colors"
-                style={{ background: '#C0001E' }}
-              >
-                Ver planes mensuales
-              </a>
-            </div>
-            <button onClick={() => setShowPaywall(false)} className="w-full text-center text-sm text-zinc-400 hover:text-zinc-700 transition-colors">
-              Cerrar
-            </button>
-          </div>
-        </div>
-      )}
       <Footer />
     </div>
   );
+}
+
+function getAge(dateOfBirth?: string | null): number | null {
+  if (!dateOfBirth) return null;
+  const birthDate = new Date(dateOfBirth);
+  if (Number.isNaN(birthDate.getTime())) return null;
+
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age -= 1;
+  }
+
+  return age >= 0 ? age : null;
 }

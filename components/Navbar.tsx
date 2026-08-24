@@ -1,9 +1,9 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { authService } from '@/services/authService';
 import { VENDOR_ROLES } from '@/types';
 import type { Profile } from '@/types';
@@ -17,17 +17,17 @@ interface NavbarProps {
 const NAV_LINKS: { href: string; key: ActivePage; label?: string }[] = [
   { href: '/events',        key: 'events' },
   { href: '/fighters',      key: 'fighters' },
-  { href: '/professionals', key: 'professionals', label: 'Servicios' },
+  { href: '/gallery',       key: 'gallery', label: 'Servicios' },
   { href: '/promoters',     key: 'promoters' },
-  { href: '/managers',      key: 'managers', label: 'Managers' },
+  { href: '/managers',      key: 'managers', label: 'Representantes' },
   { href: '/sponsors',      key: 'sponsors' },
-  { href: '/gallery',       key: 'gallery' },
-  { href: '/pricing',       key: 'pricing',  label: 'Precios' },
+  { href: '/pricing',       key: 'pricing' },
 ];
 
 function profileLink(role: string): { label: string; href: string }[] {
   switch (role) {
     case 'fighter':  return [{ label: 'Mi Perfil', href: '/fighter/profile' }, { label: 'Mis Peleas', href: '/fighter/matches' }];
+    case 'spectator': return [{ label: 'Mi Panel', href: '/spectator/dashboard' }, { label: 'Mi Perfil', href: '/profile' }];
     case 'promoter': return [{ label: 'Mi Panel', href: '/promoter/dashboard' }, { label: 'Estadísticas', href: '/promoter/analytics' }, { label: 'Mi Perfil', href: '/profile' }];
     case 'manager':  return [{ label: 'Mi Panel', href: '/manager/dashboard' }, { label: 'Estadísticas', href: '/promoter/analytics' }, { label: 'Mi Perfil', href: '/manager/profile' }];
     case 'sponsor':  return [{ label: 'Mi Panel', href: '/sponsor/dashboard' }, { label: 'Mi Perfil', href: '/profile' }];
@@ -88,6 +88,19 @@ export function Navbar({ activePage }: NavbarProps) {
     window.location.href = '/';
   };
 
+  const resetDemoGuide = () => {
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('sm_onboarding_') || key.startsWith('sm_whats_new_')) {
+        localStorage.removeItem(key);
+      }
+    });
+    sessionStorage.removeItem('sm_onboarding_active');
+    sessionStorage.removeItem('sm_onboarding_shown_session');
+    setUserMenuOpen(false);
+    setMobileOpen(false);
+    window.location.reload();
+  };
+
   const linkClass = (page: ActivePage) =>
     `px-3 py-2 text-sm font-semibold tracking-wide transition-colors ${
       activePage === page
@@ -122,26 +135,26 @@ export function Navbar({ activePage }: NavbarProps) {
           <div className="flex justify-between items-center h-16">
 
             {/* Logo */}
-            <a href="/" className="flex-shrink-0">
+            <Link href="/" className="flex-shrink-0">
               <Image
                 src="/strikers-logo.png"
                 alt="Strikers Match"
-                height={128}
-                width={128}
-                style={{ width: 'auto', height: 'auto', maxHeight: 128 }}
-                priority
+                height={56}
+                width={56}
+                className="h-14 w-14 object-contain"
+                loading="eager"
               />
-            </a>
+            </Link>
 
             {/* Desktop Nav */}
             <nav className="hidden md:flex space-x-1">
               {!isLoggedIn && (
-                <a href="/" className={linkClass('home')}>{t('nav.home')}</a>
+                <Link href="/" className={linkClass('home')}>{t('nav.home')}</Link>
               )}
               {NAV_LINKS.map(({ href, key, label }) => (
-                <a key={href} href={href} className={linkClass(key as ActivePage)}>
+                <Link key={href} href={href} className={linkClass(key as ActivePage)}>
                   {label ?? t(`nav.${key}`)}
-                </a>
+                </Link>
               ))}
             </nav>
 
@@ -151,7 +164,6 @@ export function Navbar({ activePage }: NavbarProps) {
                 <>
                   {/* Desktop logged-in: avatar/name dropdown */}
                   <div className="hidden md:flex items-center gap-3" ref={userMenuRef}>
-                    <LanguageSwitcher variant="dark" />
                     <div className="relative">
                       <button
                         onClick={() => setUserMenuOpen((o) => !o)}
@@ -188,17 +200,23 @@ export function Navbar({ activePage }: NavbarProps) {
                           </div>
                           <div className="py-1">
                             {profileLink(profile.role).map(({ label, href }) => (
-                              <a
+                              <Link
                                 key={href}
                                 href={href}
                                 onClick={() => setUserMenuOpen(false)}
                                 className="block px-4 py-2.5 text-sm font-semibold text-[#CCCCCC] hover:text-white hover:bg-[#1A1A1A] transition-colors"
                               >
                                 {label}
-                              </a>
+                              </Link>
                             ))}
                           </div>
                           <div className="border-t border-[#1A1A1A] py-1">
+                            <button
+                              onClick={resetDemoGuide}
+                              className="w-full text-left px-4 py-2.5 text-sm font-semibold text-[#CCCCCC] hover:text-white hover:bg-[#1A1A1A] transition-colors"
+                            >
+                              Reiniciar guía
+                            </button>
                             <button
                               onClick={() => { setUserMenuOpen(false); handleLogout(); }}
                               className="w-full text-left px-4 py-2.5 text-sm font-semibold text-[#C0001E] hover:bg-[#1A1A1A] transition-colors"
@@ -219,13 +237,12 @@ export function Navbar({ activePage }: NavbarProps) {
                 <>
                   {/* Desktop logged-out: inline items */}
                   <div className="hidden md:flex items-center gap-3">
-                    <LanguageSwitcher variant="dark" />
-                    <a href="/login" className="text-sm font-semibold text-[#9A9A9A] hover:text-white transition-colors">
+                    <Link href="/login" className="text-sm font-semibold text-[#9A9A9A] hover:text-white transition-colors">
                       {t('nav.login')}
-                    </a>
-                    <a href="/register" className="px-4 py-2 text-xs font-bold tracking-widest uppercase text-white bg-[#C0001E] hover:bg-[#9A0018] transition-colors">
+                    </Link>
+                    <Link href="/register" className="px-4 py-2 text-xs font-bold tracking-widest uppercase text-white bg-[#C0001E] hover:bg-[#9A0018] transition-colors">
                       {t('nav.register')}
-                    </a>
+                    </Link>
                   </div>
                   {/* Mobile logged-out: hamburger only */}
                   <div className="flex md:hidden">
@@ -246,47 +263,47 @@ export function Navbar({ activePage }: NavbarProps) {
           {/* Nav links — always shown in mobile, only in dropdown for logged-in on desktop too */}
           <nav className="border-b border-[#1A1A1A] md:hidden">
             {!isLoggedIn && (
-              <a href="/" onClick={() => setMobileOpen(false)} className={mobileLinkClass('home')}>{t('nav.home')}</a>
+              <Link href="/" onClick={() => setMobileOpen(false)} className={mobileLinkClass('home')}>{t('nav.home')}</Link>
             )}
             {NAV_LINKS.map(({ href, key, label }) => (
-              <a key={href} href={href} onClick={() => setMobileOpen(false)} className={mobileLinkClass(key as ActivePage)}>
+              <Link key={href} href={href} onClick={() => setMobileOpen(false)} className={mobileLinkClass(key as ActivePage)}>
                 {label ?? t(`nav.${key}`)}
-              </a>
+              </Link>
             ))}
           </nav>
-
-          {/* Language switcher */}
-          <div className="px-6 py-4 border-b border-[#1A1A1A]">
-            <p className="text-xs font-bold tracking-widest uppercase mb-3 text-[#5A5A5A]">Idioma</p>
-            <LanguageSwitcher variant="dark" />
-          </div>
 
           {isLoggedIn ? (
             <>
               {/* Profile links */}
               <div className="py-2">
                 {profileLink(profile.role).map(({ label, href }) => (
-                  <a
+                  <Link
                     key={href}
                     href={href}
                     onClick={() => setMobileOpen(false)}
                     className="block px-6 py-3 text-sm font-bold text-white hover:bg-[#1A1A1A] transition-colors"
                   >
                     {label}
-                  </a>
+                  </Link>
                 ))}
                 {(profile.role === 'promoter' || profile.role === 'manager' || profile.role === 'admin') && (
-                  <a
+                  <Link
                     href="/events/create"
                     onClick={() => setMobileOpen(false)}
                     className="block px-6 py-3 text-sm font-bold text-[#C0001E] hover:bg-[#1A1A1A] transition-colors"
                   >
                     + {t('nav.createEvent')}
-                  </a>
+                  </Link>
                 )}
               </div>
               {/* Logout */}
               <div className="border-t border-[#1A1A1A] py-2">
+                <button
+                  onClick={resetDemoGuide}
+                  className="w-full text-left px-6 py-3 text-sm font-bold text-white hover:bg-[#1A1A1A] transition-colors"
+                >
+                  Reiniciar guía
+                </button>
                 <button
                   onClick={handleLogout}
                   className="w-full text-left px-6 py-3 text-sm font-bold text-[#C0001E] hover:bg-[#1A1A1A] transition-colors"
@@ -298,20 +315,20 @@ export function Navbar({ activePage }: NavbarProps) {
           ) : (
             /* Logged-out CTAs */
             <div className="px-6 py-4 flex flex-col gap-3">
-              <a
+              <Link
                 href="/login"
                 onClick={() => setMobileOpen(false)}
                 className="w-full text-center py-3 text-xs font-bold tracking-widest uppercase text-white border border-[#3A3A3A] hover:border-white transition-colors"
               >
                 {t('nav.login')}
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/register"
                 onClick={() => setMobileOpen(false)}
                 className="w-full text-center py-3 text-xs font-bold tracking-widest uppercase text-white bg-[#C0001E] hover:bg-[#9A0018] transition-colors"
               >
                 {t('nav.register')}
-              </a>
+              </Link>
             </div>
           )}
 

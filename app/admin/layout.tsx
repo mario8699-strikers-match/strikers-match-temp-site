@@ -97,6 +97,12 @@ const NAV_ITEMS = [
     ),
   },
   {
+    href: '/admin/matches',
+    label: 'admin.nav.matches',
+    exact: false,
+    icon: null,
+  },
+  {
     href: '/admin/gallery',
     label: 'admin.nav.gallery',
     exact: false,
@@ -129,19 +135,35 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const [authorized, setAuthorized] = useState(IS_DEV);
   const [checking, setChecking] = useState(!IS_DEV);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (IS_DEV) return;
-    authService.getSession().then(({ data }) => {
-      if (data?.profile?.role === 'admin') {
-        setAuthorized(true);
-      } else {
-        window.location.href = '/login';
-      }
-      setChecking(false);
+    let active = true;
+    const timeout = new Promise<never>((_, reject) => {
+      window.setTimeout(() => reject(new Error('La verificación de sesión tardó demasiado.')), 10000);
     });
+
+    Promise.race([authService.getSession(), timeout])
+      .then((result) => {
+        if (!active) return;
+        if (result.data?.profile?.role === 'admin') {
+          setAuthorized(true);
+        } else {
+          setAuthError('Tu sesión no tiene acceso de administrador.');
+        }
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        setAuthError(error instanceof Error ? error.message : 'No se pudo verificar la sesión.');
+      })
+      .finally(() => {
+        if (active) setChecking(false);
+      });
+
+    return () => { active = false; };
   }, []);
 
   // Close sidebar on route change (mobile only)
@@ -172,13 +194,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (checking) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <p className="text-zinc-500 text-sm">...</p>
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+        <p className="text-zinc-500 text-sm">Verificando acceso administrativo...</p>
       </div>
     );
   }
 
-  if (!authorized) return null;
+  if (!authorized) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+        <div className="w-full max-w-md border border-zinc-200 bg-white p-6 text-center">
+          <h1 className="text-xl font-bold text-zinc-900">Acceso administrativo</h1>
+          <p className="mt-2 text-sm text-zinc-600">{authError ?? 'No se pudo verificar tu acceso.'}</p>
+          <a href="/login" className="mt-5 inline-flex min-h-11 items-center justify-center bg-zinc-900 px-5 py-3 text-sm font-bold text-white">
+            Iniciar sesión
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   const isActive = (item: typeof NAV_ITEMS[0]) =>
     item.exact ? pathname === item.href : pathname.startsWith(item.href);

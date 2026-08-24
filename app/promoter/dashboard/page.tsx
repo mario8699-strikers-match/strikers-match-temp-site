@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { ManualFighterManager } from '@/components/ManualFighterManager';
+import { EligibilityStatus } from '@/components/EligibilityStatus';
 import { authService } from '@/services/authService';
 import { eventService } from '@/services/eventService';
 import { getEventRegistrations, confirmPayment } from '@/services/registrationService';
@@ -136,22 +138,21 @@ export default function PromoterDashboardPage() {
             <h1 className="text-3xl font-black uppercase" style={{ letterSpacing: '-1px' }}>{profile!.full_name}</h1>
             <p className="text-sm mt-1" style={{ color: '#5A5A5A' }}>{profile!.city ?? ''}</p>
           </div>
-          <a href="/events/create"
+          <Link href="/events/create"
             className="px-5 py-2.5 text-xs font-bold tracking-widest uppercase text-white transition-colors flex-shrink-0"
             style={{ background: '#C0001E' }}
             onMouseOver={(e) => (e.currentTarget.style.background = '#9A0018')}
             onMouseOut={(e) => (e.currentTarget.style.background = '#C0001E')}>
             + Nuevo evento
-          </a>
+          </Link>
         </div>
 
-        {/* Always-free posting note */}
+        {/* Posting note */}
         <div className="mb-8 -mt-4 flex items-center gap-2 text-xs text-emerald-700">
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
           </svg>
-          <span className="font-semibold">Publicar eventos siempre es gratis.</span>
-          <span className="text-emerald-600">Sin tarjeta, sin límite.</span>
+          <span className="font-semibold">Publica y administra tus eventos desde este panel.</span>
         </div>
 
         {/* Stats row */}
@@ -180,11 +181,11 @@ export default function PromoterDashboardPage() {
         ) : events.length === 0 ? (
           <div className="border border-dashed border-zinc-200 py-16 text-center">
             <p className="text-sm text-zinc-400 mb-2">No has creado ningún evento todavía.</p>
-            <p className="text-xs text-emerald-700 font-semibold mb-4">Publicar eventos es gratis. Sin tarjeta, sin cuotas.</p>
-            <a href="/events/create" className="text-xs font-bold tracking-widest uppercase text-white px-5 py-2.5 transition-colors"
+            <p className="text-xs text-emerald-700 font-semibold mb-4">Crea tu primer evento para empezar a organizar tu cartelera.</p>
+            <Link href="/events/create" className="text-xs font-bold tracking-widest uppercase text-white px-5 py-2.5 transition-colors"
               style={{ background: '#C0001E' }}>
               Crear primer evento
-            </a>
+            </Link>
           </div>
         ) : (
           <div className="space-y-3">
@@ -335,12 +336,13 @@ export default function PromoterDashboardPage() {
                               </p>
                               <div className="space-y-2">
                                 {registrations.filter(r => r.payment_status === 'pending').map((reg) => (
-                                  <div key={reg.id} className="bg-white border border-zinc-200 p-3 flex items-center justify-between gap-3">
-                                    <div>
+                                  <div key={reg.id} className="bg-white border border-zinc-200 p-3 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="min-w-0">
                                       <p className="text-sm font-bold text-zinc-900">{reg.fighters?.profiles?.full_name ?? '—'}</p>
                                       <p className="text-xs text-zinc-500">{reg.fighters?.weight_class ?? '—'} · {reg.fighters?.profiles?.city ?? '—'}</p>
+                                      <EligibilityStatus status={reg.eligibility_status} reasons={reg.eligibility_reasons} showReasons />
                                     </div>
-                                    <span className="text-xs font-bold px-2 py-1 bg-amber-50 text-amber-700 flex-shrink-0">PENDIENTE</span>
+                                    <span className="self-start text-xs font-bold px-2 py-1 bg-amber-50 text-amber-700 flex-shrink-0">PENDIENTE</span>
                                   </div>
                                 ))}
                               </div>
@@ -355,8 +357,8 @@ export default function PromoterDashboardPage() {
                               </p>
                               <div className="space-y-2">
                                 {registrations.filter(r => r.payment_status === 'submitted').map((reg) => (
-                                  <div key={reg.id} className="bg-white border border-blue-200 p-3 flex items-center justify-between gap-3">
-                                    <div>
+                                  <div key={reg.id} className="bg-white border border-blue-200 p-3 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="min-w-0">
                                       <p className="text-sm font-bold text-zinc-900">{reg.fighters?.profiles?.full_name ?? '—'}</p>
                                       <p className="text-xs text-zinc-500">{reg.fighters?.weight_class ?? '—'} · {reg.fighters?.profiles?.city ?? '—'}</p>
                                       {reg.submitted_at && (
@@ -364,11 +366,12 @@ export default function PromoterDashboardPage() {
                                           Enviado: {new Date(reg.submitted_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                         </p>
                                       )}
+                                      <EligibilityStatus status={reg.eligibility_status} reasons={reg.eligibility_reasons} showReasons />
                                     </div>
                                     <button
                                       onClick={() => handleConfirmPayment(reg.id)}
                                       disabled={confirmingReg === reg.id}
-                                      className="px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50 transition-colors flex-shrink-0"
+                                      className="min-h-11 w-full px-3 py-2 text-xs font-bold text-white disabled:opacity-50 transition-colors sm:min-h-0 sm:w-auto flex-shrink-0"
                                       style={{ background: '#C0001E' }}
                                     >
                                       {confirmingReg === reg.id ? '...' : 'Confirmar Pago'}
@@ -387,8 +390,8 @@ export default function PromoterDashboardPage() {
                               </p>
                               <div className="space-y-2">
                                 {registrations.filter(r => r.payment_status === 'confirmed').map((reg) => (
-                                  <div key={reg.id} className="bg-white border border-emerald-200 p-3 flex items-center justify-between gap-3">
-                                    <div>
+                                  <div key={reg.id} className="bg-white border border-emerald-200 p-3 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="min-w-0">
                                       <p className="text-sm font-bold text-zinc-900">{reg.fighters?.profiles?.full_name ?? '—'}</p>
                                       <p className="text-xs text-zinc-500">{reg.fighters?.weight_class ?? '—'} · {reg.fighters?.profiles?.city ?? '—'}</p>
                                       {reg.confirmed_at && (
@@ -396,8 +399,9 @@ export default function PromoterDashboardPage() {
                                           Confirmado: {new Date(reg.confirmed_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                         </p>
                                       )}
+                                      <EligibilityStatus status={reg.eligibility_status} reasons={reg.eligibility_reasons} showReasons />
                                     </div>
-                                    <span className="text-xs font-bold px-2 py-1 bg-emerald-50 text-emerald-700 flex-shrink-0">PAGADO</span>
+                                    <span className="self-start text-xs font-bold px-2 py-1 bg-emerald-50 text-emerald-700 flex-shrink-0">PAGADO</span>
                                   </div>
                                 ))}
                               </div>

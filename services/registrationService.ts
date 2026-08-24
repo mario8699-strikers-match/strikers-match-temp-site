@@ -142,7 +142,7 @@ export async function getEventRegistrations(
   try {
     const { data, error } = await supabase
       .from('event_registrations')
-      .select('*, fighters(id, weight_class, disciplines, photo_url, profiles(full_name, city))')
+      .select('*, fighters(id, weight_class, disciplines, photo_url, profiles(full_name, city, date_of_birth))')
       .eq('event_id', eventId)
       .order('created_at', { ascending: true });
 

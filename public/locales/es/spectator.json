@@ -1,0 +1,61 @@
+{
+  "spectator": {
+    "loading": "Cargando...",
+    "eyebrow": "Cuenta de espectador",
+    "title": "Mis atletas",
+    "subtitle": "Sigue peleadores, revisa su récord y mantente al tanto de su progreso dentro de Strikers Match.",
+    "findFighters": "Buscar atletas",
+    "followedTitle": "Atletas seguidos",
+    "fighterFallback": "Atleta",
+    "noPhoto": "Sin foto",
+    "registered": "Registrado",
+    "recordTabs": {
+      "amateur": "box-am",
+      "all": "todos"
+    },
+    "profileStats": {
+      "division": "división",
+      "discipline": "disciplina",
+      "bouts": "combates",
+      "gym": "gimnasio",
+      "age": "edad",
+      "city": "ciudad",
+      "height": "estatura",
+      "reach": "alcance",
+      "weight": "peso",
+      "status": "estado",
+      "followers": "seguidores"
+    },
+    "levelPro": "Pro",
+    "levelAmateur": "Amateur",
+    "available": "Disponible",
+    "unavailable": "No disponible",
+    "unfollow": "Dejar de seguir",
+    "viewProfile": "Ver perfil",
+    "createAccount": "Crea una cuenta de espectador",
+    "createAccountTail": "para seguir atletas, o",
+    "signIn": "inicia sesión",
+    "followError": "No se pudo actualizar el seguimiento.",
+    "emptyTitle": "Todavía no sigues atletas",
+    "emptyBody": "Visita el directorio de atletas y sigue a los peleadores que quieres monitorear.",
+    "stats": {
+      "following": "Siguiendo",
+      "available": "Disponibles",
+      "cities": "Ciudades",
+      "disciplines": "Disciplinas"
+    },
+    "record": {
+      "label": "Récord",
+      "wins": "G",
+      "losses": "P",
+      "draws": "Draws"
+    },
+    "followCard": {
+      "eyebrow": "Seguimiento",
+      "body": "Sigue a este atleta para verlo en tu panel de espectador.",
+      "follow": "Seguir atleta",
+      "following": "Siguiendo",
+      "saving": "Guardando..."
+    }
+  }
+}

@@ -4,13 +4,15 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { adminService } from '@/services/adminService';
-import type { Profile } from '@/types';
+import type { Profile, PromoterFederationStatus } from '@/types';
 
 export default function AdminPromotersPage() {
   const { t } = useTranslation('admin');
+  const { t: tPromoters } = useTranslation('promoters');
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [updatingFederationStatus, setUpdatingFederationStatus] = useState<string | null>(null);
 
   useEffect(() => {
     adminService.getProfilesByRole('promoter').then(({ data, error }) => {
@@ -22,6 +24,18 @@ export default function AdminPromotersPage() {
       setLoading(false);
     });
   }, []);
+
+  const updateFederationStatus = async (promoterId: string, status: PromoterFederationStatus) => {
+    setUpdatingFederationStatus(promoterId);
+    setError(null);
+    const { data, error } = await adminService.updatePromoterFederationStatus(promoterId, status);
+    if (error || !data) {
+      setError(error ?? tPromoters('promoters.federation.updateFailed'));
+    } else {
+      setProfiles((prev) => prev.map((profile) => profile.id === promoterId ? data : profile));
+    }
+    setUpdatingFederationStatus(null);
+  };
 
   return (
     <div>
@@ -64,6 +78,18 @@ export default function AdminPromotersPage() {
                 <dd className="text-zinc-700">{p.city ?? '—'}</dd>
                 <dt className="text-zinc-500">Teléfono:</dt>
                 <dd className="text-zinc-700">{p.phone ?? '—'}</dd>
+                <dt className="text-zinc-500">Clasificación:</dt>
+                <dd className="text-zinc-700">
+                  <FederationStatusButtons
+                    status={p.promoter_federation_status ?? 'independent'}
+                    disabled={updatingFederationStatus === p.id}
+                    labels={{
+                      federated: tPromoters('promoters.federation.federated'),
+                      independent: tPromoters('promoters.federation.independent'),
+                    }}
+                    onChange={(status) => void updateFederationStatus(p.id, status)}
+                  />
+                </dd>
               </dl>
               <div className="mt-3 pt-3 border-t border-zinc-100">
                 <Link href={`/events?promoter=${p.id}`} className="text-xs font-medium text-zinc-700 hover:text-[#C0001E] hover:underline">
@@ -79,7 +105,7 @@ export default function AdminPromotersPage() {
           <table className="min-w-full divide-y divide-zinc-100 text-sm">
             <thead className="bg-zinc-50">
               <tr>
-                {['Nombre', 'Correo', 'Ciudad', 'Teléfono', 'Estado', 'Acciones'].map((col) => (
+                {['Nombre', 'Correo', 'Ciudad', 'Teléfono', 'Clasificación', 'Estado', 'Acciones'].map((col) => (
                   <th key={col} className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wide">
                     {col}
                   </th>
@@ -97,6 +123,17 @@ export default function AdminPromotersPage() {
                   <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">{p.email}</td>
                   <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">{p.city ?? '—'}</td>
                   <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">{p.phone ?? '—'}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <FederationStatusButtons
+                      status={p.promoter_federation_status ?? 'independent'}
+                      disabled={updatingFederationStatus === p.id}
+                      labels={{
+                        federated: tPromoters('promoters.federation.federated'),
+                        independent: tPromoters('promoters.federation.independent'),
+                      }}
+                      onChange={(status) => void updateFederationStatus(p.id, status)}
+                    />
+                  </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium ${
                       p.is_banned ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'
@@ -116,6 +153,38 @@ export default function AdminPromotersPage() {
         </div>
         </>
       )}
+    </div>
+  );
+}
+
+function FederationStatusButtons({
+  status,
+  disabled,
+  labels,
+  onChange,
+}: {
+  status: PromoterFederationStatus;
+  disabled: boolean;
+  labels: Record<PromoterFederationStatus, string>;
+  onChange: (status: PromoterFederationStatus) => void;
+}) {
+  return (
+    <div className="inline-grid grid-cols-2 border border-zinc-200">
+      {(['independent', 'federated'] as const).map((option) => (
+        <button
+          key={option}
+          type="button"
+          disabled={disabled || status === option}
+          onClick={() => onChange(option)}
+          className={`px-2 py-1 text-xs font-medium transition-colors disabled:cursor-default ${
+            status === option
+              ? 'bg-zinc-900 text-white'
+              : 'bg-white text-zinc-600 hover:bg-zinc-50 disabled:opacity-60'
+          }`}
+        >
+          {labels[option]}
+        </button>
+      ))}
     </div>
   );
 }

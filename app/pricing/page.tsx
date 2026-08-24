@@ -1,292 +1,115 @@
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
-import { supabase } from '@/lib/supabaseClient';
 
-type PlanKey = 'basic' | 'pro' | 'per_request';
-
-const PLANS: {
-  name: string;
-  planKey: PlanKey;
-  price: string;
-  period: string;
-  highlight: boolean;
-  features: { label: string; value: string | boolean }[];
-  cta: string;
-}[] = [
+const FREE_GROUPS = [
   {
-    name: 'BASIC',
-    planKey: 'basic',
-    price: '$199',
-    period: 'MXN / mes',
-    highlight: false,
-    features: [
-      { label: 'Solicitudes de pelea', value: '10 / mes' },
-      { label: 'Reemplazo de emergencia', value: false },
-      { label: 'Filtros avanzados', value: true },
-      { label: 'Visibilidad prioritaria', value: false },
-      { label: 'Panel de estadísticas', value: false },
+    title: 'Eventos',
+    items: [
+      'Crear y publicar eventos',
+      'Editar información del evento',
+      'Subir cartel del evento',
+      'Registro de atletas',
+      'Gestión de pagos manuales de inscripción',
     ],
-    cta: 'Elegir Basic',
   },
   {
-    name: 'PRO',
-    planKey: 'pro',
-    price: '$399',
-    period: 'MXN / mes',
-    highlight: true,
-    features: [
-      { label: 'Solicitudes de pelea', value: 'Ilimitadas' },
-      { label: 'Reemplazo de emergencia', value: true },
-      { label: 'Filtros avanzados', value: true },
-      { label: 'Visibilidad prioritaria', value: true },
-      { label: 'Panel de estadísticas', value: true },
+    title: 'Matchmaking',
+    items: [
+      'Solicitudes de pelea',
+      'Sugerencias de emparejamiento',
+      'Validación por disciplina',
+      'Revisión de compatibilidad',
+      'Aprobación manual de combates',
     ],
-    cta: 'Elegir Pro',
   },
   {
-    name: 'PAY-AS-YOU-GO',
-    planKey: 'per_request',
-    price: '$49',
-    period: 'MXN / solicitud',
-    highlight: false,
-    features: [
-      { label: 'Solicitudes de pelea', value: 'Paga por cada una' },
-      { label: 'Reemplazo de emergencia', value: '$99 / uso' },
-      { label: 'Filtros avanzados', value: true },
-      { label: 'Visibilidad prioritaria', value: false },
-      { label: 'Panel de estadísticas', value: false },
+    title: 'Operación',
+    items: [
+      'Combates',
+      'Asignación de rings',
+      'Orden de combates',
+      'Centro de impresión',
+      'Operación del evento',
+      'Resultados',
     ],
-    cta: 'Empezar',
   },
-];
-
-const COMPARISON = [
-  // Free platform capabilities (apply to every account)
-  { feature: 'Publicar eventos', basic: 'Gratis', pro: 'Gratis', payg: 'Gratis' },
-  { feature: 'Registro de peleadores', basic: 'Gratis', pro: 'Gratis', payg: 'Gratis' },
-  { feature: 'Confirmación de pagos del evento', basic: 'Gratis', pro: 'Gratis', payg: 'Gratis' },
-  { feature: 'Aceptación de peleas (2 lados)', basic: 'Gratis', pro: 'Gratis', payg: 'Gratis' },
-  { feature: 'Confiabilidad de peleadores', basic: 'Visible', pro: 'Visible', payg: 'Visible' },
-  // Paid differentiators
-  { feature: 'Solicitudes de pelea', basic: '10 / mes', pro: 'Ilimitadas', payg: '$49 c/u' },
-  { feature: 'Reemplazo de emergencia', basic: '—', pro: 'Incluido', payg: '$99 / uso' },
-  { feature: 'Filtros avanzados', basic: 'Sí', pro: 'Sí', payg: 'Sí' },
-  { feature: 'Visibilidad prioritaria', basic: '—', pro: 'Sí', payg: '—' },
-  { feature: 'Soporte prioritario', basic: '—', pro: 'Sí', payg: '—' },
-  { feature: 'Solicitud de prueba gratis', basic: '1 *', pro: '1 *', payg: '—' },
-  { feature: 'Panel de estadísticas', basic: '—', pro: 'Sí', payg: '—' },
+  {
+    title: 'Paneles',
+    items: [
+      'Panel de promotor',
+      'Panel de representante',
+      'Estadísticas',
+      'Equipo del evento',
+      'Directorio público',
+    ],
+  },
 ];
 
 export default function PricingPage() {
-  const [loadingPlan, setLoadingPlan] = useState<PlanKey | null>(null);
-
-  async function handleCheckout(planKey: PlanKey) {
-    setLoadingPlan(planKey);
-    try {
-      // Check if user is logged in
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        window.location.href = '/login';
-        return;
-      }
-
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ plan: planKey }),
-      });
-
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        console.error('[PRICING] Checkout error:', data.error);
-        setLoadingPlan(null);
-      }
-    } catch (err) {
-      console.error('[PRICING] Checkout error:', err);
-      setLoadingPlan(null);
-    }
-  }
-
   return (
-    <div className="min-h-screen bg-[#0A0A0A] font-sans flex flex-col">
-      <Navbar activePage={null} />
+    <div className="min-h-screen bg-[#0A0A0A] font-sans text-white">
+      <Navbar activePage="pricing" />
 
-      <main className="flex-1">
-        {/* ── Hero ── */}
-        <section className="pt-20 pb-10 px-4 text-center">
-          <p className="text-xs font-bold tracking-[0.3em] uppercase text-[#C0001E] mb-4">
-            Precios
-          </p>
-          <h1 className="text-4xl md:text-5xl font-black uppercase text-white leading-tight" style={{ letterSpacing: '-1px' }}>
-            Planes para promotores, managers y patrocinadores
+      <main>
+        <section className="mx-auto max-w-6xl px-4 py-16 text-center sm:px-6 sm:py-20">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.3em] text-[#C0001E]">Strikers Match</p>
+          <h1 className="font-display text-5xl font-black uppercase leading-none sm:text-7xl">
+            Herramientas de la plataforma
           </h1>
-          <p className="mt-4 text-base text-[#9A9A9A] max-w-lg mx-auto">
-            Encuentra peleadores, llena tu cartelera, y haz crecer tu negocio. Promotores y managers reciben 1 solicitud de prueba gratis.
+          <p className="mx-auto mt-5 max-w-3xl text-base leading-relaxed text-[#B5B5B5]">
+            Funciones disponibles para crear eventos, registrar atletas, emparejar peleadores, administrar combates e imprimir hojas del evento.
           </p>
         </section>
 
-        {/* ── Always Free banner ── */}
-        <section className="max-w-5xl mx-auto px-4 pb-12">
+        <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6">
           <div className="border border-emerald-700/40 bg-emerald-900/10 p-6 sm:p-8">
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-500/15 flex items-center justify-center">
-                <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="text-xs font-bold tracking-[0.3em] uppercase text-emerald-400 mb-1">Siempre gratis</p>
-                <h2 className="text-xl sm:text-2xl font-black text-white mb-2">Publicar eventos no cuesta nada</h2>
-                <p className="text-sm text-[#B5B5B5] mb-4">
-                  Promotores y managers pueden crear y publicar eventos ilimitados. Sin tarjeta, sin cuotas, sin límite.
-                </p>
-                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm text-[#D5D5D5]">
-                  <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span>Publicar eventos</li>
-                  <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span>Registro de peleadores</li>
-                  <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span>Explorar la plataforma</li>
-                  <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span>Perfiles de peleadores</li>
-                  <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span>Descubrir eventos</li>
-                  <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span>Galería pública</li>
-                </ul>
-              </div>
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-emerald-400">Disponible</p>
+            <h2 className="mb-6 text-2xl font-black uppercase text-white">Funciones incluidas</h2>
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              {FREE_GROUPS.map((group) => (
+                <div key={group.title} className="border border-emerald-800/30 bg-[#0A0A0A]/40 p-5">
+                  <h3 className="mb-4 font-display text-2xl font-black uppercase text-white">{group.title}</h3>
+                  <ul className="space-y-2 text-sm text-[#D5D5D5]">
+                    {group.items.map((item) => (
+                      <li key={item} className="border border-emerald-900/30 px-3 py-2">
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           </div>
-          <p className="text-center text-xs text-[#5A5A5A] mt-4">
-            Los planes de abajo son solo para funciones premium: solicitudes a peleadores, reemplazo de emergencia, filtros avanzados y analíticas.
-          </p>
         </section>
 
-        {/* ── Pricing Cards ── */}
-        <section className="max-w-5xl mx-auto px-4 pb-20">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {PLANS.map((plan) => (
-              <div
-                key={plan.name}
-                className={`border p-8 flex flex-col ${
-                  plan.highlight
-                    ? 'border-[#C0001E] bg-[#0F0F0F]'
-                    : 'border-[#2A2A2A] bg-[#0A0A0A]'
-                }`}
-              >
-                {/* Badge */}
-                {plan.highlight && (
-                  <span className="self-start text-xs font-bold tracking-widest uppercase px-3 py-1 bg-[#C0001E] text-white mb-6">
-                    Recomendado
-                  </span>
-                )}
-
-                <p className="text-xs font-bold tracking-[0.3em] uppercase text-[#9A9A9A] mb-2">
-                  {plan.name}
-                </p>
-                <div className="flex items-baseline gap-1 mb-1">
-                  <span className="text-4xl font-black text-white">{plan.price}</span>
-                </div>
-                <p className="text-sm text-[#5A5A5A] mb-8">{plan.period}</p>
-
-                {/* Features */}
-                <ul className="space-y-3 mb-8 flex-1">
-                  {plan.features.map(({ label, value }) => {
-                    const isIncluded = value === true || (typeof value === 'string' && value !== '—');
-                    return (
-                      <li key={label} className="flex items-start gap-3">
-                        {isIncluded ? (
-                          <svg className="w-4 h-4 text-[#C0001E] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                          </svg>
-                        ) : (
-                          <svg className="w-4 h-4 text-[#3A3A3A] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        )}
-                        <span className={`text-sm ${isIncluded ? 'text-white' : 'text-[#5A5A5A]'}`}>
-                          {label}
-                          {typeof value === 'string' && (
-                            <span className="ml-1 text-[#9A9A9A]">— {value}</span>
-                          )}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-
-                {/* CTA */}
-                <button
-                  onClick={() => handleCheckout(plan.planKey)}
-                  disabled={loadingPlan !== null}
-                  className={`w-full py-3 text-sm font-bold tracking-widest uppercase transition-colors disabled:opacity-50 ${
-                    plan.highlight
-                      ? 'bg-[#C0001E] text-white hover:bg-[#9A0018]'
-                      : 'border border-[#3A3A3A] text-white hover:border-white'
-                  }`}
-                >
-                  {loadingPlan === plan.planKey ? 'Procesando...' : plan.cta}
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {/* Free trial note */}
-          <p className="text-center text-xs text-[#5A5A5A] mt-8">
-            Promotores y managers reciben 1 solicitud de prueba gratis. Sin tarjeta de crédito.
-          </p>
-        </section>
-
-        {/* ── Comparison Table ── */}
-        <section className="max-w-4xl mx-auto px-4 pb-20">
-          <h2 className="text-2xl font-black uppercase text-white text-center mb-2" style={{ letterSpacing: '-0.5px' }}>
-            Comparación de planes
-          </h2>
-          <p className="text-center text-xs text-[#5A5A5A] mb-10">
-            Las primeras filas son funciones siempre gratis para cualquier cuenta.
-          </p>
-          <div className="border border-[#2A2A2A] overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[#2A2A2A]">
-                  <th className="text-left px-6 py-4 text-xs font-bold tracking-widest uppercase text-[#9A9A9A]">Característica</th>
-                  <th className="px-6 py-4 text-xs font-bold tracking-widest uppercase text-[#9A9A9A] text-center">Basic</th>
-                  <th className="px-6 py-4 text-xs font-bold tracking-widest uppercase text-center">
-                    <span className="text-[#C0001E]">Pro</span>
-                  </th>
-                  <th className="px-6 py-4 text-xs font-bold tracking-widest uppercase text-[#9A9A9A] text-center">Pay-as-you-go</th>
-                </tr>
-              </thead>
-              <tbody>
-                {COMPARISON.map((row, i) => (
-                  <tr key={row.feature} className={i < COMPARISON.length - 1 ? 'border-b border-[#1A1A1A]' : ''}>
-                    <td className="px-6 py-4 text-white font-medium">{row.feature}</td>
-                    <td className="px-6 py-4 text-[#9A9A9A] text-center">{row.basic}</td>
-                    <td className="px-6 py-4 text-white text-center font-semibold">{row.pro}</td>
-                    <td className="px-6 py-4 text-[#9A9A9A] text-center">{row.payg}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6">
+          <div className="border border-[#2A2A2A] bg-[#0F0F0F] p-6 sm:p-8">
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-[#C0001E]">Studio</p>
+            <h2 className="font-display text-3xl font-black uppercase text-white">Próximamente</h2>
+            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-[#B5B5B5]">
+              Herramientas de producción para preparar cámaras locales, gráficos y operación de transmisión desde el evento.
+            </p>
           </div>
         </section>
 
-        {/* ── CTA Section ── */}
-        <section className="border-t border-[#1A1A1A] py-20 px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-black uppercase text-white mb-4" style={{ letterSpacing: '-1px' }}>
-            Empieza a encontrar peleadores hoy
-          </h2>
-          <p className="text-sm text-[#9A9A9A] mb-8 max-w-md mx-auto">
-            Promotores y managers: tu primera solicitud es gratis. Sin compromisos.
-          </p>
-          <a
-            href="/register"
-            className="inline-block px-10 py-4 text-sm font-bold tracking-widest uppercase text-white bg-[#C0001E] hover:bg-[#9A0018] transition-colors"
-          >
-            Crear cuenta gratis
-          </a>
+        <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <Link
+              href="/events"
+              className="min-h-11 bg-[#C0001E] px-6 py-3 text-center text-xs font-bold uppercase tracking-widest text-white transition-colors hover:bg-[#9A0018]"
+            >
+              Ver eventos
+            </Link>
+            <Link
+              href="/gallery"
+              className="min-h-11 border border-[#3A3A3A] px-6 py-3 text-center text-xs font-bold uppercase tracking-widest text-white transition-colors hover:bg-[#1A1A1A]"
+            >
+              Ver Directorio
+            </Link>
+          </div>
         </section>
       </main>
 

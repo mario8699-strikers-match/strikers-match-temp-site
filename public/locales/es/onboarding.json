@@ -1,0 +1,220 @@
+{
+  "actions": {
+    "close": "Cerrar",
+    "doNotShowAgain": "No mostrar de nuevo"
+  },
+  "roles": {
+    "fighter": {
+      "eyebrow": "Cuenta de peleador",
+      "title": "Cómo usar Strikers Match",
+      "intro": "Tu cuenta sirve para mantener tu perfil listo, aplicar a eventos, confirmar pagos y responder propuestas de pelea.",
+      "primaryHref": "/fighter/profile",
+      "primaryLabel": "Completar mi perfil",
+      "steps": [
+        {
+          "title": "Completa tu perfil",
+          "body": "Agrega peso, disciplina, récord, gimnasio, disponibilidad y datos médicos cuando aplique.",
+          "href": "/fighter/profile",
+          "action": "Ir a mi perfil"
+        },
+        {
+          "title": "Busca eventos",
+          "body": "Revisa eventos publicados y aplica solo a los que coincidan con tu disciplina, peso y disponibilidad.",
+          "href": "/events",
+          "action": "Ver eventos"
+        },
+        {
+          "title": "Confirma tu registro",
+          "body": "Cuando el promotor confirme tu pago, quedas dentro del grupo de emparejamiento del evento."
+        },
+        {
+          "title": "Responde propuestas",
+          "body": "Cada propuesta requiere respuesta de ambos peleadores antes de convertirse en combate."
+        }
+      ]
+    },
+    "spectator": {
+      "eyebrow": "Cuenta de espectador",
+      "title": "Sigue atletas",
+      "intro": "Tu cuenta sirve para seguir peleadores, revisar su récord y ver su progreso desde un panel propio.",
+      "primaryHref": "/spectator/dashboard",
+      "primaryLabel": "Ir a mi panel",
+      "steps": [
+        {
+          "title": "Busca atletas",
+          "body": "Explora el directorio de atletas y abre los perfiles que quieres seguir.",
+          "href": "/fighters",
+          "action": "Ver atletas"
+        },
+        {
+          "title": "Sigue peleadores",
+          "body": "En el perfil de cada atleta usa Seguir atleta para agregarlo a tu panel."
+        },
+        {
+          "title": "Revisa progreso",
+          "body": "Tu panel muestra récord, disponibilidad y acceso rápido a los perfiles que sigues.",
+          "href": "/spectator/dashboard",
+          "action": "Abrir mi panel"
+        }
+      ]
+    },
+    "promoter": {
+      "eyebrow": "Cuenta de promotor",
+      "title": "Flujo de evento",
+      "intro": "Tu cuenta controla el flujo completo: evento, registros, emparejamiento, combates, impresión y operación del día del evento.",
+      "primaryHref": "/events/create",
+      "primaryLabel": "Crear evento",
+      "steps": [
+        {
+          "title": "Crea o publica un evento",
+          "body": "Define ciudad, fecha, disciplinas y necesidades de la cartelera.",
+          "href": "/events/create",
+          "action": "Crear evento"
+        },
+        {
+          "title": "Revisa solicitudes y pagos",
+          "body": "Acepta peleadores, confirma pagos externos y deja listo el grupo de registros."
+        },
+        {
+          "title": "Usa emparejamiento",
+          "body": "Las sugerencias solo permiten peleadores compatibles por disciplina, peso, edad, nivel y reglas."
+        },
+        {
+          "title": "Genera combates y hojas",
+          "body": "Aprueba combates permanentes, ordena áreas de combate y usa impresión u operación del evento el día del evento."
+        }
+      ]
+    },
+    "manager": {
+      "eyebrow": "Cuenta de representante",
+      "title": "Gestión de peleadores y eventos",
+      "intro": "Tu cuenta sirve para manejar roster, agregar peleadores manuales, crear eventos propios y operar el flujo de esos eventos.",
+      "primaryHref": "/manager/dashboard",
+      "primaryLabel": "Ir a mi panel",
+      "steps": [
+        {
+          "title": "Construye tu roster",
+          "body": "Agrega peleadores existentes o registra peleadores manuales bajo tu cuenta.",
+          "href": "/manager/dashboard",
+          "action": "Ver mi panel"
+        },
+        {
+          "title": "Crea eventos propios",
+          "body": "Los representantes pueden crear eventos y administrar su propio flujo de registros y emparejamiento.",
+          "href": "/events/create",
+          "action": "Crear evento"
+        },
+        {
+          "title": "Envía solicitudes",
+          "body": "Puedes contactar peleadores para oportunidades y reemplazos cuando el flujo del evento lo requiera."
+        },
+        {
+          "title": "Opera eventos asignados a tu cuenta",
+          "body": "Para eventos que tú creas, tienes acceso a configuración, emparejamiento, combates, impresión y operación del evento."
+        }
+      ]
+    },
+    "sponsor": {
+      "eyebrow": "Cuenta de patrocinador",
+      "title": "Patrocinios y contactos",
+      "intro": "Tu cuenta ayuda a encontrar peleadores, promotores y servicios relacionados con eventos de combate.",
+      "primaryHref": "/fighters",
+      "primaryLabel": "Buscar peleadores",
+      "steps": [
+        {
+          "title": "Busca peleadores",
+          "body": "Filtra perfiles por ciudad, disponibilidad, disciplina y datos públicos.",
+          "href": "/fighters",
+          "action": "Ver peleadores"
+        },
+        {
+          "title": "Revisa promotores y eventos",
+          "body": "Identifica eventos activos y organizadores con presencia pública.",
+          "href": "/events",
+          "action": "Ver eventos"
+        },
+        {
+          "title": "Contacta perfiles relevantes",
+          "body": "Los datos protegidos requieren sesión y permisos según el tipo de contacto."
+        }
+      ]
+    },
+    "admin": {
+      "eyebrow": "Cuenta admin",
+      "title": "Control de plataforma",
+      "intro": "Tu cuenta tiene visibilidad operativa para revisar usuarios, eventos, peleadores, propuestas, combates y estado general.",
+      "primaryHref": "/admin",
+      "primaryLabel": "Abrir admin",
+      "steps": [
+        {
+          "title": "Revisa el panel",
+          "body": "Monitorea usuarios, peleadores, eventos, propuestas y combates desde el panel principal.",
+          "href": "/admin",
+          "action": "Ir a admin"
+        },
+        {
+          "title": "Audita propuestas y combates",
+          "body": "La página de propuestas y combates muestra propuestas y registros permanentes de evento.",
+          "href": "/admin/matches",
+          "action": "Ver propuestas y combates"
+        },
+        {
+          "title": "Gestiona perfiles",
+          "body": "Revisa peleadores, representantes, promotores, patrocinadores y profesionales desde las secciones de administración."
+        },
+        {
+          "title": "Evita cambios manuales innecesarios",
+          "body": "Las acciones críticas deben pasar por servicios, RPCs y políticas RLS para mantener consistencia."
+        }
+      ]
+    },
+    "vendor": {
+      "eyebrow": "Cuenta profesional",
+      "title": "Perfil de servicio",
+      "intro": "Tu cuenta te permite aparecer en el directorio de servicios y recibir contactos de usuarios con sesión.",
+      "primaryHref": "/vendor/profile",
+      "primaryLabel": "Completar perfil",
+      "steps": [
+        {
+          "title": "Completa tu perfil público",
+          "body": "Agrega ciudad, experiencia, disponibilidad, foto y descripción clara del servicio.",
+          "href": "/vendor/profile",
+          "action": "Editar perfil"
+        },
+        {
+          "title": "Aparece en el Directorio",
+          "body": "Tu perfil puede ser encontrado por promotores, representantes, patrocinadores y otros usuarios.",
+          "href": "/gallery",
+          "action": "Ver directorio"
+        },
+        {
+          "title": "Mantén datos actualizados",
+          "body": "Los contactos protegidos dependen de que tu información esté correcta y disponible."
+        }
+      ]
+    },
+    "default": {
+      "eyebrow": "Strikers Match",
+      "title": "Cómo funciona la plataforma",
+      "intro": "La plataforma conecta perfiles, eventos, solicitudes, registros, emparejamiento y operación del día del evento.",
+      "primaryHref": "/events",
+      "primaryLabel": "Ver eventos",
+      "steps": [
+        {
+          "title": "Explora eventos",
+          "body": "Los eventos son el centro del flujo de registros, peleas y resultados.",
+          "href": "/events",
+          "action": "Ver eventos"
+        },
+        {
+          "title": "Completa tu perfil",
+          "body": "Cada tipo de cuenta tiene acciones diferentes según su rol."
+        },
+        {
+          "title": "Usa el panel correcto",
+          "body": "El menú de usuario te lleva al panel correspondiente a tu perfil."
+        }
+      ]
+    }
+  }
+}

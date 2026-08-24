@@ -3,14 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { RecordValue } from '@/components/CombatRecord';
 import { manualFighterService } from '@/services/manualFighterService';
 import { eventService } from '@/services/eventService';
 import { requestService } from '@/services/requestService';
 import { authService } from '@/services/authService';
-import { canPerformAction, recordRequestUsed } from '@/services/subscriptionService';
-import { supabase } from '@/lib/supabaseClient';
 import type { ManualFighterWithCreator, Profile, Event } from '@/types';
 
 const WEIGHT_LABELS: Record<string, string> = {
@@ -20,7 +20,7 @@ const WEIGHT_LABELS: Record<string, string> = {
 };
 
 const ROLE_LABELS: Record<string, string> = {
-  manager: 'Manager',
+  manager: 'Representante',
   promoter: 'Promotor',
   admin: 'Admin',
 };
@@ -41,10 +41,6 @@ export default function ManualFighterDetailPage() {
   const [sendError, setSendError] = useState<string | null>(null);
   const [sendSuccess, setSendSuccess] = useState(false);
 
-  // Paywall
-  const [showPaywall, setShowPaywall] = useState(false);
-  const [paywallReason, setPaywallReason] = useState('');
-
   useEffect(() => {
     Promise.all([
       manualFighterService.getById(id),
@@ -64,14 +60,6 @@ export default function ManualFighterDetailPage() {
   const handleSendRequest = async () => {
     if (!profile || !fighter || !modalEventId) return;
 
-    // Monetization check
-    const subCheck = await canPerformAction(profile.id, profile.role, 'send_fight_request');
-    if (!subCheck.allowed) {
-      setPaywallReason(subCheck.reason);
-      setShowPaywall(true);
-      return;
-    }
-
     setSending(true);
     setSendError(null);
     const { error } = await requestService.create({
@@ -86,7 +74,6 @@ export default function ManualFighterDetailPage() {
     if (error) {
       setSendError('No se pudo enviar la solicitud.');
     } else {
-      await recordRequestUsed(profile.id);
       setSendSuccess(true);
       setTimeout(() => { setShowModal(false); setSendSuccess(false); setModalMessage(''); setModalEventId(''); }, 1500);
     }
@@ -150,7 +137,7 @@ export default function ManualFighterDetailPage() {
         <div className="border border-amber-200 bg-amber-50/50 p-4 mb-6">
           <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#92400E' }}>Peleador sin cuenta</p>
           <p className="text-sm" style={{ color:'#5A5A5A' }}>
-            Este peleador no tiene cuenta. Toda solicitud se envía a su {creatorRole.toLowerCase() || 'manager'}
+            Este peleador no tiene cuenta. Toda solicitud se envía a su {creatorRole.toLowerCase() || 'representante'}
             {creatorName ? <> <span className="font-semibold text-zinc-900">{creatorName}</span></> : null}
             , quien gestionará el contacto dentro de la plataforma.
           </p>
@@ -158,9 +145,13 @@ export default function ManualFighterDetailPage() {
 
         {/* Record */}
         <div className="grid grid-cols-3 gap-4 border border-zinc-100 p-6 text-center mb-6">
-          {[{label:'Victorias',value:fighter.record_wins},{label:'Derrotas',value:fighter.record_losses},{label:'Empates',value:fighter.record_draws}].map(({label,value}) => (
+          {[
+            { label:'Victorias', value:fighter.record_wins, part:'wins' as const },
+            { label:'Derrotas', value:fighter.record_losses, part:'losses' as const },
+            { label:'Draws', value:fighter.record_draws, part:'draws' as const },
+          ].map(({label,value,part}) => (
             <div key={label}>
-              <p className="text-3xl font-black" style={{ fontFamily:'var(--font-barlow-condensed)', letterSpacing:'-1px' }}>{value}</p>
+              <p className="text-3xl font-black" style={{ fontFamily:'var(--font-barlow-condensed)', letterSpacing:'-1px' }}><RecordValue part={part} value={value} /></p>
               <p className="text-xs font-bold tracking-widest uppercase mt-1" style={{ color:'#5A5A5A' }}>{label}</p>
             </div>
           ))}
@@ -181,7 +172,7 @@ export default function ManualFighterDetailPage() {
             { label:'Gimnasio', value: fighter.gym_name ?? '—' },
             { label:'Estado', value: fighter.state ?? '—' },
             { label:'Estatura', value: fighter.height_cm ? `${fighter.height_cm} cm` : '—' },
-            { label:'Envergadura', value: fighter.reach_cm ? `${fighter.reach_cm} cm` : '—' },
+            { label:'Alcance', value: fighter.reach_cm ? `${fighter.reach_cm} cm` : '—' },
           ].map(({label,value}) => (
             <div key={label}>
               <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>{label}</p>
@@ -215,7 +206,7 @@ export default function ManualFighterDetailPage() {
           <div className="flex justify-end">
             <button onClick={() => setShowModal(true)} className="px-6 py-3 text-sm font-bold tracking-widest uppercase text-white transition-colors"
               style={{ background:'#C0001E' }} onMouseOver={e=>(e.currentTarget.style.background='#9A0018')} onMouseOut={e=>(e.currentTarget.style.background='#C0001E')}>
-              Contactar al manager
+              Contactar al representante
             </button>
           </div>
         )}
@@ -233,7 +224,7 @@ export default function ManualFighterDetailPage() {
             <h2 className="text-xl font-black uppercase mb-1" style={{ letterSpacing:'-0.5px' }}>Solicitud de Pelea</h2>
             <p className="text-sm mb-2" style={{ color:'#5A5A5A' }}>Para: <span className="font-semibold text-zinc-900">{fighter.full_name}</span></p>
             <p className="text-xs mb-6" style={{ color:'#92400E' }}>
-              La solicitud se envía al {creatorRole.toLowerCase() || 'manager'} del peleador dentro de la plataforma.
+              La solicitud se envía al {creatorRole.toLowerCase() || 'representante'} del peleador dentro de la plataforma.
             </p>
             {sendSuccess ? (
               <div className="py-8 text-center"><p className="text-sm font-semibold text-emerald-700">¡Solicitud enviada con éxito!</p></div>
@@ -242,7 +233,7 @@ export default function ManualFighterDetailPage() {
                 <div>
                   <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Evento *</label>
                   {myEvents.length === 0 ? (
-                    <p className="text-sm text-zinc-400">No tienes eventos. <a href="/events/create" className="underline" style={{ color:'#C0001E' }}>Crea uno</a>.</p>
+                    <p className="text-sm text-zinc-400">No tienes eventos. <Link href="/events/create" className="underline" style={{ color:'#C0001E' }}>Crea uno</Link>.</p>
                   ) : (
                     <select value={modalEventId} onChange={e => setModalEventId(e.target.value)}
                       className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white">
@@ -265,43 +256,6 @@ export default function ManualFighterDetailPage() {
                 </div>
               </div>
             )}
-          </div>
-        </div>
-      )}
-      {/* Paywall Modal */}
-      {showPaywall && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
-          <div className="bg-white max-w-md w-full p-6 shadow-xl">
-            <h2 className="text-base font-bold text-zinc-900 mb-2">Limite alcanzado</h2>
-            <p className="text-sm text-zinc-500 mb-6">{paywallReason}</p>
-            <div className="space-y-3 mb-6">
-              <button
-                onClick={async () => {
-                  const { data: { session } } = await supabase.auth.getSession();
-                  if (!session) { window.location.href = '/login'; return; }
-                  const res = await fetch('/api/checkout', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-                    body: JSON.stringify({ plan: 'per_request' }),
-                  });
-                  const data = await res.json();
-                  if (data.url) window.location.href = data.url;
-                }}
-                className="w-full px-4 py-3 text-sm font-bold tracking-wide uppercase border-2 border-[#C0001E] text-[#C0001E] hover:bg-red-50 transition-colors"
-              >
-                Pago por solicitud — $49 MXN
-              </button>
-              <a
-                href="/pricing"
-                className="block w-full px-4 py-3 text-sm font-bold tracking-wide uppercase text-white text-center transition-colors"
-                style={{ background: '#C0001E' }}
-              >
-                Ver planes mensuales
-              </a>
-            </div>
-            <button onClick={() => setShowPaywall(false)} className="w-full text-center text-sm text-zinc-400 hover:text-zinc-700 transition-colors">
-              Cerrar
-            </button>
           </div>
         </div>
       )}

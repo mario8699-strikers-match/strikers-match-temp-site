@@ -7,6 +7,23 @@
     "events": "events",
     "city": "City",
     "contact": "Contact",
-    "viewEvents": "View Events"
+    "viewEvents": "View Events",
+    "loginToViewEvents": "Sign in to view events",
+    "flyerAlt": "Poster for {{name}}",
+    "federation": {
+      "profileLabel": "Promoter classification",
+      "profileHelp": "Use Federated only if your promotion works under a recognized federation or association. Current promoters remain Independent until updated.",
+      "updateFailed": "The promoter classification could not be updated.",
+      "federated": "Federated",
+      "independent": "Independent",
+      "filter": {
+        "federated": "Federated",
+        "independent": "Independent"
+      },
+      "empty": {
+        "federated": "No federated promoters are registered.",
+        "independent": "No independent promoters are registered."
+      }
+    }
   }
 }

@@ -3,6 +3,8 @@
     "title": "Administration",
     "backToSite": "← Back to site",
     "logout": "Log out",
+    "closeMenu": "Close menu",
+    "toggleMenu": "Toggle menu",
     "unauthorized": "You do not have permission to access this section.",
     "devMode": "Dev mode — role protection activates when you connect Supabase.",
     "nav": {
@@ -14,7 +16,8 @@
       "sponsors": "Sponsors",
       "vendors": "Vendors / Services",
       "events": "Events",
-      "gallery": "Gallery",
+      "matches": "Bouts and Matches",
+      "gallery": "Directory",
       "analytics": "Analytics"
     },
     "dashboard": {
@@ -42,6 +45,7 @@
       "noUsers": "No users registered yet.",
       "roles": {
         "fighter": "Fighter",
+        "spectator": "Spectator",
         "promoter": "Promoter",
         "manager": "Manager",
         "sponsor": "Sponsor",
@@ -92,6 +96,142 @@
       "weightClass": "Weight Class",
       "purse": "Purse",
       "noEvents": "No events registered yet."
+    },
+    "matchesPage": {
+      "title": "Bouts and proposals",
+      "subtitle": "All proposals and bouts created on the platform.",
+      "proposals": "Proposals",
+      "bouts": "Bouts",
+      "search": "Search",
+      "searchPlaceholder": "Event or fighter",
+      "status": "Status",
+      "all": "All",
+      "loading": "Loading...",
+      "noProposals": "No proposals found.",
+      "noBouts": "No bouts found.",
+      "event": "Event",
+      "fighters": "Fighters",
+      "responses": "Responses",
+      "compatibility": "Compatibility",
+      "created": "Created",
+      "area": "Area",
+      "division": "Division",
+      "method": "Method",
+      "result": "Result",
+      "combat": "Bout",
+      "noArea": "No area",
+      "stateLine": "A: {{a}} · B: {{b}}",
+      "statusLabels": {
+        "proposed": "proposal",
+        "pending": "pending",
+        "confirmed": "confirmed",
+        "declined": "declined",
+        "cancelled": "cancelled",
+        "approved": "approved",
+        "ready": "ready",
+        "in_progress": "in progress",
+        "completed": "completed",
+        "no_show": "no show",
+        "all": "All"
+      }
+    },
+    "analyticsPage": {
+      "eyebrow": "Operations dashboard",
+      "title": "Event health",
+      "subtitle": "Executive view for payments, matchmaking, category coverage, reliability, and pending work before the event.",
+      "event": "Event",
+      "loading": "Loading...",
+      "checking": "Checking access...",
+      "loadingMetrics": "Loading metrics...",
+      "loginRequired": "Log in to view the analytics dashboard.",
+      "login": "Log in",
+      "permission": "This section is available to promoters, managers, and admins.",
+      "noEvents": "There are no events to analyze yet.",
+      "readiness": {
+        "title": "Event readiness",
+        "points": "points",
+        "eventStatus": "Status",
+        "help": "The score combines confirmed payments, paired fighters, category coverage, and operational risk."
+      },
+      "kpis": {
+        "applications": "Applications",
+        "intent": "intent to participate",
+        "registered": "Registered",
+        "paymentFlow": "in payment flow",
+        "confirmedPaid": "Confirmed paid",
+        "unmatched": "Unmatched",
+        "paired": "paired"
+      },
+      "sections": {
+        "pipeline": "Event pipeline",
+        "eventFlow": "Overall status",
+        "needsAttention": "Critical pending work",
+        "payments": "Payments",
+        "applications": "Fighter applications",
+        "matchmaking": "Matchmaking",
+        "reliability": "Reliability",
+        "weightCoverage": "Weight category coverage"
+      },
+      "metrics": {
+        "paymentHealth": "Confirmed payments",
+        "paymentHelper": "{{confirmed}} of {{total}} registrations have confirmed payment.",
+        "matchmakingHealth": "Paired fighters",
+        "matchmakingHelper": "{{paired}} of {{confirmed}} confirmed fighters are paired.",
+        "categoryCoverage": "Category coverage",
+        "categoryHelper": "{{covered}} of {{total}} categories covered.",
+        "noCategories": "No required categories are defined for this event."
+      },
+      "actions": {
+        "clearTitle": "No critical pending work",
+        "clearBody": "This event has no major operational alerts right now.",
+        "confirmPayments": "Payment confirmations to review",
+        "matchFighters": "Confirmed fighters without a match",
+        "coverWeights": "Categories without coverage",
+        "reviewApplications": "Pending applications",
+        "noShowRisk": "No-show risk",
+        "viewDetail": "View detail"
+      },
+      "modals": {
+        "unmatchedTitle": "Confirmed fighters without a match",
+        "unmatchedBody": "These fighters have confirmed payment, but they are not in a confirmed proposal or active bout yet.",
+        "close": "Close",
+        "noUnmatched": "There are no confirmed fighters without a match.",
+        "weight": "Weight",
+        "city": "City",
+        "reliability": "Reliability",
+        "viewProfile": "View profile"
+      },
+      "payments": {
+        "confirmed": "Confirmed",
+        "submitted": "To confirm",
+        "pending": "Pending",
+        "empty": "No registrations yet."
+      },
+      "applications": {
+        "accepted": "Accepted",
+        "pending": "Pending",
+        "declined": "Declined",
+        "empty": "No applications yet.",
+        "help": "Applications are intent to participate. They become registrations when the payment flow starts."
+      },
+      "matches": {
+        "active": "Active proposals",
+        "confirmed": "Confirmed",
+        "unmatched": "Confirmed without match"
+      },
+      "reliability": {
+        "high": "High reliability",
+        "risk": "No-show risk",
+        "score": "Attendance profile",
+        "helper": "Only fighters with enough history are counted so the score is not inflated."
+      },
+      "weight": {
+        "covered": "Covered categories",
+        "noDefined": "No categories were defined for this event.",
+        "missing": "{{count}} categories still need coverage.",
+        "coveredStatus": "Covered",
+        "missingStatus": "Missing"
+      }
     },
     "errors": {
       "generic": "Something went wrong. Please try again.",

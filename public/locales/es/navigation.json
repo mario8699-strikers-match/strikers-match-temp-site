@@ -7,13 +7,14 @@
     "professionals": "Servicios",
     "promoters": "Promotores",
     "sponsors": "Patrocinadores",
-    "gallery": "Galería",
-    "managers": "Managers",
+    "gallery": "Directorio",
+    "managers": "Representantes",
     "profile": "Perfil",
     "settings": "Configuración",
     "logout": "Cerrar Sesión",
     "login": "Iniciar Sesión",
     "register": "Registrarse",
-    "createEvent": "Crear Evento"
+    "createEvent": "Crear Evento",
+    "pricing": "Plataforma"
   }
 }

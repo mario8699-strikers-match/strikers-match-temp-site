@@ -15,7 +15,7 @@ const ROLE_LABELS: Record<string, string> = {
   ring_card_girl: 'Ring Card Girl',
   photographer: 'Fotógrafo',
   videographer: 'Videógrafo',
-  broadcast_personality: 'Personalidad de Transmisión',
+  broadcast_personality: 'Presentador / Comentarista',
   catering_vendor: 'Catering / Alimentos',
   venue_rental: 'Renta de Venue',
   judge: 'Juez / Réferi',
@@ -78,20 +78,30 @@ export default function ProfessionalDetailPage() {
     return () => { cancelled = true; };
   }, [id]);
 
-  // Prev/Next neighbors from the same list /professionals shows:
-  // role in VENDOR_ROLES, not banned, ordered by created_at desc.
+  // Prev/Next neighbors from the same list Directorio shows.
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
-    supabase
-      .from('profiles')
-      .select('id, full_name')
-      .in('role', VENDOR_ROLES)
-      .eq('is_banned', false)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        if (cancelled || !data) return;
-        const list = data as Array<{ id: string; full_name: string | null }>;
+    Promise.all([
+      supabase
+        .from('profiles')
+        .select('id, full_name, created_at')
+        .in('role', VENDOR_ROLES)
+        .eq('is_banned', false)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('profiles')
+        .select('id, full_name, created_at')
+        .overlaps('additional_roles', VENDOR_ROLES)
+        .eq('is_banned', false)
+        .order('created_at', { ascending: false }),
+    ]).then(([primary, additional]) => {
+        if (cancelled) return;
+        const byId = new Map<string, { id: string; full_name: string | null; created_at: string }>();
+        ([...(primary.data ?? []), ...(additional.data ?? [])] as Array<{ id: string; full_name: string | null; created_at: string }>).forEach((item) => {
+          byId.set(item.id, item);
+        });
+        const list = Array.from(byId.values()).sort((a, b) => b.created_at.localeCompare(a.created_at));
         const idx = list.findIndex((p) => p.id === id);
         if (idx < 0) {
           setNeighbors({ prev: null, next: null });
@@ -117,7 +127,7 @@ export default function ProfessionalDetailPage() {
 
   return (
     <div className="min-h-screen bg-white font-sans flex flex-col">
-      <Navbar activePage="professionals" />
+      <Navbar activePage="gallery" />
 
       <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
         {loading ? (
@@ -126,20 +136,20 @@ export default function ProfessionalDetailPage() {
           <div className="py-24 text-center border border-dashed border-zinc-200">
             <p className="text-zinc-500 text-sm">Perfil no encontrado o no disponible.</p>
             <Link
-              href="/professionals"
+              href="/gallery"
               className="inline-block mt-4 text-xs font-bold uppercase tracking-widest text-[#C0001E] hover:underline"
             >
-              ← Ver todos los profesionales
+              ← Ver Directorio
             </Link>
           </div>
         ) : (
           <>
             {/* Back link */}
             <Link
-              href="/professionals"
+              href="/gallery"
               className="inline-block mb-6 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-[#C0001E]"
             >
-              ← Profesionales
+              ← Directorio
             </Link>
 
             {/* Header */}

@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { ManualFighterManager } from '@/components/ManualFighterManager';
+import { InlineCombatRecord } from '@/components/CombatRecord';
 import { authService } from '@/services/authService';
 import { managerService } from '@/services/managerService';
 import { fighterService } from '@/services/fighterService';
@@ -94,26 +96,31 @@ export default function ManagerDashboardPage() {
         {/* Header */}
         <div className="mb-8 flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#C0001E' }}>Panel del Manager</p>
+            <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#C0001E' }}>Panel del Representante</p>
             <h1 className="text-3xl font-black uppercase" style={{ letterSpacing:'-1px' }}>{profile!.full_name}</h1>
             <p className="text-sm mt-1" style={{ color:'#5A5A5A' }}>{profile!.city ?? ''}</p>
           </div>
-          <a href="/events/create"
-            className="px-5 py-2.5 text-xs font-bold tracking-widest uppercase text-white transition-colors flex-shrink-0"
-            style={{ background:'#C0001E' }}
-            onMouseOver={(e) => (e.currentTarget.style.background = '#9A0018')}
-            onMouseOut={(e) => (e.currentTarget.style.background = '#C0001E')}>
-            + Nuevo evento
-          </a>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Link href="/events"
+              className="px-5 py-2.5 text-xs font-bold tracking-widest uppercase border border-zinc-300 text-zinc-800 transition-colors flex-shrink-0 text-center">
+              Eventos
+            </Link>
+            <Link href="/events/create"
+              className="px-5 py-2.5 text-xs font-bold tracking-widest uppercase text-white transition-colors flex-shrink-0 text-center"
+              style={{ background:'#C0001E' }}
+              onMouseOver={(e) => (e.currentTarget.style.background = '#9A0018')}
+              onMouseOut={(e) => (e.currentTarget.style.background = '#C0001E')}>
+              Nuevo evento
+            </Link>
+          </div>
         </div>
 
-        {/* Always-free posting note */}
+        {/* Posting note */}
         <div className="mb-8 -mt-4 flex items-center gap-2 text-xs text-emerald-700">
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
           </svg>
-          <span className="font-semibold">Publicar eventos siempre es gratis.</span>
-          <span className="text-emerald-600">Sin tarjeta, sin límite.</span>
+          <span className="font-semibold">Administra roster, eventos y propuestas desde este panel.</span>
         </div>
 
         {/* Search + Add fighters */}
@@ -191,13 +198,7 @@ export default function ManagerDashboardPage() {
                       <p className="text-xs mt-0.5" style={{ color:'#5A5A5A' }}>
                         {f.weight_class ? WEIGHT_LABELS[f.weight_class] ?? f.weight_class : '—'} · {f.profiles?.city ?? '—'}
                       </p>
-                      <div className="flex gap-1 mt-1">
-                        <span className="text-xs font-bold text-zinc-600">{f.record_wins}V</span>
-                        <span className="text-xs text-zinc-400">–</span>
-                        <span className="text-xs font-bold text-zinc-600">{f.record_losses}D</span>
-                        <span className="text-xs text-zinc-400">–</span>
-                        <span className="text-xs font-bold text-zinc-600">{f.record_draws}E</span>
-                      </div>
+                      <InlineCombatRecord wins={f.record_wins} losses={f.record_losses} draws={f.record_draws} className="mt-1 text-xs" />
                     </div>
                   </div>
                   <button onClick={() => handleRemove(f.id)} disabled={removing === f.id}

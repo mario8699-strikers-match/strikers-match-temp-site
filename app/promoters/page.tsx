@@ -12,8 +12,10 @@ import { Pagination } from '@/components/Pagination';
 import type { Profile } from '@/types';
 
 const PAGE_SIZE = 12;
+const FMB_LOGO_PATH = '/logo-FMB-dark.png';
 
 type PromoterWithFlyer = Profile & { latestFlyer: string | null; eventCount: number };
+type FederationFilter = 'independent' | 'federated';
 
 export default function PromotersPage() {
   const { t } = useTranslation('promoters');
@@ -21,6 +23,7 @@ export default function PromotersPage() {
   const [promoters, setPromoters] = useState<PromoterWithFlyer[]>([]);
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [federationFilter, setFederationFilter] = useState<FederationFilter>('independent');
   const [page, setPage] = useState(1);
 
   useEffect(() => {
@@ -68,10 +71,15 @@ export default function PromotersPage() {
     load();
   }, []);
 
-  const totalPages = Math.ceil(promoters.length / PAGE_SIZE);
+  const filteredPromoters = useMemo(
+    () => promoters.filter((promoter) => (promoter.promoter_federation_status ?? 'independent') === federationFilter),
+    [promoters, federationFilter]
+  );
+
+  const totalPages = Math.ceil(filteredPromoters.length / PAGE_SIZE);
   const pagePromoters = useMemo(
-    () => promoters.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [promoters, page]
+    () => filteredPromoters.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filteredPromoters, page]
   );
 
   return (
@@ -79,12 +87,42 @@ export default function PromotersPage() {
       <Navbar activePage="promoters" />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-10">
-          <p className="text-xs font-bold tracking-[0.25em] uppercase mb-2" style={{ color: '#C0001E' }}>Strikers Match</p>
-          <h1 className="font-display font-black uppercase leading-none" style={{ fontSize: 'clamp(2.5rem,6vw,4.5rem)', letterSpacing: '-0.02em', color: '#0A0A0A' }}>
-            {t('promoters.title')}
-          </h1>
-          <p className="mt-2 text-sm" style={{ color: '#5A5A5A' }}>{t('promoters.subtitle')}</p>
+        <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-bold tracking-[0.25em] uppercase mb-2" style={{ color: '#C0001E' }}>Strikers Match</p>
+            <h1 className="font-display font-black uppercase leading-none" style={{ fontSize: 'clamp(2.5rem,6vw,4.5rem)', letterSpacing: '-0.02em', color: '#0A0A0A' }}>
+              {t('promoters.title')}
+            </h1>
+            <p className="mt-2 text-sm" style={{ color: '#5A5A5A' }}>{t('promoters.subtitle')}</p>
+          </div>
+          <div className="grid grid-cols-2 border border-zinc-200 sm:flex">
+            {(['independent', 'federated'] as const).map((status) => (
+              <button
+                key={status}
+                type="button"
+                onClick={() => {
+                  setPage(1);
+                  setFederationFilter(status);
+                }}
+                className={`min-h-11 px-4 py-3 text-xs font-bold uppercase tracking-widest transition-colors ${
+                  federationFilter === status
+                    ? 'bg-zinc-900 text-white'
+                    : 'bg-white text-zinc-600 hover:bg-zinc-50'
+                }`}
+              >
+                {status === 'federated' && (
+                  <Image
+                    src={FMB_LOGO_PATH}
+                    alt=""
+                    width={22}
+                    height={22}
+                    className={`mr-2 inline-block h-5 w-auto align-middle ${federationFilter === status ? 'brightness-0 invert' : ''}`}
+                  />
+                )}
+                {t(`promoters.federation.filter.${status}`)}
+              </button>
+            ))}
+          </div>
         </div>
 
         {loading ? (
@@ -92,6 +130,10 @@ export default function PromotersPage() {
         ) : promoters.length === 0 ? (
           <div className="py-24 text-center border border-dashed border-zinc-200">
             <p className="text-zinc-500 text-sm">{t('promoters.empty')}</p>
+          </div>
+        ) : filteredPromoters.length === 0 ? (
+          <div className="py-24 text-center border border-dashed border-zinc-200">
+            <p className="text-zinc-500 text-sm">{t(`promoters.federation.empty.${federationFilter}`)}</p>
           </div>
         ) : (
           <>
@@ -104,7 +146,7 @@ export default function PromotersPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={promoter.latestFlyer}
-                    alt={`Flyer de ${promoter.full_name}`}
+                    alt={t('promoters.flyerAlt', { name: promoter.full_name })}
                     className="w-full h-48 object-cover"
                   />
                 ) : (
@@ -139,6 +181,18 @@ export default function PromotersPage() {
                     <div>
                       <h2 className="font-display font-black uppercase leading-none text-xl" style={{ color: '#0A0A0A' }}>{promoter.full_name || 'Promotor'}</h2>
                       {promoter.city && <p className="text-xs text-zinc-500 mt-0.5">{promoter.city}</p>}
+                      <span className="mt-2 inline-flex items-center border border-zinc-200 px-2 py-0.5 text-xs font-bold uppercase tracking-widest text-zinc-600">
+                        {(promoter.promoter_federation_status ?? 'independent') === 'federated' && (
+                          <Image
+                            src={FMB_LOGO_PATH}
+                            alt=""
+                            width={20}
+                            height={20}
+                            className="mr-1.5 h-4 w-auto"
+                          />
+                        )}
+                        {t(`promoters.federation.${promoter.promoter_federation_status ?? 'independent'}`)}
+                      </span>
                     </div>
                     {promoter.eventCount > 0 && (
                       <span className="ml-auto text-xs font-medium text-zinc-500 bg-zinc-100 px-2 py-0.5">
@@ -163,7 +217,7 @@ export default function PromotersPage() {
                       <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                       </svg>
-                      Inicia sesión para ver eventos
+                      {t('promoters.loginToViewEvents')}
                     </a>
                   )}
                 </div>

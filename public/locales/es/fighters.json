@@ -10,7 +10,16 @@
     "unavailable": "No disponible",
     "wins": "Victorias",
     "losses": "Derrotas",
-    "draws": "Empates",
+    "draws": "Draws",
+    "follower": "seguidor",
+    "followers": "seguidores",
+    "age": "Edad",
+    "search": {
+      "label": "Buscar atleta",
+      "placeholder": "Nombre, ciudad, gimnasio, peso o disciplina",
+      "button": "Buscar",
+      "empty": "No se encontraron atletas con esa búsqueda"
+    },
     "filter": {
       "all": "Todos",
       "available": "Disponibles"
