@@ -53,7 +53,7 @@ export default function PricingPage() {
     <div className="min-h-screen bg-[#0A0A0A] font-sans text-white">
       <Navbar activePage="pricing" />
 
-      <main>
+      <main className="text-center">
         <section className="mx-auto max-w-6xl px-4 py-16 text-center sm:px-6 sm:py-20">
           <p className="mb-3 text-xs font-bold uppercase tracking-[0.3em] text-[#C0001E]">Strikers Match</p>
           <h1 className="font-display text-5xl font-black uppercase leading-none sm:text-7xl">
@@ -89,7 +89,7 @@ export default function PricingPage() {
           <div className="border border-[#3A3A3A] bg-[#151515] p-6 opacity-45 grayscale sm:p-8">
             <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-[#9A9A9A]">Studio</p>
             <h2 className="font-display text-3xl font-black uppercase text-[#B5B5B5]">Próximamente</h2>
-            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-[#9A9A9A]">
+            <p className="mx-auto mt-4 max-w-3xl text-sm leading-relaxed text-[#9A9A9A]">
               Herramientas de producción para preparar cámaras locales, gráficos y operación de transmisión desde el evento.
             </p>
           </div>

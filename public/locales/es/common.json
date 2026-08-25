@@ -1,7 +1,6 @@
 {
   "common": {
     "appName": "Strikers Match",
-    "tagline": "Conecta atletas, promotores, representantes y patrocinadores para eventos de deportes de combate en México.",
     "loading": "Cargando...",
     "error": "Error",
     "success": "Éxito",
@@ -22,14 +21,14 @@
     "continue": "Continuar",
     "confirm": "Confirmar",
     "language": "Idioma",
-    "eyebrow": "Plataforma de Combates \u00b7 M\u00e9xico",
     "hero": {
-      "line1": "Encuentra",
-      "line2": "peleadores.",
-      "line3": "Llena",
-      "line4": "carteleras.",
-      "line5": "Sin caos de",
-      "line6": "ultimo momento."
+      "line1": "Donde se conecta la",
+      "line2": "comunidad del boxeo y",
+      "line3": "las artes marciales mixtas",
+      "line4": "en México.",
+      "description": "Conecta con atletas, entrenadores, gimnasios y organizadores.",
+      "detail": "Todo lo que necesitas, desde encontrar una pelea hasta organizar un evento, en un solo lugar.",
+      "signature": "Strikers Match. Donde empieza el siguiente combate."
     },
     "comingSoon": "Proximamente en",
     "appStore": "App Store",

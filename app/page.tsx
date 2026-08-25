@@ -69,26 +69,24 @@ export default function Home() {
             style={{ opacity: heroVisible ? 1 : 0, pointerEvents: heroVisible ? 'auto' : 'none' }}
           >
 
-            {/* Eyebrow */}
-            <p className="text-xs font-bold tracking-[0.3em] uppercase mb-6" style={{ color: '#C0001E' }}>
-              {tCommon('common.eyebrow')}
-            </p>
-
             {/* Hero headline */}
             <h1
               className="font-display font-black uppercase leading-none mb-8"
               style={{ fontSize: 'clamp(3.5rem, 9vw, 7.5rem)', letterSpacing: '-0.02em', color: '#FFFFFF' }}
             >
               {tCommon('common.hero.line1')}<br />
-              {tCommon('common.hero.line2')}<br />
-              <span style={{ color: '#C0001E', fontStyle: 'italic' }}>{tCommon('common.hero.line3')}<br />{tCommon('common.hero.line4')}</span><br />
-              {tCommon('common.hero.line5')}<br />{tCommon('common.hero.line6')}
+              <span style={{ color: '#C0001E', fontStyle: 'italic' }}>
+                {tCommon('common.hero.line2')}<br />
+                {tCommon('common.hero.line3')}
+              </span><br />
+              {tCommon('common.hero.line4')}
             </h1>
 
-            {/* Tagline */}
-            <p className="text-base max-w-md mb-10 text-zinc-300">
-              {tCommon('common.tagline')}
-            </p>
+            <div className="max-w-2xl mb-10 space-y-3 text-base sm:text-lg text-zinc-300">
+              <p>{tCommon('common.hero.description')}</p>
+              <p>{tCommon('common.hero.detail')}</p>
+              <p className="font-bold text-white">{tCommon('common.hero.signature')}</p>
+            </div>
 
             {/* CTAs */}
             <div className="flex flex-wrap gap-4">
