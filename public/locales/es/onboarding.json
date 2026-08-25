@@ -139,31 +139,6 @@
         }
       ]
     },
-    "admin": {
-      "eyebrow": "Cuenta admin",
-      "title": "Control de plataforma",
-      "intro": "Tu cuenta tiene visibilidad operativa para revisar usuarios, eventos, peleadores, propuestas, combates y estado general.",
-      "primaryHref": "/admin",
-      "primaryLabel": "Abrir admin",
-      "steps": [
-        {
-          "title": "Revisa el panel",
-          "body": "Monitorea usuarios, peleadores, eventos, propuestas y combates desde el panel principal.",
-          "href": "/admin",
-          "action": "Ir a admin"
-        },
-        {
-          "title": "Audita propuestas y combates",
-          "body": "La página de propuestas y combates muestra propuestas y registros permanentes de evento.",
-          "href": "/admin/matches",
-          "action": "Ver propuestas y combates"
-        },
-        {
-          "title": "Gestiona perfiles",
-          "body": "Revisa peleadores, representantes, promotores, patrocinadores y profesionales desde las secciones de administración."
-        }
-      ]
-    },
     "vendor": {
       "eyebrow": "Cuenta profesional",
       "title": "Perfil de servicio",

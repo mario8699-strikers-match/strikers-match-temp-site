@@ -139,31 +139,6 @@
         }
       ]
     },
-    "admin": {
-      "eyebrow": "Admin account",
-      "title": "Platform control",
-      "intro": "Your account has operational visibility across users, events, fighters, proposals, bouts, and platform status.",
-      "primaryHref": "/admin",
-      "primaryLabel": "Open admin",
-      "steps": [
-        {
-          "title": "Review the dashboard",
-          "body": "Monitor users, fighters, events, matches, and bouts from the main panel.",
-          "href": "/admin",
-          "action": "Go to admin"
-        },
-        {
-          "title": "Audit matches and bouts",
-          "body": "The matches/bouts page shows proposals and permanent event records.",
-          "href": "/admin/matches",
-          "action": "View matches/bouts"
-        },
-        {
-          "title": "Manage profiles",
-          "body": "Review fighters, managers, promoters, sponsors, and professionals from the admin sections."
-        }
-      ]
-    },
     "vendor": {
       "eyebrow": "Professional account",
       "title": "Service profile",

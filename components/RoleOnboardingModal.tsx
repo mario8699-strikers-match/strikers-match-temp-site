@@ -22,7 +22,6 @@ const ROLE_CONTENT_KEYS: Partial<Record<UserRole, string>> = {
   promoter: 'promoter',
   manager: 'manager',
   sponsor: 'sponsor',
-  admin: 'admin',
 };
 
 function onboardingKey(profile: Profile) {
@@ -56,7 +55,7 @@ export function RoleOnboardingModal() {
     authService.getSession().then(({ data }) => {
       if (cancelled) return;
       const nextProfile = data?.profile ?? null;
-      if (!nextProfile) return;
+      if (!nextProfile || nextProfile.role === 'admin') return;
 
       try {
         if (localStorage.getItem(onboardingKey(nextProfile)) === 'dismissed') return;

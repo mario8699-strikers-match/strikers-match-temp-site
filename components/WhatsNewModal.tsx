@@ -75,9 +75,9 @@ export function WhatsNewModal() {
       authService.getSession().then(({ data }) => {
         if (cancelled || isOnboardingActive()) return;
         const role = data?.profile?.role;
-        // Show to any signed-in user; the highlights cover platform-wide updates
-        // that affect promoters, managers, fighters, sponsors, and vendors.
-        if (!role) return;
+        // Admin accounts use their operational dashboard and should not receive
+        // public-facing product announcements.
+        if (!role || role === 'admin') return;
         setOpen(true);
       });
     };
