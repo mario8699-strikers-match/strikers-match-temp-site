@@ -6,6 +6,12 @@ export type UserRole =
   | 'manager'
   | 'sponsor'
   | 'admin'
+  | 'gyms_academies'
+  | 'recovery_wellness'
+  | 'gear_apparel'
+  | 'nutrition_supplements'
+  | 'local_business'
+  | 'other_service'
   | 'ring_card_girl'
   | 'photographer'
   | 'videographer'
@@ -22,6 +28,8 @@ export type UserRole =
 
 // Vendor/service-provider roles.
 export const VENDOR_ROLES: UserRole[] = [
+  'gyms_academies', 'recovery_wellness', 'gear_apparel',
+  'nutrition_supplements', 'local_business', 'other_service',
   'ring_card_girl', 'photographer', 'videographer', 'broadcast_personality',
   'catering_vendor', 'venue_rental', 'judge', 'ring_rental',
   'ring_announcer', 'cutman', 'merchandise_vendor',

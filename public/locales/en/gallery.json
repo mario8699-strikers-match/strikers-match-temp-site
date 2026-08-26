@@ -66,6 +66,12 @@
       }
     },
     "serviceRoles": {
+      "gyms_academies": "Gym / Academy",
+      "recovery_wellness": "Recovery and wellness",
+      "gear_apparel": "Gear and apparel",
+      "nutrition_supplements": "Nutrition and supplements",
+      "local_business": "Local business",
+      "other_service": "Other service",
       "ring_card_girl": "Ring Card Girl",
       "photographer": "Photographer",
       "videographer": "Videographer",

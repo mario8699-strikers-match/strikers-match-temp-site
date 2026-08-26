@@ -12,6 +12,12 @@ import { VENDOR_ROLES } from '@/types';
 import type { Profile } from '@/types';
 
 const ROLE_LABELS: Record<string, string> = {
+  gyms_academies: 'Gimnasio / Academia',
+  recovery_wellness: 'Recuperación y bienestar',
+  gear_apparel: 'Ropa y equipo',
+  nutrition_supplements: 'Nutrición y suplementos',
+  local_business: 'Negocio local',
+  other_service: 'Otro servicio',
   ring_card_girl: 'Ring Card Girl',
   photographer: 'Fotógrafo',
   videographer: 'Videógrafo',
