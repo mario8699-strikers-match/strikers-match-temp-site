@@ -2,13 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { uploadToSpaces, deleteFromSpaces, createPresignedUploadUrl, getPublicUrl } from '@/lib/spacesClient';
 
-// Allow uploads up to 50 MB (for small files that go through the proxy path)
-export const config = {
-  api: { bodyParser: false },
-  maxDuration: 60,
-};
-
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 /**
  * Verify the request has a valid Supabase session.

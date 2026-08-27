@@ -5,14 +5,22 @@ import type { NextRequest } from 'next/server';
 const NOINDEX_PATHS = [
   '/profile',
   '/fighter/profile',
+  '/fighter/matches',
+  '/promoter/analytics',
   '/promoter/dashboard',
   '/manager/dashboard',
   '/manager/profile',
   '/sponsor/dashboard',
+  '/spectator/dashboard',
   '/vendor/profile',
   '/consent',
   '/events/create',
+  '/login',
+  '/register',
+  '/forgot-password',
   '/reset-password',
+  '/pricing/success',
+  '/search',
   '/admin',
 ];
 
@@ -21,11 +29,11 @@ export function proxy(request: NextRequest) {
 
   const isProtected = NOINDEX_PATHS.some(
     (p) => pathname === p || pathname.startsWith(p + '/')
-  );
+  ) || /^\/events\/[^/]+\/manage(?:\/|$)/.test(pathname);
 
   if (isProtected) {
     const response = NextResponse.next();
-    response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
     return response;
   }
 

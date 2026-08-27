@@ -38,6 +38,11 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: '/professionals',
+        destination: '/directorio',
+        permanent: true,
+      },
+      {
         source: '/admin/gallery',
         destination: '/admin/directorio',
         permanent: true,
