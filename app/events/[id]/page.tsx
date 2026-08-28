@@ -23,6 +23,7 @@ import {
 } from '@/services/matchService';
 import { reliabilityTier } from '@/services/reliabilityService';
 import type { Event, EventFormData, EventApplication, Profile, Fighter, MatchResult, EmergencyMatchResult, MatchRequest, EventRegistration } from '@/types';
+import { useEventInitialData } from './EventInitialData';
 
 const WEIGHT_CLASSES = [
   'minimosca','mosca','supermosca','gallo','supergallo',
@@ -241,9 +242,10 @@ export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { t } = useTranslation('events');
   const { t: tCommon } = useTranslation('common');
+  const initialEvent = useEventInitialData();
 
-  const [event, setEvent] = useState<Event | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [event, setEvent] = useState<Event | null>(initialEvent);
+  const [loading, setLoading] = useState(!initialEvent);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   // Auth
@@ -326,8 +328,12 @@ export default function EventDetailPage() {
 
   useEffect(() => {
     if (!id) return;
+    const eventRequest = initialEvent?.id === id
+      ? Promise.resolve({ data: initialEvent, error: null })
+      : eventService.getById(id);
+
     Promise.all([
-      eventService.getById(id),
+      eventRequest,
       authService.getSession(),
     ]).then(async ([{ data: ev, error: evErr }, { data: session }]) => {
       if (evErr || !ev) { setLoadError(t('events.errors.loadFailed')); setLoading(false); return; }
@@ -407,7 +413,7 @@ export default function EventDetailPage() {
 
   // ── Supabase Realtime: fight request status updates ──
   useEffect(() => {
-    if (!id) return;
+    if (!id || !canOperateThisEvent) return;
     const channel = supabase
       .channel(`requests-${id}`)
       .on(
@@ -421,7 +427,7 @@ export default function EventDetailPage() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [id]);
+  }, [id, canOperateThisEvent]);
 
   // ── Emergency replacement handler ──
   const handleFindEmergency = useCallback(async () => {
@@ -755,7 +761,13 @@ export default function EventDetailPage() {
             {event.flyer_url && (
               <div className="border border-zinc-100">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={event.flyer_url} alt={`Flyer — ${event.event_name}`} className="w-full object-contain max-h-[480px] bg-zinc-50" />
+                <img
+                  src={event.flyer_url}
+                  alt={`Flyer — ${event.event_name}`}
+                  fetchPriority="high"
+                  decoding="async"
+                  className="w-full object-contain max-h-[480px] bg-zinc-50"
+                />
               </div>
             )}
 

@@ -2,6 +2,10 @@ import type { Metadata } from 'next';
 import { StructuredData } from '@/components/StructuredData';
 import { absoluteUrl, pageMetadata, truncateDescription } from '@/lib/seo';
 import { getPublicEventSeo } from '@/lib/seoData';
+import { EventInitialDataProvider } from './EventInitialData';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 interface EventLayoutProps {
   children: React.ReactNode;
@@ -95,7 +99,9 @@ export default async function EventLayout({ children, params }: EventLayoutProps
   return (
     <>
       <StructuredData data={structuredData} />
-      {children}
+      <EventInitialDataProvider event={event}>
+        {children}
+      </EventInitialDataProvider>
     </>
   );
 }

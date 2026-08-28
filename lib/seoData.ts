@@ -12,18 +12,7 @@ import {
   type UserRole,
 } from '@/types';
 
-export interface PublicEventSeo {
-  id: string;
-  event_name: string;
-  event_date: string | null;
-  event_time: string | null;
-  city: string | null;
-  venue: string | null;
-  notes: string | null;
-  disciplines_needed: string[] | null;
-  flyer_url: string | null;
-  status: string;
-  created_at: string;
+export interface PublicEventSeo extends Event {
   profiles: { full_name: string } | null;
 }
 
@@ -100,7 +89,7 @@ export const getPublicEventSeo = cache(async (id: string): Promise<PublicEventSe
   try {
     const { data, error } = await client
       .from('events')
-      .select('id,event_name,event_date,event_time,city,venue,notes,disciplines_needed,flyer_url,status,created_at,profiles(full_name)')
+      .select('id,promoter_id,event_name,event_date,event_time,city,venue,weight_class_needed,weight_classes_needed,disciplines_needed,purse_amount,signup_fee,notes,flyer_url,status,created_at,profiles(full_name)')
       .eq('id', id)
       .maybeSingle();
     if (error || !data) return null;

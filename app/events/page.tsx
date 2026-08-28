@@ -3,7 +3,8 @@ import { StructuredData } from '@/components/StructuredData';
 import { absoluteUrl } from '@/lib/seo';
 import { getPublicEventsForPage } from '@/lib/seoData';
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function EventsPage() {
   const events = await getPublicEventsForPage();
