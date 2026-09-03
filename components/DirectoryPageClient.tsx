@@ -19,6 +19,30 @@ type DirectoryEntry =
   | { kind: 'profile'; profile: Profile }
   | { kind: 'listing'; listing: BusinessListing };
 
+const CATEGORY_PROFILE_ROLES: Record<BusinessListingCategory, UserRole[]> = {
+  gyms_academies: ['gyms_academies'],
+  recovery_wellness: ['recovery_wellness'],
+  event_services: [
+    'ring_card_girl',
+    'photographer',
+    'videographer',
+    'broadcast_personality',
+    'catering_vendor',
+    'venue_rental',
+    'judge',
+    'ring_rental',
+    'ring_announcer',
+    'cutman',
+    'merchandise_vendor',
+    'ringside_doctor',
+    'ringside_emt',
+  ],
+  gear_apparel: ['gear_apparel'],
+  nutrition_supplements: ['nutrition_supplements'],
+  local_business: ['local_business'],
+  other: ['other_service'],
+};
+
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).slice(0, 2);
   return parts.map((part) => part[0]?.toUpperCase() ?? '').join('') || '—';
@@ -129,7 +153,15 @@ export function DirectoryPageClient({ initialListings, initialProfiles }: Direct
 
     if (category === 'profiles') return profileEntries;
     if (category === 'all') return [...profileEntries, ...listingEntries];
-    return listingEntries.filter((entry) => entry.listing.category === category);
+
+    const matchingRoles = CATEGORY_PROFILE_ROLES[category];
+    const matchingProfiles = profileEntries.filter(({ profile: serviceProfile }) => {
+      const roles = [serviceProfile.role, ...(serviceProfile.additional_roles ?? [])];
+      return roles.some((role) => matchingRoles.includes(role));
+    });
+    const matchingListings = listingEntries.filter((entry) => entry.listing.category === category);
+
+    return [...matchingProfiles, ...matchingListings];
   }, [category, listings, serviceProfiles]);
 
   const totalPages = Math.ceil(directoryEntries.length / PAGE_SIZE);
