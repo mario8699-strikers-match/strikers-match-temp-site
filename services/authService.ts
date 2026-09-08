@@ -127,6 +127,9 @@ export const authService = {
           data: {
             full_name: formData.full_name,
             role: formData.role,
+            promoter_federation_status: formData.role === 'promoter'
+              ? formData.promoter_federation_status || 'independent'
+              : 'independent',
             city: formData.city || null,
             phone: formData.phone || null,
             date_of_birth: formData.date_of_birth || null,

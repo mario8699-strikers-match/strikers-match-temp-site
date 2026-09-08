@@ -334,6 +334,7 @@ export interface RegisterFormData {
   email: string;
   password: string;
   role: UserRole;
+  promoter_federation_status: PromoterFederationStatus | '';
   city: string;
   phone: string;
   date_of_birth: string;

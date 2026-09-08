@@ -50,6 +50,7 @@ export default function RegisterPage() {
     email: '',
     password: '',
     role: initialAccountType === 'spectator' ? 'spectator' : '' as UserRole,
+    promoter_federation_status: '',
     city: '',
     phone: '',
     date_of_birth: '',
@@ -81,7 +82,11 @@ export default function RegisterPage() {
   };
 
   const pickRole = (role: UserRole) => {
-    setFormData((prev) => ({ ...prev, role }));
+    setFormData((prev) => ({
+      ...prev,
+      role,
+      promoter_federation_status: role === 'promoter' ? prev.promoter_federation_status : '',
+    }));
     setStep(3);
   };
 
@@ -105,6 +110,9 @@ export default function RegisterPage() {
     else if (formData.password.length < 8) newErrors.password = t('auth.errors.passwordMinLength');
     if (formData.password !== confirmPassword) newErrors.confirmPassword = t('auth.errors.passwordMismatch');
     if (!formData.role) newErrors.role = t('auth.errors.roleRequired');
+    if (formData.role === 'promoter' && !formData.promoter_federation_status) {
+      newErrors.promoter_federation_status = t('auth.errors.promoterFederationRequired');
+    }
     if (!acceptedTerms) newErrors.terms = tLegal('legal.register.termsRequired');
     if (!formData.date_of_birth) {
       newErrors.date_of_birth = t('auth.errors.dobRequired');
@@ -311,6 +319,45 @@ export default function RegisterPage() {
             {t('auth.register.selectedRole')}{' '}
             <span className="font-semibold text-zinc-900">{t(`auth.register.${formData.role}`)}</span>
           </div>
+
+          {formData.role === 'promoter' && (
+            <fieldset>
+              <legend className="block text-sm font-medium text-zinc-700 mb-2">
+                {t('auth.register.promoterFederationPrompt')}
+              </legend>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {(['federated', 'independent'] as const).map((status) => (
+                  <label
+                    key={status}
+                    className={`cursor-pointer border p-4 transition-colors ${
+                      formData.promoter_federation_status === status
+                        ? 'border-zinc-950 bg-zinc-950 text-white'
+                        : errors.promoter_federation_status
+                          ? 'border-red-400 bg-white text-zinc-900'
+                          : 'border-zinc-300 bg-white text-zinc-900 hover:border-zinc-900'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="promoter_federation_status"
+                      value={status}
+                      checked={formData.promoter_federation_status === status}
+                      onChange={() => {
+                        setFormData((prev) => ({ ...prev, promoter_federation_status: status }));
+                        setErrors((prev) => ({ ...prev, promoter_federation_status: undefined }));
+                      }}
+                      className="sr-only"
+                    />
+                    <span className="block text-sm font-bold">{t(`auth.register.promoterFederation.${status}`)}</span>
+                    <span className={`mt-1 block text-xs leading-relaxed ${formData.promoter_federation_status === status ? 'text-zinc-300' : 'text-zinc-500'}`}>
+                      {t(`auth.register.promoterFederation.${status}Description`)}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              {errors.promoter_federation_status && <p className="mt-1 text-xs text-red-500">{errors.promoter_federation_status}</p>}
+            </fieldset>
+          )}
 
           {/* Full Name */}
           <div>
