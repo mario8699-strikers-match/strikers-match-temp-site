@@ -174,11 +174,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setInitialSidebarState();
   }, []);
 
-  // Close sidebar on route change (mobile only)
-  useEffect(() => {
-    if (window.innerWidth < 768) setSidebarOpen(false);
-  }, [pathname]);
-
   // Close sidebar on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -245,9 +240,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest mb-0.5">
               {t('admin.title')}
             </p>
-            <a href="/" className="text-base font-bold text-white hover:text-zinc-300 transition-colors">
+            <Link href="/" className="text-base font-bold text-white hover:text-zinc-300 transition-colors">
               Strikers Match
-            </a>
+            </Link>
           </div>
           {/* Close button */}
           <button
@@ -267,6 +262,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => {
+                if (window.innerWidth < 768) setSidebarOpen(false);
+              }}
               className={`flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors ${
                 isActive(item)
                   ? 'bg-zinc-800 text-white'

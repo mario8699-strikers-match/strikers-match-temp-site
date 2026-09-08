@@ -52,6 +52,24 @@ export function ManualFighterManager({
   const [photoUrl, setPhotoUrl] = useState('');
   const [bio, setBio] = useState('');
   const [isAvailable, setIsAvailable] = useState(true);
+  const [isPublic, setIsPublic] = useState(true);
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [genderDivision, setGenderDivision] = useState('');
+  const [exactWeight, setExactWeight] = useState('');
+  const [requestedWeight, setRequestedWeight] = useState('');
+  const [minimumWeight, setMinimumWeight] = useState('');
+  const [maximumWeight, setMaximumWeight] = useState('');
+  const [skillRating, setSkillRating] = useState('');
+  const [rulesets, setRulesets] = useState('');
+  const [koWins, setKoWins] = useState('0');
+  const [tkoWins, setTkoWins] = useState('0');
+  const [koLosses, setKoLosses] = useState('0');
+  const [tkoLosses, setTkoLosses] = useState('0');
+  const [availableFrom, setAvailableFrom] = useState('');
+  const [availableTo, setAvailableTo] = useState('');
+  const [lastFightAt, setLastFightAt] = useState('');
+  const [lastKoLossAt, setLastKoLossAt] = useState('');
+  const [restrictions, setRestrictions] = useState('');
 
   useEffect(() => {
     manualFighterService.getByCreator(creatorId).then(({ data }) => {
@@ -65,7 +83,10 @@ export function ManualFighterManager({
     setWins('0'); setLosses('0'); setDraws('0');
     setPhone(''); setEmail(''); setCity(''); setStateField(''); setGym('');
     setLevel('amateur'); setNotes(''); setPhotoUrl(''); setBio('');
-    setIsAvailable(true); setError(null);
+    setIsAvailable(true); setIsPublic(true); setDateOfBirth(''); setGenderDivision(''); setExactWeight('');
+    setRequestedWeight(''); setMinimumWeight(''); setMaximumWeight(''); setSkillRating(''); setRulesets('');
+    setKoWins('0'); setTkoWins('0'); setKoLosses('0'); setTkoLosses('0'); setAvailableFrom(''); setAvailableTo('');
+    setLastFightAt(''); setLastKoLossAt(''); setRestrictions(''); setError(null);
   };
 
   const handleAdd = async () => {
@@ -93,6 +114,24 @@ export function ManualFighterManager({
       reach_cm: null,
       state: state.trim() || null,
       is_available: isAvailable,
+      is_public: isPublic,
+      date_of_birth: dateOfBirth || null,
+      gender_division: genderDivision.trim() || null,
+      exact_weight: exactWeight ? Number(exactWeight) : null,
+      requested_weight_kg: requestedWeight ? Number(requestedWeight) : null,
+      acceptable_weight_min_kg: minimumWeight ? Number(minimumWeight) : null,
+      acceptable_weight_max_kg: maximumWeight ? Number(maximumWeight) : null,
+      skill_rating: skillRating ? Number(skillRating) : null,
+      preferred_rulesets: rulesets.split(',').map((value) => value.trim()).filter(Boolean),
+      ko_wins: Number(koWins) || 0,
+      tko_wins: Number(tkoWins) || 0,
+      ko_losses: Number(koLosses) || 0,
+      tko_losses: Number(tkoLosses) || 0,
+      available_from: availableFrom || null,
+      available_to: availableTo || null,
+      last_fight_at: lastFightAt || null,
+      last_ko_loss_at: lastKoLossAt || null,
+      special_restrictions: restrictions.split(',').map((value) => value.trim()).filter(Boolean),
     });
 
     setSaving(false);
@@ -180,6 +219,41 @@ export function ManualFighterManager({
             </div>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <RosterInput label="Fecha de nacimiento" type="date" value={dateOfBirth} onChange={setDateOfBirth} />
+            <RosterInput label="División de género" value={genderDivision} onChange={setGenderDivision} />
+            <RosterInput label="Nivel técnico 1–10" type="number" value={skillRating} onChange={setSkillRating} />
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-zinc-600">Pesos para matchmaking</p>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <RosterInput label="Peso real kg" type="number" value={exactWeight} onChange={setExactWeight} />
+              <RosterInput label="Solicitado kg" type="number" value={requestedWeight} onChange={setRequestedWeight} />
+              <RosterInput label="Mínimo kg" type="number" value={minimumWeight} onChange={setMinimumWeight} />
+              <RosterInput label="Máximo kg" type="number" value={maximumWeight} onChange={setMaximumWeight} />
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-zinc-600">Récord KO / TKO</p>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <RosterInput label="KO a favor" type="number" value={koWins} onChange={setKoWins} />
+              <RosterInput label="TKO a favor" type="number" value={tkoWins} onChange={setTkoWins} />
+              <RosterInput label="KO en contra" type="number" value={koLosses} onChange={setKoLosses} />
+              <RosterInput label="TKO en contra" type="number" value={tkoLosses} onChange={setTkoLosses} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <RosterInput label="Reglamentos (separados por coma)" value={rulesets} onChange={setRulesets} />
+            <RosterInput label="Restricciones privadas (separadas por coma)" value={restrictions} onChange={setRestrictions} />
+            <RosterInput label="Disponible desde" type="date" value={availableFrom} onChange={setAvailableFrom} />
+            <RosterInput label="Disponible hasta" type="date" value={availableTo} onChange={setAvailableTo} />
+            <RosterInput label="Última pelea" type="date" value={lastFightAt} onChange={setLastFightAt} />
+            <RosterInput label="Última derrota por KO" type="date" value={lastKoLossAt} onChange={setLastKoLossAt} />
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Teléfono (solo tú lo verás)</label>
@@ -225,6 +299,10 @@ export function ManualFighterManager({
               <label className="flex items-center gap-2 cursor-pointer mt-1">
                 <input type="checkbox" checked={isAvailable} onChange={(e) => setIsAvailable(e.target.checked)} className="w-4 h-4 accent-[#C0001E]" />
                 <span className="text-sm text-zinc-700">Disponible para peleas</span>
+              </label>
+              <label className="mt-2 flex cursor-pointer items-center gap-2">
+                <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="w-4 h-4 accent-[#C0001E]" />
+                <span className="text-sm text-zinc-700">Mostrar en el directorio público</span>
               </label>
             </div>
           </div>
@@ -279,6 +357,8 @@ export function ManualFighterManager({
                   {f.weight_class ? WEIGHT_LABELS[f.weight_class] ?? f.weight_class : '—'} · {f.city ?? '—'}
                 </p>
                 <InlineCombatRecord wins={f.record_wins} losses={f.record_losses} draws={f.record_draws} className="mt-1 text-xs" />
+                <p className="mt-1 text-xs text-zinc-500">KO/TKO {f.ko_wins + f.tko_wins} · nivel {f.skill_rating ?? '—'}/10 · {f.gender_division ?? 'división pendiente'}</p>
+                <p className="mt-1 text-xs text-zinc-500">Busca {f.requested_weight_kg ?? '—'} kg · rango {f.acceptable_weight_min_kg ?? '—'}–{f.acceptable_weight_max_kg ?? '—'} kg</p>
                 <div className="flex gap-2 mt-1.5 flex-wrap">
                   <span className={`text-xs font-bold px-1.5 py-0.5 uppercase tracking-widest ${f.experience_level === 'pro' ? 'bg-[#C0001E] text-white' : 'bg-zinc-100 text-zinc-600'}`}>
                     {f.experience_level === 'pro' ? 'Pro' : 'Amateur'}
@@ -300,4 +380,8 @@ export function ManualFighterManager({
       )}
     </div>
   );
+}
+
+function RosterInput({ label, value, onChange, type = 'text' }: { label: string; value: string; onChange: (value: string) => void; type?: string }) {
+  return <label><span className="mb-1 block text-xs text-zinc-500">{label}</span><input type={type} min={type === 'number' ? 0 : undefined} step={type === 'number' ? '0.1' : undefined} value={value} onChange={(event) => onChange(event.target.value)} className="w-full border border-zinc-300 px-3 py-2 text-sm" /></label>;
 }

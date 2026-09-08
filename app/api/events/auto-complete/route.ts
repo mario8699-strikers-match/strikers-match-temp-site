@@ -58,3 +58,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Internal error.' }, { status: 500 });
   }
 }
+
+// Vercel Cron invokes routes with GET. Keep POST for manual secured runs.
+export const GET = POST;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { adminService } from '@/services/adminService';
 import { eventService } from '@/services/eventService';
@@ -53,12 +54,12 @@ export default function AdminEventsPage() {
           <h1 className="text-xl font-bold text-zinc-900">{t('admin.events.title')}</h1>
           <p className="mt-1 text-sm text-zinc-500">{t('admin.events.subtitle')}</p>
         </div>
-        <a
+        <Link
           href="/events/create"
           className="w-full sm:w-auto text-center bg-zinc-900 text-white px-4 py-2 text-sm font-medium hover:bg-zinc-800 transition-colors whitespace-nowrap"
         >
           + {tEvents('events.createEvent')}
-        </a>
+        </Link>
       </div>
 
       {loading ? (

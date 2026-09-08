@@ -111,16 +111,14 @@ export function DirectoryPageClient({ initialListings, initialProfiles }: Direct
         authService.getSession(),
         directoryService.getPublished(),
         supabase
-          .from('profiles')
+          .from('public_profiles')
           .select('*')
           .in('role', VENDOR_ROLES)
-          .eq('is_banned', false)
           .order('created_at', { ascending: false }),
         supabase
-          .from('profiles')
+          .from('public_profiles')
           .select('*')
           .overlaps('additional_roles', VENDOR_ROLES)
-          .eq('is_banned', false)
           .order('created_at', { ascending: false }),
       ]);
       if (!active) return;

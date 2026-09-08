@@ -55,7 +55,7 @@ export default function ProfessionalDetailPage() {
     let cancelled = false;
 
     Promise.all([
-      supabase.from('profiles').select('*').eq('id', id).single(),
+      supabase.from('public_profiles').select('*').eq('id', id).single(),
       authService.getSession(),
     ]).then(([{ data, error }, { data: session }]) => {
       if (cancelled) return;
@@ -90,16 +90,14 @@ export default function ProfessionalDetailPage() {
     let cancelled = false;
     Promise.all([
       supabase
-        .from('profiles')
+        .from('public_profiles')
         .select('id, full_name, created_at')
         .in('role', VENDOR_ROLES)
-        .eq('is_banned', false)
         .order('created_at', { ascending: false }),
       supabase
-        .from('profiles')
+        .from('public_profiles')
         .select('id, full_name, created_at')
         .overlaps('additional_roles', VENDOR_ROLES)
-        .eq('is_banned', false)
         .order('created_at', { ascending: false }),
     ]).then(([primary, additional]) => {
         if (cancelled) return;

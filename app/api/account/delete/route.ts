@@ -53,10 +53,9 @@ export async function POST(req: NextRequest) {
 
     const adminSupabase = getAdminSupabase();
 
-    // Delete the profile row first (cascading will handle related tables)
-    await adminSupabase.from('profiles').delete().eq('id', userId);
-
-    // Delete the auth user
+    // Delete Auth first. The profiles foreign key cascades application data.
+    // This ordering prevents a failed Auth deletion from leaving a login with
+    // no profile row (the source of the previous profile-load failure).
     const { error } = await adminSupabase.auth.admin.deleteUser(userId);
 
     if (error) {

@@ -324,6 +324,8 @@ export default function EventDetailPage() {
     print: false,
     operation: false,
     production: false,
+    participants: false,
+    graphics: false,
   });
 
   useEffect(() => {
@@ -359,6 +361,8 @@ export default function EventDetailPage() {
         print: printAllowed,
         operation: operationAllowed,
         production: productionAllowed,
+        participants: matchmakingAllowed,
+        graphics: matchmakingAllowed || productionAllowed,
       });
 
       if (p?.role === 'fighter') {
@@ -477,11 +481,11 @@ export default function EventDetailPage() {
   const reloadConfirmedRegistrations = useCallback(async (eventId: string) => {
     const { data } = await getEventRegistrations(eventId);
     const confirmed = (data ?? [])
-      .filter((r) => r.payment_status === 'confirmed')
+      .filter((r) => ['confirmed', 'waived'].includes(r.payment_status) && r.eligibility_status === 'eligible')
       .map((r) => ({
-        id: r.fighters?.id ?? r.fighter_id,
-        name: r.fighters?.profiles?.full_name ?? '—',
-        weight: r.fighters?.weight_class ?? null,
+        id: r.id,
+        name: r.display_name ?? r.fighters?.profiles?.full_name ?? r.manual_fighters?.full_name ?? '—',
+        weight: r.registered_weight_class ?? r.fighters?.weight_class ?? r.manual_fighters?.weight_class ?? null,
       }));
     setConfirmedRegistrations(confirmed);
   }, []);
@@ -703,7 +707,7 @@ export default function EventDetailPage() {
             </span>
           </div>
           {canManageEvent && !editing && (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
               {eventToolAccess.settings && (
                 <a href={`/events/${event.id}/manage/settings`} className="flex min-h-11 items-center justify-center border border-zinc-300 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-zinc-800">
                   {t('events.engine.nav.settings')}
@@ -713,6 +717,9 @@ export default function EventDetailPage() {
                 <a href={`/events/${event.id}/manage/matchmaking`} className="flex min-h-11 items-center justify-center bg-zinc-900 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-white">
                   {t('events.engine.nav.matchmaking')}
                 </a>
+              )}
+              {eventToolAccess.participants && (
+                <a href={`/events/${event.id}/manage/participants`} className="flex min-h-11 items-center justify-center border border-zinc-300 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-zinc-800">Participantes</a>
               )}
               {eventToolAccess.bouts && (
                 <a href={`/events/${event.id}/manage/bouts`} className="flex min-h-11 items-center justify-center border border-zinc-300 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-zinc-800">
@@ -737,6 +744,9 @@ export default function EventDetailPage() {
                 >
                   {t('events.engine.nav.streaming')} · {t('events.engine.streaming.comingSoon')}
                 </button>
+              )}
+              {eventToolAccess.graphics && (
+                <a href={`/events/${event.id}/manage/graphics`} className="flex min-h-11 items-center justify-center border border-[#C0001E] px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-[#C0001E]">Gráficos</a>
               )}
               {canEditEvent && (
                 <>
@@ -1472,7 +1482,7 @@ export default function EventDetailPage() {
                             <div key={m.id} className="border border-zinc-200 p-3 flex items-center justify-between gap-3">
                               <div className="min-w-0">
                                 <p className="text-sm font-bold text-zinc-900 truncate">
-                                  {m.fighter_a?.profiles?.full_name ?? '—'} vs {m.fighter_b?.profiles?.full_name ?? '—'}
+                                  {m.fighter_a_registration?.display_name ?? m.fighter_a?.profiles?.full_name ?? '—'} vs {m.fighter_b_registration?.display_name ?? m.fighter_b?.profiles?.full_name ?? '—'}
                                 </p>
                                 <p className="text-xs text-zinc-500 mt-0.5">
                                   A: {m.fighter_a_status} · B: {m.fighter_b_status}

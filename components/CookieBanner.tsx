@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 
 const COOKIE_CONSENT_KEY = 'sm_cookie_consent';
@@ -16,24 +16,26 @@ export function getCookieConsent(): boolean {
 
 export function setCookieConsent(): void {
   localStorage.setItem(COOKIE_CONSENT_KEY, new Date().toISOString());
+  window.dispatchEvent(new Event('sm-cookie-consent'));
+}
+
+function subscribeToConsent(callback: () => void) {
+  window.addEventListener('sm-cookie-consent', callback);
+  window.addEventListener('storage', callback);
+  return () => {
+    window.removeEventListener('sm-cookie-consent', callback);
+    window.removeEventListener('storage', callback);
+  };
 }
 
 export function CookieBanner() {
   const { t } = useTranslation('legal');
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    // Show banner only if consent has not been given yet
-    if (!getCookieConsent()) {
-      setVisible(true);
-    }
-  }, []);
+  const visible = useSyncExternalStore(subscribeToConsent, () => !getCookieConsent(), () => false);
 
   if (!visible) return null;
 
   const handleAccept = () => {
     setCookieConsent();
-    setVisible(false);
   };
 
   return (

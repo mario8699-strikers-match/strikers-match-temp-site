@@ -55,7 +55,7 @@ export function RoleOnboardingModal() {
     authService.getSession().then(({ data }) => {
       if (cancelled) return;
       const nextProfile = data?.profile ?? null;
-      if (!nextProfile || nextProfile.role === 'admin') return;
+      if (!nextProfile || ['admin', 'promoter', 'manager'].includes(nextProfile.role)) return;
 
       try {
         if (localStorage.getItem(onboardingKey(nextProfile)) === 'dismissed') return;

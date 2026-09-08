@@ -13,15 +13,15 @@ import { Redis } from '@upstash/redis';
 // ── Configuration ──────────────────────────────
 const CACHE_ENABLED =
   typeof process !== 'undefined' &&
-  !!process.env.NEXT_PUBLIC_UPSTASH_REDIS_REST_URL &&
-  !!process.env.NEXT_PUBLIC_UPSTASH_REDIS_REST_TOKEN;
+  !!process.env.UPSTASH_REDIS_REST_URL &&
+  !!process.env.UPSTASH_REDIS_REST_TOKEN;
 
 let redis: Redis | null = null;
 
 if (CACHE_ENABLED) {
   redis = new Redis({
-    url: process.env.NEXT_PUBLIC_UPSTASH_REDIS_REST_URL!,
-    token: process.env.NEXT_PUBLIC_UPSTASH_REDIS_REST_TOKEN!,
+    url: process.env.UPSTASH_REDIS_REST_URL!,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
   });
 }
 

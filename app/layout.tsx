@@ -5,6 +5,7 @@ import { I18nProvider } from "@/components/I18nProvider";
 import { QueryProvider } from "@/components/QueryProvider";
 import { CookieBanner } from "@/components/CookieBanner";
 import { RoleOnboardingModal } from "@/components/RoleOnboardingModal";
+import { GuidedOnboardingHelp } from "@/components/GuidedOnboardingHelp";
 import { WhatsNewModal } from "@/components/WhatsNewModal";
 import { IdleTimeout } from "@/components/IdleTimeout";
 import { JsonLd } from "@/components/JsonLd";
@@ -100,6 +101,7 @@ export default function RootLayout({
             {children}
             <CookieBanner />
             <RoleOnboardingModal />
+            <GuidedOnboardingHelp />
             <WhatsNewModal />
             <IdleTimeout />
             <Analytics />

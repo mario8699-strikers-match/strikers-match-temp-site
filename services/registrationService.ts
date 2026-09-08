@@ -30,15 +30,10 @@ export async function registerForEvent(
       return { data: null, error: 'Ya estás registrado en este evento.' };
     }
 
-    const { data, error } = await supabase
-      .from('event_registrations')
-      .insert({
-        event_id: eventId,
-        fighter_id: fighterId,
-        payment_status: 'pending',
-      })
-      .select()
-      .single();
+    const { data, error } = await supabase.rpc('register_self_for_event', {
+      target_event_id: eventId,
+      target_fighter_id: fighterId,
+    });
 
     if (error) return { data: null, error: error.message };
     return { data, error: null };
@@ -52,27 +47,9 @@ export async function submitPayment(
   registrationId: string
 ): Promise<ServiceResponse<EventRegistration>> {
   try {
-    // Fetch current status to validate
-    const { data: reg } = await supabase
-      .from('event_registrations')
-      .select('id, payment_status')
-      .eq('id', registrationId)
-      .single();
-
-    if (!reg) return { data: null, error: 'Registro no encontrado.' };
-    if (reg.payment_status !== 'pending') {
-      return { data: null, error: 'El pago ya fue enviado o confirmado.' };
-    }
-
-    const { data, error } = await supabase
-      .from('event_registrations')
-      .update({
-        payment_status: 'submitted',
-        submitted_at: new Date().toISOString(),
-      })
-      .eq('id', registrationId)
-      .select()
-      .single();
+    const { data, error } = await supabase.rpc('submit_event_registration_payment', {
+      registration_uuid: registrationId,
+    });
 
     if (error) return { data: null, error: error.message };
     return { data, error: null };
@@ -86,27 +63,9 @@ export async function confirmPayment(
   registrationId: string
 ): Promise<ServiceResponse<EventRegistration>> {
   try {
-    // Fetch current status to validate
-    const { data: reg } = await supabase
-      .from('event_registrations')
-      .select('id, payment_status')
-      .eq('id', registrationId)
-      .single();
-
-    if (!reg) return { data: null, error: 'Registro no encontrado.' };
-    if (reg.payment_status !== 'submitted') {
-      return { data: null, error: 'Solo se puede confirmar un pago que haya sido enviado.' };
-    }
-
-    const { data, error } = await supabase
-      .from('event_registrations')
-      .update({
-        payment_status: 'confirmed',
-        confirmed_at: new Date().toISOString(),
-      })
-      .eq('id', registrationId)
-      .select()
-      .single();
+    const { data, error } = await supabase.rpc('confirm_event_registration_payment', {
+      registration_uuid: registrationId,
+    });
 
     if (error) return { data: null, error: error.message };
     return { data, error: null };
@@ -142,7 +101,11 @@ export async function getEventRegistrations(
   try {
     const { data, error } = await supabase
       .from('event_registrations')
-      .select('*, fighters(id, weight_class, disciplines, photo_url, profiles(full_name, city, date_of_birth))')
+      .select(`
+        *,
+        fighters(id, weight_class, disciplines, photo_url, profiles(full_name, city, date_of_birth)),
+        manual_fighters:manual_fighter_id(*)
+      `)
       .eq('event_id', eventId)
       .order('created_at', { ascending: true });
 

@@ -80,6 +80,11 @@ export interface Profile {
   total_matches?: number;
   cancellations?: number;
   no_shows?: number;
+  onboarding_completed: boolean;
+  onboarding_step: number;
+  onboarding_dismissed: boolean;
+  onboarding_event_id: string | null;
+  onboarding_updated_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -107,6 +112,19 @@ export interface Fighter {
   available_to: string | null;
   medical_clearance_date: string | null;
   photo_url: string | null;
+  gender_division: string | null;
+  ko_wins: number;
+  tko_wins: number;
+  ko_losses: number;
+  tko_losses: number;
+  skill_rating: number | null;
+  preferred_rulesets: string[];
+  requested_weight_kg: number | null;
+  acceptable_weight_min_kg: number | null;
+  acceptable_weight_max_kg: number | null;
+  special_restrictions: string[];
+  last_fight_at: string | null;
+  last_ko_loss_at: string | null;
   has_manager: boolean;
   manager_name: string | null;
   manager_email: string | null;
@@ -122,6 +140,7 @@ export interface Fighter {
   verified?: boolean;
   is_hidden?: boolean;
   created_at: string;
+  age?: number | null;
 }
 
 // Fighter joined with profile (for admin views)
@@ -249,7 +268,29 @@ export interface ManualFighter {
   reach_cm: number | null;
   state: string | null;
   is_available: boolean;
+  is_public: boolean;
+  date_of_birth: string | null;
+  gender_division: string | null;
+  exact_weight: number | null;
+  ko_wins: number;
+  tko_wins: number;
+  ko_losses: number;
+  tko_losses: number;
+  skill_rating: number | null;
+  preferred_rulesets: string[];
+  requested_weight_kg: number | null;
+  acceptable_weight_min_kg: number | null;
+  acceptable_weight_max_kg: number | null;
+  special_restrictions: string[];
+  available_from: string | null;
+  available_to: string | null;
+  medical_clearance_date: string | null;
+  last_fight_at: string | null;
+  last_ko_loss_at: string | null;
+  country: string;
   created_at: string;
+  updated_at: string;
+  age?: number | null;
 }
 
 // Manual fighter joined with creator's profile (for admin/public views)
@@ -397,10 +438,13 @@ export type RegistrationEligibilityStatus = 'pending' | 'review_required' | 'eli
 export interface EventRegistration {
   id: string;
   event_id: string;
-  fighter_id: string;
+  fighter_id: string | null;
+  manual_fighter_id: string | null;
+  registration_source: 'self' | 'manager' | 'promoter' | 'manual_roster' | 'event_only' | 'invited' | 'admin';
+  created_by: string | null;
   application_id: string | null;
   approval_status: RegistrationApprovalStatus;
-  payment_status: 'pending' | 'submitted' | 'confirmed';
+  payment_status: 'pending' | 'submitted' | 'confirmed' | 'waived';
   eligibility_status: RegistrationEligibilityStatus;
   eligibility_reasons: string[];
   eligibility_evaluated_at: string | null;
@@ -418,11 +462,33 @@ export interface EventRegistration {
   age_at_event: number | null;
   age_class: string | null;
   gender_division: string | null;
+  display_name: string | null;
+  nickname: string | null;
+  photo_url: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
   team_name: string | null;
   ruleset: string | null;
   bout_format: string | null;
   availability_confirmed: boolean;
   weight_confirmed: boolean;
+  ko_wins: number;
+  tko_wins: number;
+  ko_losses: number;
+  tko_losses: number;
+  skill_rating: number | null;
+  requested_weight_kg: number | null;
+  acceptable_weight_min_kg: number | null;
+  acceptable_weight_max_kg: number | null;
+  special_restrictions: string[];
+  available_from: string | null;
+  available_to: string | null;
+  last_fight_at: string | null;
+  last_ko_loss_at: string | null;
+  representative_confirmed_at: string | null;
+  representative_confirmed_by: string | null;
+  representative_confirmation_note: string | null;
   medical_clearance_date: string | null;
   medical_verified_at: string | null;
   minor_consent_verified_at: string | null;
@@ -440,7 +506,8 @@ export interface RegistrationWithFighter extends EventRegistration {
     weight_class: string | null;
     disciplines: string[];
     photo_url: string | null;
-  };
+  } | null;
+  manual_fighters?: ManualFighter | null;
 }
 
 export interface EventMat {
@@ -482,6 +549,11 @@ export interface EventMatchmakingSettings {
   minimum_rest_minutes: number;
   rules_version: number;
   registration_closes_at: string | null;
+  skill_rating_tolerance: number;
+  knockout_record_tolerance: number;
+  prefer_local_fighters: boolean;
+  promoter_preferences: Record<string, unknown>;
+  score_weights: Record<string, number>;
   created_at: string;
   updated_at: string;
 }
@@ -524,10 +596,10 @@ export interface Bout {
   division_id: string | null;
   fighter_a_registration_id: string;
   fighter_b_registration_id: string;
-  fighter_a_id: string;
-  fighter_b_id: string;
-  fighter_a_snapshot: { id: string; name: string; team?: string | null };
-  fighter_b_snapshot: { id: string; name: string; team?: string | null };
+  fighter_a_id: string | null;
+  fighter_b_id: string | null;
+  fighter_a_snapshot: BoutFighterSnapshot;
+  fighter_b_snapshot: BoutFighterSnapshot;
   fighter_a?: {
     id: string;
     photo_url: string | null;
@@ -563,6 +635,7 @@ export interface Bout {
   scheduled_time: string | null;
   status: BoutStatus;
   winner_id: string | null;
+  winner_registration_id: string | null;
   result: string | null;
   method: string | null;
   elapsed_seconds: number | null;
@@ -574,6 +647,172 @@ export interface Bout {
   completed_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface BoutFighterSnapshot {
+  id: string;
+  registration_id?: string;
+  fighter_id?: string | null;
+  manual_fighter_id?: string | null;
+  name: string;
+  nickname?: string | null;
+  photo_url?: string | null;
+  team?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  age?: number | null;
+  gender_division?: string | null;
+  experience_level?: string | null;
+  skill_rating?: number | null;
+  record_wins?: number | null;
+  record_losses?: number | null;
+  record_draws?: number | null;
+  ko_wins?: number;
+  tko_wins?: number;
+  ko_losses?: number;
+  tko_losses?: number;
+  registered_weight?: number | null;
+  requested_weight?: number | null;
+  acceptable_weight_min?: number | null;
+  acceptable_weight_max?: number | null;
+  discipline?: string | null;
+  ruleset?: string | null;
+}
+
+export type MatchSuggestionStatus =
+  | 'active'
+  | 'rejected'
+  | 'changes_requested'
+  | 'locked'
+  | 'converted'
+  | 'stale';
+
+export interface MatchSuggestion {
+  id: string;
+  event_id: string;
+  fighter_a_registration_id: string;
+  fighter_b_registration_id: string;
+  compatibility_score: number;
+  score_breakdown: Record<string, number>;
+  hard_failures: string[];
+  warnings: string[];
+  is_eligible: boolean;
+  fighter_a_scheduled_count: number;
+  fighter_b_scheduled_count: number;
+  previous_matchup_count: number;
+  last_matchup_at: string | null;
+  status: MatchSuggestionStatus;
+  review_reason: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  rule_version: number;
+  generation_id: string;
+  inputs_updated_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MatchSuggestionWithParticipants extends MatchSuggestion {
+  fighter_a_registration: RegistrationWithFighter;
+  fighter_b_registration: RegistrationWithFighter;
+}
+
+export interface EventGraphicsSettings {
+  event_id: string;
+  template_key: string;
+  template_version: number;
+  primary_color: string;
+  secondary_color: string;
+  accent_color: string;
+  logo_url: string | null;
+  background_url: string | null;
+  sponsor_logo_urls: string[];
+  display_duration_seconds: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BoutGraphicPayload {
+  schemaVersion: number;
+  event: {
+    id: string;
+    name: string;
+    date: string | null;
+    city: string | null;
+    venue: string | null;
+    logoUrl: string | null;
+    backgroundUrl: string | null;
+    sponsorLogoUrls: string[];
+  };
+  bout: {
+    id: string;
+    number: number | null;
+    discipline: string | null;
+    ruleset: string | null;
+    format: string | null;
+    weightClass: string | null;
+    scheduledTime: string | null;
+    redCorner: BoutFighterSnapshot;
+    blueCorner: BoutFighterSnapshot;
+  };
+  theme: {
+    primary: string;
+    secondary: string;
+    accent: string;
+  };
+}
+
+export interface BoutGraphic {
+  id: string;
+  event_id: string;
+  bout_id: string;
+  template_key: string;
+  template_version: number;
+  payload: BoutGraphicPayload;
+  status: 'draft' | 'approved' | 'published' | 'stale';
+  approved_by: string | null;
+  approved_at: string | null;
+  published_by: string | null;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EventDisplayState {
+  event_id: string;
+  active_bout_id: string | null;
+  active_graphic_id: string | null;
+  mode: 'manual' | 'sequence';
+  is_live: boolean;
+  revision: number;
+  updated_by: string | null;
+  updated_at: string;
+}
+
+export interface EventDisplayToken {
+  id: string;
+  event_id: string;
+  token: string;
+  label: string;
+  expires_at: string | null;
+  revoked_at: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface PublicEventDisplay {
+  eventId: string;
+  displayDurationSeconds: number;
+  state: Omit<EventDisplayState, 'updated_by'> | Record<string, never>;
+  graphics: Array<{
+    id: string;
+    boutId: string;
+    templateKey: string;
+    templateVersion: number;
+    payload: BoutGraphicPayload;
+    updatedAt: string;
+  }>;
 }
 
 // Operational action access result.

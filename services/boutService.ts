@@ -81,7 +81,7 @@ export interface BoutOperation {
   matId?: string;
   matOrder?: number;
   scheduledTime?: string;
-  winnerId?: string;
+  winnerRegistrationId?: string;
   method?: string;
   elapsedSeconds?: number;
   reason?: string;
@@ -91,13 +91,13 @@ export async function updateBoutOperation(
   boutId: string,
   operation: BoutOperation
 ): Promise<ServiceResponse<Bout>> {
-  const { data, error } = await supabase.rpc('update_bout_operation', {
+  const { data, error } = await supabase.rpc('update_bout_operation_v2', {
     bout_uuid: boutId,
     next_status: operation.status ?? null,
     next_mat_id: operation.matId ?? null,
     next_mat_order: operation.matOrder ?? null,
     next_scheduled_time: operation.scheduledTime ?? null,
-    next_winner_id: operation.winnerId ?? null,
+    next_winner_registration_id: operation.winnerRegistrationId ?? null,
     next_method: operation.method ?? null,
     next_elapsed_seconds: operation.elapsedSeconds ?? null,
     operation_reason: operation.reason ?? null,

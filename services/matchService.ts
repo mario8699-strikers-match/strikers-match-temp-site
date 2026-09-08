@@ -21,8 +21,11 @@ export type MatchSide = 'a' | 'b';
 export interface Match {
   id: string;
   event_id: string;
-  fighter_a_id: string;
-  fighter_b_id: string;
+  fighter_a_id: string | null;
+  fighter_b_id: string | null;
+  fighter_a_registration_id: string | null;
+  fighter_b_registration_id: string | null;
+  suggestion_id?: string | null;
   fighter_a_status: 'pending' | 'accepted' | 'declined';
   fighter_b_status: 'pending' | 'accepted' | 'declined';
   match_status: 'pending' | 'confirmed' | 'cancelled';
@@ -31,6 +34,8 @@ export interface Match {
   warnings?: string[];
   rule_version?: number | null;
   approved_at?: string | null;
+  fighter_a_confirmation_method?: 'self' | 'proxy' | null;
+  fighter_b_confirmation_method?: 'self' | 'proxy' | null;
   created_at: string;
 }
 
@@ -51,39 +56,45 @@ export interface MatchWithContext extends Match {
     weight_class: string | null;
     profiles: { full_name: string | null; city: string | null } | null;
   } | null;
+  fighter_a_registration?: {
+    id: string;
+    display_name: string | null;
+    registered_weight_class: string | null;
+    city: string | null;
+  } | null;
+  fighter_b_registration?: {
+    id: string;
+    display_name: string | null;
+    registered_weight_class: string | null;
+    city: string | null;
+  } | null;
 }
 
 const SELECT_WITH_CONTEXT = `
   *,
   events:event_id ( id, event_name, event_date, city ),
   fighter_a:fighter_a_id ( id, weight_class, profiles ( full_name, city ) ),
-  fighter_b:fighter_b_id ( id, weight_class, profiles ( full_name, city ) )
+  fighter_b:fighter_b_id ( id, weight_class, profiles ( full_name, city ) ),
+  fighter_a_registration:fighter_a_registration_id ( id, display_name, registered_weight_class, city ),
+  fighter_b_registration:fighter_b_registration_id ( id, display_name, registered_weight_class, city )
 `;
 
 // ── Promoter: propose a match between two confirmed fighters ──
 export async function proposeMatch(
   eventId: string,
-  fighterIdX: string,
-  fighterIdY: string,
-  compatibility?: {
-    score: number;
-    scoreBreakdown: Record<string, number>;
-    warnings: string[];
-    ruleVersion: number;
-  }
+  registrationIdX: string,
+  registrationIdY: string,
+  suggestionId?: string
 ): Promise<ServiceResponse<Match>> {
-  if (fighterIdX === fighterIdY) {
+  if (registrationIdX === registrationIdY) {
     return { data: null, error: 'No se puede emparejar a un peleador consigo mismo.' };
   }
 
-  const { data, error } = await supabase.rpc('propose_event_match', {
+  const { data, error } = await supabase.rpc('propose_event_match_registrations', {
     target_event_id: eventId,
-    fighter_x_id: fighterIdX,
-    fighter_y_id: fighterIdY,
-    next_compatibility_score: compatibility?.score ?? null,
-    next_score_breakdown: compatibility?.scoreBreakdown ?? {},
-    next_warnings: compatibility?.warnings ?? [],
-    next_rule_version: compatibility?.ruleVersion ?? null,
+    registration_x_id: registrationIdX,
+    registration_y_id: registrationIdY,
+    target_suggestion_id: suggestionId ?? null,
   });
 
   if (error) return { data: null, error: error.message };
@@ -111,41 +122,11 @@ async function updateFighterStatus(
   fighterId: string,
   status: 'accepted' | 'declined'
 ): Promise<ServiceResponse<Match>> {
-  const { data: match, error: fetchErr } = await supabase
-    .from('matches')
-    .select('id, fighter_a_id, fighter_b_id, fighter_a_status, fighter_b_status, match_status')
-    .eq('id', matchId)
-    .single();
-
-  if (fetchErr || !match) {
-    return { data: null, error: 'Propuesta de pelea no encontrada.' };
-  }
-  if (match.match_status === 'cancelled') {
-    return { data: null, error: 'Esta propuesta ya fue cancelada.' };
-  }
-  if (match.match_status === 'confirmed' && status === 'declined') {
-    return { data: null, error: 'No puedes rechazar una pelea ya confirmada. Cancela en su lugar.' };
-  }
-
-  const side: MatchSide | null =
-    fighterId === match.fighter_a_id ? 'a'
-    : fighterId === match.fighter_b_id ? 'b'
-    : null;
-
-  if (!side) {
-    return { data: null, error: 'No formas parte de esta propuesta.' };
-  }
-
-  const wasConfirmed = match.match_status === 'confirmed';
-  const patch =
-    side === 'a' ? { fighter_a_status: status } : { fighter_b_status: status };
-
-  const { data, error } = await supabase
-    .from('matches')
-    .update(patch)
-    .eq('id', matchId)
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc('respond_to_match_proposal', {
+    match_uuid: matchId,
+    response: status,
+    acting_fighter_id: fighterId,
+  });
 
   if (error) return { data: null, error: error.message };
 
@@ -154,12 +135,7 @@ async function updateFighterStatus(
   if (status === 'accepted') {
     await applyDeltaToFighters([fighterId], 'match_accepted', matchId);
   } else if (status === 'declined') {
-    if (wasConfirmed) {
-      // Decline after confirmation = cancel-after-accept
-      await applyDeltaToFighters([fighterId], 'cancel_after_accept', matchId);
-    } else {
-      await applyDeltaToFighters([fighterId], 'match_declined', matchId);
-    }
+    await applyDeltaToFighters([fighterId], 'match_declined', matchId);
   }
 
   return { data: data as Match, error: null };
@@ -174,19 +150,17 @@ export async function cancelMatch(matchId: string): Promise<ServiceResponse<Matc
     .eq('id', matchId)
     .single();
 
-  const { data, error } = await supabase
-    .from('matches')
-    .update({ match_status: 'cancelled' })
-    .eq('id', matchId)
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc('cancel_event_match', {
+    match_uuid: matchId,
+    cancellation_reason: null,
+  });
 
   if (error) return { data: null, error: error.message };
 
   // If the match had been confirmed, both fighters get the cancel-after-accept hit
   if (pre && pre.match_status === 'confirmed') {
     await applyDeltaToFighters(
-      [pre.fighter_a_id, pre.fighter_b_id],
+      [pre.fighter_a_id, pre.fighter_b_id].filter((id): id is string => Boolean(id)),
       'cancel_after_accept',
       matchId
     );
@@ -203,6 +177,33 @@ export async function getMatchesForFighter(
     .from('matches')
     .select(SELECT_WITH_CONTEXT)
     .or(`fighter_a_id.eq.${fighterId},fighter_b_id.eq.${fighterId}`)
+    .order('created_at', { ascending: false });
+
+  if (error) return { data: null, error: error.message };
+  return { data: (data ?? []) as MatchWithContext[], error: null };
+}
+
+// Representative inbox: proposals involving any platform fighter in the
+// authenticated manager's roster. RLS independently verifies representation.
+export async function getMatchesForManager(
+  managerId: string
+): Promise<ServiceResponse<MatchWithContext[]>> {
+  const { data: rosterRows, error: rosterError } = await supabase
+    .from('manager_fighters')
+    .select('fighter_id')
+    .eq('manager_id', managerId);
+
+  if (rosterError) return { data: null, error: rosterError.message };
+  const fighterIds = (rosterRows ?? [])
+    .map((row) => row.fighter_id as string | null)
+    .filter((id): id is string => Boolean(id));
+  if (fighterIds.length === 0) return { data: [], error: null };
+
+  const idList = fighterIds.join(',');
+  const { data, error } = await supabase
+    .from('matches')
+    .select(SELECT_WITH_CONTEXT)
+    .or(`fighter_a_id.in.(${idList}),fighter_b_id.in.(${idList})`)
     .order('created_at', { ascending: false });
 
   if (error) return { data: null, error: error.message };

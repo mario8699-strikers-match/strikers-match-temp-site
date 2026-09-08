@@ -30,6 +30,7 @@ export async function uploadFile(
       folder,
       filename: file.name,
       contentType: file.type,
+      size: String(file.size),
     });
 
     const res = await fetch(`/api/storage?${params}`, {

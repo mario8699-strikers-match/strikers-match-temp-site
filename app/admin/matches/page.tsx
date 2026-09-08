@@ -64,6 +64,8 @@ export default function AdminMatchesPage() {
     if (!normalizedSearch) return true;
     return [
       match.events?.event_name,
+      match.fighter_a_registration?.display_name,
+      match.fighter_b_registration?.display_name,
       match.fighter_a?.profiles?.full_name,
       match.fighter_b?.profiles?.full_name,
     ].some((value) => value?.toLowerCase().includes(normalizedSearch));
@@ -251,7 +253,7 @@ function EmptyState({ text }: { text: string }) {
 }
 
 function fighterNames(match: MatchWithContext) {
-  return `${match.fighter_a?.profiles?.full_name ?? '—'} vs ${match.fighter_b?.profiles?.full_name ?? '—'}`;
+  return `${match.fighter_a_registration?.display_name ?? match.fighter_a?.profiles?.full_name ?? '—'} vs ${match.fighter_b_registration?.display_name ?? match.fighter_b?.profiles?.full_name ?? '—'}`;
 }
 
 function formatStatus(value: string, t: (key: string) => string) {

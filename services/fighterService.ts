@@ -12,9 +12,8 @@ export const fighterService = {
   async getAll(): Promise<ServiceResponse<Fighter[]>> {
     try {
       const { data, error } = await supabase
-        .from('fighters')
-        .select('*, profiles(full_name, city, date_of_birth)')
-        .neq('is_hidden', true)
+        .from('public_fighters')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) return { data: null, error: error.message };
@@ -27,8 +26,8 @@ export const fighterService = {
   async getById(id: string): Promise<ServiceResponse<Fighter>> {
     try {
       const { data, error } = await supabase
-        .from('fighters')
-        .select('*, profiles(full_name, city, date_of_birth)')
+        .from('public_fighters')
+        .select('*')
         .eq('id', id)
         .single();
 
@@ -57,10 +56,9 @@ export const fighterService = {
   async getAvailable(): Promise<ServiceResponse<Fighter[]>> {
     try {
       const { data, error } = await supabase
-        .from('fighters')
-        .select('*, profiles(full_name, city, date_of_birth)')
+        .from('public_fighters')
+        .select('*')
         .eq('is_available', true)
-        .neq('is_hidden', true)
         .order('created_at', { ascending: false });
 
       if (error) return { data: null, error: error.message };
@@ -78,8 +76,8 @@ export const fighterService = {
       const to = from + pageSize - 1;
 
       let query = supabase
-        .from('fighters')
-        .select('*, profiles(full_name, city, date_of_birth, is_banned)', { count: 'exact' });
+        .from('public_fighters')
+        .select('*', { count: 'exact' });
 
       if (filters.manager_id) {
         const { data: rosterRows, error: rosterError } = await supabase
@@ -99,11 +97,9 @@ export const fighterService = {
       }
 
       if (filters.weight_class) query = query.eq('weight_class', filters.weight_class);
-      if (filters.city) query = query.ilike('profiles.city', `%${filters.city}%`);
+      if (filters.city) query = query.ilike('profile_city', `%${filters.city}%`);
       if (filters.short_notice_ready === true) query = query.eq('short_notice_ready', true);
       if (filters.is_available === true) query = query.eq('is_available', true);
-
-      query = query.neq('is_hidden', true);
 
       const { data, error, count } = await query
         .order('created_at', { ascending: false })

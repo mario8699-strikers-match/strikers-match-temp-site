@@ -17,7 +17,7 @@ export const eventService = {
     try {
       const { data, error } = await supabase
         .from('events')
-        .select('*, profiles(full_name)')
+        .select('*, profiles!events_promoter_id_fkey(full_name)')
         .eq('status', 'published')
         .order('event_date', { ascending: true });
       if (error) return { data: null, error: error.message };
@@ -31,7 +31,7 @@ export const eventService = {
     try {
       const { data, error } = await supabase
         .from('events')
-        .select('*, profiles(full_name)')
+        .select('*, profiles!events_promoter_id_fkey(full_name)')
         .eq('id', id)
         .single();
       if (error) return { data: null, error: error.message };

@@ -11,6 +11,14 @@ import { InlineCombatRecord } from '@/components/CombatRecord';
 import { authService } from '@/services/authService';
 import { managerService } from '@/services/managerService';
 import { fighterService } from '@/services/fighterService';
+import {
+  acceptMatch,
+  declineMatch,
+  fighterSide,
+  getMatchesForManager,
+  statusForFighter,
+  type MatchWithContext,
+} from '@/services/matchService';
 import type { Profile, Fighter } from '@/types';
 
 type FighterWithProfile = Fighter & { profiles: { full_name: string; city: string | null } };
@@ -25,7 +33,10 @@ export default function ManagerDashboardPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [roster, setRoster] = useState<FighterWithProfile[]>([]);
+  const [matches, setMatches] = useState<MatchWithContext[]>([]);
   const [loading, setLoading] = useState(true);
+  const [matchAction, setMatchAction] = useState<string | null>(null);
+  const [matchError, setMatchError] = useState<string | null>(null);
 
   // Add fighter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -42,8 +53,10 @@ export default function ManagerDashboardPage() {
       if (!p) { window.location.href = '/login'; return; }
       if (p.role !== 'manager') { window.location.href = '/'; return; }
 
-      managerService.getRoster(p.id).then(({ data: fighters }) => {
-        setRoster((fighters as FighterWithProfile[]) ?? []);
+      Promise.all([managerService.getRoster(p.id), getMatchesForManager(p.id)]).then(([rosterResult, matchResult]) => {
+        setRoster((rosterResult.data as FighterWithProfile[]) ?? []);
+        setMatches(matchResult.data ?? []);
+        setMatchError(matchResult.error);
         setLoading(false);
       });
     });
@@ -75,6 +88,9 @@ export default function ManagerDashboardPage() {
     } else {
       setRoster(prev => [...prev, fighter]);
       setSearchResults(prev => prev.filter(f => f.id !== fighter.id));
+      const refreshed = await getMatchesForManager(profile.id);
+      setMatches(refreshed.data ?? []);
+      if (refreshed.error) setMatchError(refreshed.error);
     }
   };
 
@@ -83,10 +99,36 @@ export default function ManagerDashboardPage() {
     setRemoving(fighterId);
     await managerService.removeFighter(profile.id, fighterId);
     setRoster(prev => prev.filter(f => f.id !== fighterId));
+    const refreshed = await getMatchesForManager(profile.id);
+    setMatches(refreshed.data ?? []);
+    if (refreshed.error) setMatchError(refreshed.error);
     setRemoving(null);
   };
 
+  const handleMatchResponse = async (
+    matchId: string,
+    fighterId: string,
+    response: 'accepted' | 'declined'
+  ) => {
+    if (!profile) return;
+    setMatchAction(`${matchId}:${fighterId}`);
+    setMatchError(null);
+    const result = response === 'accepted'
+      ? await acceptMatch(matchId, fighterId)
+      : await declineMatch(matchId, fighterId);
+    if (result.error) setMatchError(result.error);
+    const refreshed = await getMatchesForManager(profile.id);
+    if (refreshed.error) setMatchError(refreshed.error);
+    setMatches(refreshed.data ?? []);
+    setMatchAction(null);
+  };
+
   if (profile === undefined) return <div className="min-h-screen bg-white flex items-center justify-center"><p className="text-sm" style={{ color:'#9A9A9A' }}>...</p></div>;
+  if (!profile || profile.role !== 'manager') return <div className="min-h-screen bg-white" />;
+
+  const pendingProposals = roster.flatMap((fighter) => matches
+    .filter((match) => match.match_status === 'pending' && statusForFighter(match, fighter.id) === 'pending')
+    .map((match) => ({ fighter, match })));
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -97,8 +139,8 @@ export default function ManagerDashboardPage() {
         <div className="mb-8 flex items-start justify-between gap-4 flex-wrap">
           <div>
             <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#C0001E' }}>Panel del Representante</p>
-            <h1 className="text-3xl font-black uppercase" style={{ letterSpacing:'-1px' }}>{profile!.full_name}</h1>
-            <p className="text-sm mt-1" style={{ color:'#5A5A5A' }}>{profile!.city ?? ''}</p>
+            <h1 className="text-3xl font-black uppercase" style={{ letterSpacing:'-1px' }}>{profile.full_name}</h1>
+            <p className="text-sm mt-1" style={{ color:'#5A5A5A' }}>{profile.city ?? ''}</p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Link href="/events"
@@ -122,6 +164,45 @@ export default function ManagerDashboardPage() {
           </svg>
           <span className="font-semibold">Administra roster, eventos y propuestas desde este panel.</span>
         </div>
+
+        <section className="mb-8 border border-zinc-200 p-6">
+          <div className="mb-4 flex items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-[#C0001E]">Propuestas por confirmar</p>
+              <p className="mt-1 text-sm text-zinc-500">Responde en nombre de los peleadores que representas.</p>
+            </div>
+            <span className="text-sm font-bold text-zinc-400">{pendingProposals.length}</span>
+          </div>
+          {matchError && <p className="mb-3 border border-red-200 bg-red-50 p-3 text-sm text-red-700">{matchError}</p>}
+          {pendingProposals.length === 0 ? (
+            <p className="border border-dashed border-zinc-200 px-4 py-8 text-center text-sm text-zinc-400">No hay propuestas pendientes para tu roster.</p>
+          ) : (
+            <div className="space-y-3">
+              {pendingProposals.map(({ fighter, match }) => {
+                const side = fighterSide(match, fighter.id);
+                const opponentRegistration = side === 'a' ? match.fighter_b_registration : match.fighter_a_registration;
+                const opponentFighter = side === 'a' ? match.fighter_b : match.fighter_a;
+                const actionKey = `${match.id}:${fighter.id}`;
+                return (
+                  <article key={actionKey} className="border border-zinc-200 p-4">
+                    <p className="text-sm font-bold text-zinc-900">
+                      {fighter.profiles?.full_name ?? '—'} vs {opponentRegistration?.display_name ?? opponentFighter?.profiles?.full_name ?? '—'}
+                    </p>
+                    <p className="mt-1 text-xs text-zinc-500">
+                      {match.events?.event_name ?? 'Evento'}
+                      {match.events?.event_date ? ` · ${new Date(match.events.event_date).toLocaleDateString('es-MX')}` : ''}
+                      {match.compatibility_score != null ? ` · Compatibilidad ${match.compatibility_score}%` : ''}
+                    </p>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <button type="button" disabled={matchAction === actionKey} onClick={() => void handleMatchResponse(match.id, fighter.id, 'accepted')} className="min-h-11 bg-emerald-700 px-3 py-2 text-xs font-bold uppercase tracking-widest text-white disabled:opacity-50">Aceptar</button>
+                      <button type="button" disabled={matchAction === actionKey} onClick={() => void handleMatchResponse(match.id, fighter.id, 'declined')} className="min-h-11 border border-zinc-300 px-3 py-2 text-xs font-bold uppercase tracking-widest text-zinc-800 disabled:opacity-50">Rechazar</button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
 
         {/* Search + Add fighters */}
         <div className="border border-zinc-200 p-6 mb-8">
@@ -213,7 +294,7 @@ export default function ManagerDashboardPage() {
 
         {/* ── Add Your Own Fighters ── */}
         <div className="mt-10 border-t border-zinc-100 pt-8">
-          <ManualFighterManager creatorId={profile!.id} sectionLabel="Mis Peleadores" />
+          <ManualFighterManager creatorId={profile.id} sectionLabel="Mis Peleadores" />
         </div>
       </main>
       <Footer />

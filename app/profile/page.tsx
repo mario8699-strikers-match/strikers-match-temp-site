@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { authService } from '@/services/authService';
-import type { Profile, PromoterFederationStatus } from '@/types';
+import type { Profile } from '@/types';
 
 const ROLE_LABELS: Record<string, string> = {
   fighter: 'Peleador',
@@ -32,7 +32,6 @@ export default function ProfilePage() {
   const [fullName, setFullName] = useState('');
   const [city, setCity] = useState('');
   const [phone, setPhone] = useState('');
-  const [promoterFederationStatus, setPromoterFederationStatus] = useState<PromoterFederationStatus>('independent');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -45,7 +44,6 @@ export default function ProfilePage() {
       setFullName(p.full_name ?? '');
       setCity(p.city ?? '');
       setPhone(p.phone ?? '');
-      setPromoterFederationStatus(p.promoter_federation_status ?? 'independent');
     });
   }, []);
 
@@ -76,7 +74,6 @@ export default function ProfilePage() {
       full_name: fullName.trim(),
       city: city.trim() || null,
       phone: phone.trim() || null,
-      ...(profile.role === 'promoter' ? { promoter_federation_status: promoterFederationStatus } : {}),
       ...(photoUrl !== undefined ? { photo_url: photoUrl } : {}),
     });
 
@@ -89,7 +86,6 @@ export default function ProfilePage() {
         full_name: fullName.trim(),
         city: city.trim() || null,
         phone: phone.trim() || null,
-        promoter_federation_status: profile.role === 'promoter' ? promoterFederationStatus : profile.promoter_federation_status,
         photo_url: photoUrl ?? profile.photo_url,
       });
       setPhotoFile(null);
@@ -348,32 +344,19 @@ export default function ProfilePage() {
 
             {profile!.role === 'promoter' && (
               <div>
-                <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#5A5A5A' }}>
+                <p className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#5A5A5A' }}>
                   {t('promoters.federation.profileLabel')}
-                </label>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {(['independent', 'federated'] as const).map((status) => (
-                    <button
-                      key={status}
-                      type="button"
-                      onClick={() => setPromoterFederationStatus(status)}
-                      className={`min-h-11 border px-4 py-3 text-left text-xs font-bold uppercase tracking-widest transition-colors ${
-                        promoterFederationStatus === status
-                          ? 'border-zinc-900 bg-zinc-900 text-white'
-                          : 'border-zinc-300 bg-white text-zinc-700 hover:border-zinc-500'
-                      }`}
-                    >
-                      {t(`promoters.federation.${status}`)}
-                    </button>
-                  ))}
+                </p>
+                <div className="min-h-11 border border-zinc-200 bg-zinc-50 px-4 py-3 text-xs font-bold uppercase tracking-widest text-zinc-700">
+                  {t(`promoters.federation.${profile!.promoter_federation_status ?? 'independent'}`)}
                 </div>
-                <p className="mt-2 text-xs text-zinc-500">{t('promoters.federation.profileHelp')}</p>
+                <p className="mt-2 text-xs text-zinc-500">Esta clasificación la administra Strikers Match.</p>
               </div>
             )}
 
             <div className="flex justify-end gap-3 pt-2">
               <button
-                onClick={() => { setEditing(false); setError(null); setFullName(profile!.full_name ?? ''); setCity(profile!.city ?? ''); setPhone(profile!.phone ?? ''); setPromoterFederationStatus(profile!.promoter_federation_status ?? 'independent'); setPhotoFile(null); setPhotoPreview(null); }}
+                onClick={() => { setEditing(false); setError(null); setFullName(profile!.full_name ?? ''); setCity(profile!.city ?? ''); setPhone(profile!.phone ?? ''); setPhotoFile(null); setPhotoPreview(null); }}
                 className="px-4 py-2 text-sm font-medium border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition-colors"
               >
                 Cancelar

@@ -12,6 +12,11 @@ export type EventSettingsInput = Pick<
   | 'minimum_rest_minutes'
   | 'rules_version'
   | 'registration_closes_at'
+  | 'skill_rating_tolerance'
+  | 'knockout_record_tolerance'
+  | 'prefer_local_fighters'
+  | 'promoter_preferences'
+  | 'score_weights'
 >;
 
 export type EventDivisionInput = Omit<
@@ -29,6 +34,21 @@ export const DEFAULT_EVENT_SETTINGS: EventSettingsInput = {
   minimum_rest_minutes: 30,
   rules_version: 1,
   registration_closes_at: null,
+  skill_rating_tolerance: 3,
+  knockout_record_tolerance: 5,
+  prefer_local_fighters: false,
+  promoter_preferences: {},
+  score_weights: {
+    weight: 25,
+    age: 10,
+    experience: 15,
+    record: 10,
+    knockout: 10,
+    skill: 15,
+    opponent_history: 5,
+    location: 5,
+    availability: 5,
+  },
 };
 
 export const DEFAULT_DIVISION_INPUT: EventDivisionInput = {

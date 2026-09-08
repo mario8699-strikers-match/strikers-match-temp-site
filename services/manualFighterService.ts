@@ -2,18 +2,18 @@ import { supabase } from '@/lib/supabaseClient';
 import type { ManualFighter, ManualFighterWithCreator, ServiceResponse } from '@/types';
 
 // Fields allowed on insert/update
-export type ManualFighterInput = Omit<
+export type ManualFighterInput = Pick<ManualFighter, 'full_name'> & Partial<Omit<
   ManualFighter,
-  'id' | 'manager_id' | 'created_at'
->;
+  'id' | 'manager_id' | 'created_at' | 'updated_at' | 'full_name'
+>>;
 
 export const manualFighterService = {
-  // Public list — anyone can read (RLS allows public select).
+  // Public list — intentionally excludes private medical/contact fields.
   async getAllPublic(): Promise<ServiceResponse<ManualFighterWithCreator[]>> {
     try {
       const { data, error } = await supabase
-        .from('manual_fighters')
-        .select('*, profiles:manager_id(full_name, email, role)')
+        .from('public_manual_fighters')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) return { data: null, error: error.message };
@@ -27,8 +27,8 @@ export const manualFighterService = {
   async getById(id: string): Promise<ServiceResponse<ManualFighterWithCreator>> {
     try {
       const { data, error } = await supabase
-        .from('manual_fighters')
-        .select('*, profiles:manager_id(full_name, email, role)')
+        .from('public_manual_fighters')
+        .select('*')
         .eq('id', id)
         .single();
 

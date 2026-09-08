@@ -207,7 +207,7 @@ export const adminService = {
     try {
       const { data, error } = await supabase
         .from('events')
-        .select('*, profiles(full_name)')
+        .select('*, profiles!events_promoter_id_fkey(full_name)')
         .order('event_date', { ascending: false })
         .limit(ADMIN_LIST_LIMIT);
 
@@ -223,11 +223,13 @@ export const adminService = {
       const { data, error } = await supabase
         .from('matches')
         .select(`
-          id, event_id, fighter_a_id, fighter_b_id, fighter_a_status, fighter_b_status,
+          id, event_id, fighter_a_id, fighter_b_id, fighter_a_registration_id, fighter_b_registration_id, fighter_a_status, fighter_b_status,
           match_status, compatibility_score, created_at,
           events:event_id ( id, event_name, event_date, city ),
           fighter_a:fighter_a_id ( id, weight_class, profiles ( full_name, city ) ),
-          fighter_b:fighter_b_id ( id, weight_class, profiles ( full_name, city ) )
+          fighter_b:fighter_b_id ( id, weight_class, profiles ( full_name, city ) ),
+          fighter_a_registration:fighter_a_registration_id ( id, display_name, registered_weight_class, city ),
+          fighter_b_registration:fighter_b_registration_id ( id, display_name, registered_weight_class, city )
         `)
         .order('created_at', { ascending: false })
         .limit(ADMIN_LIST_LIMIT);

@@ -210,13 +210,13 @@ function LiveBoutCard({ bout, busy, updateBout, primary = false }: {
         <div className="mt-4 grid grid-cols-1 gap-3 border-t border-zinc-200 pt-4 sm:grid-cols-4">
           <select value={winner} onChange={(eventValue) => setWinner(eventValue.target.value)} className="min-h-11 border border-zinc-300 bg-white px-3 py-2 text-sm">
             <option value="">{t('events.engine.bouts.winnerShort')}</option>
-            <option value={bout.fighter_a_id}>{bout.fighter_a_snapshot.name}</option>
-            <option value={bout.fighter_b_id}>{bout.fighter_b_snapshot.name}</option>
+            <option value={bout.fighter_a_registration_id}>{bout.fighter_a_snapshot.name}</option>
+            <option value={bout.fighter_b_registration_id}>{bout.fighter_b_snapshot.name}</option>
           </select>
           <input value={method} onChange={(eventValue) => setMethod(eventValue.target.value)} placeholder={t('events.engine.bouts.method')} className="min-h-11 border border-zinc-300 px-3 py-2 text-sm" />
           <input type="number" min={0} value={elapsedSeconds} onChange={(eventValue) => setElapsedSeconds(eventValue.target.value)} placeholder={t('events.engine.bouts.seconds')} className="min-h-11 border border-zinc-300 px-3 py-2 text-sm" />
           <button type="button" disabled={!winner || busy}
-            onClick={() => updateBout(bout.id, { status: 'completed', winnerId: winner, method, elapsedSeconds: elapsedSeconds ? Number(elapsedSeconds) : undefined })}
+            onClick={() => updateBout(bout.id, { status: 'completed', winnerRegistrationId: winner, method, elapsedSeconds: elapsedSeconds ? Number(elapsedSeconds) : undefined })}
             className="min-h-11 bg-[#C0001E] px-4 py-3 text-xs font-bold uppercase text-white disabled:bg-zinc-300">
             {t('events.engine.bouts.save')}
           </button>

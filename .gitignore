@@ -15,6 +15,8 @@
 
 # next.js
 /.next/
+/apps/web/.next/
+/apps/api/dist/
 /out/
 
 # production
@@ -39,6 +41,7 @@ public/*.mp4
 
 # vercel
 .vercel
+/supabase/.temp/
 
 # typescript
 *.tsbuildinfo

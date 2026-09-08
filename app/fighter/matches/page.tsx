@@ -345,7 +345,6 @@ function StatusCard({
   fighterId,
   tone,
   label,
-  t: _t,
 }: CardProps & { tone: 'emerald' | 'amber' | 'red' | 'zinc'; label: string }) {
   const opp = opponent(match, fighterId);
   const toneClasses: Record<string, string> = {

@@ -5,6 +5,7 @@ import type { LoginFormData, RegisterFormData, ServiceResponse, AuthSession, Use
 const SESSION_PROFILE_COLUMNS = `
   id, full_name, email, role, city, state, country, phone, date_of_birth,
   bio, instagram, photo_url, promoter_federation_status, is_available, additional_roles, is_banned,
+  onboarding_completed, onboarding_step, onboarding_dismissed, onboarding_event_id, onboarding_updated_at,
   created_at, updated_at
 `;
 

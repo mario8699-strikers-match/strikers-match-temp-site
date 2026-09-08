@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { authService } from '@/services/authService';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -32,9 +32,15 @@ export function IdleTimeout() {
   const [warning, setWarning] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(Math.floor(WARN_MS / 1000));
 
-  const lastActivityRef = useRef<number>(Date.now());
+  const lastActivityRef = useRef<number>(0);
   const checkTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const doLogout = useCallback(async () => {
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+    await authService.logout();
+    window.location.href = '/login?reason=timeout';
+  }, []);
 
   // ── Track auth state ──────────────────────────────────────────────
   useEffect(() => {
@@ -44,6 +50,7 @@ export function IdleTimeout() {
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setAuthed(Boolean(session));
+      if (!session) setWarning(false);
     });
     return () => {
       mounted = false;
@@ -57,7 +64,6 @@ export function IdleTimeout() {
       // Clean up any stale timers when signed out.
       if (checkTimerRef.current) clearInterval(checkTimerRef.current);
       if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
-      setWarning(false);
       return;
     }
 
@@ -127,13 +133,7 @@ export function IdleTimeout() {
     return () => {
       if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
     };
-  }, [warning]);
-
-  const doLogout = async () => {
-    try { localStorage.removeItem(STORAGE_KEY); } catch {}
-    await authService.logout();
-    window.location.href = '/login?reason=timeout';
-  };
+  }, [doLogout, warning]);
 
   const stayLoggedIn = () => {
     const now = Date.now();

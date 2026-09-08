@@ -231,7 +231,7 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
               const city = isManual
                 ? entry.data.city
                 : entry.data.profiles?.city;
-              const age = isManual ? null : getAge(entry.data.profiles?.date_of_birth);
+              const age = entry.data.age ?? null;
               const verified = !isManual && entry.data.verified;
               const weightClass = entry.data.weight_class;
               const disciplines = isManual
@@ -246,6 +246,13 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                 : entry.data.is_available;
               const followers = isManual ? null : (followerCounts[entry.data.id] ?? 0);
               const photoUrl = entry.data.photo_url;
+              const koTkoWins = (entry.data.ko_wins ?? 0) + (entry.data.tko_wins ?? 0);
+              const skillRating = entry.data.skill_rating;
+              const genderDivision = entry.data.gender_division;
+              const requestedWeight = entry.data.requested_weight_kg;
+              const minimumWeight = entry.data.acceptable_weight_min_kg;
+              const maximumWeight = entry.data.acceptable_weight_max_kg;
+              const rulesets = entry.data.preferred_rulesets ?? [];
               const initials = getInitials(name);
 
               return (
@@ -314,6 +321,12 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                     {weightClass && (
                       <span className="text-xs bg-zinc-100 text-zinc-700 px-2 py-1">{weightClass}</span>
                     )}
+                    {genderDivision && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">{genderDivision}</span>}
+                    {skillRating != null && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">Nivel {skillRating}/10</span>}
+                    <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">KO/TKO {koTkoWins}</span>
+                    {requestedWeight != null && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">Busca {requestedWeight} kg</span>}
+                    {(minimumWeight != null || maximumWeight != null) && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">Rango {minimumWeight ?? '—'}–{maximumWeight ?? '—'} kg</span>}
+                    {rulesets.map((ruleset) => <span key={ruleset} className="text-xs border border-zinc-200 px-2 py-1 text-zinc-700">{ruleset}</span>)}
                     {followers !== null && (
                       <span className="text-xs bg-zinc-100 text-zinc-700 px-2 py-1">
                         {followers} {followers === 1 ? t('fighters.follower') : t('fighters.followers')}
@@ -351,19 +364,4 @@ function getInitials(name: string) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join('') || 'SM';
-}
-
-function getAge(dateOfBirth?: string | null): number | null {
-  if (!dateOfBirth) return null;
-  const birthDate = new Date(dateOfBirth);
-  if (Number.isNaN(birthDate.getTime())) return null;
-
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    age -= 1;
-  }
-
-  return age >= 0 ? age : null;
 }

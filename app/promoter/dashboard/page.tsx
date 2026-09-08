@@ -338,8 +338,8 @@ export default function PromoterDashboardPage() {
                                 {registrations.filter(r => r.payment_status === 'pending').map((reg) => (
                                   <div key={reg.id} className="bg-white border border-zinc-200 p-3 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="min-w-0">
-                                      <p className="text-sm font-bold text-zinc-900">{reg.fighters?.profiles?.full_name ?? '—'}</p>
-                                      <p className="text-xs text-zinc-500">{reg.fighters?.weight_class ?? '—'} · {reg.fighters?.profiles?.city ?? '—'}</p>
+                                      <p className="text-sm font-bold text-zinc-900">{reg.display_name ?? reg.fighters?.profiles?.full_name ?? reg.manual_fighters?.full_name ?? '—'}</p>
+                                      <p className="text-xs text-zinc-500">{reg.registered_weight_class ?? reg.fighters?.weight_class ?? reg.manual_fighters?.weight_class ?? '—'} · {reg.city ?? reg.fighters?.profiles?.city ?? reg.manual_fighters?.city ?? '—'}</p>
                                       <EligibilityStatus status={reg.eligibility_status} reasons={reg.eligibility_reasons} showReasons />
                                     </div>
                                     <span className="self-start text-xs font-bold px-2 py-1 bg-amber-50 text-amber-700 flex-shrink-0">PENDIENTE</span>
@@ -359,8 +359,8 @@ export default function PromoterDashboardPage() {
                                 {registrations.filter(r => r.payment_status === 'submitted').map((reg) => (
                                   <div key={reg.id} className="bg-white border border-blue-200 p-3 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="min-w-0">
-                                      <p className="text-sm font-bold text-zinc-900">{reg.fighters?.profiles?.full_name ?? '—'}</p>
-                                      <p className="text-xs text-zinc-500">{reg.fighters?.weight_class ?? '—'} · {reg.fighters?.profiles?.city ?? '—'}</p>
+                                      <p className="text-sm font-bold text-zinc-900">{reg.display_name ?? reg.fighters?.profiles?.full_name ?? reg.manual_fighters?.full_name ?? '—'}</p>
+                                      <p className="text-xs text-zinc-500">{reg.registered_weight_class ?? reg.fighters?.weight_class ?? reg.manual_fighters?.weight_class ?? '—'} · {reg.city ?? reg.fighters?.profiles?.city ?? reg.manual_fighters?.city ?? '—'}</p>
                                       {reg.submitted_at && (
                                         <p className="text-xs text-blue-500 mt-0.5">
                                           Enviado: {new Date(reg.submitted_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
@@ -383,17 +383,17 @@ export default function PromoterDashboardPage() {
                           )}
 
                           {/* Section 3: Paid (confirmed) */}
-                          {registrations.filter(r => r.payment_status === 'confirmed').length > 0 && (
+                          {registrations.filter(r => ['confirmed', 'waived'].includes(r.payment_status)).length > 0 && (
                             <div>
                               <p className="text-xs font-bold uppercase tracking-widest text-emerald-700 mb-2">
-                                Pagados ({registrations.filter(r => r.payment_status === 'confirmed').length})
+                                Listos ({registrations.filter(r => ['confirmed', 'waived'].includes(r.payment_status)).length})
                               </p>
                               <div className="space-y-2">
-                                {registrations.filter(r => r.payment_status === 'confirmed').map((reg) => (
+                                {registrations.filter(r => ['confirmed', 'waived'].includes(r.payment_status)).map((reg) => (
                                   <div key={reg.id} className="bg-white border border-emerald-200 p-3 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="min-w-0">
-                                      <p className="text-sm font-bold text-zinc-900">{reg.fighters?.profiles?.full_name ?? '—'}</p>
-                                      <p className="text-xs text-zinc-500">{reg.fighters?.weight_class ?? '—'} · {reg.fighters?.profiles?.city ?? '—'}</p>
+                                      <p className="text-sm font-bold text-zinc-900">{reg.display_name ?? reg.fighters?.profiles?.full_name ?? reg.manual_fighters?.full_name ?? '—'}</p>
+                                      <p className="text-xs text-zinc-500">{reg.registered_weight_class ?? reg.fighters?.weight_class ?? reg.manual_fighters?.weight_class ?? '—'} · {reg.city ?? reg.fighters?.profiles?.city ?? reg.manual_fighters?.city ?? '—'}</p>
                                       {reg.confirmed_at && (
                                         <p className="text-xs text-emerald-500 mt-0.5">
                                           Confirmado: {new Date(reg.confirmed_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
@@ -401,7 +401,7 @@ export default function PromoterDashboardPage() {
                                       )}
                                       <EligibilityStatus status={reg.eligibility_status} reasons={reg.eligibility_reasons} showReasons />
                                     </div>
-                                    <span className="self-start text-xs font-bold px-2 py-1 bg-emerald-50 text-emerald-700 flex-shrink-0">PAGADO</span>
+                                    <span className="self-start text-xs font-bold px-2 py-1 bg-emerald-50 text-emerald-700 flex-shrink-0">{reg.payment_status === 'waived' ? 'EXENTO' : 'PAGADO'}</span>
                                   </div>
                                 ))}
                               </div>

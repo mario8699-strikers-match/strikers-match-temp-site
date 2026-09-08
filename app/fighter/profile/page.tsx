@@ -59,6 +59,19 @@ export default function FighterProfilePage() {
   const [wins, setWins] = useState('0');
   const [losses, setLosses] = useState('0');
   const [draws, setDraws] = useState('0');
+  const [genderDivision, setGenderDivision] = useState('');
+  const [koWins, setKoWins] = useState('0');
+  const [tkoWins, setTkoWins] = useState('0');
+  const [koLosses, setKoLosses] = useState('0');
+  const [tkoLosses, setTkoLosses] = useState('0');
+  const [skillRating, setSkillRating] = useState('');
+  const [preferredRulesets, setPreferredRulesets] = useState('');
+  const [requestedWeight, setRequestedWeight] = useState('');
+  const [acceptableWeightMin, setAcceptableWeightMin] = useState('');
+  const [acceptableWeightMax, setAcceptableWeightMax] = useState('');
+  const [specialRestrictions, setSpecialRestrictions] = useState('');
+  const [lastFightAt, setLastFightAt] = useState('');
+  const [lastKoLossAt, setLastKoLossAt] = useState('');
   const [isAvailable, setIsAvailable] = useState(true);
   const [shortNotice, setShortNotice] = useState(false);
   const [experienceLevel, setExperienceLevel] = useState<'amateur' | 'pro'>('amateur');
@@ -109,6 +122,19 @@ export default function FighterProfilePage() {
     setWins(String(f.record_wins));
     setLosses(String(f.record_losses));
     setDraws(String(f.record_draws));
+    setGenderDivision(f.gender_division ?? '');
+    setKoWins(String(f.ko_wins ?? 0));
+    setTkoWins(String(f.tko_wins ?? 0));
+    setKoLosses(String(f.ko_losses ?? 0));
+    setTkoLosses(String(f.tko_losses ?? 0));
+    setSkillRating(f.skill_rating != null ? String(f.skill_rating) : '');
+    setPreferredRulesets((f.preferred_rulesets ?? []).join(', '));
+    setRequestedWeight(f.requested_weight_kg != null ? String(f.requested_weight_kg) : '');
+    setAcceptableWeightMin(f.acceptable_weight_min_kg != null ? String(f.acceptable_weight_min_kg) : '');
+    setAcceptableWeightMax(f.acceptable_weight_max_kg != null ? String(f.acceptable_weight_max_kg) : '');
+    setSpecialRestrictions((f.special_restrictions ?? []).join(', '));
+    setLastFightAt(f.last_fight_at ?? '');
+    setLastKoLossAt(f.last_ko_loss_at ?? '');
     setIsAvailable(f.is_available);
     setShortNotice(f.short_notice_ready);
     setExperienceLevel(f.experience_level ?? 'amateur');
@@ -220,6 +246,19 @@ export default function FighterProfilePage() {
       record_wins: parseInt(wins) || 0,
       record_losses: parseInt(losses) || 0,
       record_draws: parseInt(draws) || 0,
+      gender_division: genderDivision || null,
+      ko_wins: parseInt(koWins) || 0,
+      tko_wins: parseInt(tkoWins) || 0,
+      ko_losses: parseInt(koLosses) || 0,
+      tko_losses: parseInt(tkoLosses) || 0,
+      skill_rating: skillRating ? parseFloat(skillRating) : null,
+      preferred_rulesets: preferredRulesets.split(',').map((value) => value.trim()).filter(Boolean),
+      requested_weight_kg: requestedWeight ? parseFloat(requestedWeight) : null,
+      acceptable_weight_min_kg: acceptableWeightMin ? parseFloat(acceptableWeightMin) : null,
+      acceptable_weight_max_kg: acceptableWeightMax ? parseFloat(acceptableWeightMax) : null,
+      special_restrictions: specialRestrictions.split(',').map((value) => value.trim()).filter(Boolean),
+      last_fight_at: lastFightAt || null,
+      last_ko_loss_at: lastKoLossAt || null,
       is_available: isAvailable,
       short_notice_ready: shortNotice,
       experience_level: experienceLevel,
@@ -383,6 +422,14 @@ export default function FighterProfilePage() {
                 { label:'División', value: fighter.weight_class ? (WEIGHT_LABELS[fighter.weight_class] ?? fighter.weight_class) : '—' },
                 { label:'Gimnasio', value: fighter.gym_name ?? '—' },
                 { label:'Peso exacto', value: fighter.exact_weight ? `${fighter.exact_weight} kg` : '—' },
+                { label:'División de género', value: fighter.gender_division ?? '—' },
+                { label:'Nivel técnico', value: fighter.skill_rating ? `${fighter.skill_rating}/10` : '—' },
+                { label:'KO/TKO a favor', value: `${fighter.ko_wins + fighter.tko_wins}` },
+                { label:'KO/TKO en contra', value: `${fighter.ko_losses + fighter.tko_losses}` },
+                { label:'Reglamentos', value: fighter.preferred_rulesets.length ? fighter.preferred_rulesets.join(', ') : '—' },
+                { label:'Peso solicitado', value: fighter.requested_weight_kg ? `${fighter.requested_weight_kg} kg` : '—' },
+                { label:'Rango aceptable', value: fighter.acceptable_weight_min_kg != null || fighter.acceptable_weight_max_kg != null ? `${fighter.acceptable_weight_min_kg ?? '—'}–${fighter.acceptable_weight_max_kg ?? '—'} kg` : '—' },
+                { label:'Última pelea', value: fighter.last_fight_at ?? '—' },
                 { label:'Estatura', value: fighter.height_cm ? `${fighter.height_cm} cm` : '—' },
                 { label:'Alcance', value: fighter.reach_cm ? `${fighter.reach_cm} cm` : '—' },
               ].map(({label,value}) => (
@@ -419,6 +466,12 @@ export default function FighterProfilePage() {
                 <div>
                   <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>Disponible hasta</p>
                   <p className="text-sm text-zinc-900">{fighter.available_to}</p>
+                </div>
+              )}
+              {fighter.special_restrictions.length > 0 && (
+                <div className="col-span-2 border border-amber-200 bg-amber-50 p-3">
+                  <p className="text-xs font-bold tracking-widest uppercase text-amber-800">Restricciones privadas</p>
+                  <p className="mt-1 text-sm text-amber-950">{fighter.special_restrictions.join(' · ')}</p>
                 </div>
               )}
             </div>
@@ -517,6 +570,42 @@ export default function FighterProfilePage() {
                   </div>
                 ))}
               </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>División y nivel técnico</label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <input value={genderDivision} onChange={e => setGenderDivision(e.target.value)} placeholder="División de género" className="w-full border border-zinc-300 px-3 py-2 text-sm" />
+                <input type="number" min="1" max="10" step="0.1" value={skillRating} onChange={e => setSkillRating(e.target.value)} placeholder="Nivel 1–10" className="w-full border border-zinc-300 px-3 py-2 text-sm" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Récord KO / TKO</label>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {[{label:'KO a favor',val:koWins,set:setKoWins},{label:'TKO a favor',val:tkoWins,set:setTkoWins},{label:'KO en contra',val:koLosses,set:setKoLosses},{label:'TKO en contra',val:tkoLosses,set:setTkoLosses}].map(({ label, val, set: setter }) => <label key={label}><span className="mb-1 block text-xs text-zinc-400">{label}</span><input type="number" min="0" value={val} onChange={e => setter(e.target.value)} className="w-full border border-zinc-300 px-3 py-2 text-center text-sm" /></label>)}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Reglamentos y peso solicitado</label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <input value={preferredRulesets} onChange={e => setPreferredRulesets(e.target.value)} placeholder="Reglamentos, separados por coma" className="w-full border border-zinc-300 px-3 py-2 text-sm sm:col-span-2" />
+                <input type="number" min="0" step="0.1" value={requestedWeight} onChange={e => setRequestedWeight(e.target.value)} placeholder="Peso solicitado kg" className="w-full border border-zinc-300 px-3 py-2 text-sm" />
+                <div className="grid grid-cols-2 gap-3">
+                  <input type="number" min="0" step="0.1" value={acceptableWeightMin} onChange={e => setAcceptableWeightMin(e.target.value)} placeholder="Mín. kg" className="w-full border border-zinc-300 px-3 py-2 text-sm" />
+                  <input type="number" min="0" step="0.1" value={acceptableWeightMax} onChange={e => setAcceptableWeightMax(e.target.value)} placeholder="Máx. kg" className="w-full border border-zinc-300 px-3 py-2 text-sm" />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Historial reciente y restricciones privadas</label>
+              <div className="grid grid-cols-2 gap-3">
+                <label><span className="mb-1 block text-xs text-zinc-400">Última pelea</span><input type="date" value={lastFightAt} onChange={e => setLastFightAt(e.target.value)} className="w-full border border-zinc-300 px-3 py-2 text-sm" /></label>
+                <label><span className="mb-1 block text-xs text-zinc-400">Última derrota por KO</span><input type="date" value={lastKoLossAt} onChange={e => setLastKoLossAt(e.target.value)} className="w-full border border-zinc-300 px-3 py-2 text-sm" /></label>
+              </div>
+              <textarea value={specialRestrictions} onChange={e => setSpecialRestrictions(e.target.value)} rows={2} placeholder="Restricciones separadas por coma. Solo visibles para ti y el equipo del evento." className="mt-3 w-full border border-zinc-300 px-3 py-2 text-sm" />
             </div>
 
             {/* Availability window */}

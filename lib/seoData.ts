@@ -89,7 +89,7 @@ export const getPublicEventSeo = cache(async (id: string): Promise<PublicEventSe
   try {
     const { data, error } = await client
       .from('events')
-      .select('id,promoter_id,event_name,event_date,event_time,city,venue,weight_class_needed,weight_classes_needed,disciplines_needed,purse_amount,signup_fee,notes,flyer_url,status,created_at,profiles(full_name)')
+      .select('id,promoter_id,event_name,event_date,event_time,city,venue,weight_class_needed,weight_classes_needed,disciplines_needed,purse_amount,signup_fee,notes,flyer_url,status,created_at,profiles!events_promoter_id_fkey(full_name)')
       .eq('id', id)
       .maybeSingle();
     if (error || !data) return null;
@@ -104,8 +104,8 @@ export const getPublicFighterSeo = cache(async (id: string): Promise<PublicFight
   if (!client) return null;
   try {
     const { data, error } = await client
-      .from('fighters')
-      .select('id,nickname,bio,weight_class,disciplines,gym_name,state,experience_level,photo_url,is_hidden,created_at,profiles(full_name,city,is_banned)')
+      .from('public_fighters')
+      .select('id,nickname,bio,weight_class,disciplines,gym_name,state,experience_level,photo_url,is_hidden,created_at,profiles')
       .eq('id', id)
       .maybeSingle();
     if (error || !data) return null;
@@ -120,7 +120,7 @@ export const getPublicManualFighterSeo = cache(async (id: string): Promise<Publi
   if (!client) return null;
   try {
     const { data, error } = await client
-      .from('manual_fighters')
+      .from('public_manual_fighters')
       .select('id,full_name,nickname,bio,weight_class,discipline,city,state,gym_name,experience_level,photo_url,created_at')
       .eq('id', id)
       .maybeSingle();
@@ -136,7 +136,7 @@ export const getPublicProfessionalSeo = cache(async (id: string): Promise<Public
   if (!client) return null;
   try {
     const { data, error } = await client
-      .from('profiles')
+      .from('public_profiles')
       .select('id,full_name,role,additional_roles,city,state,country,bio,photo_url,is_banned,updated_at')
       .eq('id', id)
       .maybeSingle();
@@ -178,13 +178,12 @@ export const getPublicFightersForPage = cache(async (): Promise<{
   try {
     const [registeredResult, manualResult] = await Promise.all([
       client
-        .from('fighters')
-        .select('*,profiles(full_name,email,city,date_of_birth,phone,is_banned,reliability_score,total_matches,cancellations,no_shows)')
-        .neq('is_hidden', true)
+        .from('public_fighters')
+        .select('*')
         .order('created_at', { ascending: false }),
       client
-        .from('manual_fighters')
-        .select('*,profiles:manager_id(full_name,email,role)')
+        .from('public_manual_fighters')
+        .select('*')
         .order('created_at', { ascending: false }),
     ]);
 
@@ -211,8 +210,8 @@ export const getPublicDirectoryForPage = cache(async (): Promise<{
         .eq('status', 'published')
         .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false }),
-      client.from('profiles').select('*').in('role', VENDOR_ROLES).eq('is_banned', false).order('created_at', { ascending: false }),
-      client.from('profiles').select('*').overlaps('additional_roles', VENDOR_ROLES).eq('is_banned', false).order('created_at', { ascending: false }),
+      client.from('public_profiles').select('*').in('role', VENDOR_ROLES).order('created_at', { ascending: false }),
+      client.from('public_profiles').select('*').overlaps('additional_roles', VENDOR_ROLES).order('created_at', { ascending: false }),
     ]);
 
     const profiles = new Map<string, Profile>();
@@ -234,7 +233,7 @@ export const getPublicPromotersForPage = cache(async (): Promise<PublicPromoterC
   if (!client) return [];
   try {
     const [profileResult, eventResult] = await Promise.all([
-      client.from('profiles').select('*').eq('role', 'promoter').eq('is_banned', false).order('full_name'),
+      client.from('public_profiles').select('*').eq('role', 'promoter').order('full_name'),
       client.from('events').select('promoter_id,flyer_url,event_date').eq('status', 'published').order('event_date', { ascending: false }),
     ]);
     if (profileResult.error) return [];
@@ -261,7 +260,7 @@ export const getPublicManagersForPage = cache(async (): Promise<PublicManagerCar
   if (!client) return [];
   try {
     const [profileResult, rosterResult] = await Promise.all([
-      client.from('profiles').select('*').eq('role', 'manager').eq('is_banned', false).order('full_name'),
+      client.from('public_profiles').select('*').eq('role', 'manager').order('full_name'),
       client.from('manager_fighters').select('manager_id'),
     ]);
     if (profileResult.error) return [];
@@ -285,10 +284,9 @@ export const getPublicSponsorsForPage = cache(async (): Promise<Profile[]> => {
   if (!client) return [];
   try {
     const { data, error } = await client
-      .from('profiles')
+      .from('public_profiles')
       .select('*')
       .eq('role', 'sponsor')
-      .eq('is_banned', false)
       .order('full_name');
     if (error) return [];
     return (data ?? []) as Profile[];
@@ -311,13 +309,11 @@ export async function getSitemapRecords(): Promise<{
     const [eventsResult, fightersResult, manualResult, primaryProfilesResult, additionalProfilesResult] = await Promise.all([
       client.from('events').select('id,created_at').eq('status', 'published'),
       client
-        .from('fighters')
-        .select('id,created_at,profiles!inner(is_banned)')
-        .neq('is_hidden', true)
-        .eq('profiles.is_banned', false),
-      client.from('manual_fighters').select('id,created_at'),
-      client.from('profiles').select('id,updated_at').in('role', VENDOR_ROLES).eq('is_banned', false),
-      client.from('profiles').select('id,updated_at').overlaps('additional_roles', VENDOR_ROLES).eq('is_banned', false),
+        .from('public_fighters')
+        .select('id,created_at'),
+      client.from('public_manual_fighters').select('id,created_at'),
+      client.from('public_profiles').select('id,updated_at').in('role', VENDOR_ROLES),
+      client.from('public_profiles').select('id,updated_at').overlaps('additional_roles', VENDOR_ROLES),
     ]);
 
     const professionalMap = new Map<string, SitemapRecord>();

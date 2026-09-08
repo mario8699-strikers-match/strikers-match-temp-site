@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "buildCommand": "next build",
+  "buildCommand": "npm run build:release",
   "outputDirectory": ".next",
   "functions": {
     "app/api/storage/route.ts": {

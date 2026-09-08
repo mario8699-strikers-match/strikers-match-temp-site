@@ -29,6 +29,19 @@ export function EventManageFrame({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const eventManageMatch = pathname.match(/^\/events\/([^/]+)\/manage(?:\/|$)/);
+  const eventReturnHref = eventManageMatch
+    ? `/events/${eventManageMatch[1]}?action=participate`
+    : null;
+  const eventReturnLink = eventReturnHref ? (
+    <Link
+      href={eventReturnHref}
+      className="print:hidden inline-flex w-fit min-h-11 items-center gap-2 border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:border-zinc-900 hover:text-zinc-900"
+    >
+      <span aria-hidden="true">←</span>
+      Volver al evento
+    </Link>
+  ) : null;
 
   useEffect(() => {
     let active = true;
@@ -83,6 +96,7 @@ export function EventManageFrame({ children }: { children: ReactNode }) {
     return (
       <div className="min-h-screen bg-white font-sans text-zinc-900">
         <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+          {eventReturnLink}
           {children}
         </main>
       </div>
@@ -171,6 +185,7 @@ export function EventManageFrame({ children }: { children: ReactNode }) {
 
           <main className="flex-1 bg-zinc-50 p-4 sm:p-6 lg:p-8">
             <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
+              {eventReturnLink}
               {children}
             </div>
           </main>
@@ -183,6 +198,7 @@ export function EventManageFrame({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-white font-sans text-zinc-900">
       <Navbar activePage="events" />
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+        {eventReturnLink}
         {children}
       </main>
       <Footer />

@@ -13,6 +13,7 @@ import {
   removeEventStaff,
 } from '@/services/eventStaffService';
 import { eventService } from '@/services/eventService';
+import { advanceGuidedOnboarding } from '@/services/onboardingService';
 import {
   DEFAULT_DIVISION_INPUT,
   DEFAULT_EVENT_SETTINGS,
@@ -96,7 +97,14 @@ export default function EventSettingsPage() {
     setMessage(null);
     const result = await saveEventMatchmakingSettings(eventId, settings);
     if (result.error) setError(result.error);
-    else setMessage(t('events.engine.settings.saved'));
+    else {
+      setMessage(t('events.engine.settings.saved'));
+      if (profile && !profile.onboarding_completed && !profile.onboarding_dismissed
+        && profile.onboarding_event_id === eventId && profile.onboarding_step <= 2) {
+        const advancement = await advanceGuidedOnboarding(3, eventId, true);
+        if (advancement.data) setProfile(advancement.data);
+      }
+    }
     setActing(null);
   };
 
@@ -124,6 +132,11 @@ export default function EventSettingsPage() {
       setDivisionForm(DEFAULT_DIVISION_INPUT);
       setEditingDivisionId(null);
       await reload();
+      if (profile && !profile.onboarding_completed && !profile.onboarding_dismissed
+        && profile.onboarding_event_id === eventId && profile.onboarding_step <= 2) {
+        const advancement = await advanceGuidedOnboarding(3, eventId, true);
+        if (advancement.data) setProfile(advancement.data);
+      }
     }
     setActing(null);
   };
@@ -210,13 +223,11 @@ export default function EventSettingsPage() {
           <h1 className="mt-2 text-4xl font-black uppercase text-zinc-900 sm:text-5xl">{t('events.engine.settings.title')}</h1>
           <p className="mt-2 text-sm text-zinc-600">{event?.event_name}</p>
         </div>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-6">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <Link href={`/events/${eventId}/manage/participants`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">Participantes</Link>
           <Link href={`/events/${eventId}/manage/matchmaking`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">{t('events.engine.nav.matchmaking')}</Link>
           <Link href={`/events/${eventId}/manage/bouts`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">{t('events.engine.nav.bouts')}</Link>
-          <Link href={`/events/${eventId}/manage/print`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">{t('events.engine.nav.print')}</Link>
-          <Link href={`/events/${eventId}/manage/live`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">{t('events.engine.nav.live')}</Link>
-          <span aria-disabled="true" className="flex min-h-11 cursor-not-allowed items-center justify-center whitespace-nowrap border border-zinc-200 bg-zinc-100 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-400">{t('events.engine.nav.streaming')}</span>
-          <Link href={`/events/${eventId}`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">{t('events.engine.nav.event')}</Link>
+          <Link href={`/events/${eventId}/manage/graphics`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">Gráficos</Link>
         </div>
       </header>
 
@@ -307,6 +318,10 @@ export default function EventSettingsPage() {
             onChange={(value) => setSettings({ ...settings, age_tolerance_years: value })} />
           <NumberField label={t('events.engine.settings.experienceTolerance')} value={settings.experience_tolerance_fights} min={0}
             onChange={(value) => setSettings({ ...settings, experience_tolerance_fights: value })} />
+          <NumberField label="Tolerancia de nivel (1–10)" value={settings.skill_rating_tolerance} min={0}
+            onChange={(value) => setSettings({ ...settings, skill_rating_tolerance: value })} />
+          <NumberField label="Tolerancia de KO/TKO" value={settings.knockout_record_tolerance} min={0}
+            onChange={(value) => setSettings({ ...settings, knockout_record_tolerance: value })} />
           <NumberField label={t('events.engine.settings.recentOpponentDays')} value={settings.recent_opponent_lookback_days} min={0}
             onChange={(value) => setSettings({ ...settings, recent_opponent_lookback_days: value })} />
           <NumberField label={t('events.engine.settings.maxBoutsPerFighter')} value={settings.max_bouts_per_fighter} min={1}
@@ -322,6 +337,26 @@ export default function EventSettingsPage() {
               onChange={(eventValue) => setSettings({ ...settings, allow_same_team: eventValue.target.checked })}
               className="h-4 w-4 accent-[#C0001E]" />
             {t('events.engine.settings.allowSameTeam')}
+          </label>
+          <label className="flex min-h-11 items-center gap-3 border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-800">
+            <input type="checkbox" checked={settings.prefer_local_fighters}
+              onChange={(eventValue) => setSettings({ ...settings, prefer_local_fighters: eventValue.target.checked })}
+              className="h-4 w-4 accent-[#C0001E]" />
+            Preferir peleadores locales
+          </label>
+          <label className="block sm:col-span-2 lg:col-span-3">
+            <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">Preferencias del promotor</span>
+            <textarea
+              rows={3}
+              value={String(settings.promoter_preferences.notes ?? '')}
+              onChange={(eventValue) => setSettings({
+                ...settings,
+                promoter_preferences: { ...settings.promoter_preferences, notes: eventValue.target.value },
+              })}
+              placeholder="Ej. priorizar peleadores locales, evitar revancha, abrir cartelera con amateur..."
+              className="w-full border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900"
+            />
+            <span className="mt-1 block text-xs text-zinc-500">Estas preferencias orientan la revisión; nunca anulan restricciones obligatorias.</span>
           </label>
         </div>
       </section>
@@ -411,6 +446,11 @@ function toSettingsInput(settings: EventSettingsInput): EventSettingsInput {
     minimum_rest_minutes: settings.minimum_rest_minutes,
     rules_version: settings.rules_version,
     registration_closes_at: settings.registration_closes_at,
+    skill_rating_tolerance: settings.skill_rating_tolerance,
+    knockout_record_tolerance: settings.knockout_record_tolerance,
+    prefer_local_fighters: settings.prefer_local_fighters,
+    promoter_preferences: settings.promoter_preferences,
+    score_weights: settings.score_weights,
   };
 }
 

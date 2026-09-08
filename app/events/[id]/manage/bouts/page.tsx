@@ -117,13 +117,11 @@ export default function BoutManagementPage() {
           <h1 className="mt-2 text-4xl font-black uppercase text-zinc-900 sm:text-5xl">{t('events.engine.bouts.title')}</h1>
           <p className="mt-2 text-sm text-zinc-600">{event?.event_name}</p>
         </div>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-6">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <Link href={`/events/${eventId}/manage/participants`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">Participantes</Link>
           <Link href={`/events/${eventId}/manage/settings`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">{t('events.engine.nav.settings')}</Link>
           <Link href={`/events/${eventId}/manage/matchmaking`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">{t('events.engine.nav.matchmaking')}</Link>
-          <Link href={`/events/${eventId}/manage/print`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">{t('events.engine.nav.print')}</Link>
-          <Link href={`/events/${eventId}/manage/live`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">{t('events.engine.nav.live')}</Link>
-          <span aria-disabled="true" className="flex min-h-11 cursor-not-allowed items-center justify-center whitespace-nowrap border border-zinc-200 bg-zinc-100 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-400">{t('events.engine.nav.streaming')}</span>
-          <Link href={`/events/${eventId}`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">{t('events.engine.nav.event')}</Link>
+          <Link href={`/events/${eventId}/manage/graphics`} className="flex min-h-11 items-center justify-center whitespace-nowrap bg-[#C0001E] px-4 py-3 text-center text-xs font-bold uppercase text-white">Gráficos</Link>
           <button type="button" onClick={orderBouts} disabled={acting === 'order' || bouts.length === 0}
             className="min-h-11 bg-zinc-900 px-4 py-3 text-xs font-bold uppercase text-white disabled:bg-zinc-300">
             {acting === 'order' ? t('events.engine.bouts.ordering') : t('events.engine.bouts.generateOrder')}
@@ -281,12 +279,12 @@ function BoutCard({ bout, mats, registrations, warnings, busy, update, replaceFi
         <div className="mt-4 grid grid-cols-1 gap-3 border-t border-zinc-200 pt-4 sm:grid-cols-4">
           <select value={winner} onChange={(eventValue) => setWinner(eventValue.target.value)} className="min-h-11 border border-zinc-300 bg-white px-3 py-2 text-sm">
             <option value="">{t('events.engine.bouts.winner')}</option>
-            <option value={bout.fighter_a_id}>{bout.fighter_a_snapshot.name}</option>
-            <option value={bout.fighter_b_id}>{bout.fighter_b_snapshot.name}</option>
+            <option value={bout.fighter_a_registration_id}>{bout.fighter_a_snapshot.name}</option>
+            <option value={bout.fighter_b_registration_id}>{bout.fighter_b_snapshot.name}</option>
           </select>
           <input value={method} onChange={(eventValue) => setMethod(eventValue.target.value)} placeholder={t('events.engine.bouts.method')} className="min-h-11 border border-zinc-300 px-3 py-2 text-sm" />
           <input type="number" min={0} value={elapsedSeconds} onChange={(eventValue) => setElapsedSeconds(eventValue.target.value)} placeholder={t('events.engine.bouts.seconds')} className="min-h-11 border border-zinc-300 px-3 py-2 text-sm" />
-          <button type="button" disabled={!winner || busy} onClick={() => update(bout.id, { status: 'completed', winnerId: winner, method, elapsedSeconds: elapsedSeconds ? Number(elapsedSeconds) : undefined })}
+          <button type="button" disabled={!winner || busy} onClick={() => update(bout.id, { status: 'completed', winnerRegistrationId: winner, method, elapsedSeconds: elapsedSeconds ? Number(elapsedSeconds) : undefined })}
             className="min-h-11 bg-[#C0001E] px-4 py-3 text-xs font-bold uppercase text-white disabled:bg-zinc-300">{t('events.engine.bouts.saveResult')}</button>
         </div>
       )}
@@ -304,12 +302,12 @@ function BoutCard({ bout, mats, registrations, warnings, busy, update, replaceFi
               .filter((registration) =>
                 registration.payment_status === 'confirmed'
                 && registration.eligibility_status === 'eligible'
-                && registration.fighter_id !== bout.fighter_a_id
-                && registration.fighter_id !== bout.fighter_b_id
+                && registration.id !== bout.fighter_a_registration_id
+                && registration.id !== bout.fighter_b_registration_id
               )
               .map((registration) => (
                 <option key={registration.id} value={registration.id}>
-                  {registration.fighters?.profiles?.full_name ?? t('events.engine.bouts.fighter')} · {registration.registered_weight_class ?? registration.fighters?.weight_class ?? t('events.engine.bouts.pendingWeight')}
+                  {registration.display_name ?? registration.fighters?.profiles?.full_name ?? registration.manual_fighters?.full_name ?? t('events.engine.bouts.fighter')} · {registration.registered_weight_class ?? registration.fighters?.weight_class ?? registration.manual_fighters?.weight_class ?? t('events.engine.bouts.pendingWeight')}
                 </option>
               ))}
           </select>
@@ -450,8 +448,8 @@ function buildBoutConflictMap(bouts: Bout[]) {
       const key = `${bout.mat_id}:${bout.mat_order}`;
       matOrders.set(key, [...(matOrders.get(key) ?? []), bout.id]);
     }
-    fighterAssignments.set(bout.fighter_a_id, [...(fighterAssignments.get(bout.fighter_a_id) ?? []), bout.id]);
-    fighterAssignments.set(bout.fighter_b_id, [...(fighterAssignments.get(bout.fighter_b_id) ?? []), bout.id]);
+    fighterAssignments.set(bout.fighter_a_registration_id, [...(fighterAssignments.get(bout.fighter_a_registration_id) ?? []), bout.id]);
+    fighterAssignments.set(bout.fighter_b_registration_id, [...(fighterAssignments.get(bout.fighter_b_registration_id) ?? []), bout.id]);
   }
 
   for (const boutIds of matOrders.values()) {

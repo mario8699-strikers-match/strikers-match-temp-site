@@ -22,7 +22,7 @@ const WEIGHT_LABELS: Record<string, string> = {
   superwelter:'Superwelter',medio:'Medio',supermedio:'Supermedio',semipesado:'Semipesado',crucero:'Crucero',pesado:'Pesado',
 };
 
-type FighterDetail = Fighter & { profiles: { full_name: string; city: string | null; date_of_birth?: string | null } };
+type FighterDetail = Fighter & { profiles: { full_name: string; city: string | null } };
 
 type Neighbor = { id: string; name: string };
 
@@ -161,7 +161,7 @@ export default function FighterDetailPage() {
   }
 
   const canSendRequest = profile && (profile.role === 'promoter' || profile.role === 'manager' || profile.role === 'admin');
-  const age = getAge(fighter.profiles?.date_of_birth);
+  const age = fighter.age ?? null;
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -246,7 +246,14 @@ export default function FighterDetailPage() {
             { label:'Edad', value: age !== null ? `${age}` : '—' },
             { label:'Seguidores', value: `${followerCount}` },
             { label:'Gimnasio', value: fighter.gym_name ?? '—' },
-            { label:'Peso exacto', value: fighter.exact_weight ? `${fighter.exact_weight} kg` : '—' },
+            { label:'División de género', value: fighter.gender_division ?? '—' },
+            { label:'Nivel técnico', value: fighter.skill_rating ? `${fighter.skill_rating}/10` : '—' },
+            { label:'KO/TKO a favor', value: `${fighter.ko_wins + fighter.tko_wins}` },
+            { label:'KO/TKO en contra', value: `${fighter.ko_losses + fighter.tko_losses}` },
+            { label:'Reglamentos', value: fighter.preferred_rulesets.length ? fighter.preferred_rulesets.join(', ') : '—' },
+            { label:'Peso solicitado', value: fighter.requested_weight_kg ? `${fighter.requested_weight_kg} kg` : '—' },
+            { label:'Rango aceptable', value: fighter.acceptable_weight_min_kg != null || fighter.acceptable_weight_max_kg != null ? `${fighter.acceptable_weight_min_kg ?? '—'}–${fighter.acceptable_weight_max_kg ?? '—'} kg` : '—' },
+            { label:'Última pelea', value: fighter.last_fight_at ?? '—' },
             { label:'Estatura', value: fighter.height_cm ? `${fighter.height_cm} cm` : '—' },
             { label:'Alcance', value: fighter.reach_cm ? `${fighter.reach_cm} cm` : '—' },
           ].map(({label,value}) => (
@@ -404,19 +411,4 @@ export default function FighterDetailPage() {
       <Footer />
     </div>
   );
-}
-
-function getAge(dateOfBirth?: string | null): number | null {
-  if (!dateOfBirth) return null;
-  const birthDate = new Date(dateOfBirth);
-  if (Number.isNaN(birthDate.getTime())) return null;
-
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    age -= 1;
-  }
-
-  return age >= 0 ? age : null;
 }
