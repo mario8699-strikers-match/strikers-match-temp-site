@@ -92,8 +92,12 @@ export function GuidedOnboardingHelp() {
         setStep(1);
         setEventId(null);
         setDismissed(false);
-        setPanel('welcome');
-        try { sessionStorage.setItem(ONBOARDING_SHOWN_SESSION_KEY, '1'); } catch { /* noop */ }
+        if (pathname === '/events/create') {
+          setPanel(null);
+        } else {
+          setPanel('welcome');
+          try { sessionStorage.setItem(ONBOARDING_SHOWN_SESSION_KEY, '1'); } catch { /* noop */ }
+        }
 
         if (nextProfile.onboarding_completed || nextProfile.onboarding_step !== 0 || nextProfile.onboarding_dismissed) {
           void updateGuidedOnboarding({ step: 0, completed: false, dismissed: false });
@@ -133,7 +137,7 @@ export function GuidedOnboardingHelp() {
       }
     });
     return () => { cancelled = true; };
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     setOnboardingActive(panel !== null);
