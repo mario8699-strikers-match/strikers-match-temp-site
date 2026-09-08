@@ -46,3 +46,15 @@ public/*.mp4
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local project documentation (not deployed)
+/ARCHITECTURE.md
+/DATABASE_SCHEMA.md
+/DEVELOPMENT_RULES.md
+/EVENT_ENGINE_BASELINE.md
+/EVENT_ENGINE_ROADMAP.md
+/MATCHMAKING_PRESENTATION_ROADMAP.md
+/PRODUCT_REQUIREMENTS.md
+/PROJECT_STRUCTURE.md
+/STRIKERS_MATCH_STUDIO_PROGRESS.md
+/infrastructure/digitalocean/DIGITALOCEAN_REQUIREMENTS.md
