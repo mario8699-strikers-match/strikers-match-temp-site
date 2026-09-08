@@ -64,10 +64,40 @@ export function GuidedOnboardingHelp() {
 
   useEffect(() => {
     let cancelled = false;
-    authService.getSession().then(({ data }) => {
+    authService.getSession().then(async ({ data }) => {
       if (cancelled) return;
       const nextProfile = data?.profile ?? null;
       if (!nextProfile || !['promoter', 'manager'].includes(nextProfile.role)) return;
+
+      const { data: ownedEvents, error: ownedEventsError } = await supabase
+        .from('events')
+        .select('id')
+        .eq('promoter_id', nextProfile.id)
+        .limit(1);
+      if (cancelled) return;
+
+      // The first-event guide cannot be permanently dismissed. Promoters and
+      // managers may close it for the current visit, but it returns until an
+      // event owned by their account exists.
+      if (!ownedEventsError && (ownedEvents?.length ?? 0) === 0) {
+        setProfile({
+          ...nextProfile,
+          onboarding_completed: false,
+          onboarding_step: 0,
+          onboarding_dismissed: false,
+          onboarding_event_id: null,
+        });
+        setStep(1);
+        setEventId(null);
+        setDismissed(false);
+        setPanel('welcome');
+        try { sessionStorage.setItem(ONBOARDING_SHOWN_SESSION_KEY, '1'); } catch { /* noop */ }
+
+        if (nextProfile.onboarding_completed || nextProfile.onboarding_step !== 0 || nextProfile.onboarding_dismissed) {
+          void updateGuidedOnboarding({ step: 0, completed: false, dismissed: false });
+        }
+        return;
+      }
 
       const savedStep = validStep(nextProfile.onboarding_step) ? nextProfile.onboarding_step : 1;
       setProfile(nextProfile);
