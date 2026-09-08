@@ -22,16 +22,17 @@ interface HelpTopic {
   title: string;
   body: string;
   action: string;
+  requiresEvent?: boolean;
   path: (eventId: string | null) => string;
 }
 
 const HELP_TOPICS: HelpTopic[] = [
   { title: 'Crear un evento', body: 'Crea el nombre, fecha, ciudad, recinto y disciplinas de tu nueva cartelera.', action: 'Crear evento', path: () => '/events/create' },
-  { title: 'Registrar peleadores', body: 'Agrega perfiles de Strikers Match, peleadores de tu roster o altas rápidas exclusivas del evento.', action: 'Abrir participantes', path: (id) => id ? `/events/${id}/manage/participants` : '/events' },
-  { title: 'Encontrar enfrentamientos', body: 'Revisa las combinaciones calculadas por peso, edad, experiencia, récord, disciplina y disponibilidad.', action: 'Abrir matchmaking', path: (id) => id ? `/events/${id}/manage/matchmaking` : '/events' },
-  { title: 'Revisar peleas', body: 'Tú decides qué propuesta aceptar, rechazar, modificar o fijar antes de hacerla oficial.', action: 'Revisar propuestas', path: (id) => id ? `/events/${id}/manage/matchmaking` : '/events' },
-  { title: 'Generar gráficos', body: 'Los combates oficiales generan borradores que puedes aprobar, publicar y descargar.', action: 'Abrir gráficos', path: (id) => id ? `/events/${id}/manage/graphics` : '/events' },
-  { title: 'Mostrar peleas en pantalla', body: 'Publica un gráfico y abre el modo pantalla directamente dentro de Strikers Match.', action: 'Configurar pantalla', path: (id) => id ? `/events/${id}/manage/graphics` : '/events' },
+  { title: 'Registrar peleadores', body: 'Agrega perfiles de Strikers Match, peleadores de tu roster o altas rápidas exclusivas del evento.', action: 'Abrir participantes', requiresEvent: true, path: (id) => id ? `/events/${id}/manage/participants` : '/events/create?onboarding=1' },
+  { title: 'Encontrar enfrentamientos', body: 'Revisa las combinaciones calculadas por peso, edad, experiencia, récord, disciplina y disponibilidad.', action: 'Abrir matchmaking', requiresEvent: true, path: (id) => id ? `/events/${id}/manage/matchmaking` : '/events/create?onboarding=1' },
+  { title: 'Revisar peleas', body: 'Tú decides qué propuesta aceptar, rechazar, modificar o fijar antes de hacerla oficial.', action: 'Revisar propuestas', requiresEvent: true, path: (id) => id ? `/events/${id}/manage/matchmaking` : '/events/create?onboarding=1' },
+  { title: 'Generar gráficos', body: 'Los combates oficiales generan borradores que puedes aprobar, publicar y descargar.', action: 'Abrir gráficos', requiresEvent: true, path: (id) => id ? `/events/${id}/manage/graphics` : '/events/create?onboarding=1' },
+  { title: 'Mostrar peleas en pantalla', body: 'Publica un gráfico y abre el modo pantalla directamente dentro de Strikers Match.', action: 'Configurar pantalla', requiresEvent: true, path: (id) => id ? `/events/${id}/manage/graphics` : '/events/create?onboarding=1' },
 ];
 
 function setOnboardingActive(active: boolean) {
@@ -71,8 +72,9 @@ export function GuidedOnboardingHelp() {
 
       const { data: ownedEvents, error: ownedEventsError } = await supabase
         .from('events')
-        .select('id')
+        .select('id, event_name')
         .eq('promoter_id', nextProfile.id)
+        .order('created_at', { ascending: false })
         .limit(1);
       if (cancelled) return;
 
@@ -99,10 +101,24 @@ export function GuidedOnboardingHelp() {
         return;
       }
 
+      const latestOwnedEvent = ownedEvents?.[0] ?? null;
+      let guidedEvent = latestOwnedEvent;
+      if (nextProfile.onboarding_event_id && nextProfile.onboarding_event_id !== latestOwnedEvent?.id) {
+        const { data: savedEvent } = await supabase
+          .from('events')
+          .select('id, event_name')
+          .eq('id', nextProfile.onboarding_event_id)
+          .eq('promoter_id', nextProfile.id)
+          .maybeSingle();
+        if (cancelled) return;
+        if (savedEvent) guidedEvent = savedEvent;
+      }
+
       const savedStep = validStep(nextProfile.onboarding_step) ? nextProfile.onboarding_step : 1;
       setProfile(nextProfile);
       setStep(savedStep);
-      setEventId(nextProfile.onboarding_event_id ?? null);
+      setEventId(guidedEvent?.id ?? null);
+      setEventName(guidedEvent?.event_name ?? null);
       setDismissed(Boolean(nextProfile.onboarding_dismissed));
 
       const requestedStep = Number(new URLSearchParams(window.location.search).get('guideStep'));
@@ -306,7 +322,7 @@ export function GuidedOnboardingHelp() {
             ) : panel === 'topic' && topic ? (
               <>
                 <PanelHeader eyebrow="Guía rápida" title={topic.title} onClose={() => setPanel('help')} />
-                <div className="p-5 sm:p-6"><p className="text-sm leading-relaxed text-zinc-600">{topic.body}</p><button type="button" onClick={() => go(topic.path(eventId))} className="mt-5 min-h-11 w-full bg-[#C0001E] px-4 text-xs font-bold uppercase tracking-widest text-white">{topic.action}</button></div>
+                <div className="p-5 sm:p-6"><p className="text-sm leading-relaxed text-zinc-600">{topic.body}</p>{topic.requiresEvent && !eventId && <p className="mt-4 border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-900">Primero necesitas crear tu evento. Al terminar, te llevaremos al siguiente paso.</p>}<button type="button" onClick={() => go(topic.path(eventId))} className="mt-5 min-h-11 w-full bg-[#C0001E] px-4 text-xs font-bold uppercase tracking-widest text-white">{topic.requiresEvent && !eventId ? 'Crear mi primer evento' : topic.action}</button></div>
               </>
             ) : (
               <WizardStep step={step} eventId={eventId} eventName={eventName} participantReady={participantReady} busy={busy} copied={copied} error={error} onDismiss={dismiss} onGo={go} onShare={shareRegistration} onMatchmaking={openMatchmaking} onGraphics={openGraphics} onDisplay={openDisplay} onClose={closePanel} />
