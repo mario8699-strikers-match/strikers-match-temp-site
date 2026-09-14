@@ -221,6 +221,16 @@ export default function EventGraphicsPage() {
       </div>
     </section>
 
+    <section className="border border-zinc-200 p-4 sm:p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-xl font-black uppercase">Llaves para jueces y réferis</h2>
+          <p className="mt-1 max-w-2xl text-sm text-zinc-500">Generadas automáticamente con los combates oficiales, agrupadas por división y listas para consultar en pantalla, imprimir o guardar como PDF.</p>
+        </div>
+        <Link href={`/events/${eventId}/manage/print?view=officials`} className="flex min-h-11 shrink-0 items-center justify-center bg-zinc-950 px-5 text-center text-xs font-bold uppercase text-white">Abrir llaves oficiales</Link>
+      </div>
+    </section>
+
     <section><div className="flex items-baseline justify-between"><h2 className="text-2xl font-black uppercase">Combates</h2><span className="text-sm text-zinc-500">{graphics.length} gráficos</span></div><div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">{graphics.length === 0 ? <p className="border border-dashed border-zinc-300 p-10 text-center text-sm text-zinc-500 lg:col-span-2">Aprueba un combate para generar su primer gráfico.</p> : graphics.map((graphic) => <article key={graphic.id} className="border border-zinc-200 bg-white p-4"><BoutGraphicPreview payload={graphic.payload} /><div className="mt-3 flex flex-wrap items-center justify-between gap-2"><div><p className="text-sm font-black uppercase">Combate {graphic.payload.bout.number ?? 'sin número'}</p><p className="text-xs text-zinc-500">{graphic.status} · plantilla v{graphic.template_version}</p></div><div className="flex flex-wrap gap-2">{graphic.status === 'draft' || graphic.status === 'stale' ? <SmallButton label="Aprobar" disabled={acting === graphic.id} onClick={() => review(graphic, 'approve')} /> : null}{graphic.status === 'approved' ? <SmallButton label="Publicar" primary disabled={acting === graphic.id} onClick={() => review(graphic, 'publish')} /> : null}{graphic.status === 'published' ? <SmallButton label="Mostrar" primary disabled={acting === 'display'} onClick={() => showGraphic(graphic.id, 'manual')} /> : null}<SmallButton label="SVG pantalla" disabled={false} onClick={() => downloadBoutGraphic(graphic.payload, 'screen')} /><SmallButton label="SVG social" disabled={false} onClick={() => downloadBoutGraphic(graphic.payload, 'social')} />{graphic.status !== 'draft' && <SmallButton label="Borrador" disabled={acting === graphic.id} onClick={() => review(graphic, 'return_to_draft')} />}</div></div></article>)}</div></section>
   </Frame>;
 }
