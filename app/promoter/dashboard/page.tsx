@@ -110,7 +110,7 @@ export default function PromoterDashboardPage() {
     setConfirmingReg(regId);
     const { data } = await confirmPayment(regId);
     if (data) {
-      setRegistrations((prev) => prev.map((r) => r.id === regId ? { ...r, payment_status: 'confirmed', confirmed_at: data.confirmed_at } : r));
+      setRegistrations((prev) => prev.map((r) => r.id === regId ? { ...r, ...data } : r));
     }
     setConfirmingReg(null);
   };
@@ -255,7 +255,7 @@ export default function PromoterDashboardPage() {
                         className={`text-xs font-bold tracking-wide uppercase px-3 py-1.5 border transition-colors ${
                           selectedRegEventId === ev.id ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-700 border-zinc-300 hover:bg-zinc-50'
                         }`}>
-                        Pagos
+                        Registro y pagos
                       </button>
                     </div>
                   </div>
@@ -389,7 +389,7 @@ export default function PromoterDashboardPage() {
                           {registrations.filter(r => ['confirmed', 'waived'].includes(r.payment_status)).length > 0 && (
                             <div>
                               <p className="text-xs font-bold uppercase tracking-widest text-emerald-700 mb-2">
-                                Listos ({registrations.filter(r => ['confirmed', 'waived'].includes(r.payment_status)).length})
+                                Pago confirmado ({registrations.filter(r => ['confirmed', 'waived'].includes(r.payment_status)).length})
                               </p>
                               <div className="space-y-2">
                                 {registrations.filter(r => ['confirmed', 'waived'].includes(r.payment_status)).map((reg) => (

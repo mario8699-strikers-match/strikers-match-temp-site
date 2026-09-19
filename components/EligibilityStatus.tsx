@@ -18,12 +18,20 @@ const REASON_LABELS: Record<string, string> = {
   application_not_approved: 'La solicitud no fue aprobada',
   application_pending: 'La solicitud está pendiente',
   payment_not_confirmed: 'El pago no está confirmado',
+  fighter_name_missing: 'Falta el nombre del peleador',
   discipline_missing: 'Falta la disciplina',
   weight_class_missing: 'Falta la categoría de peso',
+  actual_or_requested_weight_missing: 'Falta el peso real o solicitado',
   weight_not_confirmed: 'El peso no está confirmado',
   availability_not_confirmed: 'La disponibilidad no está confirmada',
+  experience_level_missing: 'Falta indicar amateur o profesional',
+  gender_division_missing: 'Falta la división de género',
+  ruleset_missing: 'Falta el reglamento',
+  acceptable_weight_range_invalid: 'El rango de peso aceptable no es válido',
+  outside_availability_window: 'La fecha del evento está fuera de la disponibilidad indicada',
   date_of_birth_missing: 'Falta la fecha de nacimiento',
   minor_consent_missing: 'Falta el consentimiento para menor de edad',
+  representative_confirmation_missing: 'Falta confirmar la autorización del peleador o representante',
 };
 
 interface EligibilityStatusProps {
@@ -56,4 +64,3 @@ export function EligibilityStatus({
     </div>
   );
 }
-
