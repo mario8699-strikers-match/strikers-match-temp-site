@@ -36,7 +36,13 @@ export async function registerForEvent(
     });
 
     if (error) return { data: null, error: error.message };
-    return { data, error: null };
+    const { data: current, error: refreshError } = await supabase
+      .from('event_registrations')
+      .select('*')
+      .eq('id', data.id)
+      .single();
+    if (refreshError) return { data, error: null };
+    return { data: current, error: null };
   } catch {
     return { data: null, error: 'Error al registrarse al evento.' };
   }
@@ -125,7 +131,7 @@ export async function getConfirmedFighterIds(
       .from('event_registrations')
       .select('fighter_id')
       .eq('event_id', eventId)
-      .eq('payment_status', 'confirmed');
+      .in('payment_status', ['confirmed', 'waived']);
 
     return (data ?? []).map((r) => r.fighter_id);
   } catch {

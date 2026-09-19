@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 
-const SECTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
+const SECTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] as const;
 
 export default function PrivacyPolicyPage() {
   const { t } = useTranslation('legal');
@@ -21,7 +21,7 @@ export default function PrivacyPolicyPage() {
           {t('legal.privacy.title')}
         </h1>
         <p className="text-sm text-zinc-400 mb-10">
-          {t('legal.lastUpdated')}: March 2026
+          {t('legal.lastUpdated')}: {t('legal.privacy.updated')}
         </p>
 
         <p className="text-sm text-zinc-700 leading-relaxed mb-8">

@@ -6,6 +6,7 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { ManualFighterManager } from '@/components/ManualFighterManager';
 import { EligibilityStatus } from '@/components/EligibilityStatus';
+import { OrganizerPaymentsPanel } from '@/components/OrganizerPaymentsPanel';
 import { authService } from '@/services/authService';
 import { eventService } from '@/services/eventService';
 import { getEventRegistrations, confirmPayment } from '@/services/registrationService';
@@ -154,6 +155,8 @@ export default function PromoterDashboardPage() {
           </svg>
           <span className="font-semibold">Publica y administra tus eventos desde este panel.</span>
         </div>
+
+        <OrganizerPaymentsPanel />
 
         {/* Stats row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">

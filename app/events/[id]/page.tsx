@@ -14,6 +14,11 @@ import { supabase } from '@/lib/supabaseClient';
 import { getRecommendedFighters } from '@/services/matchmakingService';
 import { findEmergencyReplacements, sendQuickRequest } from '@/services/emergencyMatchService';
 import { registerForEvent, submitPayment, getFighterRegistration, getEventRegistrations } from '@/services/registrationService';
+import {
+  getEventPaymentSettings,
+  getRegistrationPayment,
+  startRegistrationCheckout,
+} from '@/services/paymentService';
 import { requestService } from '@/services/requestService';
 import {
   proposeMatch,
@@ -22,7 +27,7 @@ import {
   type MatchWithContext,
 } from '@/services/matchService';
 import { reliabilityTier } from '@/services/reliabilityService';
-import type { Event, EventFormData, EventApplication, Profile, Fighter, MatchResult, EmergencyMatchResult, MatchRequest, EventRegistration } from '@/types';
+import type { Event, EventFormData, EventApplication, Profile, Fighter, MatchResult, EmergencyMatchResult, MatchRequest, EventRegistration, EventPaymentSettings, RegistrationPayment } from '@/types';
 import { useEventInitialData } from './EventInitialData';
 
 const WEIGHT_CLASSES = [
@@ -304,6 +309,8 @@ export default function EventDetailPage() {
 
   // Event registration (payment tracking)
   const [myRegistration, setMyRegistration] = useState<EventRegistration | null>(null);
+  const [paymentSettings, setPaymentSettings] = useState<EventPaymentSettings | null>(null);
+  const [registrationPayment, setRegistrationPayment] = useState<RegistrationPayment | null>(null);
   const [registering, setRegistering] = useState(false);
   const [submittingPayment, setSubmittingPayment] = useState(false);
   const [regError, setRegError] = useState<string | null>(null);
@@ -337,9 +344,11 @@ export default function EventDetailPage() {
     Promise.all([
       eventRequest,
       authService.getSession(),
-    ]).then(async ([{ data: ev, error: evErr }, { data: session }]) => {
+      getEventPaymentSettings(id),
+    ]).then(async ([{ data: ev, error: evErr }, { data: session }, paymentSettingsResult]) => {
       if (evErr || !ev) { setLoadError(t('events.errors.loadFailed')); setLoading(false); return; }
       setEvent(ev);
+      setPaymentSettings(paymentSettingsResult.data ?? null);
       setLoading(false);
 
       const p = session?.profile ?? null;
@@ -387,6 +396,10 @@ export default function EventDetailPage() {
           // Check event registration (payment tracking)
           const { data: reg } = await getFighterRegistration(id, f.id);
           setMyRegistration(reg ?? null);
+          if (reg) {
+            const { data: payment } = await getRegistrationPayment(reg.id);
+            setRegistrationPayment(payment ?? null);
+          }
         }
       }
 
@@ -414,6 +427,38 @@ export default function EventDetailPage() {
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  // A successful Checkout return is never treated as proof of payment. Poll the
+  // webhook-backed record briefly so the page updates when Stripe confirms it.
+  useEffect(() => {
+    if (!myRegistration || paymentSettings?.payment_method !== 'stripe') return;
+    const returnedFromCheckout = typeof window !== 'undefined'
+      && new URLSearchParams(window.location.search).get('payment') === 'success';
+    if (!returnedFromCheckout || myRegistration.payment_status === 'confirmed') return;
+
+    let active = true;
+    let attempts = 0;
+    const verify = async () => {
+      const [registrationResult, paymentResult] = await Promise.all([
+        getFighterRegistration(myRegistration.event_id, myRegistration.fighter_id!),
+        getRegistrationPayment(myRegistration.id),
+      ]);
+      if (!active) return;
+      if (registrationResult.data?.payment_status !== myRegistration.payment_status) {
+        setMyRegistration(registrationResult.data);
+      }
+      if (paymentResult.data?.payment_status !== registrationPayment?.payment_status) {
+        setRegistrationPayment(paymentResult.data);
+      }
+      attempts += 1;
+      if (registrationResult.data?.payment_status !== 'confirmed' && attempts < 8) {
+        window.setTimeout(verify, 1500);
+      }
+    };
+    void verify();
+    return () => { active = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myRegistration?.id, paymentSettings?.payment_method]);
 
   // ── Supabase Realtime: fight request status updates ──
   useEffect(() => {
@@ -539,6 +584,8 @@ export default function EventDetailPage() {
       purse_amount: event.purse_amount !== null ? String(event.purse_amount) : '',
       purse_enabled: event.purse_amount !== null,
       signup_fee: event.signup_fee !== null ? String(event.signup_fee) : '',
+      registration_type: paymentSettings?.registration_type ?? (event.signup_fee && event.signup_fee > 0 ? 'paid' : 'free'),
+      payment_method: paymentSettings?.payment_method ?? 'manual',
       notes: event.notes ?? '',
       status: event.status,
     });
@@ -584,8 +631,12 @@ export default function EventDetailPage() {
       flyerUrl = url;
     }
 
+    const eventFields: Partial<EventFormData> = { ...formData };
+    delete eventFields.registration_type;
+    delete eventFields.payment_method;
+    delete eventFields.signup_fee;
     const payload = {
-      ...formData,
+      ...eventFields,
       disciplines_needed: editDisciplines,
       weight_classes_needed: editWeightClasses,
       ...(flyerUrl !== undefined ? { flyer_url: flyerUrl } : {}),
@@ -594,7 +645,7 @@ export default function EventDetailPage() {
     const { data, error } = await eventService.update(id, payload);
     setSaving(false);
     if (error) {
-      setSaveError(t('events.errors.generic'));
+      setSaveError(error);
     } else if (data) {
       setEvent(data);
       setEditing(false);
@@ -680,6 +731,8 @@ export default function EventDetailPage() {
   const participatePath = `/events/${event.id}?action=participate`;
   const participateLoginHref = `/login?next=${encodeURIComponent(participatePath)}`;
   const participateRegisterHref = `/register?next=${encodeURIComponent(participatePath)}`;
+  const usesStripeRegistration = paymentSettings?.registration_type === 'paid'
+    && paymentSettings.payment_method === 'stripe';
 
   return (
     <EventManageFrame>
@@ -1075,16 +1128,28 @@ export default function EventDetailPage() {
             )}
 
             {/* ── Fighter: Event Registration & Payment ── */}
-            {profile?.role === 'fighter' && myFighter && event.status === 'published' && event.signup_fee && event.signup_fee > 0 && (
+            {profile?.role === 'fighter' && myFighter && event.status === 'published' && (paymentSettings || (event.signup_fee && event.signup_fee > 0)) && (
               <div className="border border-zinc-200 p-6 mt-6">
-                <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color: '#C0001E' }}>Registro y Pago del Evento</p>
+                <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color: '#C0001E' }}>
+                  {paymentSettings?.registration_type === 'free' ? 'Registro del Evento' : 'Registro y Pago del Evento'}
+                </p>
+
+                {usesStripeRegistration && (
+                  <div className="mb-4 border border-zinc-100 bg-zinc-50 p-3 text-xs text-zinc-600">
+                    El cobro lo realiza <span className="font-bold text-zinc-900">{event.profiles?.full_name ?? 'el organizador del evento'}</span> mediante su cuenta conectada de Stripe. Strikers Match proporciona la tecnología de registro.
+                  </div>
+                )}
 
                 {!myRegistration ? (
                   /* Step 1: Register */
                   <div>
                     <p className="text-sm text-zinc-600 mb-3">
-                      Este evento requiere un pago de inscripción de <span className="font-bold text-zinc-900">${event.signup_fee} MXN</span>.
-                      Regístrate para recibir las instrucciones de pago.
+                      {paymentSettings?.registration_type === 'free' ? (
+                        <>La inscripción a este evento es gratuita. Regístrate para que el organizador revise tu participación.</>
+                      ) : (
+                        <>Este evento requiere un pago de inscripción de <span className="font-bold text-zinc-900">${event.signup_fee} MXN</span>.
+                          {usesStripeRegistration ? ' Regístrate para continuar al pago seguro.' : ' Regístrate para recibir las instrucciones de pago.'}</>
+                      )}
                     </p>
                     {regError && <p className="text-xs text-red-600 mb-2">{regError}</p>}
                     <button
@@ -1105,16 +1170,39 @@ export default function EventDetailPage() {
                       {registering ? 'Registrando...' : 'Registrarme al Evento'}
                     </button>
                   </div>
+                ) : paymentSettings?.registration_type === 'free' || myRegistration.payment_status === 'waived' ? (
+                  <div className="flex items-center gap-3 border border-emerald-200 bg-emerald-50 p-4">
+                    <span className="text-xs font-bold text-emerald-700">REGISTRO SIN COSTO</span>
+                    <p className="text-sm text-emerald-800">No se requiere pago. El organizador revisará tu participación para el matchmaking.</p>
+                  </div>
+                ) : usesStripeRegistration && ['refunded', 'partially_refunded', 'disputed'].includes(registrationPayment?.payment_status ?? '') ? (
+                  <div className="border border-amber-200 bg-amber-50 p-4">
+                    <p className="text-sm font-bold text-amber-900">Este pago requiere revisión del organizador.</p>
+                    <p className="mt-1 text-xs text-amber-800">Estado: {registrationPayment?.payment_status === 'disputed' ? 'en disputa' : 'reembolsado'}.</p>
+                  </div>
+                ) : usesStripeRegistration && registrationPayment?.payment_status === 'processing' ? (
+                  <div className="flex items-center gap-3 border border-blue-200 bg-blue-50 p-4">
+                    <span className="text-xs font-bold text-blue-700">VERIFICANDO PAGO</span>
+                    <p className="text-sm text-blue-800">Stripe está procesando el pago. Esta página se actualizará al confirmarse.</p>
+                  </div>
                 ) : myRegistration.payment_status === 'pending' ? (
-                  /* Step 2: Show payment instructions + "I've Paid" button */
+                  /* Step 2: Stripe Checkout or legacy manual payment */
                   <div>
-                    <div className="bg-zinc-50 border border-zinc-100 p-4 mb-4">
-                      <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Instrucciones de Pago</p>
-                      <p className="text-sm text-zinc-700 mb-2">
-                        Realiza el pago de <span className="font-bold">${event.signup_fee} MXN</span> al promotor del evento.
-                      </p>
-                      <p className="text-sm text-zinc-500">Contacta al promotor para obtener los datos de pago (transferencia, efectivo, etc.)</p>
-                    </div>
+                    {usesStripeRegistration ? (
+                      <div className="mb-4 border border-zinc-100 bg-zinc-50 p-4">
+                        <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Pago seguro con Stripe</p>
+                        <p className="text-sm text-zinc-700">Paga <span className="font-bold">${event.signup_fee} MXN</span>. Tu lugar se habilita para revisión y matchmaking únicamente después de que Stripe confirme el pago.</p>
+                        {registrationPayment?.payment_status === 'failed' && (
+                          <p className="mt-2 text-xs text-red-700">El intento anterior no se completó. Puedes volver a intentarlo.</p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="bg-zinc-50 border border-zinc-100 p-4 mb-4">
+                        <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Instrucciones de Pago</p>
+                        <p className="text-sm text-zinc-700 mb-2">Realiza el pago de <span className="font-bold">${event.signup_fee} MXN</span> al promotor del evento.</p>
+                        <p className="text-sm text-zinc-500">Contacta al promotor para obtener los datos de pago (transferencia, efectivo, etc.)</p>
+                      </div>
+                    )}
                     <div className="flex items-center gap-3">
                       <span className="text-xs font-bold px-2 py-1 bg-amber-50 text-amber-700">PENDIENTE</span>
                       {regError && <p className="text-xs text-red-600">{regError}</p>}
@@ -1123,9 +1211,15 @@ export default function EventDetailPage() {
                       onClick={async () => {
                         setSubmittingPayment(true);
                         setRegError(null);
-                        const { data, error } = await submitPayment(myRegistration.id);
-                        if (error) setRegError(error);
-                        else setMyRegistration(data);
+                        if (usesStripeRegistration) {
+                          const { data: checkoutUrl, error } = await startRegistrationCheckout(myRegistration.id);
+                          if (error) setRegError(error);
+                          else if (checkoutUrl) window.location.href = checkoutUrl;
+                        } else {
+                          const { data, error } = await submitPayment(myRegistration.id);
+                          if (error) setRegError(error);
+                          else setMyRegistration(data);
+                        }
                         setSubmittingPayment(false);
                       }}
                       disabled={submittingPayment}
@@ -1134,7 +1228,7 @@ export default function EventDetailPage() {
                       onMouseOver={(e) => (e.currentTarget.style.background = '#333')}
                       onMouseOut={(e) => (e.currentTarget.style.background = '#0A0A0A')}
                     >
-                      {submittingPayment ? 'Enviando...' : 'Ya Pagué'}
+                      {submittingPayment ? 'Abriendo...' : usesStripeRegistration ? 'Continuar al pago seguro' : 'Ya Pagué'}
                     </button>
                   </div>
                 ) : myRegistration.payment_status === 'submitted' ? (
@@ -1153,7 +1247,7 @@ export default function EventDetailPage() {
                   <div>
                     <div className="flex items-center gap-3">
                       <span className="text-xs font-bold px-2 py-1 bg-emerald-50 text-emerald-700">PAGO CONFIRMADO</span>
-                      <p className="text-sm text-zinc-600">Tu pago ha sido verificado. Estás registrado oficialmente.</p>
+                      <p className="text-sm text-zinc-600">Tu pago ha sido verificado por el sistema.</p>
                     </div>
                     <p className="text-xs text-zinc-400 mt-2">
                       Confirmado: {new Date(myRegistration.confirmed_at!).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
@@ -1582,10 +1676,11 @@ export default function EventDetailPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-zinc-700 mb-1">Cuota de inscripción <span className="text-zinc-400 font-normal">(opcional)</span></label>
-                <input type="number" min="0" value={formData!.signup_fee} onChange={(e) => set('signup_fee', e.target.value)}
-                  placeholder="Ej. 500 (MXN)"
-                  className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 text-sm" />
-                <p className="text-xs text-zinc-400 mt-1">Dejar en blanco si es gratuito</p>
+                <input type="text" value={formData!.signup_fee ? `$${formData!.signup_fee} MXN` : 'Gratuito'} disabled
+                  className="w-full border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-500" />
+                <a href={`/events/${event.id}/manage/settings`} className="mt-1 inline-block text-xs font-semibold text-[#C0001E]">
+                  Cambiar registro y cobro en Configuración
+                </a>
               </div>
             </div>
 

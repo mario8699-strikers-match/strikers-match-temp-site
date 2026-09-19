@@ -11,6 +11,11 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2026-03-25.dahlia',
 });
 
+export const STRIPE_CONNECT_COUNTRY = 'MX';
+// Fee support remains wired into Checkout, refunds, and reporting. It is zero
+// until a platform-fee amount is explicitly approved.
+export const EVENT_REGISTRATION_PLATFORM_FEE_CENTS = 0;
+
 export type PlanKey = 'basic' | 'pro' | 'per_request';
 
 export interface PlanConfig {

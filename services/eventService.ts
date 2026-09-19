@@ -72,14 +72,45 @@ export const eventService = {
         weight_classes_needed: formData.weight_classes_needed ?? [],
         disciplines_needed: formData.disciplines_needed ?? [],
         purse_amount: formData.purse_enabled && formData.purse_amount ? parseFloat(formData.purse_amount) : null,
-        signup_fee: formData.signup_fee ? parseFloat(formData.signup_fee) : null,
+        signup_fee: null,
         notes: formData.notes || null,
-        status: formData.status,
+        // Payment settings must exist before a paid event can be published.
+        status: 'draft' as const,
         flyer_url: flyerUrl ?? null,
       };
       const { data, error } = await supabase.from('events').insert(payload).select().single();
       if (error) return { data: null, error: error.message };
-      return { data, error: null };
+
+      const feeCents = formData.registration_type === 'paid'
+        ? Math.round(Number(formData.signup_fee || 0) * 100)
+        : 0;
+      const { error: paymentError } = await supabase.rpc('configure_event_payment_settings', {
+        target_event_id: data.id,
+        next_registration_type: formData.registration_type,
+        next_payment_method: formData.payment_method,
+        next_fee_cents: feeCents,
+      });
+      if (paymentError) {
+        await supabase.from('events').delete().eq('id', data.id);
+        return { data: null, error: paymentError.message };
+      }
+
+      if (formData.status === 'draft') {
+        const { data: configured } = await supabase.from('events').select('*').eq('id', data.id).single();
+        return { data: configured ?? data, error: null };
+      }
+
+      const { data: published, error: statusError } = await supabase
+        .from('events')
+        .update({ status: formData.status })
+        .eq('id', data.id)
+        .select()
+        .single();
+      if (statusError) {
+        await supabase.from('events').delete().eq('id', data.id);
+        return { data: null, error: statusError.message };
+      }
+      return { data: published, error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }
@@ -100,10 +131,34 @@ export const eventService = {
       if (formData.weight_classes_needed !== undefined) payload.weight_classes_needed = formData.weight_classes_needed;
       if (formData.disciplines_needed !== undefined) payload.disciplines_needed = formData.disciplines_needed;
       if (formData.purse_amount !== undefined) payload.purse_amount = (formData.purse_enabled && formData.purse_amount) ? parseFloat(formData.purse_amount) : null;
-      if (formData.signup_fee !== undefined) payload.signup_fee = formData.signup_fee ? parseFloat(formData.signup_fee) : null;
       if (formData.notes !== undefined) payload.notes = formData.notes || null;
       if (formData.status !== undefined) payload.status = formData.status;
       if (formData.flyer_url !== undefined) payload.flyer_url = formData.flyer_url ?? null;
+
+      if (formData.registration_type !== undefined) {
+        // Unpublishing must remain possible even if a formerly connected Stripe
+        // account has since been restricted. Do that before re-validating payment settings.
+        if (formData.status !== undefined && formData.status !== 'published') {
+          const { error: unpublishError } = await supabase
+            .from('events')
+            .update({ status: formData.status })
+            .eq('id', id);
+          if (unpublishError) return { data: null, error: unpublishError.message };
+          delete payload.status;
+        }
+        const feeCents = formData.registration_type === 'paid'
+          ? Math.round(Number(formData.signup_fee || 0) * 100)
+          : 0;
+        const { error: paymentError } = await supabase.rpc('configure_event_payment_settings', {
+          target_event_id: id,
+          next_registration_type: formData.registration_type,
+          next_payment_method: formData.payment_method ?? 'manual',
+          next_fee_cents: feeCents,
+        });
+        if (paymentError) return { data: null, error: paymentError.message };
+      } else if (formData.signup_fee !== undefined) {
+        payload.signup_fee = formData.signup_fee ? parseFloat(formData.signup_fee) : null;
+      }
 
       const { data, error } = await supabase.from('events').update(payload).eq('id', id).select().single();
       if (error) return { data: null, error: error.message };

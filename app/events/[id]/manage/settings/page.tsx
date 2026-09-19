@@ -5,6 +5,8 @@ import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EventManageFrame } from '@/components/EventManageFrame';
+import { EventPaymentSettingsEditor } from '@/components/EventPaymentSettingsEditor';
+import { OrganizerPaymentsPanel } from '@/components/OrganizerPaymentsPanel';
 import { authService } from '@/services/authService';
 import {
   addEventStaffByEmail,
@@ -233,6 +235,10 @@ export default function EventSettingsPage() {
 
       {error && <p className="border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p>}
       {message && <p className="border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p>}
+
+      <EventPaymentSettingsEditor eventId={eventId} eventStatus={event?.status ?? 'draft'} />
+
+      <OrganizerPaymentsPanel eventId={eventId} />
 
       <section className="border border-zinc-200 p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

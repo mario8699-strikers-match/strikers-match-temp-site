@@ -7,6 +7,7 @@ import { Navbar } from '@/components/Navbar';
 import { eventService } from '@/services/eventService';
 import { authService } from '@/services/authService';
 import { updateGuidedOnboarding } from '@/services/onboardingService';
+import { getConnectAccount, openConnectAccount, type ConnectAccountStatus } from '@/services/paymentService';
 import type { EventFormData, Profile } from '@/types';
 
 const WEIGHT_CLASSES = [
@@ -75,6 +76,7 @@ const DISCIPLINES = [
 ];
 
 const STATUSES: EventFormData['status'][] = ['draft', 'published', 'cancelled', 'completed'];
+const PAYMENT_SETUP_DRAFT_KEY = 'strikersmatch:event-payment-setup-draft';
 
 const EMPTY_FORM: EventFormData = {
   event_name: '',
@@ -88,6 +90,8 @@ const EMPTY_FORM: EventFormData = {
   purse_amount: '',
   purse_enabled: false,
   signup_fee: '',
+  registration_type: 'free',
+  payment_method: 'manual',
   notes: '',
   status: 'draft',
 };
@@ -102,9 +106,24 @@ export default function CreateEventPage() {
   const [loading, setLoading] = useState(false);
   const [flyerFile, setFlyerFile] = useState<File | null>(null);
   const [flyerPreview, setFlyerPreview] = useState<string | null>(null);
+  const [paymentAccount, setPaymentAccount] = useState<ConnectAccountStatus | null>(null);
+  const [connectingStripe, setConnectingStripe] = useState(false);
+  const [serverErrorActionUrl, setServerErrorActionUrl] = useState<string | null>(null);
 
   // Auth guard: must be promoter or manager
   useEffect(() => {
+    const returnedFromStripe = new URLSearchParams(window.location.search).has('stripe');
+    if (returnedFromStripe) {
+      try {
+        const saved = window.sessionStorage.getItem(PAYMENT_SETUP_DRAFT_KEY);
+        if (saved) {
+          const restored = { ...EMPTY_FORM, ...JSON.parse(saved) as EventFormData };
+          Promise.resolve().then(() => setFormData(restored));
+        }
+      } catch {
+        window.sessionStorage.removeItem(PAYMENT_SETUP_DRAFT_KEY);
+      }
+    }
     authService.getSession().then(({ data }) => {
       const p = data?.profile ?? null;
       setProfile(p);
@@ -112,6 +131,8 @@ export default function CreateEventPage() {
         window.location.href = '/login';
       } else if (p.role !== 'promoter' && p.role !== 'manager' && p.role !== 'admin') {
         window.location.href = '/events';
+      } else {
+        void getConnectAccount(returnedFromStripe).then(({ data }) => setPaymentAccount(data ?? null));
       }
     });
   }, []);
@@ -134,8 +155,35 @@ export default function CreateEventPage() {
   const validate = (): boolean => {
     const newErrors: typeof errors = {};
     if (!formData.event_name.trim()) newErrors.event_name = t('events.errors.nameRequired');
+    const feeCents = Math.round(Number(formData.signup_fee || 0) * 100);
+    if (formData.registration_type === 'paid' && feeCents <= 0) {
+      newErrors.signup_fee = 'Ingresa una cuota de inscripción válida.';
+    }
+    if (
+      formData.status === 'published' && formData.registration_type === 'paid'
+      && formData.payment_method === 'stripe' && !paymentAccount?.onboarding_complete
+    ) {
+      newErrors.payment_method = 'Completa la conexión con Stripe antes de publicar.';
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handleConnectStripe = async () => {
+    setConnectingStripe(true);
+    setServerError(null);
+    setServerErrorActionUrl(null);
+    window.sessionStorage.setItem(PAYMENT_SETUP_DRAFT_KEY, JSON.stringify(formData));
+    const result = await openConnectAccount(
+      paymentAccount?.onboarding_complete ? 'manage' : 'onboard',
+      '/events/create',
+    );
+    if (result.data) window.location.href = result.data;
+    else {
+      setServerError(result.error);
+      setServerErrorActionUrl(result.actionUrl ?? null);
+      setConnectingStripe(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -160,8 +208,9 @@ export default function CreateEventPage() {
     const { data, error } = await eventService.create(promoterId, formData, flyerUrl);
     setLoading(false);
     if (error) {
-      setServerError(t('events.errors.generic'));
+      setServerError(error);
     } else if (data) {
+      window.sessionStorage.removeItem(PAYMENT_SETUP_DRAFT_KEY);
       const guided = profile?.role !== 'admin'
         && !profile?.onboarding_completed
         && !profile?.onboarding_dismissed;
@@ -222,7 +271,12 @@ export default function CreateEventPage() {
         <form onSubmit={handleSubmit} noValidate className="space-y-6">
           {serverError && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
-              {serverError}
+              <p>{serverError}</p>
+              {serverErrorActionUrl && (
+                <a href={serverErrorActionUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block font-bold underline">
+                  Activar Stripe Connect
+                </a>
+              )}
             </div>
           )}
 
@@ -498,49 +552,86 @@ export default function CreateEventPage() {
             )}
           </div>
 
-          {/* Purse + Signup Fee row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              {/* Purse with toggle */}
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-sm font-medium text-zinc-700">{t('events.fields.purse_amount')}</label>
-                <button
-                  type="button"
-                  onClick={() => setFormData((prev) => ({ ...prev, purse_enabled: !prev.purse_enabled, purse_amount: '' }))}
-                  className={`relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
-                    formData.purse_enabled ? 'bg-[#C0001E]' : 'bg-zinc-300'
-                  }`}
-                  aria-label="Toggle purse"
-                >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${formData.purse_enabled ? 'translate-x-4' : 'translate-x-0'}`} />
-                </button>
-              </div>
-              {formData.purse_enabled && (
-                <input
-                  type="number"
-                  min="0"
-                  value={formData.purse_amount}
-                  onChange={(e) => set('purse_amount', e.target.value)}
-                  placeholder={t('events.fields.purse_amountPlaceholder')}
-                  className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 text-sm"
-                />
-              )}
-              {!formData.purse_enabled && (
-                <p className="text-xs text-zinc-400">Sin bolsa (desactivado)</p>
-              )}
+          {/* Purse */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-sm font-medium text-zinc-700">{t('events.fields.purse_amount')}</label>
+              <button
+                type="button"
+                onClick={() => setFormData((prev) => ({ ...prev, purse_enabled: !prev.purse_enabled, purse_amount: '' }))}
+                className={`relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${formData.purse_enabled ? 'bg-[#C0001E]' : 'bg-zinc-300'}`}
+                aria-label="Toggle purse"
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${formData.purse_enabled ? 'translate-x-4' : 'translate-x-0'}`} />
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">Cuota de inscripción <span className="text-zinc-400 font-normal">(opcional)</span></label>
+            {formData.purse_enabled ? (
               <input
                 type="number"
                 min="0"
-                value={formData.signup_fee}
-                onChange={(e) => set('signup_fee', e.target.value)}
-                placeholder="Ej. 500 (MXN)"
+                value={formData.purse_amount}
+                onChange={(e) => set('purse_amount', e.target.value)}
+                placeholder={t('events.fields.purse_amountPlaceholder')}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 text-sm"
               />
-              <p className="text-xs text-zinc-400 mt-1">Dejar en blanco si la participación es gratuita</p>
+            ) : <p className="text-xs text-zinc-400">Sin bolsa (desactivado)</p>}
+          </div>
+
+          {/* Registration and payment */}
+          <div className="border border-zinc-200 p-4 sm:p-5">
+            <p className="text-xs font-bold uppercase tracking-widest text-[#C0001E]">Registro y cobro</p>
+            <p className="mt-1 text-sm text-zinc-500">El organizador cobra directamente las inscripciones del evento.</p>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <button type="button" onClick={() => setFormData((prev) => ({ ...prev, registration_type: 'free', payment_method: 'manual', signup_fee: '' }))}
+                className={`border p-3 text-left ${formData.registration_type === 'free' ? 'border-[#C0001E] bg-red-50' : 'border-zinc-300'}`}>
+                <span className="block text-sm font-black uppercase">Gratuito</span>
+                <span className="mt-1 block text-xs text-zinc-500">Sin pago de inscripción.</span>
+              </button>
+              <button type="button" onClick={() => setFormData((prev) => ({ ...prev, registration_type: 'paid' }))}
+                className={`border p-3 text-left ${formData.registration_type === 'paid' ? 'border-[#C0001E] bg-red-50' : 'border-zinc-300'}`}>
+                <span className="block text-sm font-black uppercase">Con cuota</span>
+                <span className="mt-1 block text-xs text-zinc-500">Pago requerido para matchmaking.</span>
+              </button>
             </div>
+            {formData.registration_type === 'paid' && (
+              <div className="mt-4 space-y-4">
+                <label className="block">
+                  <span className="mb-1 block text-sm font-medium text-zinc-700">Cuota de inscripción (MXN)</span>
+                  <input type="text" inputMode="decimal" autoComplete="off"
+                    value={formData.signup_fee}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(',', '.');
+                      if (/^\d*(?:\.\d{0,2})?$/.test(value)) set('signup_fee', value);
+                    }}
+                    placeholder="Ej. 500"
+                    className={`w-full border px-3 py-2 text-sm text-zinc-900 outline-none focus:ring-1 focus:ring-zinc-900 ${errors.signup_fee ? 'border-red-400' : 'border-zinc-300'}`} />
+                  {errors.signup_fee && <span className="mt-1 block text-xs text-red-600">{errors.signup_fee}</span>}
+                </label>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <button type="button" onClick={() => setFormData((prev) => ({ ...prev, payment_method: 'stripe' }))}
+                    className={`border p-3 text-left ${formData.payment_method === 'stripe' ? 'border-[#C0001E] bg-red-50' : 'border-zinc-300'}`}>
+                    <span className="block text-sm font-black uppercase">Stripe</span>
+                    <span className="mt-1 block text-xs text-zinc-500">Pago en línea verificado automáticamente.</span>
+                  </button>
+                  <button type="button" onClick={() => setFormData((prev) => ({ ...prev, payment_method: 'manual' }))}
+                    className={`border p-3 text-left ${formData.payment_method === 'manual' ? 'border-[#C0001E] bg-red-50' : 'border-zinc-300'}`}>
+                    <span className="block text-sm font-black uppercase">Manual</span>
+                    <span className="mt-1 block text-xs text-zinc-500">Efectivo o transferencia confirmada por ti.</span>
+                  </button>
+                </div>
+                {formData.payment_method === 'stripe' && (
+                  <div className={`border p-3 ${paymentAccount?.onboarding_complete ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
+                    <p className="text-sm font-bold text-zinc-900">{paymentAccount?.onboarding_complete ? 'Stripe está listo para cobrar.' : 'Conecta Stripe antes de publicar este evento.'}</p>
+                    <p className="mt-1 text-xs text-zinc-600">Actualmente Strikers Match no aplica una comisión de plataforma a estas inscripciones.</p>
+                    <button type="button" onClick={() => void handleConnectStripe()} disabled={connectingStripe}
+                      className="mt-3 min-h-11 border border-zinc-300 bg-white px-4 py-2 text-xs font-bold uppercase text-zinc-800 disabled:opacity-50">
+                      {connectingStripe ? 'Abriendo…' : paymentAccount?.onboarding_complete ? 'Administrar Stripe' : 'Conectar Stripe'}
+                    </button>
+                    {errors.payment_method && <p className="mt-2 text-xs text-red-700">{errors.payment_method}</p>}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Disciplines needed */}

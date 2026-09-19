@@ -5,6 +5,7 @@
     "lastUpdated": "Ultima actualizacion",
     "privacy": {
       "title": "Aviso de Privacidad",
+      "updated": "septiembre de 2026",
       "intro": "Strikers Match (\"nosotros\", \"nuestro\") opera la plataforma Strikers Match. Este Aviso de Privacidad explica como recopilamos, usamos y protegemos tu informacion personal.",
       "section1Title": "1. Informacion que Recopilamos",
       "section1Text": "Recopilamos la informacion que proporcionas durante el registro, incluyendo tu nombre completo, correo electronico, numero de telefono, fecha de nacimiento, ciudad, rol (peleador, espectador, promotor, representante o patrocinador) y gimnasio. Los peleadores pueden proporcionar atributos fisicos como categoria de peso, disciplina, record de peleas y fotos de perfil. Los promotores pueden proporcionar detalles de eventos incluyendo nombres, fechas, sedes y volantes.",
@@ -25,10 +26,13 @@
       "section9Title": "9. Contacto",
       "section9Text": "Para preguntas sobre este Aviso de Privacidad, contactanos a info@strikersmatch.com.",
       "section10Title": "10. Cookies y Almacenamiento Local",
-      "section10Text": "Usamos cookies y almacenamiento local del navegador para recordar tu preferencia de idioma y mantener tu sesion activa mientras estas conectado. No usamos cookies para publicidad ni rastreo de terceros. Al continuar usando la plataforma, consientes el uso de estas cookies esenciales."
+      "section10Text": "Usamos cookies y almacenamiento local del navegador para recordar tu preferencia de idioma y mantener tu sesion activa mientras estas conectado. No usamos cookies para publicidad ni rastreo de terceros. Al continuar usando la plataforma, consientes el uso de estas cookies esenciales.",
+      "section11Title": "11. Procesamiento de Pagos",
+      "section11Text": "Para inscripciones pagadas, compartimos con Stripe la informacion necesaria para procesar el pago y operar la cuenta conectada del organizador, como correo electronico, identificadores de registro, importe y datos del evento. Strikers Match no almacena numeros completos de tarjeta, credenciales bancarias ni contraseñas de Stripe. Stripe procesa esa informacion conforme a sus propios terminos y aviso de privacidad."
     },
     "terms": {
       "title": "Terminos y Condiciones",
+      "updated": "septiembre de 2026",
       "intro": "Al acceder o usar la plataforma Strikers Match, aceptas estar sujeto a estos Terminos y Condiciones. Si no estas de acuerdo, no uses la plataforma.",
       "section1Title": "1. Descripcion de la Plataforma",
       "section1Text": "Strikers Match es una plataforma que conecta peleadores, espectadores, promotores, representantes y patrocinadores para eventos de deportes de combate en Mexico. La plataforma proporciona herramientas para gestion de eventos, emparejamiento de peleadores, registro a eventos y comunicacion dentro de la plataforma.",
@@ -57,7 +61,9 @@
       "section11Title": "11. Cambios a Estos Terminos",
       "section11Text": "Podemos modificar estos Terminos en cualquier momento. El uso continuado de la plataforma despues de los cambios constituye la aceptacion de los Terminos actualizados.",
       "section12Title": "12. Contacto",
-      "section12Text": "Para preguntas sobre estos Terminos, contactanos a info@strikersmatch.com."
+      "section12Text": "Para preguntas sobre estos Terminos, contactanos a info@strikersmatch.com.",
+      "section13Title": "13. Pagos de Inscripcion a Eventos",
+      "section13Text": "Cuando un organizador cobra una inscripcion mediante Stripe, el organizador del evento es el vendedor y responsable del cobro, del evento, de sus politicas de cancelacion, de los reembolsos y de las disputas relacionadas. El pago se procesa directamente en la cuenta Stripe conectada del organizador. Strikers Match proporciona la tecnologia de registro, no organiza el evento ni recibe el ingreso del organizador como vendedor. Actualmente Strikers Match no aplica una comision de plataforma. Cualquier comision futura se informaria antes del pago. Stripe puede aplicar sus propias comisiones de procesamiento. Los reembolsos dependen de la politica del organizador y se procesan desde su cuenta conectada."
     },
     "register": {
       "acceptTerms": "Acepto los",

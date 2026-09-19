@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { formatCalendarDate } from '@/lib/calendarDate';
 import { authService } from '@/services/authService';
 import { fighterService } from '@/services/fighterService';
 import {
@@ -257,7 +258,7 @@ function eventLine(match: MatchWithContext): string {
   const ev = match.events;
   if (!ev) return '—';
   const parts = [ev.event_name];
-  if (ev.event_date) parts.push(new Date(ev.event_date).toLocaleDateString());
+  if (ev.event_date) parts.push(formatCalendarDate(ev.event_date));
   if (ev.city) parts.push(ev.city);
   return parts.join(' · ');
 }

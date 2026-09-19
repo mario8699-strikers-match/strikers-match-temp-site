@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { adminService, type AdminStats } from '@/services/adminService';
+import { OrganizerPaymentsPanel } from '@/components/OrganizerPaymentsPanel';
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
@@ -54,6 +55,8 @@ export default function AdminDashboardPage() {
       <div className="mb-8">
         <h1 className="text-xl font-bold text-zinc-900">{t('admin.dashboard.title')}</h1>
       </div>
+
+      <OrganizerPaymentsPanel />
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard label={t('admin.dashboard.totalUsers')} value={val(stats?.totalUsers)} />

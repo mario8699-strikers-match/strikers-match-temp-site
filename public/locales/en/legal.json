@@ -5,6 +5,7 @@
     "lastUpdated": "Last updated",
     "privacy": {
       "title": "Privacy Policy",
+      "updated": "September 2026",
       "intro": "Strikers Match (\"we\", \"us\", \"our\") operates the Strikers Match platform. This Privacy Policy explains how we collect, use, and protect your personal information.",
       "section1Title": "1. Information We Collect",
       "section1Text": "We collect information you provide during registration, including your full name, email address, phone number, date of birth, city, role (fighter, spectator, promoter, manager, or sponsor), and gym affiliation. Fighters may also provide physical attributes such as weight class, discipline, fight record, and profile photos. Promoters may provide event details including event names, dates, venues, and flyers.",
@@ -25,10 +26,13 @@
       "section9Title": "9. Contact",
       "section9Text": "For questions about this Privacy Policy, please contact us at info@strikersmatch.com.",
       "section10Title": "10. Cookies and Local Storage",
-      "section10Text": "We use cookies and browser local storage to remember your language preference and to keep your session active while you are logged in. We do not use cookies for advertising or third-party tracking. By continuing to use the platform, you consent to our use of these essential cookies."
+      "section10Text": "We use cookies and browser local storage to remember your language preference and to keep your session active while you are logged in. We do not use cookies for advertising or third-party tracking. By continuing to use the platform, you consent to our use of these essential cookies.",
+      "section11Title": "11. Payment Processing",
+      "section11Text": "For paid registrations, we share with Stripe the information needed to process the payment and operate the organizer's connected account, such as email address, registration identifiers, amount, and event details. Strikers Match does not store complete card numbers, bank credentials, or Stripe passwords. Stripe processes that information under its own terms and privacy notice."
     },
     "terms": {
       "title": "Terms & Conditions",
+      "updated": "September 2026",
       "intro": "By accessing or using the Strikers Match platform, you agree to be bound by these Terms and Conditions. If you do not agree, do not use the platform.",
       "section1Title": "1. Platform Description",
       "section1Text": "Strikers Match is a platform that connects fighters, spectators, promoters, managers, and sponsors for combat sports events in Mexico. The platform provides tools for event management, fighter matchmaking, event registration, and in-platform communication.",
@@ -57,7 +61,9 @@
       "section11Title": "11. Changes to These Terms",
       "section11Text": "We may modify these Terms at any time. Continued use of the platform after changes constitutes acceptance of the updated Terms.",
       "section12Title": "12. Contact",
-      "section12Text": "For questions about these Terms, please contact us at info@strikersmatch.com."
+      "section12Text": "For questions about these Terms, please contact us at info@strikersmatch.com.",
+      "section13Title": "13. Event Registration Payments",
+      "section13Text": "When an organizer charges an event registration through Stripe, the event organizer is the seller and is responsible for the charge, the event, cancellation policies, refunds, and related disputes. Payment is processed directly in the organizer's connected Stripe account. Strikers Match provides registration technology; it does not organize the event or receive the organizer's proceeds as the seller. Strikers Match currently applies no platform fee. Any future fee would be disclosed before payment. Stripe may charge separate processing fees. Refunds are subject to the organizer's policy and are processed from the organizer's connected account."
     },
     "register": {
       "acceptTerms": "I accept the",

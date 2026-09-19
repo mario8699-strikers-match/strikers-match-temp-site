@@ -188,6 +188,72 @@ export interface Event {
   flyer_url: string | null;
   status: 'draft' | 'published' | 'cancelled' | 'completed';
   created_at: string;
+  profiles?: { full_name: string | null } | null;
+}
+
+export type RegistrationType = 'free' | 'paid';
+export type EventPaymentMethod = 'stripe' | 'manual';
+export type PlatformFeeType = 'fixed' | 'percentage' | 'none';
+
+export interface OrganizerPaymentAccount {
+  id: string;
+  user_id: string;
+  provider: 'stripe';
+  stripe_account_id: string;
+  charges_enabled: boolean;
+  payouts_enabled: boolean;
+  details_submitted: boolean;
+  onboarding_complete: boolean;
+  account_display_name: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EventPaymentSettings {
+  id: string;
+  event_id: string;
+  registration_type: RegistrationType;
+  payment_method: EventPaymentMethod;
+  registration_fee_cents: number;
+  currency: 'mxn';
+  platform_fee_type: PlatformFeeType;
+  platform_fee_amount: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export type RegistrationPaymentStatus =
+  | 'unpaid'
+  | 'pending'
+  | 'processing'
+  | 'paid'
+  | 'failed'
+  | 'refunded'
+  | 'partially_refunded'
+  | 'disputed';
+
+export interface RegistrationPayment {
+  id: string;
+  registration_id: string;
+  event_id: string;
+  fighter_id: string | null;
+  organizer_id: string;
+  payer_display_name: string | null;
+  stripe_account_id: string;
+  stripe_checkout_session_id: string | null;
+  stripe_payment_intent_id: string | null;
+  stripe_charge_id: string | null;
+  amount_cents: number;
+  platform_fee_cents: number;
+  currency: 'mxn';
+  payment_status: RegistrationPaymentStatus;
+  amount_refunded_cents: number;
+  failure_message: string | null;
+  paid_at: string | null;
+  refunded_at: string | null;
+  created_at: string;
+  updated_at: string;
+  events?: { event_name: string } | null;
 }
 
 // Event form data
@@ -203,6 +269,8 @@ export interface EventFormData {
   purse_amount: string;
   purse_enabled: boolean;
   signup_fee: string;
+  registration_type: RegistrationType;
+  payment_method: EventPaymentMethod;
   notes: string;
   status: Event['status'];
 }
@@ -435,6 +503,7 @@ export interface EmergencyMatchResult {
 // Event registration (external payment tracking)
 export type RegistrationApprovalStatus = 'pending' | 'accepted' | 'declined' | 'withdrawn';
 export type RegistrationEligibilityStatus = 'pending' | 'review_required' | 'eligible' | 'ineligible';
+export type RegistrationStatus = 'draft' | 'submitted' | 'confirmed' | 'rejected' | 'withdrawn' | 'cancelled';
 
 export interface EventRegistration {
   id: string;
@@ -446,6 +515,7 @@ export interface EventRegistration {
   application_id: string | null;
   approval_status: RegistrationApprovalStatus;
   payment_status: 'pending' | 'submitted' | 'confirmed' | 'waived';
+  registration_status: RegistrationStatus;
   eligibility_status: RegistrationEligibilityStatus;
   eligibility_reasons: string[];
   eligibility_evaluated_at: string | null;

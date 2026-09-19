@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EventManageFrame } from '@/components/EventManageFrame';
+import { formatCalendarDate } from '@/lib/calendarDate';
 import { authService } from '@/services/authService';
 import { getBoutsForEvent, getMatsForEvent } from '@/services/boutService';
 import { canUseEventFeature } from '@/services/eventStaffService';
@@ -394,7 +395,7 @@ function formatElapsed(seconds: number) {
 }
 
 function formatDate(value: string) {
-  return new Date(value).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+  return formatCalendarDate(value);
 }
 
 function formatStatus(value: string, t: (key: string) => string) {

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BoutMethodText } from '@/components/CombatRecord';
+import { formatCalendarDate } from '@/lib/calendarDate';
 import { adminService } from '@/services/adminService';
 import type { Bout } from '@/types';
 import type { MatchWithContext } from '@/services/matchService';
@@ -261,5 +262,5 @@ function formatStatus(value: string, t: (key: string) => string) {
 }
 
 function formatDate(value: string) {
-  return new Date(value).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+  return formatCalendarDate(value);
 }

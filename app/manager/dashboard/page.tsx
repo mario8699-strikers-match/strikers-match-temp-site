@@ -8,6 +8,8 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { ManualFighterManager } from '@/components/ManualFighterManager';
 import { InlineCombatRecord } from '@/components/CombatRecord';
+import { OrganizerPaymentsPanel } from '@/components/OrganizerPaymentsPanel';
+import { formatCalendarDate } from '@/lib/calendarDate';
 import { authService } from '@/services/authService';
 import { managerService } from '@/services/managerService';
 import { fighterService } from '@/services/fighterService';
@@ -165,6 +167,8 @@ export default function ManagerDashboardPage() {
           <span className="font-semibold">Administra roster, eventos y propuestas desde este panel.</span>
         </div>
 
+        <OrganizerPaymentsPanel />
+
         <section className="mb-8 border border-zinc-200 p-6">
           <div className="mb-4 flex items-end justify-between gap-3">
             <div>
@@ -190,7 +194,7 @@ export default function ManagerDashboardPage() {
                     </p>
                     <p className="mt-1 text-xs text-zinc-500">
                       {match.events?.event_name ?? 'Evento'}
-                      {match.events?.event_date ? ` · ${new Date(match.events.event_date).toLocaleDateString('es-MX')}` : ''}
+                      {match.events?.event_date ? ` · ${formatCalendarDate(match.events.event_date)}` : ''}
                       {match.compatibility_score != null ? ` · Compatibilidad ${match.compatibility_score}%` : ''}
                     </p>
                     <div className="mt-3 grid grid-cols-2 gap-2">
