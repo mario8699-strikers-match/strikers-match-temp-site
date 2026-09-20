@@ -124,7 +124,7 @@ export const fighterService = {
 
   async create(
     profileId: string,
-    data: { weight_class?: string; discipline?: string; is_available?: boolean; short_notice_ready?: boolean }
+    data: Partial<Omit<Fighter, 'id' | 'profile_id' | 'created_at' | 'verified' | 'is_hidden'>>
   ): Promise<ServiceResponse<Fighter>> {
     try {
       const { data: row, error } = await supabase

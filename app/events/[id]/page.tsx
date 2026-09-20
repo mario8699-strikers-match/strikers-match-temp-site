@@ -17,6 +17,7 @@ import {
   GENERIC_WEIGHT_CLASS_OPTIONS,
   calculateAgeOnDate,
   getCombatWeightGroupsForAge,
+  inferCombatWeightCategory,
   restrictWeightGroupsToEvent,
   sanitizeWeightClasses,
 } from '@/lib/combatWeightCategories';
@@ -215,6 +216,16 @@ export default function EventDetailPage() {
             ev.status === 'published' &&
             (!currentApplication || currentApplication.status === 'withdrawn')
           ) {
+            const preferredDiscipline = f.disciplines?.find((discipline) =>
+              (ev.disciplines_needed ?? []).length === 0 || (ev.disciplines_needed ?? []).includes(discipline)
+            ) ?? f.disciplines?.[0] ?? (ev.disciplines_needed ?? [])[0] ?? '';
+            setApplyDiscipline(preferredDiscipline);
+            setApplyWeightClass(inferCombatWeightCategory(
+              preferredDiscipline,
+              calculateAgeOnDate(p.date_of_birth ?? '', ev.event_date),
+              f.exact_weight,
+              ev.weight_classes_needed
+            ) ?? '');
             setApplyOpen(true);
           }
 
@@ -496,7 +507,12 @@ export default function EventDetailPage() {
     const { data, error } = await eventService.applyToEvent(id, myFighter.id, {
       message: applyMessage,
       fighter_discipline: applyDiscipline || undefined,
-      fighter_weight_class: applyWeightClass || undefined,
+      fighter_weight_class: applyWeightClass || inferCombatWeightCategory(
+        applyDiscipline,
+        calculateAgeOnDate(profile?.date_of_birth ?? '', event?.event_date ?? null),
+        myFighter.exact_weight,
+        event?.weight_classes_needed
+      ) || undefined,
       jiu_jitsu_belt: applyBelt || undefined,
       confirm_weight: applyConfirmWeight,
       confirm_availability: applyConfirmAvailability,
@@ -520,6 +536,21 @@ export default function EventDetailPage() {
     await eventService.updateApplicationStatus(appId, status);
     setApplications((prev) => prev.map((a) => a.id === appId ? { ...a, status } : a));
     setUpdatingApp(null);
+  };
+
+  const openApplicationForm = () => {
+    if (!event || !myFighter) return;
+    const preferredDiscipline = myFighter.disciplines?.find((discipline) =>
+      event.disciplines_needed.length === 0 || event.disciplines_needed.includes(discipline)
+    ) ?? myFighter.disciplines?.[0] ?? event.disciplines_needed[0] ?? '';
+    setApplyDiscipline(preferredDiscipline);
+    setApplyWeightClass(inferCombatWeightCategory(
+      preferredDiscipline,
+      calculateAgeOnDate(profile?.date_of_birth ?? '', event.event_date),
+      myFighter.exact_weight,
+      event.weight_classes_needed
+    ) ?? '');
+    setApplyOpen(true);
   };
 
   const formatDate = (dateStr: string | null) => {
@@ -557,6 +588,12 @@ export default function EventDetailPage() {
   const hasMismatch = isFighter && myFighter && eventDisciplines.length > 0 &&
     !fighterDisciplines.some((d) => eventDisciplines.includes(d));
   const applicantAge = calculateAgeOnDate(profile?.date_of_birth ?? '', event.event_date);
+  const inferredApplicantWeightClass = inferCombatWeightCategory(
+    applyDiscipline,
+    applicantAge,
+    myFighter?.exact_weight,
+    eventWeightClasses
+  );
   const applicantWeightGroups = restrictWeightGroupsToEvent(
     getCombatWeightGroupsForAge(applyDiscipline, applicantAge),
     eventWeightClasses
@@ -766,7 +803,15 @@ export default function EventDetailPage() {
                           <div className="flex flex-wrap gap-2">
                             {(event.disciplines_needed ?? []).map((d) => (
                               <button key={d} type="button"
-                                onClick={() => { setApplyDiscipline(d); setApplyWeightClass(''); }}
+                                onClick={() => {
+                                  setApplyDiscipline(d);
+                                  setApplyWeightClass(inferCombatWeightCategory(
+                                    d,
+                                    applicantAge,
+                                    myFighter.exact_weight,
+                                    eventWeightClasses
+                                  ) ?? '');
+                                }}
                                 className={`px-3 py-1.5 text-xs font-bold tracking-wide uppercase border transition-colors ${
                                   applyDiscipline === d
                                     ? 'bg-[#C0001E] text-white border-[#C0001E]'
@@ -784,6 +829,12 @@ export default function EventDetailPage() {
                         <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#5A5A5A' }}>
                           Categoría de peso <span className="text-red-500">*</span>
                         </label>
+
+                        {inferredApplicantWeightClass && (
+                          <p className="mb-3 text-xs text-emerald-700">
+                            Categoría asignada automáticamente con tu edad y peso de perfil: <strong>{inferredApplicantWeightClass}</strong>. Puedes corregirla si tu peso cambió.
+                          </p>
+                        )}
 
                         {applicantWeightGroups.length > 0 ? (
                           /* Striking / grappling disciplines: grouped by age/division */
@@ -937,7 +988,7 @@ export default function EventDetailPage() {
                       </div>
                     </div>
                   ) : (
-                    <button onClick={() => setApplyOpen(true)} className="px-6 py-2.5 text-sm font-bold tracking-widest uppercase text-white transition-colors" style={{ background: '#C0001E' }}
+                    <button onClick={openApplicationForm} className="px-6 py-2.5 text-sm font-bold tracking-widest uppercase text-white transition-colors" style={{ background: '#C0001E' }}
                       onMouseOver={(e) => (e.currentTarget.style.background = '#9A0018')}
                       onMouseOut={(e) => (e.currentTarget.style.background = '#C0001E')}>
                       Aplicar a este evento

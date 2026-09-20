@@ -208,7 +208,10 @@ export const authService = {
     updates: {
       full_name?: string;
       city?: string | null;
+      state?: string | null;
+      country?: string | null;
       phone?: string | null;
+      date_of_birth?: string | null;
       bio?: string | null;
       instagram?: string | null;
       tiktok?: string | null;

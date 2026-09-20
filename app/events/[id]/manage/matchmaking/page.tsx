@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { InlineCombatRecord } from '@/components/CombatRecord';
 import { EventManageFrame } from '@/components/EventManageFrame';
 import { authService } from '@/services/authService';
-import { approveMatchAsBout } from '@/services/boutService';
+import { approveMatchAsBout, approveMatchSuggestionAsBout } from '@/services/boutService';
 import {
   getEventCompatibilityPool,
   participantName,
@@ -21,7 +21,6 @@ import { eventService } from '@/services/eventService';
 import { advanceGuidedOnboarding } from '@/services/onboardingService';
 import {
   getMatchesForEvent,
-  proposeMatch,
   type MatchWithContext,
 } from '@/services/matchService';
 import type { Event, Profile } from '@/types';
@@ -123,20 +122,20 @@ export default function MatchmakingBoardPage() {
       .map((match) => [match.fighter_a_registration_id!, match.fighter_b_registration_id!].sort().join(':'))
   ), [matches]);
 
-  const createProposal = async (suggestion: CompatibilityResult) => {
+  const confirmSuggestion = async (suggestion: CompatibilityResult) => {
     const key = [suggestion.fighter_a_registration_id, suggestion.fighter_b_registration_id].sort().join(':');
     setActing(key);
     setError(null);
     setMessage(null);
-    const result = await proposeMatch(
-      eventId,
-      suggestion.fighter_a_registration_id,
-      suggestion.fighter_b_registration_id,
-      suggestion.id
-    );
+    const result = await approveMatchSuggestionAsBout(suggestion.id);
     if (result.error) setError(result.error);
     else {
-      setMessage(t('events.engine.matchmaking.proposalCreated'));
+      setMessage('Combate confirmado. El gráfico se generó automáticamente.');
+      if (profile && !profile.onboarding_completed && !profile.onboarding_dismissed
+        && profile.onboarding_event_id === eventId && profile.onboarding_step <= 6) {
+        const advancement = await advanceGuidedOnboarding(6, eventId, true);
+        if (advancement.data) setProfile(advancement.data);
+      }
       await reload();
     }
     setActing(null);
@@ -233,9 +232,13 @@ export default function MatchmakingBoardPage() {
 
       {eligibleCount === 0 && (
         <div className="border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-          <p className="font-bold">Las categorías del evento no asignan automáticamente una categoría a cada peleador.</p>
+          <p className="font-bold">
+            {suggestions.length === 0
+              ? 'El matchmaking automático necesita al menos dos participantes listos.'
+              : `Strikers Match analizó ${suggestions.length} combinaciones, pero ninguna cumple todavía las reglas del evento.`}
+          </p>
           <p className="mt-1">
-            En Participantes, asigna a cada peleador su disciplina, fecha de nacimiento, división de género, categoría de peso y reglamento. Dos peleadores podrán proponerse cuando sus datos sean compatibles y ambos estén listos para matchmaking.
+            La categoría se calcula automáticamente con la disciplina, la edad y el peso del peleador. Completa únicamente los datos faltantes marcados en Participantes; el sistema volverá a analizar y ordenar los enfrentamientos automáticamente.
           </p>
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
             <Link href={`/events/${eventId}/manage/participants`} className="inline-flex min-h-11 items-center justify-center bg-zinc-900 px-4 py-3 text-xs font-bold uppercase text-white">
@@ -257,7 +260,7 @@ export default function MatchmakingBoardPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-2xl font-black uppercase text-zinc-900">{t('events.engine.matchmaking.suggestions')}</h2>
-            <p className="mt-1 text-sm text-zinc-500">{t('events.engine.matchmaking.suggestionsHelp')}</p>
+            <p className="mt-1 text-sm text-zinc-500">Strikers Match genera y ordena los enfrentamientos automáticamente. Tú confirmas, rechazas o solicitas cambios.</p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <button type="button" onClick={regenerate} disabled={acting === 'regenerate'} className="min-h-11 bg-zinc-900 px-4 py-3 text-sm font-bold text-white disabled:bg-zinc-300">
@@ -305,8 +308,8 @@ export default function MatchmakingBoardPage() {
                     {suggestion.review_reason && <p className="mt-1 text-xs font-medium text-zinc-700">Nota: {suggestion.review_reason}</p>}
                   </div>
                   <div className="grid w-full grid-cols-2 gap-2 sm:w-auto">
-                    <button type="button" disabled={!suggestion.eligible || proposed || acting === pairKey || suggestion.status === 'rejected'} onClick={() => createProposal(suggestion)} className="min-h-11 bg-zinc-900 px-4 py-3 text-xs font-bold uppercase tracking-widest text-white disabled:cursor-not-allowed disabled:bg-zinc-300">
-                      {proposed ? t('events.engine.matchmaking.existingProposal') : acting === pairKey ? t('events.engine.matchmaking.saving') : t('events.engine.matchmaking.createProposal')}
+                    <button type="button" disabled={!suggestion.eligible || proposed || acting === pairKey || suggestion.status === 'rejected'} onClick={() => confirmSuggestion(suggestion)} className="min-h-11 bg-[#C0001E] px-4 py-3 text-xs font-bold uppercase tracking-widest text-white disabled:cursor-not-allowed disabled:bg-zinc-300">
+                      {proposed ? 'Combate creado' : acting === pairKey ? 'Confirmando…' : 'Confirmar combate'}
                     </button>
                     {suggestion.status === 'locked' ? (
                       <ReviewButton label="Desbloquear" disabled={acting === suggestion.id} onClick={() => reviewSuggestion(suggestion, 'restore')} />

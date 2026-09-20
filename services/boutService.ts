@@ -9,6 +9,14 @@ export async function approveMatchAsBout(matchId: string): Promise<ServiceRespon
   return { data: data as Bout, error: null };
 }
 
+export async function approveMatchSuggestionAsBout(suggestionId: string): Promise<ServiceResponse<Bout>> {
+  const { data, error } = await supabase.rpc('approve_match_suggestion_as_bout', {
+    suggestion_uuid: suggestionId,
+  });
+  if (error) return { data: null, error: error.message };
+  return { data: data as Bout, error: null };
+}
+
 export async function getBoutsForEvent(eventId: string): Promise<ServiceResponse<Bout[]>> {
   const { data, error } = await supabase
     .from('bouts')

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { InlineCombatRecord } from '@/components/CombatRecord';
 import { manualFighterService } from '@/services/manualFighterService';
 import type { ManualFighter } from '@/types';
+import { GenderDivisionCheckboxes } from '@/components/GenderDivisionCheckboxes';
 
 const WEIGHT_CLASSES = [
   'minimosca','mosca','supermosca','gallo','supergallo','pluma','superpluma',
@@ -221,7 +222,7 @@ export function ManualFighterManager({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <RosterInput label="Fecha de nacimiento" type="date" value={dateOfBirth} onChange={setDateOfBirth} />
-            <RosterInput label="División de género" value={genderDivision} onChange={setGenderDivision} />
+            <GenderDivisionCheckboxes value={genderDivision} onChange={setGenderDivision} />
             <RosterInput label="Nivel técnico 1–10" type="number" value={skillRating} onChange={setSkillRating} />
           </div>
 

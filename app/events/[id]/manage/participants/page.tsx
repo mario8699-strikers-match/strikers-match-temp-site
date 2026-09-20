@@ -6,12 +6,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { EventManageFrame } from '@/components/EventManageFrame';
 import { InlineCombatRecord } from '@/components/CombatRecord';
 import { EligibilityStatus } from '@/components/EligibilityStatus';
+import { GenderDivisionCheckboxes } from '@/components/GenderDivisionCheckboxes';
 import {
   DISCIPLINE_OPTIONS,
   GENERIC_WEIGHT_CLASS_OPTIONS,
   calculateAgeOnDate,
   getCombatWeightGroups,
   getCombatWeightGroupsForAge,
+  inferCombatWeightCategory,
   restrictWeightGroupsToEvent,
   sanitizeWeightClasses,
 } from '@/lib/combatWeightCategories';
@@ -304,11 +306,22 @@ export default function EventParticipantsPage() {
       rosterFighters,
       setSelectedFighterId,
       event?.signup_fee && event.signup_fee > 0 ? 'pending' : 'waived',
+      event?.event_date ?? null,
+      event?.disciplines_needed ?? [],
+      event?.weight_classes_needed ?? [],
       (selectedForm) => setForm({
         ...selectedForm,
         date_of_birth: application.fighters?.profiles?.date_of_birth ?? selectedForm.date_of_birth,
         discipline: application.fighter_discipline ?? selectedForm.discipline,
-        weight_class: application.fighter_weight_class ?? selectedForm.weight_class,
+        weight_class: inferCombatWeightCategory(
+          application.fighter_discipline ?? selectedForm.discipline,
+          calculateAgeOnDate(
+            application.fighters?.profiles?.date_of_birth ?? selectedForm.date_of_birth,
+            event?.event_date ?? null
+          ),
+          numberValue(selectedForm.exact_weight),
+          event?.weight_classes_needed ?? []
+        ) ?? (selectedForm.weight_class || application.fighter_weight_class || ''),
         gym_name: application.corner_name ?? selectedForm.gym_name,
         availability_confirmed: application.confirm_availability || selectedForm.availability_confirmed,
         weight_confirmed: application.confirm_weight || selectedForm.weight_confirmed,
@@ -455,7 +468,7 @@ export default function EventParticipantsPage() {
         {!editingId && source !== 'event_only' && (
           <label className="mt-4 block">
             <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">Peleador</span>
-            <select value={selectedFighterId} onChange={(input) => selectExistingParticipant(input.target.value, source, platformFighters, rosterFighters, setSelectedFighterId, event?.signup_fee && event.signup_fee > 0 ? 'pending' : 'waived', setForm)} className="min-h-11 w-full border border-zinc-300 bg-white px-3 text-sm">
+            <select value={selectedFighterId} onChange={(input) => selectExistingParticipant(input.target.value, source, platformFighters, rosterFighters, setSelectedFighterId, event?.signup_fee && event.signup_fee > 0 ? 'pending' : 'waived', event?.event_date ?? null, event?.disciplines_needed ?? [], event?.weight_classes_needed ?? [], setForm)} className="min-h-11 w-full border border-zinc-300 bg-white px-3 text-sm">
               <option value="">Seleccionar…</option>
               {(source === 'platform' ? platformFighters : rosterFighters).map((fighter) => (
                 <option key={fighter.id} value={fighter.id}>{source === 'platform' ? (fighter as PlatformFighter).profiles?.full_name : (fighter as ManualFighter).full_name} · {weightClassLabel(fighter.weight_class)}</option>
@@ -604,6 +617,16 @@ export default function EventParticipantsPage() {
 
 function ParticipantFields({ form, setForm, showIdentity, eventDate, eventWeightClasses }: { form: ParticipantForm; setForm: (form: ParticipantForm) => void; showIdentity: boolean; eventDate: string | null; eventWeightClasses: string[] }) {
   const change = <K extends keyof ParticipantForm>(key: K, value: ParticipantForm[K]) => setForm({ ...form, [key]: value });
+  const changeAndInferWeightCategory = <K extends 'discipline' | 'date_of_birth' | 'exact_weight'>(key: K, value: ParticipantForm[K]) => {
+    const next = { ...form, [key]: value };
+    const inferredCategory = inferCombatWeightCategory(
+      next.discipline,
+      calculateAgeOnDate(next.date_of_birth, eventDate),
+      numberValue(next.exact_weight),
+      eventWeightClasses
+    );
+    setForm(inferredCategory ? { ...next, weight_class: inferredCategory } : next);
+  };
   return (
     <div className="mt-5 space-y-5">
       {showIdentity && <FieldGroup title="Identidad y contacto privado">
@@ -614,18 +637,19 @@ function ParticipantFields({ form, setForm, showIdentity, eventDate, eventWeight
         <TextField label="URL de foto" value={form.photo_url} onChange={(value) => change('photo_url', value)} />
       </FieldGroup>}
       <FieldGroup title="Datos de combate">
-        <SelectField label="Disciplina" value={form.discipline} onChange={(value) => change('discipline', value)} options={disciplineOptions(form.discipline)} />
-        <TextField label="Fecha de nacimiento" type="date" value={form.date_of_birth} onChange={(value) => change('date_of_birth', value)} />
-        <TextField label="División de género" value={form.gender_division} onChange={(value) => change('gender_division', value)} placeholder="Masculina, femenina…" />
+        <SelectField label="Disciplina" value={form.discipline} onChange={(value) => changeAndInferWeightCategory('discipline', value)} options={disciplineOptions(form.discipline)} />
+        <TextField label="Fecha de nacimiento" type="date" value={form.date_of_birth} onChange={(value) => changeAndInferWeightCategory('date_of_birth', value)} />
+        <GenderDivisionCheckboxes value={form.gender_division} onChange={(value) => change('gender_division', value)} />
         <WeightCategoryField
           discipline={form.discipline}
           dateOfBirth={form.date_of_birth}
           eventDate={eventDate}
           eventWeightClasses={eventWeightClasses}
+          exactWeight={form.exact_weight}
           value={form.weight_class}
           onChange={(value) => change('weight_class', value)}
         />
-        <TextField label="Peso real registrado (kg)" type="number" value={form.exact_weight} onChange={(value) => change('exact_weight', value)} />
+        <TextField label="Peso real registrado (kg)" type="number" value={form.exact_weight} onChange={(value) => changeAndInferWeightCategory('exact_weight', value)} />
         <TextField label="Peso solicitado (kg)" type="number" value={form.requested_weight_kg} onChange={(value) => change('requested_weight_kg', value)} />
         <TextField label="Peso mínimo aceptable (kg)" type="number" value={form.acceptable_weight_min_kg} onChange={(value) => change('acceptable_weight_min_kg', value)} />
         <TextField label="Peso máximo aceptable (kg)" type="number" value={form.acceptable_weight_max_kg} onChange={(value) => change('acceptable_weight_max_kg', value)} />
@@ -734,6 +758,9 @@ function selectExistingParticipant(
   rosterFighters: ManualFighter[],
   setSelectedFighterId: (value: string) => void,
   defaultPaymentStatus: EventRegistration['payment_status'],
+  eventDate: string | null,
+  eventDisciplines: string[],
+  eventWeightClasses: string[],
   setForm: (value: ParticipantForm) => void
 ) {
   setSelectedFighterId(fighterId);
@@ -741,26 +768,42 @@ function selectExistingParticipant(
   if (source === 'platform') {
     const fighter = platformFighters.find((item) => item.id === fighterId);
     if (!fighter) return;
+    const discipline = fighter.disciplines?.find((item) => eventDisciplines.length === 0 || eventDisciplines.includes(item))
+      ?? fighter.disciplines?.[0]
+      ?? '';
+    const weightClass = inferCombatWeightCategory(
+      discipline,
+      calculateAgeOnDate(fighter.profiles?.date_of_birth ?? '', eventDate) ?? fighter.age ?? null,
+      fighter.exact_weight,
+      eventWeightClasses
+    ) ?? fighter.weight_class ?? '';
     setForm({
       ...EMPTY_FORM,
       payment_status: defaultPaymentStatus,
       full_name: fighter.profiles?.full_name ?? '', nickname: fighter.nickname ?? '', photo_url: fighter.photo_url ?? '',
       city: fighter.profiles?.city ?? '', state: fighter.state ?? fighter.profiles?.state ?? '', country: fighter.profiles?.country ?? 'Mexico',
-      date_of_birth: fighter.profiles?.date_of_birth ?? '', gender_division: fighter.gender_division ?? '', weight_class: fighter.weight_class ?? '', exact_weight: stringValue(fighter.exact_weight),
+      date_of_birth: fighter.profiles?.date_of_birth ?? '', gender_division: fighter.gender_division ?? '', weight_class: weightClass, exact_weight: stringValue(fighter.exact_weight),
       requested_weight_kg: stringValue(fighter.requested_weight_kg), acceptable_weight_min_kg: stringValue(fighter.acceptable_weight_min_kg), acceptable_weight_max_kg: stringValue(fighter.acceptable_weight_max_kg),
-      discipline: fighter.disciplines?.[0] ?? '', ruleset: fighter.preferred_rulesets?.[0] ?? '', experience_level: fighter.experience_level ?? 'amateur', skill_rating: stringValue(fighter.skill_rating),
+      discipline, ruleset: fighter.preferred_rulesets?.[0] ?? '', experience_level: fighter.experience_level ?? 'amateur', skill_rating: stringValue(fighter.skill_rating),
       record_wins: String(fighter.record_wins ?? 0), record_losses: String(fighter.record_losses ?? 0), record_draws: String(fighter.record_draws ?? 0), ko_wins: String(fighter.ko_wins ?? 0), tko_wins: String(fighter.tko_wins ?? 0), ko_losses: String(fighter.ko_losses ?? 0), tko_losses: String(fighter.tko_losses ?? 0),
       gym_name: fighter.gym_name ?? '', special_restrictions: fighter.special_restrictions?.join(', ') ?? '', available_from: fighter.available_from ?? '', available_to: fighter.available_to ?? '', medical_clearance_date: fighter.medical_clearance_date ?? '', last_fight_at: fighter.last_fight_at ?? '', last_ko_loss_at: fighter.last_ko_loss_at ?? '',
     });
   } else {
     const fighter = rosterFighters.find((item) => item.id === fighterId);
     if (!fighter) return;
+    const discipline = fighter.discipline ?? '';
+    const weightClass = inferCombatWeightCategory(
+      discipline,
+      calculateAgeOnDate(fighter.date_of_birth ?? '', eventDate),
+      fighter.exact_weight,
+      eventWeightClasses
+    ) ?? fighter.weight_class ?? '';
     setForm({
       ...EMPTY_FORM,
       payment_status: defaultPaymentStatus,
       full_name: fighter.full_name, nickname: fighter.nickname ?? '', photo_url: fighter.photo_url ?? '', phone: fighter.phone ?? '', email: fighter.email ?? '', city: fighter.city ?? '', state: fighter.state ?? '', country: fighter.country ?? 'Mexico',
-      date_of_birth: fighter.date_of_birth ?? '', gender_division: fighter.gender_division ?? '', weight_class: fighter.weight_class ?? '', exact_weight: stringValue(fighter.exact_weight), requested_weight_kg: stringValue(fighter.requested_weight_kg), acceptable_weight_min_kg: stringValue(fighter.acceptable_weight_min_kg), acceptable_weight_max_kg: stringValue(fighter.acceptable_weight_max_kg),
-      discipline: fighter.discipline ?? '', ruleset: fighter.preferred_rulesets?.[0] ?? '', experience_level: fighter.experience_level ?? 'amateur', skill_rating: stringValue(fighter.skill_rating), record_wins: String(fighter.record_wins ?? 0), record_losses: String(fighter.record_losses ?? 0), record_draws: String(fighter.record_draws ?? 0), ko_wins: String(fighter.ko_wins ?? 0), tko_wins: String(fighter.tko_wins ?? 0), ko_losses: String(fighter.ko_losses ?? 0), tko_losses: String(fighter.tko_losses ?? 0),
+      date_of_birth: fighter.date_of_birth ?? '', gender_division: fighter.gender_division ?? '', weight_class: weightClass, exact_weight: stringValue(fighter.exact_weight), requested_weight_kg: stringValue(fighter.requested_weight_kg), acceptable_weight_min_kg: stringValue(fighter.acceptable_weight_min_kg), acceptable_weight_max_kg: stringValue(fighter.acceptable_weight_max_kg),
+      discipline, ruleset: fighter.preferred_rulesets?.[0] ?? '', experience_level: fighter.experience_level ?? 'amateur', skill_rating: stringValue(fighter.skill_rating), record_wins: String(fighter.record_wins ?? 0), record_losses: String(fighter.record_losses ?? 0), record_draws: String(fighter.record_draws ?? 0), ko_wins: String(fighter.ko_wins ?? 0), tko_wins: String(fighter.tko_wins ?? 0), ko_losses: String(fighter.ko_losses ?? 0), tko_losses: String(fighter.tko_losses ?? 0),
       gym_name: fighter.gym_name ?? '', special_restrictions: fighter.special_restrictions?.join(', ') ?? '', available_from: fighter.available_from ?? '', available_to: fighter.available_to ?? '', medical_clearance_date: fighter.medical_clearance_date ?? '', last_fight_at: fighter.last_fight_at ?? '', last_ko_loss_at: fighter.last_ko_loss_at ?? '',
     });
   }
@@ -788,8 +831,9 @@ function FieldGroup({ title, children }: { title: string; children: React.ReactN
 function TextField({ label, value, onChange, type = 'text', placeholder }: { label: string; value: string; onChange: (value: string) => void; type?: string; placeholder?: string }) { return <label><span className="mb-1 block text-xs font-bold uppercase text-zinc-600">{label}</span><input type={type} min={type === 'number' ? 0 : undefined} value={value} placeholder={placeholder} onChange={(input) => onChange(input.target.value)} className="min-h-11 w-full border border-zinc-300 px-3 text-sm" /></label>; }
 function SelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: string[][] }) { return <label><span className="mb-1 block text-xs font-bold uppercase text-zinc-600">{label}</span><select value={value} onChange={(input) => onChange(input.target.value)} className="min-h-11 w-full border border-zinc-300 bg-white px-3 text-sm">{options.map(([key, name]) => <option key={key} value={key}>{name}</option>)}</select></label>; }
 function ReadOnlyField({ label, value }: { label: string; value: string }) { return <div><span className="mb-1 block text-xs font-bold uppercase text-zinc-600">{label}</span><div className="flex min-h-11 items-center border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-600">{value}</div></div>; }
-function WeightCategoryField({ discipline, dateOfBirth, eventDate, eventWeightClasses, value, onChange }: { discipline: string; dateOfBirth: string; eventDate: string | null; eventWeightClasses: string[]; value: string; onChange: (value: string) => void }) {
+function WeightCategoryField({ discipline, dateOfBirth, eventDate, eventWeightClasses, exactWeight, value, onChange }: { discipline: string; dateOfBirth: string; eventDate: string | null; eventWeightClasses: string[]; exactWeight: string; value: string; onChange: (value: string) => void }) {
   const ageAtEvent = calculateAgeOnDate(dateOfBirth, eventDate);
+  const inferredCategory = inferCombatWeightCategory(discipline, ageAtEvent, numberValue(exactWeight), eventWeightClasses);
   const allGroups = getCombatWeightGroups(discipline);
   const configuredWeightClasses = sanitizeWeightClasses(eventWeightClasses);
   if (allGroups.length === 0) {
@@ -820,7 +864,9 @@ function WeightCategoryField({ discipline, dateOfBirth, eventDate, eventWeightCl
         ))}
       </select>
       <span className="mt-1 block text-xs text-zinc-500">
-        {ageAtEvent == null
+        {inferredCategory
+          ? `Categoría asignada automáticamente por edad y peso: ${inferredCategory}. Puedes corregirla manualmente.`
+          : ageAtEvent == null
           ? 'Agrega la fecha de nacimiento para mostrar solamente la división de edad correspondiente.'
           : `Edad el día del evento: ${ageAtEvent} años · ${visibleGroups.map((group) => group.group).join(', ')}`}
       </span>

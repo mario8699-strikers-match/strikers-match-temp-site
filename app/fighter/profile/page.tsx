@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { RecordValue } from '@/components/CombatRecord';
+import { GenderDivisionCheckboxes } from '@/components/GenderDivisionCheckboxes';
 import { authService } from '@/services/authService';
 import { fighterService } from '@/services/fighterService';
 import { requestService } from '@/services/requestService';
@@ -55,7 +56,15 @@ export default function FighterProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Form fields
+  // Account profile fields. Email is intentionally never included in updates.
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [country, setCountry] = useState('Mexico');
+
+  // Fighter profile fields
   const [nickname, setNickname] = useState('');
   const [bio, setBio] = useState('');
   const [weightClass, setWeightClass] = useState('');
@@ -125,6 +134,15 @@ export default function FighterProfilePage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const syncFormFromProfile = (p: Profile) => {
+    setFullName(p.full_name ?? '');
+    setPhone(p.phone ?? '');
+    setDateOfBirth(p.date_of_birth ?? '');
+    setCity(p.city ?? '');
+    setState(p.state ?? '');
+    setCountry(p.country ?? 'Mexico');
+  };
+
   const syncFormFromFighter = (f: Fighter) => {
     setNickname(f.nickname ?? '');
     setBio(f.bio ?? '');
@@ -175,6 +193,7 @@ export default function FighterProfilePage() {
       setProfile(p);
       if (!p) { window.location.href = '/login'; return; }
       if (p.role !== 'fighter') { window.location.href = '/'; return; }
+      syncFormFromProfile(p);
 
       setSocialMedia((current) => ({ ...current, instagram: p.instagram ?? '' }));
       authService.getSocialMediaHandles(p.id).then(({ data: handles }) => {
@@ -241,6 +260,22 @@ export default function FighterProfilePage() {
     });
   }, []);
 
+  const startEditing = () => {
+    if (profile) syncFormFromProfile(profile);
+    if (fighter) syncFormFromFighter(fighter);
+    setError(null);
+    setEditing(true);
+  };
+
+  const cancelEditing = () => {
+    if (profile) syncFormFromProfile(profile);
+    if (fighter) syncFormFromFighter(fighter);
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    setError(null);
+    setEditing(false);
+  };
+
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -253,6 +288,19 @@ export default function FighterProfilePage() {
   const handleSave = async () => {
     if (!profile) return;
     setError(null);
+
+    const normalizedFullName = fullName.trim();
+    if (!normalizedFullName) {
+      setError('El nombre completo es obligatorio.');
+      return;
+    }
+
+    const minimumWeight = acceptableWeightMin ? Number(acceptableWeightMin) : null;
+    const maximumWeight = acceptableWeightMax ? Number(acceptableWeightMax) : null;
+    if (minimumWeight != null && maximumWeight != null && minimumWeight > maximumWeight) {
+      setError('El peso mínimo aceptable no puede ser mayor que el peso máximo.');
+      return;
+    }
 
     const invalidPlatform = SOCIAL_MEDIA_PLATFORMS.find(
       ({ key }) => !isValidSocialMediaIdentifier(key, socialMedia[key])
@@ -280,14 +328,14 @@ export default function FighterProfilePage() {
     }
 
     const payload = {
-      nickname: nickname || undefined,
-      bio: bio || undefined,
-      weight_class: weightClass || undefined,
+      nickname: nickname.trim() || null,
+      bio: bio.trim() || null,
+      weight_class: weightClass || null,
       disciplines: disciplines,
-      gym_name: gymName || undefined,
-      exact_weight: exactWeight ? parseFloat(exactWeight) : undefined,
-      height_cm: heightCm ? parseFloat(heightCm) : undefined,
-      reach_cm: reachCm ? parseFloat(reachCm) : undefined,
+      gym_name: gymName.trim() || null,
+      exact_weight: exactWeight ? parseFloat(exactWeight) : null,
+      height_cm: heightCm ? parseFloat(heightCm) : null,
+      reach_cm: reachCm ? parseFloat(reachCm) : null,
       record_wins: parseInt(wins) || 0,
       record_losses: parseInt(losses) || 0,
       record_draws: parseInt(draws) || 0,
@@ -299,16 +347,16 @@ export default function FighterProfilePage() {
       skill_rating: skillRating ? parseFloat(skillRating) : null,
       preferred_rulesets: preferredRulesets.split(',').map((value) => value.trim()).filter(Boolean),
       requested_weight_kg: requestedWeight ? parseFloat(requestedWeight) : null,
-      acceptable_weight_min_kg: acceptableWeightMin ? parseFloat(acceptableWeightMin) : null,
-      acceptable_weight_max_kg: acceptableWeightMax ? parseFloat(acceptableWeightMax) : null,
+      acceptable_weight_min_kg: minimumWeight,
+      acceptable_weight_max_kg: maximumWeight,
       special_restrictions: specialRestrictions.split(',').map((value) => value.trim()).filter(Boolean),
       last_fight_at: lastFightAt || null,
       last_ko_loss_at: lastKoLossAt || null,
       is_available: isAvailable,
       short_notice_ready: shortNotice,
       experience_level: experienceLevel,
-      available_from: availableFrom || undefined,
-      available_to: availableTo || undefined,
+      available_from: availableFrom || null,
+      available_to: availableTo || null,
       has_manager: hasManager,
       manager_name: hasManager ? managerName || null : null,
       manager_email: hasManager ? managerEmail || null : null,
@@ -334,15 +382,24 @@ export default function FighterProfilePage() {
       return;
     }
 
-    const socialResult = await authService.updateProfile(profile.id, socialUpdates);
+    const profileUpdates = {
+      full_name: normalizedFullName,
+      phone: phone.trim() || null,
+      date_of_birth: dateOfBirth || null,
+      city: city.trim() || null,
+      state: state.trim() || null,
+      country: country.trim() || 'Mexico',
+      ...socialUpdates,
+    };
+    const profileResult = await authService.updateProfile(profile.id, profileUpdates);
     setSaving(false);
     setFighter(result.data);
-    if (socialResult.error) {
-      setError('El perfil deportivo se guardó, pero no se pudieron guardar las redes sociales. Intenta de nuevo.');
+    if (profileResult.error) {
+      setError('El perfil deportivo se guardó, pero no se pudieron guardar los datos personales. Intenta de nuevo.');
       return;
     }
 
-    setProfile((current) => current ? { ...current, ...socialUpdates } : current);
+    setProfile((current) => current ? { ...current, ...profileUpdates } : current);
     setSocialMedia({
       instagram: socialUpdates.instagram ?? '',
       tiktok: socialUpdates.tiktok ?? '',
@@ -385,7 +442,7 @@ export default function FighterProfilePage() {
     }
   };
 
-  if (profile === undefined || fighter === undefined) {
+  if (!profile || fighter === undefined) {
     return <div className="min-h-screen bg-white flex items-center justify-center"><p className="text-sm" style={{ color:'#9A9A9A' }}>...</p></div>;
   }
 
@@ -447,7 +504,7 @@ export default function FighterProfilePage() {
           <div className="border-l-4 border-[#C0001E] bg-zinc-50 px-4 py-4 mb-6">
             <p className="text-sm font-semibold text-zinc-900">Completa tu perfil de peleador</p>
             <p className="text-xs text-zinc-500 mt-1">Agrega tu división, disciplina y récord para aparecer en el directorio.</p>
-            <button onClick={() => setEditing(true)} className="mt-3 px-4 py-2 text-xs font-bold tracking-widest uppercase text-white" style={{ background:'#C0001E' }}>Configurar perfil</button>
+            <button onClick={startEditing} className="mt-3 px-4 py-2 text-xs font-bold tracking-widest uppercase text-white" style={{ background:'#C0001E' }}>Configurar perfil</button>
           </div>
         )}
 
@@ -456,6 +513,26 @@ export default function FighterProfilePage() {
         {/* ── View Mode ── */}
         {!editing && fighter && (
           <div className="space-y-6">
+            <div className="border border-zinc-100 p-6">
+              <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color:'#9A9A9A' }}>Información personal</p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {[
+                  { label:'Nombre completo', value: profile.full_name },
+                  { label:'Teléfono', value: profile.phone ?? '—' },
+                  { label:'Fecha de nacimiento', value: profile.date_of_birth ?? '—' },
+                  { label:'Ciudad', value: profile.city ?? '—' },
+                  { label:'Estado', value: profile.state ?? '—' },
+                  { label:'País', value: profile.country || 'México' },
+                  { label:'Correo de la cuenta', value: profile.email },
+                ].map(({ label, value }) => (
+                  <div key={label}>
+                    <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>{label}</p>
+                    <p className="text-sm font-semibold text-zinc-900">{value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Record */}
             <div className="grid grid-cols-3 gap-4 border border-zinc-100 p-6 text-center">
               {[
@@ -571,7 +648,7 @@ export default function FighterProfilePage() {
             )}
 
             <div className="flex justify-end">
-              <button onClick={() => setEditing(true)} className="px-4 py-2 text-sm font-semibold border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition-colors">Editar perfil</button>
+              <button onClick={startEditing} className="px-4 py-2 text-sm font-semibold border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition-colors">Editar perfil</button>
             </div>
           </div>
         )}
@@ -579,6 +656,48 @@ export default function FighterProfilePage() {
         {/* ── Edit / Setup Form ── */}
         {editing && (
           <div className="space-y-5">
+            <div className="border border-zinc-200 p-4 sm:p-5">
+              <p className="text-xs font-bold tracking-widest uppercase" style={{ color:'#5A5A5A' }}>Información personal</p>
+              <p className="mt-1 text-xs text-zinc-500">Puedes actualizar estos datos. El correo de acceso no se puede modificar aquí.</p>
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <label className="sm:col-span-2">
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">Nombre completo</span>
+                  <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} required maxLength={120}
+                    className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                </label>
+                <label>
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">Teléfono</span>
+                  <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+52 000 000 0000" maxLength={30}
+                    className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                </label>
+                <label>
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">Fecha de nacimiento</span>
+                  <input type="date" value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)}
+                    className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                </label>
+                <label>
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">Ciudad</span>
+                  <input type="text" value={city} onChange={e => setCity(e.target.value)} maxLength={100}
+                    className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                </label>
+                <label>
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">Estado</span>
+                  <input type="text" value={state} onChange={e => setState(e.target.value)} maxLength={100}
+                    className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                </label>
+                <label>
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">País</span>
+                  <input type="text" value={country} onChange={e => setCountry(e.target.value)} maxLength={100}
+                    className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                </label>
+                <label>
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">Correo de la cuenta</span>
+                  <input type="email" value={profile.email} readOnly aria-readonly="true"
+                    className="w-full cursor-not-allowed border border-zinc-200 bg-zinc-100 px-3 py-2 text-sm text-zinc-500" />
+                </label>
+              </div>
+            </div>
+
             {/* Nickname */}
             <div>
               <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Apodo (opcional)</label>
@@ -661,7 +780,7 @@ export default function FighterProfilePage() {
             <div>
               <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>División y nivel técnico</label>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <input value={genderDivision} onChange={e => setGenderDivision(e.target.value)} placeholder="División de género" className="w-full border border-zinc-300 px-3 py-2 text-sm" />
+                <GenderDivisionCheckboxes value={genderDivision} onChange={setGenderDivision} />
                 <input type="number" min="1" max="10" step="0.1" value={skillRating} onChange={e => setSkillRating(e.target.value)} placeholder="Nivel 1–10" className="w-full border border-zinc-300 px-3 py-2 text-sm" />
               </div>
             </div>
@@ -873,7 +992,7 @@ export default function FighterProfilePage() {
 
             <div className="flex justify-end gap-3 pt-2">
               {fighter && (
-                <button onClick={() => setEditing(false)} className="px-4 py-2 text-sm font-medium border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition-colors">Cancelar</button>
+                <button onClick={cancelEditing} className="px-4 py-2 text-sm font-medium border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition-colors">Cancelar</button>
               )}
               <button onClick={handleSave} disabled={saving} className="px-6 py-2 text-sm font-bold tracking-wide uppercase text-white disabled:opacity-50 transition-colors"
                 style={{ background: saving ? '#9A9A9A' : '#C0001E' }}>
