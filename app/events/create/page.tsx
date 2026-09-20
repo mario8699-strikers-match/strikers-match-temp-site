@@ -4,76 +4,13 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
+import { EventWeightCategorySelector } from '@/components/EventWeightCategorySelector';
+import { DISCIPLINE_OPTIONS } from '@/lib/combatWeightCategories';
 import { eventService } from '@/services/eventService';
 import { authService } from '@/services/authService';
 import { updateGuidedOnboarding } from '@/services/onboardingService';
 import { getConnectAccount, openConnectAccount, type ConnectAccountStatus } from '@/services/paymentService';
 import type { EventFormData, Profile } from '@/types';
-
-const WEIGHT_CLASSES = [
-  'minimosca','mosca','supermosca','gallo','supergallo',
-  'pluma','superpluma','ligero','superligero','welter',
-  'superwelter','medio','supermedio','semipesado','crucero','pesado','multiple',
-];
-
-const BOXING_WEIGHT_GROUPS = [
-  { group: 'Infantil 6–7 años', weights: ['20–22 kg', '23–25 kg', '26–28 kg', '29–31 kg'] },
-  { group: 'Infantil 8–9 años', weights: ['24–27 kg', '28–31 kg', '32–35 kg', '36–39 kg'] },
-  { group: 'Infantil 10–11 años', weights: ['28–31 kg', '32–35 kg', '36–39 kg', '40–43 kg', '44–47 kg'] },
-  { group: 'Infantil 12 años', weights: ['32–35 kg', '36–39 kg', '40–43 kg', '44–47 kg', '48–51 kg'] },
-  { group: 'Juvenil 13–14 años', weights: ['40–43 kg', '44–46 kg', '48 kg', '50 kg', '52 kg', '54 kg', '57 kg', '60 kg', '63 kg', '66 kg', '70 kg'] },
-  { group: 'Juvenil 15–17 años', weights: ['46–48 kg', '50 kg', '52 kg', '54 kg', '57 kg', '60 kg', '63.5 kg', '67 kg', '71 kg', '75 kg', '80 kg', '+80 kg'] },
-  { group: 'Adultos 18+', weights: ['48 kg — Mini mosca', '51 kg — Mosca', '54 kg — Gallo', '57 kg — Pluma', '60 kg — Ligero', '63.5 kg — Súper ligero', '67 kg — Welter', '71 kg — Súper welter', '75 kg — Medio', '80 kg — Semi pesado', '86 kg', '92 kg', '+92 kg — Pesado'] },
-];
-
-const MUAY_THAI_WEIGHT_GROUPS = [
-  { group: 'Infantil 6–7 años', weights: ['20–22 kg', '23–25 kg', '26–28 kg', '29–31 kg'] },
-  { group: 'Infantil 8–9 años', weights: ['24–27 kg', '28–31 kg', '32–35 kg', '36–39 kg'] },
-  { group: 'Infantil 10–11 años', weights: ['28–31 kg', '32–35 kg', '36–39 kg', '40–43 kg', '44–47 kg'] },
-  { group: 'Infantil 12 años', weights: ['32–35 kg', '36–39 kg', '40–43 kg', '44–47 kg', '48–51 kg'] },
-  { group: 'Juvenil 13–14 años', weights: ['40–43 kg', '44–46 kg', '48 kg', '50 kg', '52 kg', '54 kg', '57 kg', '60 kg', '63 kg', '66 kg', '70 kg'] },
-  { group: 'Juvenil 15–17 años', weights: ['46–48 kg', '50 kg', '52 kg', '54 kg', '57 kg', '60 kg', '63.5 kg', '67 kg', '71 kg', '75 kg', '80 kg', '+80 kg'] },
-  { group: 'Adultos 18+', weights: ['48 kg', '51 kg', '54 kg', '57 kg', '60 kg', '63.5 kg', '67 kg', '71 kg', '75 kg', '81 kg', '86 kg', '91 kg', '+91 kg'] },
-];
-
-const MMA_WEIGHT_GROUPS = [
-  { group: 'Infantil 6–7 años', weights: ['20–22 kg', '23–25 kg', '26–28 kg', '29–31 kg'] },
-  { group: 'Infantil 8–9 años', weights: ['24–27 kg', '28–31 kg', '32–35 kg', '36–39 kg'] },
-  { group: 'Infantil 10–11 años', weights: ['28–31 kg', '32–35 kg', '36–39 kg', '40–43 kg', '44–47 kg'] },
-  { group: 'Infantil 12 años', weights: ['32–35 kg', '36–39 kg', '40–43 kg', '44–47 kg', '48–51 kg'] },
-  { group: 'Juvenil 13–14 años', weights: ['40–43 kg', '44–46 kg', '48 kg', '50 kg', '52 kg', '54 kg', '57 kg', '60 kg', '63 kg', '66 kg', '70 kg'] },
-  { group: 'Juvenil 15–17 años', weights: ['46–48 kg', '50 kg', '52 kg', '54 kg', '57 kg', '60 kg', '63.5 kg', '67 kg', '71 kg', '75 kg', '80 kg', '+80 kg'] },
-  { group: 'Adultos 18+', weights: ['52 kg — Mosca', '56.7 kg — Gallo', '61.2 kg — Pluma', '65.8 kg — Ligero', '70.3 kg — Welter', '77.1 kg — Medio', '83.9 kg — Semi pesado', '93 kg — Pesado ligero', '120 kg — Pesado'] },
-];
-
-const BJJ_WEIGHT_GROUPS = [
-  { group: 'Infantil 4–5 años', weights: ['-20 kg', '21–25 kg', '26–30 kg', '31–35 kg', '36–40 kg', '41–45 kg', '+46 kg'] },
-  { group: 'Infantil 6–7 años', weights: ['-20 kg', '21–25 kg', '26–30 kg', '31–35 kg', '36–40 kg', '41–45 kg', '+46 kg'] },
-  { group: 'Infantil 8–9 años', weights: ['-20 kg', '21–25 kg', '26–30 kg', '31–35 kg', '36–40 kg', '41–45 kg', '+46 kg'] },
-  { group: 'Infantil 10–11 años', weights: ['-20 kg', '21–25 kg', '26–30 kg', '31–35 kg', '36–40 kg', '41–45 kg', '+46 kg'] },
-  { group: 'Infantil 12 años', weights: ['-20 kg', '21–25 kg', '26–30 kg', '31–35 kg', '36–40 kg', '41–45 kg', '+46 kg'] },
-  { group: 'Juvenil 13–14 años', weights: ['-48 kg', '-52 kg', '-57 kg', '-63 kg', '-69 kg', '-75 kg', '-81 kg', '+81 kg'] },
-  { group: 'Juvenil 15–17 años', weights: ['-48 kg', '-52 kg', '-57 kg', '-63 kg', '-69 kg', '-75 kg', '-81 kg', '+81 kg'] },
-  { group: 'Adultos 18+ (GI / No-Gi)', weights: ['-57 kg — Gallo', '-64 kg — Pluma', '-70 kg — Ligero', '-76 kg — Medio', 'hasta 82.3 kg — Medio pesado', 'hasta 88.3 kg — Pesado', 'hasta 94.3 kg — Super pesado', 'hasta 100.5 kg — Pesadísimo', '+100.5 kg — Ultra pesado'] },
-];
-
-const K1_WEIGHT_GROUPS = [
-  { group: 'Infantil 6–7 años', weights: ['20–22 kg', '23–25 kg', '26–28 kg', '29–31 kg'] },
-  { group: 'Infantil 8–9 años', weights: ['24–27 kg', '28–31 kg', '32–35 kg', '36–39 kg'] },
-  { group: 'Infantil 10–11 años', weights: ['28–31 kg', '32–35 kg', '36–39 kg', '40–43 kg', '44–47 kg'] },
-  { group: 'Infantil 12 años', weights: ['32–35 kg', '36–39 kg', '40–43 kg', '44–47 kg', '48–51 kg'] },
-  { group: 'Juvenil 13–14 años', weights: ['40–43 kg', '44–46 kg', '48 kg', '50 kg', '52 kg', '54 kg', '57 kg', '60 kg', '63 kg', '66 kg', '70 kg'] },
-  { group: 'Juvenil 15–17 años', weights: ['46–48 kg', '50 kg', '52 kg', '54 kg', '57 kg', '60 kg', '63.5 kg', '67 kg', '71 kg', '75 kg', '80 kg', '+80 kg'] },
-  { group: 'Adultos 18+', weights: ['51 kg', '54 kg', '57 kg', '60 kg', '63.5 kg', '67 kg', '71 kg', '75 kg', '81 kg', '86 kg', '91 kg', '+91 kg'] },
-];
-
-const STRIKING_DISCIPLINES = ['Boxeo', 'Kickboxing', 'Light Contact', 'Low Kick', 'Kick Light', 'Point Fight', 'Full Contact'];
-
-const DISCIPLINES = [
-  'Boxeo','Muay Thai','MMA','Kickboxing','Karate','Judo','Lucha Libre',
-  'Lima Lama','Jiu-Jitsu','Point Fight','Bare Knuckle','K1',
-  'Light Contact','Kick Light','Low Kick','Full Contact','Otro',
-];
 
 const STATUSES: EventFormData['status'][] = ['draft', 'published', 'cancelled', 'completed'];
 const PAYMENT_SETUP_DRAFT_KEY = 'strikersmatch:event-payment-setup-draft';
@@ -365,191 +302,46 @@ export default function CreateEventPage() {
             </div>
           </div>
 
+          {/* Disciplines needed */}
+          <div>
+            <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#5A5A5A' }}>
+              Disciplinas requeridas
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {DISCIPLINE_OPTIONS.map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      disciplines_needed: prev.disciplines_needed.includes(d)
+                        ? prev.disciplines_needed.filter((x) => x !== d)
+                        : [...prev.disciplines_needed, d],
+                    }))
+                  }
+                  className={`px-3 py-1.5 text-xs font-bold tracking-wide uppercase border transition-colors ${
+                    formData.disciplines_needed.includes(d)
+                      ? 'bg-[#C0001E] text-white border-[#C0001E]'
+                      : 'bg-white text-zinc-600 border-zinc-300 hover:border-zinc-500'
+                  }`}
+                >
+                  {d}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Weight Classes multi-select */}
           <div>
             <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#5A5A5A' }}>
               Categorías de Peso Requeridas
             </label>
-            {formData.disciplines_needed.length === 0 ? (
-              <p className="text-xs text-zinc-400 italic">Selecciona una disciplina para ver las categorías de peso disponibles</p>
-            ) : (
-              <div className="space-y-4">
-                {/* Show Boxing groups if any striking discipline selected */}
-                {formData.disciplines_needed.some(d => STRIKING_DISCIPLINES.includes(d)) && (
-                  <div>
-                    <p className="text-xs font-bold text-zinc-700 uppercase tracking-widest mb-2">Boxeo / Kickboxing / Point Fight</p>
-                    {BOXING_WEIGHT_GROUPS.map((grp) => (
-                      <div key={grp.group} className="mb-3">
-                        <p className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-1.5">{grp.group}</p>
-                        <div className="flex flex-wrap gap-2">
-                          {grp.weights.map((wc) => (
-                            <button key={wc} type="button"
-                              onClick={() => setFormData((prev) => ({
-                                ...prev,
-                                weight_classes_needed: prev.weight_classes_needed.includes(wc)
-                                  ? prev.weight_classes_needed.filter((x) => x !== wc)
-                                  : [...prev.weight_classes_needed, wc],
-                              }))}
-                              className={`px-3 py-1.5 text-xs font-bold tracking-wide border transition-colors ${
-                                formData.weight_classes_needed.includes(wc)
-                                  ? 'bg-[#C0001E] text-white border-[#C0001E]'
-                                  : 'bg-white text-zinc-600 border-zinc-300 hover:border-zinc-500'
-                              }`}>
-                              {wc}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Show Muay Thai groups */}
-                {formData.disciplines_needed.includes('Muay Thai') && (
-                  <div>
-                    <p className="text-xs font-bold text-zinc-700 uppercase tracking-widest mb-2">Muay Thai</p>
-                    {MUAY_THAI_WEIGHT_GROUPS.map((grp) => (
-                      <div key={grp.group} className="mb-3">
-                        <p className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-1.5">{grp.group}</p>
-                        <div className="flex flex-wrap gap-2">
-                          {grp.weights.map((wc) => (
-                            <button key={`mt-${wc}`} type="button"
-                              onClick={() => setFormData((prev) => ({
-                                ...prev,
-                                weight_classes_needed: prev.weight_classes_needed.includes(wc)
-                                  ? prev.weight_classes_needed.filter((x) => x !== wc)
-                                  : [...prev.weight_classes_needed, wc],
-                              }))}
-                              className={`px-3 py-1.5 text-xs font-bold tracking-wide border transition-colors ${
-                                formData.weight_classes_needed.includes(wc)
-                                  ? 'bg-[#C0001E] text-white border-[#C0001E]'
-                                  : 'bg-white text-zinc-600 border-zinc-300 hover:border-zinc-500'
-                              }`}>
-                              {wc}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Show MMA groups */}
-                {formData.disciplines_needed.includes('MMA') && (
-                  <div>
-                    <p className="text-xs font-bold text-zinc-700 uppercase tracking-widest mb-2">MMA</p>
-                    {MMA_WEIGHT_GROUPS.map((grp) => (
-                      <div key={grp.group} className="mb-3">
-                        <p className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-1.5">{grp.group}</p>
-                        <div className="flex flex-wrap gap-2">
-                          {grp.weights.map((wc) => (
-                            <button key={`mma-${wc}`} type="button"
-                              onClick={() => setFormData((prev) => ({
-                                ...prev,
-                                weight_classes_needed: prev.weight_classes_needed.includes(wc)
-                                  ? prev.weight_classes_needed.filter((x) => x !== wc)
-                                  : [...prev.weight_classes_needed, wc],
-                              }))}
-                              className={`px-3 py-1.5 text-xs font-bold tracking-wide border transition-colors ${
-                                formData.weight_classes_needed.includes(wc)
-                                  ? 'bg-[#C0001E] text-white border-[#C0001E]'
-                                  : 'bg-white text-zinc-600 border-zinc-300 hover:border-zinc-500'
-                              }`}>
-                              {wc}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Show BJJ groups */}
-                {formData.disciplines_needed.includes('Jiu-Jitsu') && (
-                  <div>
-                    <p className="text-xs font-bold text-zinc-700 uppercase tracking-widest mb-2">Jiu-Jitsu</p>
-                    {BJJ_WEIGHT_GROUPS.map((grp) => (
-                      <div key={grp.group} className="mb-3">
-                        <p className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-1.5">{grp.group}</p>
-                        <div className="flex flex-wrap gap-2">
-                          {grp.weights.map((wc) => (
-                            <button key={`bjj-${wc}`} type="button"
-                              onClick={() => setFormData((prev) => ({
-                                ...prev,
-                                weight_classes_needed: prev.weight_classes_needed.includes(wc)
-                                  ? prev.weight_classes_needed.filter((x) => x !== wc)
-                                  : [...prev.weight_classes_needed, wc],
-                              }))}
-                              className={`px-3 py-1.5 text-xs font-bold tracking-wide border transition-colors ${
-                                formData.weight_classes_needed.includes(wc)
-                                  ? 'bg-[#C0001E] text-white border-[#C0001E]'
-                                  : 'bg-white text-zinc-600 border-zinc-300 hover:border-zinc-500'
-                              }`}>
-                              {wc}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Show K1 groups */}
-                {formData.disciplines_needed.includes('K1') && (
-                  <div>
-                    <p className="text-xs font-bold text-zinc-700 uppercase tracking-widest mb-2">K1</p>
-                    {K1_WEIGHT_GROUPS.map((grp) => (
-                      <div key={grp.group} className="mb-3">
-                        <p className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-1.5">{grp.group}</p>
-                        <div className="flex flex-wrap gap-2">
-                          {grp.weights.map((wc) => (
-                            <button key={`k1-${wc}`} type="button"
-                              onClick={() => setFormData((prev) => ({
-                                ...prev,
-                                weight_classes_needed: prev.weight_classes_needed.includes(wc)
-                                  ? prev.weight_classes_needed.filter((x) => x !== wc)
-                                  : [...prev.weight_classes_needed, wc],
-                              }))}
-                              className={`px-3 py-1.5 text-xs font-bold tracking-wide border transition-colors ${
-                                formData.weight_classes_needed.includes(wc)
-                                  ? 'bg-[#C0001E] text-white border-[#C0001E]'
-                                  : 'bg-white text-zinc-600 border-zinc-300 hover:border-zinc-500'
-                              }`}>
-                              {wc}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Fallback for other disciplines */}
-                {formData.disciplines_needed.some(d => !STRIKING_DISCIPLINES.includes(d) && !['Muay Thai', 'MMA', 'Jiu-Jitsu', 'K1'].includes(d)) && (
-                  <div>
-                    <p className="text-xs font-bold text-zinc-700 uppercase tracking-widest mb-2">Otras Disciplinas</p>
-                    <div className="flex flex-wrap gap-2">
-                      {WEIGHT_CLASSES.map((wc) => (
-                        <button key={wc} type="button"
-                          onClick={() => setFormData((prev) => ({
-                            ...prev,
-                            weight_classes_needed: prev.weight_classes_needed.includes(wc)
-                              ? prev.weight_classes_needed.filter((x) => x !== wc)
-                              : [...prev.weight_classes_needed, wc],
-                          }))}
-                          className={`px-3 py-1.5 text-xs font-bold tracking-wide uppercase border transition-colors ${
-                            formData.weight_classes_needed.includes(wc)
-                              ? 'bg-[#C0001E] text-white border-[#C0001E]'
-                              : 'bg-white text-zinc-600 border-zinc-300 hover:border-zinc-500'
-                          }`}>
-                          {t(`events.weightClasses.${wc}`, { defaultValue: wc })}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+            <EventWeightCategorySelector
+              disciplines={formData.disciplines_needed}
+              selected={formData.weight_classes_needed}
+              onChange={(weightClasses) => setFormData((prev) => ({ ...prev, weight_classes_needed: weightClasses }))}
+            />
           </div>
 
           {/* Purse */}
@@ -632,36 +424,6 @@ export default function CreateEventPage() {
                 )}
               </div>
             )}
-          </div>
-
-          {/* Disciplines needed */}
-          <div>
-            <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#5A5A5A' }}>
-              Disciplinas requeridas
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {DISCIPLINES.map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      disciplines_needed: prev.disciplines_needed.includes(d)
-                        ? prev.disciplines_needed.filter((x) => x !== d)
-                        : [...prev.disciplines_needed, d],
-                    }))
-                  }
-                  className={`px-3 py-1.5 text-xs font-bold tracking-wide uppercase border transition-colors ${
-                    formData.disciplines_needed.includes(d)
-                      ? 'bg-[#C0001E] text-white border-[#C0001E]'
-                      : 'bg-white text-zinc-600 border-zinc-300 hover:border-zinc-500'
-                  }`}
-                >
-                  {d}
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Flyer Upload */}

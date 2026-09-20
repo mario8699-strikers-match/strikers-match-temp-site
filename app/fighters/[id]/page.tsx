@@ -14,6 +14,7 @@ import { requestService } from '@/services/requestService';
 import { authService } from '@/services/authService';
 import { fighterFollowService } from '@/services/fighterFollowService';
 import { supabase } from '@/lib/supabaseClient';
+import { SOCIAL_MEDIA_PLATFORMS, getSocialMediaDisplayValue, getSocialMediaHref } from '@/lib/socialMedia';
 import type { Fighter, Profile, Event } from '@/types';
 
 const WEIGHT_LABELS: Record<string, string> = {
@@ -22,7 +23,17 @@ const WEIGHT_LABELS: Record<string, string> = {
   superwelter:'Superwelter',medio:'Medio',supermedio:'Supermedio',semipesado:'Semipesado',crucero:'Crucero',pesado:'Pesado',
 };
 
-type FighterDetail = Fighter & { profiles: { full_name: string; city: string | null } };
+type FighterDetail = Fighter & {
+  profiles: {
+    full_name: string;
+    city: string | null;
+    instagram?: string | null;
+    tiktok?: string | null;
+    facebook?: string | null;
+    youtube?: string | null;
+    x_handle?: string | null;
+  };
+};
 
 type Neighbor = { id: string; name: string };
 
@@ -162,6 +173,11 @@ export default function FighterDetailPage() {
 
   const canSendRequest = profile && (profile.role === 'promoter' || profile.role === 'manager' || profile.role === 'admin');
   const age = fighter.age ?? null;
+  const socialMedia = SOCIAL_MEDIA_PLATFORMS.flatMap((platform) => {
+    const value = fighter.profiles?.[platform.key];
+    const href = value ? getSocialMediaHref(platform.key, value) : null;
+    return value && href ? [{ ...platform, value, href }] : [];
+  });
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -287,6 +303,26 @@ export default function FighterDetailPage() {
           <div className="border border-zinc-100 p-6 mb-8">
             <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color:'#9A9A9A' }}>Bio</p>
             <p className="text-sm text-zinc-700 leading-relaxed">{fighter.bio}</p>
+          </div>
+        )}
+
+        {socialMedia.length > 0 && (
+          <div className="border border-zinc-100 p-6 mb-8">
+            <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color:'#9A9A9A' }}>Redes sociales</p>
+            <div className="flex flex-wrap gap-2">
+              {socialMedia.map(({ key, label, value, href }) => (
+                <a
+                  key={key}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 border border-zinc-200 px-3 py-2 text-sm text-zinc-700 transition-colors hover:border-[#C0001E] hover:text-[#C0001E]"
+                >
+                  <span className="font-bold">{label}</span>
+                  <span>{getSocialMediaDisplayValue(value)}</span>
+                </a>
+              ))}
+            </div>
           </div>
         )}
 

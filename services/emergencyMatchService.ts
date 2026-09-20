@@ -11,6 +11,7 @@
  */
 
 import { supabase } from '@/lib/supabaseClient';
+import { sanitizeWeightClass, sanitizeWeightClasses } from '@/lib/combatWeightCategories';
 import type { FighterWithProfile, EmergencyMatchResult, ServiceResponse } from '@/types';
 
 // ── Weight class order for neighbor matching ──
@@ -62,10 +63,12 @@ export async function findEmergencyReplacements(
 
     // Build target weights
     const targetWeights: string[] = [];
-    if (event.weight_classes_needed?.length) {
-      targetWeights.push(...event.weight_classes_needed);
-    } else if (event.weight_class_needed) {
-      targetWeights.push(event.weight_class_needed);
+    const configuredWeightClasses = sanitizeWeightClasses(event.weight_classes_needed);
+    const configuredWeightClass = sanitizeWeightClass(event.weight_class_needed);
+    if (configuredWeightClasses.length) {
+      targetWeights.push(...configuredWeightClasses);
+    } else if (configuredWeightClass) {
+      targetWeights.push(configuredWeightClass);
     }
 
     // Score each fighter

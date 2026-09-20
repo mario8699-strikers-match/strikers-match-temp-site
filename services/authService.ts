@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabaseClient';
 import { uploadFile } from '@/lib/storageClient';
 import type { LoginFormData, RegisterFormData, ServiceResponse, AuthSession, UserRole, PromoterFederationStatus, Profile } from '@/types';
+import type { SocialMediaHandles } from '@/lib/socialMedia';
 
 const SESSION_PROFILE_COLUMNS = `
   id, full_name, email, role, city, state, country, phone, date_of_birth,
@@ -210,6 +211,10 @@ export const authService = {
       phone?: string | null;
       bio?: string | null;
       instagram?: string | null;
+      tiktok?: string | null;
+      facebook?: string | null;
+      youtube?: string | null;
+      x_handle?: string | null;
       photo_url?: string | null;
       promoter_federation_status?: PromoterFederationStatus;
       is_available?: boolean;
@@ -224,6 +229,21 @@ export const authService = {
       if (error) return { data: null, error: error.message };
       clearSessionCache();
       return { data: null, error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
+  async getSocialMediaHandles(id: string): Promise<ServiceResponse<SocialMediaHandles>> {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('instagram, tiktok, facebook, youtube, x_handle')
+        .eq('id', id)
+        .single();
+
+      if (error) return { data: null, error: error.message };
+      return { data: data as SocialMediaHandles, error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }

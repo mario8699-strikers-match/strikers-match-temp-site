@@ -71,6 +71,10 @@ export interface Profile {
   date_of_birth: string | null;
   bio: string | null;
   instagram: string | null;
+  tiktok?: string | null;
+  facebook?: string | null;
+  youtube?: string | null;
+  x_handle?: string | null;
   photo_url: string | null;
   promoter_federation_status: PromoterFederationStatus;
   is_available: boolean;

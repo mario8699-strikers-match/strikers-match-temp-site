@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 import { uploadFile } from '@/lib/storageClient';
+import { sanitizeWeightClass, sanitizeWeightClasses } from '@/lib/combatWeightCategories';
 import type { Event, EventFormData, EventApplication, ServiceResponse } from '@/types';
 
 export const eventService = {
@@ -68,8 +69,8 @@ export const eventService = {
         event_time: formData.event_time || null,
         city: formData.city || null,
         venue: formData.venue || null,
-        weight_class_needed: formData.weight_class_needed || null,
-        weight_classes_needed: formData.weight_classes_needed ?? [],
+        weight_class_needed: sanitizeWeightClass(formData.weight_class_needed),
+        weight_classes_needed: sanitizeWeightClasses(formData.weight_classes_needed),
         disciplines_needed: formData.disciplines_needed ?? [],
         purse_amount: formData.purse_enabled && formData.purse_amount ? parseFloat(formData.purse_amount) : null,
         signup_fee: null,
@@ -127,8 +128,8 @@ export const eventService = {
       if (formData.event_time !== undefined) payload.event_time = formData.event_time || null;
       if (formData.city !== undefined) payload.city = formData.city || null;
       if (formData.venue !== undefined) payload.venue = formData.venue || null;
-      if (formData.weight_class_needed !== undefined) payload.weight_class_needed = formData.weight_class_needed || null;
-      if (formData.weight_classes_needed !== undefined) payload.weight_classes_needed = formData.weight_classes_needed;
+      if (formData.weight_class_needed !== undefined) payload.weight_class_needed = sanitizeWeightClass(formData.weight_class_needed);
+      if (formData.weight_classes_needed !== undefined) payload.weight_classes_needed = sanitizeWeightClasses(formData.weight_classes_needed);
       if (formData.disciplines_needed !== undefined) payload.disciplines_needed = formData.disciplines_needed;
       if (formData.purse_amount !== undefined) payload.purse_amount = (formData.purse_enabled && formData.purse_amount) ? parseFloat(formData.purse_amount) : null;
       if (formData.notes !== undefined) payload.notes = formData.notes || null;
@@ -232,7 +233,7 @@ export const eventService = {
   async getApplicationsForEvent(eventId: string): Promise<ServiceResponse<
     (EventApplication & {
       fighters: {
-        profiles: { full_name: string; city: string | null };
+        profiles: { full_name: string; city: string | null; date_of_birth: string | null };
         weight_class: string | null;
         disciplines: string[];
         photo_url: string | null;
@@ -242,7 +243,7 @@ export const eventService = {
     try {
       const { data, error } = await supabase
         .from('event_applications')
-        .select('*, fighters(weight_class, disciplines, photo_url, profiles(full_name, city))')
+        .select('*, fighters(weight_class, disciplines, photo_url, profiles(full_name, city, date_of_birth))')
         .eq('event_id', eventId)
         .order('created_at', { ascending: true });
       if (error) return { data: null, error: error.message };

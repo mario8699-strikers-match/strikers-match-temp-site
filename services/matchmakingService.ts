@@ -12,6 +12,7 @@
  */
 
 import { supabase } from '@/lib/supabaseClient';
+import { sanitizeWeightClass, sanitizeWeightClasses } from '@/lib/combatWeightCategories';
 import type { FighterWithProfile, MatchResult } from '@/types';
 
 // ── Ordered weight classes for neighbor matching ──
@@ -146,10 +147,12 @@ export async function getRecommendedFighters(
   try {
     // Build target weight classes
     const targetWeights: string[] = [];
-    if (event.weight_classes_needed?.length) {
-      targetWeights.push(...event.weight_classes_needed);
-    } else if (event.weight_class_needed) {
-      targetWeights.push(event.weight_class_needed);
+    const configuredWeightClasses = sanitizeWeightClasses(event.weight_classes_needed);
+    const configuredWeightClass = sanitizeWeightClass(event.weight_class_needed);
+    if (configuredWeightClasses.length) {
+      targetWeights.push(...configuredWeightClasses);
+    } else if (configuredWeightClass) {
+      targetWeights.push(configuredWeightClass);
     }
 
     // Pre-filter query: only available, non-hidden fighters

@@ -126,6 +126,26 @@ export async function updateEventParticipant(
   return { data: data as EventRegistration, error: null };
 }
 
+export async function confirmManualEventParticipantPayment(
+  registrationId: string
+): Promise<ServiceResponse<EventRegistration>> {
+  const { data, error } = await supabase.rpc('confirm_manual_event_registration_payment', {
+    registration_uuid: registrationId,
+  });
+  if (error) return { data: null, error: error.message };
+  return { data: data as EventRegistration, error: null };
+}
+
+export async function confirmAcceptedManualEventParticipantPayments(
+  eventId: string
+): Promise<ServiceResponse<EventRegistration[]>> {
+  const { data, error } = await supabase.rpc('confirm_accepted_manual_event_registration_payments', {
+    event_uuid: eventId,
+  });
+  if (error) return { data: null, error: error.message };
+  return { data: (data ?? []) as EventRegistration[], error: null };
+}
+
 export async function removeEventParticipant(
   registrationId: string
 ): Promise<ServiceResponse<null>> {

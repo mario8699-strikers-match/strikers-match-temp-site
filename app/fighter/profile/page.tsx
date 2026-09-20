@@ -12,6 +12,14 @@ import { requestService } from '@/services/requestService';
 import { eventService } from '@/services/eventService';
 import { isMinor, hasValidConsent } from '@/services/consentService';
 import { supabase } from '@/lib/supabaseClient';
+import {
+  SOCIAL_MEDIA_PLATFORMS,
+  getSocialMediaDisplayValue,
+  getSocialMediaHref,
+  isValidSocialMediaIdentifier,
+  normalizeSocialMediaIdentifier,
+} from '@/lib/socialMedia';
+import type { SocialMediaHandles, SocialMediaPlatform } from '@/lib/socialMedia';
 import type { Profile, Fighter, MatchRequest, EventApplication } from '@/types';
 
 const WEIGHT_CLASSES = [
@@ -77,6 +85,13 @@ export default function FighterProfilePage() {
   const [experienceLevel, setExperienceLevel] = useState<'amateur' | 'pro'>('amateur');
   const [availableFrom, setAvailableFrom] = useState('');
   const [availableTo, setAvailableTo] = useState('');
+  const [socialMedia, setSocialMedia] = useState<Record<SocialMediaPlatform, string>>({
+    instagram: '',
+    tiktok: '',
+    facebook: '',
+    youtube: '',
+    x_handle: '',
+  });
 
   // Representation
   const [hasManager, setHasManager] = useState(false);
@@ -161,6 +176,19 @@ export default function FighterProfilePage() {
       if (!p) { window.location.href = '/login'; return; }
       if (p.role !== 'fighter') { window.location.href = '/'; return; }
 
+      setSocialMedia((current) => ({ ...current, instagram: p.instagram ?? '' }));
+      authService.getSocialMediaHandles(p.id).then(({ data: handles }) => {
+        if (!handles) return;
+        setSocialMedia({
+          instagram: handles.instagram ?? '',
+          tiktok: handles.tiktok ?? '',
+          facebook: handles.facebook ?? '',
+          youtube: handles.youtube ?? '',
+          x_handle: handles.x_handle ?? '',
+        });
+        setProfile((current) => current ? { ...current, ...handles } : current);
+      });
+
       // Minor consent gate
       if (isMinor(p.date_of_birth)) {
         const consented = await hasValidConsent(p.id);
@@ -224,8 +252,25 @@ export default function FighterProfilePage() {
 
   const handleSave = async () => {
     if (!profile) return;
-    setSaving(true);
     setError(null);
+
+    const invalidPlatform = SOCIAL_MEDIA_PLATFORMS.find(
+      ({ key }) => !isValidSocialMediaIdentifier(key, socialMedia[key])
+    );
+    if (invalidPlatform) {
+      setError(`Revisa tu usuario o enlace de ${invalidPlatform.label}.`);
+      return;
+    }
+
+    const socialUpdates: SocialMediaHandles = {
+      instagram: normalizeSocialMediaIdentifier(socialMedia.instagram),
+      tiktok: normalizeSocialMediaIdentifier(socialMedia.tiktok),
+      facebook: normalizeSocialMediaIdentifier(socialMedia.facebook),
+      youtube: normalizeSocialMediaIdentifier(socialMedia.youtube),
+      x_handle: normalizeSocialMediaIdentifier(socialMedia.x_handle),
+    };
+
+    setSaving(true);
 
     let photoUrl: string | undefined;
     if (photoFile) {
@@ -283,15 +328,31 @@ export default function FighterProfilePage() {
       ? await fighterService.update(fighter.id, payload)
       : await fighterService.create(profile.id, payload);
 
-    setSaving(false);
     if (result.error) {
+      setSaving(false);
       setError('Error al guardar. Intenta de nuevo.');
-    } else {
-      setFighter(result.data);
-      setPhotoFile(null);
-      setPhotoPreview(null);
-      setEditing(false);
+      return;
     }
+
+    const socialResult = await authService.updateProfile(profile.id, socialUpdates);
+    setSaving(false);
+    setFighter(result.data);
+    if (socialResult.error) {
+      setError('El perfil deportivo se guardó, pero no se pudieron guardar las redes sociales. Intenta de nuevo.');
+      return;
+    }
+
+    setProfile((current) => current ? { ...current, ...socialUpdates } : current);
+    setSocialMedia({
+      instagram: socialUpdates.instagram ?? '',
+      tiktok: socialUpdates.tiktok ?? '',
+      facebook: socialUpdates.facebook ?? '',
+      youtube: socialUpdates.youtube ?? '',
+      x_handle: socialUpdates.x_handle ?? '',
+    });
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    setEditing(false);
   };
 
   const handleRequestStatus = async (requestId: string, status: 'accepted' | 'declined') => {
@@ -330,6 +391,11 @@ export default function FighterProfilePage() {
 
   const isSetup = !fighter;
   const displayPhoto = photoPreview ?? fighter?.photo_url ?? null;
+  const visibleSocialMedia = SOCIAL_MEDIA_PLATFORMS.flatMap((platform) => {
+    const value = socialMedia[platform.key];
+    const href = value ? getSocialMediaHref(platform.key, value) : null;
+    return href ? [{ ...platform, value, href }] : [];
+  });
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -481,6 +547,26 @@ export default function FighterProfilePage() {
               <div className="border border-zinc-100 p-6">
                 <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color:'#9A9A9A' }}>Bio</p>
                 <p className="text-sm text-zinc-700 leading-relaxed">{fighter.bio}</p>
+              </div>
+            )}
+
+            {visibleSocialMedia.length > 0 && (
+              <div className="border border-zinc-100 p-6">
+                <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color:'#9A9A9A' }}>Redes sociales</p>
+                <div className="flex flex-wrap gap-2">
+                  {visibleSocialMedia.map(({ key, label, value, href }) => (
+                    <a
+                      key={key}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 border border-zinc-200 px-3 py-2 text-sm text-zinc-700 transition-colors hover:border-[#C0001E] hover:text-[#C0001E]"
+                    >
+                      <span className="font-bold">{label}</span>
+                      <span>{getSocialMediaDisplayValue(value)}</span>
+                    </a>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -669,6 +755,30 @@ export default function FighterProfilePage() {
               <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Bio</label>
               <textarea value={bio} onChange={e => setBio(e.target.value)} rows={4} placeholder="Cuéntanos sobre ti..."
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900 resize-none" />
+            </div>
+
+            {/* Social media */}
+            <div className="border border-zinc-200 p-4">
+              <label className="block text-xs font-bold tracking-widest uppercase" style={{ color:'#5A5A5A' }}>Redes sociales</label>
+              <p className="mt-1 text-xs text-zinc-500">Agrega tu usuario o pega el enlace completo de tu perfil.</p>
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {SOCIAL_MEDIA_PLATFORMS.map(({ key, label, placeholder }) => (
+                  <label key={key}>
+                    <span className="mb-1 block text-xs text-zinc-400">{label}</span>
+                    <input
+                      type="text"
+                      value={socialMedia[key]}
+                      onChange={(event) => setSocialMedia((current) => ({ ...current, [key]: event.target.value }))}
+                      placeholder={placeholder}
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      maxLength={255}
+                      className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                    />
+                  </label>
+                ))}
+              </div>
             </div>
 
             {/* Representation */}

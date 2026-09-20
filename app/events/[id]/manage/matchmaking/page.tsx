@@ -231,6 +231,25 @@ export default function MatchmakingBoardPage() {
         <Metric label={t('events.engine.matchmaking.proposals')} value={matches.filter((match) => match.match_status !== 'cancelled').length} />
       </div>
 
+      {eligibleCount === 0 && (
+        <div className="border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+          <p className="font-bold">Las categorías del evento no asignan automáticamente una categoría a cada peleador.</p>
+          <p className="mt-1">
+            En Participantes, asigna a cada peleador su disciplina, fecha de nacimiento, división de género, categoría de peso y reglamento. Dos peleadores podrán proponerse cuando sus datos sean compatibles y ambos estén listos para matchmaking.
+          </p>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <Link href={`/events/${eventId}/manage/participants`} className="inline-flex min-h-11 items-center justify-center bg-zinc-900 px-4 py-3 text-xs font-bold uppercase text-white">
+              Completar participantes
+            </Link>
+            {invalidCount > 0 && !showInvalid && (
+              <button type="button" onClick={() => setShowInvalid(true)} className="min-h-11 border border-amber-300 bg-white px-4 py-3 text-xs font-bold uppercase text-amber-950">
+                Ver por qué no coinciden
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {error && <p className="border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p>}
       {message && <p className="border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p>}
 

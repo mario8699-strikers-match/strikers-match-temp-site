@@ -5,12 +5,21 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { EventManageFrame } from '@/components/EventManageFrame';
+import { EventWeightCategorySelector } from '@/components/EventWeightCategorySelector';
 import { InlineCombatRecord } from '@/components/CombatRecord';
 import { eventService } from '@/services/eventService';
 import { authService } from '@/services/authService';
 import { canAccessEventTools, canUseEventFeature } from '@/services/eventStaffService';
 import { fighterService } from '@/services/fighterService';
 import { supabase } from '@/lib/supabaseClient';
+import {
+  DISCIPLINE_OPTIONS,
+  GENERIC_WEIGHT_CLASS_OPTIONS,
+  calculateAgeOnDate,
+  getCombatWeightGroupsForAge,
+  restrictWeightGroupsToEvent,
+  sanitizeWeightClasses,
+} from '@/lib/combatWeightCategories';
 import { getRecommendedFighters } from '@/services/matchmakingService';
 import { findEmergencyReplacements, sendQuickRequest } from '@/services/emergencyMatchService';
 import { registerForEvent, submitPayment, getFighterRegistration, getEventRegistrations } from '@/services/registrationService';
@@ -30,191 +39,7 @@ import { reliabilityTier } from '@/services/reliabilityService';
 import type { Event, EventFormData, EventApplication, Profile, Fighter, MatchResult, EmergencyMatchResult, MatchRequest, EventRegistration, EventPaymentSettings, RegistrationPayment } from '@/types';
 import { useEventInitialData } from './EventInitialData';
 
-const WEIGHT_CLASSES = [
-  'minimosca','mosca','supermosca','gallo','supergallo',
-  'pluma','superpluma','ligero','superligero','welter',
-  'superwelter','medio','supermedio','semipesado','crucero','pesado','multiple',
-];
-
-const DISCIPLINES = [
-  'Boxeo','Muay Thai','MMA','Kickboxing','Karate','Judo','Lucha Libre',
-  'Lima Lama','Jiu-Jitsu','Point Fight','Bare Knuckle','K1',
-  'Light Contact','Kick Light','Low Kick','Full Contact','Otro',
-];
-
 const STATUSES: EventFormData['status'][] = ['draft', 'published', 'cancelled', 'completed'];
-
-const BOXING_WEIGHT_GROUPS = [
-  {
-    group: 'Infantil 6–7 años',
-    weights: ['20–22 kg', '23–25 kg', '26–28 kg', '29–31 kg'],
-  },
-  {
-    group: 'Infantil 8–9 años',
-    weights: ['24–27 kg', '28–31 kg', '32–35 kg', '36–39 kg'],
-  },
-  {
-    group: 'Infantil 10–11 años',
-    weights: ['28–31 kg', '32–35 kg', '36–39 kg', '40–43 kg', '44–47 kg'],
-  },
-  {
-    group: 'Infantil 12 años',
-    weights: ['32–35 kg', '36–39 kg', '40–43 kg', '44–47 kg', '48–51 kg'],
-  },
-  {
-    group: 'Juvenil 13–14 años (Junior)',
-    weights: ['40–43 kg', '44–46 kg', '48 kg', '50 kg', '52 kg', '54 kg', '57 kg', '60 kg', '63 kg', '66 kg', '70 kg'],
-  },
-  {
-    group: 'Juvenil 15–17 años',
-    weights: ['46–48 kg', '50 kg', '52 kg', '54 kg', '57 kg', '60 kg', '63.5 kg', '67 kg', '71 kg', '75 kg', '80 kg', '+80 kg'],
-  },
-  {
-    group: 'Adultos 18+ años',
-    weights: [
-      '48 kg — Mini mosca', '51 kg — Mosca', '54 kg — Gallo', '57 kg — Pluma',
-      '60 kg — Ligero', '63.5 kg — Súper ligero', '67 kg — Welter', '71 kg — Súper welter',
-      '75 kg — Medio', '80 kg — Semi pesado', '86 kg', '92 kg', '+92 kg — Pesado',
-    ],
-  },
-];
-
-const MUAY_THAI_WEIGHT_GROUPS = [
-  {
-    group: 'Infantil 6–7 años',
-    weights: ['20–22 kg', '23–25 kg', '26–28 kg', '29–31 kg'],
-  },
-  {
-    group: 'Infantil 8–9 años',
-    weights: ['24–27 kg', '28–31 kg', '32–35 kg', '36–39 kg'],
-  },
-  {
-    group: 'Infantil 10–11 años',
-    weights: ['28–31 kg', '32–35 kg', '36–39 kg', '40–43 kg', '44–47 kg'],
-  },
-  {
-    group: 'Infantil 12 años',
-    weights: ['32–35 kg', '36–39 kg', '40–43 kg', '44–47 kg', '48–51 kg'],
-  },
-  {
-    group: 'Juvenil 13–14 años',
-    weights: ['40–43 kg', '44–46 kg', '48 kg', '50 kg', '52 kg', '54 kg', '57 kg', '60 kg', '63 kg', '66 kg', '70 kg'],
-  },
-  {
-    group: 'Juvenil 15–17 años',
-    weights: ['46–48 kg', '50 kg', '52 kg', '54 kg', '57 kg', '60 kg', '63.5 kg', '67 kg', '71 kg', '75 kg', '80 kg', '+80 kg'],
-  },
-  {
-    group: 'Adultos 18+ años',
-    weights: ['48 kg', '51 kg', '54 kg', '57 kg', '60 kg', '63.5 kg', '67 kg', '71 kg', '75 kg', '81 kg', '86 kg', '91 kg', '+91 kg'],
-  },
-];
-
-const MMA_WEIGHT_GROUPS = [
-  {
-    group: 'Infantil 6–7 años',
-    weights: ['20–22 kg', '23–25 kg', '26–28 kg', '29–31 kg'],
-  },
-  {
-    group: 'Infantil 8–9 años',
-    weights: ['24–27 kg', '28–31 kg', '32–35 kg', '36–39 kg'],
-  },
-  {
-    group: 'Infantil 10–11 años',
-    weights: ['28–31 kg', '32–35 kg', '36–39 kg', '40–43 kg', '44–47 kg'],
-  },
-  {
-    group: 'Infantil 12 años',
-    weights: ['32–35 kg', '36–39 kg', '40–43 kg', '44–47 kg', '48–51 kg'],
-  },
-  {
-    group: 'Juvenil 13–14 años',
-    weights: ['40–43 kg', '44–46 kg', '48 kg', '50 kg', '52 kg', '54 kg', '57 kg', '60 kg', '63 kg', '66 kg', '70 kg'],
-  },
-  {
-    group: 'Juvenil 15–17 años',
-    weights: ['46–48 kg', '50 kg', '52 kg', '54 kg', '57 kg', '60 kg', '63.5 kg', '67 kg', '71 kg', '75 kg', '80 kg', '+80 kg'],
-  },
-  {
-    group: 'Adultos 18+ años',
-    weights: [
-      '52 kg — Mosca', '56.7 kg — Gallo', '61.2 kg — Pluma', '65.8 kg — Ligero',
-      '70.3 kg — Welter', '77.1 kg — Medio', '83.9 kg — Semi pesado',
-      '93 kg — Pesado ligero', '120 kg — Pesado',
-    ],
-  },
-];
-
-const K1_WEIGHT_GROUPS = [
-  {
-    group: 'Infantil 6–7 años',
-    weights: ['20–22 kg', '23–25 kg', '26–28 kg', '29–31 kg'],
-  },
-  {
-    group: 'Infantil 8–9 años',
-    weights: ['24–27 kg', '28–31 kg', '32–35 kg', '36–39 kg'],
-  },
-  {
-    group: 'Infantil 10–11 años',
-    weights: ['28–31 kg', '32–35 kg', '36–39 kg', '40–43 kg', '44–47 kg'],
-  },
-  {
-    group: 'Infantil 12 años',
-    weights: ['32–35 kg', '36–39 kg', '40–43 kg', '44–47 kg', '48–51 kg'],
-  },
-  {
-    group: 'Juvenil 13–14 años',
-    weights: ['40–43 kg', '44–46 kg', '48 kg', '50 kg', '52 kg', '54 kg', '57 kg', '60 kg', '63 kg', '66 kg', '70 kg'],
-  },
-  {
-    group: 'Juvenil 15–17 años',
-    weights: ['46–48 kg', '50 kg', '52 kg', '54 kg', '57 kg', '60 kg', '63.5 kg', '67 kg', '71 kg', '75 kg', '80 kg', '+80 kg'],
-  },
-  {
-    group: 'Adultos 18+ años',
-    weights: ['51 kg', '54 kg', '57 kg', '60 kg', '63.5 kg', '67 kg', '71 kg', '75 kg', '81 kg', '86 kg', '91 kg', '+91 kg'],
-  },
-];
-
-const BJJ_WEIGHT_GROUPS = [
-  {
-    group: 'Infantil 4–5 años',
-    weights: ['-20 kg', '21–25 kg', '26–30 kg', '31–35 kg', '36–40 kg', '41–45 kg', '+46 kg'],
-  },
-  {
-    group: 'Infantil 6–7 años',
-    weights: ['-20 kg', '21–25 kg', '26–30 kg', '31–35 kg', '36–40 kg', '41–45 kg', '+46 kg'],
-  },
-  {
-    group: 'Infantil 8–9 años',
-    weights: ['-20 kg', '21–25 kg', '26–30 kg', '31–35 kg', '36–40 kg', '41–45 kg', '+46 kg'],
-  },
-  {
-    group: 'Infantil 10–11 años',
-    weights: ['-20 kg', '21–25 kg', '26–30 kg', '31–35 kg', '36–40 kg', '41–45 kg', '+46 kg'],
-  },
-  {
-    group: 'Infantil 12 años',
-    weights: ['-20 kg', '21–25 kg', '26–30 kg', '31–35 kg', '36–40 kg', '41–45 kg', '+46 kg'],
-  },
-  {
-    group: 'Juvenil 13–14 años',
-    weights: ['-48 kg', '-52 kg', '-57 kg', '-63 kg', '-69 kg', '-75 kg', '-81 kg', '+81 kg'],
-  },
-  {
-    group: 'Juvenil 15–17 años',
-    weights: ['-48 kg', '-52 kg', '-57 kg', '-63 kg', '-69 kg', '-75 kg', '-81 kg', '+81 kg'],
-  },
-  {
-    group: 'Adultos 18+ años (GI / No-Gi)',
-    weights: [
-      '-57 kg — Gallo', '-64 kg — Pluma', '-70 kg — Ligero', '-76 kg — Medio',
-      'hasta 82.3 kg — Medio pesado', 'hasta 88.3 kg — Pesado',
-      'hasta 94.3 kg — Super pesado', 'hasta 100.5 kg — Pesadísimo',
-      '+100.5 kg — Ultra pesado / Absoluto',
-    ],
-  },
-];
 
 const BJJ_BELTS_ADULTS = ['Blanca', 'Azul', 'Morada', 'Cafe', 'Negra', 'Roja y Negra (Coral)', 'Roja y Blanca (Coral)', 'Roja'];
 
@@ -590,7 +415,7 @@ export default function EventDetailPage() {
       status: event.status,
     });
     setEditDisciplines(event.disciplines_needed ?? []);
-    setEditWeightClasses(event.weight_classes_needed ?? []);
+    setEditWeightClasses(sanitizeWeightClasses(event.weight_classes_needed));
     setSaveError(null);
     setEditing(true);
   };
@@ -725,9 +550,19 @@ export default function EventDetailPage() {
 
   // Discipline mismatch warning for fighters
   const eventDisciplines = event.disciplines_needed ?? [];
+  const eventWeightClasses = sanitizeWeightClasses(event.weight_classes_needed);
+  const hasLegacyMultipleWeightClass = (event.weight_classes_needed ?? [])
+    .some((weightClass) => weightClass.trim().toLowerCase() === 'multiple');
   const fighterDisciplines = myFighter?.disciplines ?? [];
   const hasMismatch = isFighter && myFighter && eventDisciplines.length > 0 &&
     !fighterDisciplines.some((d) => eventDisciplines.includes(d));
+  const applicantAge = calculateAgeOnDate(profile?.date_of_birth ?? '', event.event_date);
+  const applicantWeightGroups = restrictWeightGroupsToEvent(
+    getCombatWeightGroupsForAge(applyDiscipline, applicantAge),
+    eventWeightClasses
+  );
+  const genericApplicantWeightClasses = GENERIC_WEIGHT_CLASS_OPTIONS.slice(1)
+    .filter(([value]) => eventWeightClasses.length === 0 || eventWeightClasses.includes(value));
   const participatePath = `/events/${event.id}?action=participate`;
   const participateLoginHref = `/login?next=${encodeURIComponent(participatePath)}`;
   const participateRegisterHref = `/register?next=${encodeURIComponent(participatePath)}`;
@@ -851,16 +686,21 @@ export default function EventDetailPage() {
             </div>
 
             {/* Weight classes needed pills */}
-            {(event.weight_classes_needed ?? []).length > 0 && (
+            {eventWeightClasses.length > 0 && (
               <div className="border border-zinc-100 p-6">
                 <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: '#9A9A9A' }}>Categorías de peso requeridas</p>
                 <div className="flex flex-wrap gap-2">
-                  {(event.weight_classes_needed ?? []).map((wc) => (
+                  {eventWeightClasses.map((wc) => (
                     <span key={wc} className="text-xs font-bold px-3 py-1.5 uppercase tracking-wide bg-[#0A0A0A] text-white">
                       {t(`events.weightClasses.${wc}`, { defaultValue: wc })}
                     </span>
                   ))}
                 </div>
+              </div>
+            )}
+            {hasLegacyMultipleWeightClass && canOperateThisEvent && (
+              <div className="border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                Este evento conserva la configuración anterior “multiple”. Edita el evento y selecciona las categorías concretas por edad y peso.
               </div>
             )}
 
@@ -945,19 +785,10 @@ export default function EventDetailPage() {
                           Categoría de peso <span className="text-red-500">*</span>
                         </label>
 
-                        {['Boxeo', 'Kickboxing', 'Light Contact', 'Low Kick', 'Kick Light', 'Point Fight', 'Full Contact'].includes(applyDiscipline) || ['Muay Thai', 'MMA', 'Jiu-Jitsu', 'K1'].includes(applyDiscipline) ? (
+                        {applicantWeightGroups.length > 0 ? (
                           /* Striking / grappling disciplines: grouped by age/division */
                           <div className="space-y-4">
-                            {(applyDiscipline === 'Muay Thai'
-                              ? MUAY_THAI_WEIGHT_GROUPS
-                              : applyDiscipline === 'MMA'
-                              ? MMA_WEIGHT_GROUPS
-                              : applyDiscipline === 'K1'
-                              ? K1_WEIGHT_GROUPS
-                              : applyDiscipline === 'Jiu-Jitsu'
-                              ? BJJ_WEIGHT_GROUPS
-                              : BOXING_WEIGHT_GROUPS
-                            ).map((grp) => (
+                            {applicantWeightGroups.map((grp) => (
                               <div key={grp.group}>
                                 <p className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-1.5">{grp.group}</p>
                                 <div className="flex flex-wrap gap-2">
@@ -979,15 +810,15 @@ export default function EventDetailPage() {
                         ) : (
                           /* All other disciplines: generic flat list */
                           <div className="flex flex-wrap gap-2">
-                            {WEIGHT_CLASSES.map((wc) => (
-                              <button key={wc} type="button"
-                                onClick={() => setApplyWeightClass(wc)}
+                            {genericApplicantWeightClasses.map(([value, label]) => (
+                              <button key={value} type="button"
+                                onClick={() => setApplyWeightClass(value)}
                                 className={`px-3 py-1.5 text-xs font-bold tracking-wide uppercase border transition-colors ${
-                                  applyWeightClass === wc
+                                  applyWeightClass === value
                                     ? 'bg-[#C0001E] text-white border-[#C0001E]'
                                     : 'bg-white text-zinc-600 border-zinc-300 hover:border-zinc-500'
                                 }`}>
-                                {t(`events.weightClasses.${wc}`, { defaultValue: wc })}
+                                {label}
                               </button>
                             ))}
                           </div>
@@ -1063,7 +894,7 @@ export default function EventDetailPage() {
 
                       {/* Confirmations */}
                       <div className="space-y-2">
-                        {(event.weight_classes_needed ?? []).length > 0 && (
+                        {eventWeightClasses.length > 0 && (
                           <label className="flex items-start gap-3 cursor-pointer group">
                             <input
                               type="checkbox"
@@ -1073,9 +904,9 @@ export default function EventDetailPage() {
                             />
                             <span className="text-xs text-zinc-700">
                               Confirmo que puedo pelear en{' '}
-                              {event.weight_classes_needed!.length === 1
-                                ? <span className="font-bold">la categoría {event.weight_classes_needed![0]}</span>
-                                : <span className="font-bold">alguna de las categorías: {event.weight_classes_needed!.join(', ')}</span>
+                              {eventWeightClasses.length === 1
+                                ? <span className="font-bold">la categoría {eventWeightClasses[0]}</span>
+                                : <span className="font-bold">alguna de las categorías: {eventWeightClasses.join(', ')}</span>
                               }
                             </span>
                           </label>
@@ -1684,27 +1515,11 @@ export default function EventDetailPage() {
               </div>
             </div>
 
-            {/* Weight classes multi-select */}
-            <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#5A5A5A' }}>Categorías de Peso Requeridas</label>
-              <div className="flex flex-wrap gap-2">
-                {WEIGHT_CLASSES.map((wc) => (
-                  <button key={wc} type="button"
-                    onClick={() => setEditWeightClasses((prev) => prev.includes(wc) ? prev.filter((x) => x !== wc) : [...prev, wc])}
-                    className={`px-3 py-1.5 text-xs font-bold tracking-wide uppercase border transition-colors ${
-                      editWeightClasses.includes(wc) ? 'bg-[#C0001E] text-white border-[#C0001E]' : 'bg-white text-zinc-600 border-zinc-300 hover:border-zinc-500'
-                    }`}>
-                    {t(`events.weightClasses.${wc}`, { defaultValue: wc })}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Disciplines multi-select */}
             <div>
               <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#5A5A5A' }}>Disciplinas requeridas</label>
               <div className="flex flex-wrap gap-2">
-                {DISCIPLINES.map((d) => (
+                {DISCIPLINE_OPTIONS.map((d) => (
                   <button key={d} type="button"
                     onClick={() => setEditDisciplines((prev) => prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d])}
                     className={`px-3 py-1.5 text-xs font-bold tracking-wide uppercase border transition-colors ${
@@ -1714,6 +1529,16 @@ export default function EventDetailPage() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Weight classes multi-select */}
+            <div>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#5A5A5A' }}>Categorías de Peso Requeridas</label>
+              <EventWeightCategorySelector
+                disciplines={editDisciplines}
+                selected={editWeightClasses}
+                onChange={setEditWeightClasses}
+              />
             </div>
 
             {/* Flyer */}
