@@ -116,13 +116,32 @@ export async function updateEventParticipant(
     const { data: authData } = await supabase.auth.getUser();
     safePatch.representative_confirmed_by = authData.user?.id ?? null;
   }
-  const { data, error } = await supabase
+  const { error, count } = await supabase
     .from('event_registrations')
-    .update(safePatch)
-    .eq('id', registrationId)
-    .select()
-    .single();
+    .update(safePatch, { count: 'exact' })
+    .eq('id', registrationId);
   if (error) return { data: null, error: error.message };
+  if (count !== 1) {
+    return {
+      data: null,
+      error: 'No se actualizó el participante. Verifica que todavía exista y que tengas permiso para editarlo; después vuelve a cargar la página.',
+    };
+  }
+
+  // Avoid depending on UPDATE's returned JSON representation. Reload the
+  // registration after database-side eligibility and matchmaking recalculation.
+  const { data, error: reloadError } = await supabase
+    .from('event_registrations')
+    .select('*')
+    .eq('id', registrationId)
+    .maybeSingle();
+  if (reloadError) return { data: null, error: reloadError.message };
+  if (!data) {
+    return {
+      data: null,
+      error: 'El participante se actualizó, pero no se pudo recargar su ficha. Actualiza la página para ver los cambios.',
+    };
+  }
   return { data: data as EventRegistration, error: null };
 }
 

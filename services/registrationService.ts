@@ -18,31 +18,41 @@ export async function registerForEvent(
   fighterId: string
 ): Promise<ServiceResponse<EventRegistration>> {
   try {
-    // Check for existing registration (prevent duplicates)
-    const { data: existing } = await supabase
+    // A retry after a slow response should resume the existing registration.
+    const { data: existing, error: existingError } = await supabase
       .from('event_registrations')
-      .select('id, payment_status')
+      .select('*')
       .eq('event_id', eventId)
       .eq('fighter_id', fighterId)
       .maybeSingle();
 
-    if (existing) {
-      return { data: null, error: 'Ya estás registrado en este evento.' };
-    }
+    if (existingError) return { data: null, error: existingError.message };
+    if (existing) return { data: existing as EventRegistration, error: null };
 
     const { data, error } = await supabase.rpc('register_self_for_event', {
       target_event_id: eventId,
       target_fighter_id: fighterId,
     });
 
-    if (error) return { data: null, error: error.message };
+    if (error) {
+      // If the request completed but its response was lost, do not make the
+      // fighter register again. This also covers a concurrent retry.
+      const { data: saved } = await supabase
+        .from('event_registrations')
+        .select('*')
+        .eq('event_id', eventId)
+        .eq('fighter_id', fighterId)
+        .maybeSingle();
+      if (saved) return { data: saved as EventRegistration, error: null };
+      return { data: null, error: error.message };
+    }
     const { data: current, error: refreshError } = await supabase
       .from('event_registrations')
       .select('*')
       .eq('id', data.id)
-      .single();
+      .maybeSingle();
     if (refreshError) return { data, error: null };
-    return { data: current, error: null };
+    return { data: current ?? data, error: null };
   } catch {
     return { data: null, error: 'Error al registrarse al evento.' };
   }
