@@ -5,7 +5,9 @@ import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { InlineCombatRecord } from '@/components/CombatRecord';
+import { EligibilityStatus } from '@/components/EligibilityStatus';
 import { EventManageFrame } from '@/components/EventManageFrame';
+import { getCombatWeightGroups } from '@/lib/combatWeightCategories';
 import { authService } from '@/services/authService';
 import { approveMatchAsBout, approveMatchSuggestionAsBout } from '@/services/boutService';
 import {
@@ -23,7 +25,14 @@ import {
   getMatchesForEvent,
   type MatchWithContext,
 } from '@/services/matchService';
-import type { Event, Profile } from '@/types';
+import { getEventRegistrations } from '@/services/registrationService';
+import type { Event, Profile, RegistrationWithFighter } from '@/types';
+
+interface WeightCategoryGroup {
+  key: string;
+  label: string;
+  registrations: RegistrationWithFighter[];
+}
 
 const FAILURE_LABELS: Record<string, string> = {
   same_fighter: 'Mismo peleador',
@@ -38,6 +47,7 @@ const FAILURE_LABELS: Record<string, string> = {
   gender_division_mismatch: 'Divisiones incompatibles',
   same_team: 'Mismo equipo',
   weight_tolerance_exceeded: 'Diferencia de peso excedida',
+  exact_weight_missing: 'Falta el peso real registrado',
   age_tolerance_exceeded: 'Diferencia de edad excedida',
   experience_tolerance_exceeded: 'Diferencia de experiencia excedida',
   competition_class_mismatch: 'Amateur/pro incompatible',
@@ -65,8 +75,11 @@ export default function MatchmakingBoardPage() {
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [event, setEvent] = useState<Event | null>(null);
   const [suggestions, setSuggestions] = useState<CompatibilityResult[]>([]);
+  const [registrations, setRegistrations] = useState<RegistrationWithFighter[]>([]);
   const [matches, setMatches] = useState<MatchWithContext[]>([]);
   const [showInvalid, setShowInvalid] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [selectedRegistrationId, setSelectedRegistrationId] = useState<string | null>(null);
   const [canManage, setCanManage] = useState(false);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState<string | null>(null);
@@ -74,12 +87,15 @@ export default function MatchmakingBoardPage() {
   const [message, setMessage] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
-    const [poolResult, matchResult] = await Promise.all([
+    const [poolResult, registrationResult, matchResult] = await Promise.all([
       getEventCompatibilityPool(eventId),
+      getEventRegistrations(eventId),
       getMatchesForEvent(eventId),
     ]);
-    if (poolResult.error) setError(poolResult.error);
+    const loadError = poolResult.error ?? registrationResult.error ?? matchResult.error;
+    if (loadError) setError(loadError);
     setSuggestions(poolResult.data ?? []);
+    setRegistrations(registrationResult.data ?? []);
     setMatches(matchResult.data ?? []);
   }, [eventId]);
 
@@ -121,6 +137,33 @@ export default function MatchmakingBoardPage() {
       .filter((match) => match.fighter_a_registration_id && match.fighter_b_registration_id)
       .map((match) => [match.fighter_a_registration_id!, match.fighter_b_registration_id!].sort().join(':'))
   ), [matches]);
+  const activeAssignmentCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const match of matches) {
+      if (match.match_status === 'cancelled') continue;
+      for (const registrationId of [match.fighter_a_registration_id, match.fighter_b_registration_id]) {
+        if (registrationId) counts.set(registrationId, (counts.get(registrationId) ?? 0) + 1);
+      }
+    }
+    return counts;
+  }, [matches]);
+  const suggestionByPair = useMemo(() => new Map(
+    suggestions.map((suggestion) => [suggestionPairKey(
+      suggestion.fighter_a_registration_id,
+      suggestion.fighter_b_registration_id
+    ), suggestion])
+  ), [suggestions]);
+  const categoryGroups = useMemo(() => groupRegistrationsByWeightCategory(registrations), [registrations]);
+  const visibleCategoryGroups = useMemo(
+    () => categoryFilter === 'all'
+      ? categoryGroups
+      : categoryGroups.filter((group) => group.key === categoryFilter),
+    [categoryFilter, categoryGroups]
+  );
+  const selectedRegistration = useMemo(
+    () => registrations.find((registration) => registration.id === selectedRegistrationId) ?? null,
+    [registrations, selectedRegistrationId]
+  );
 
   const confirmSuggestion = async (suggestion: CompatibilityResult) => {
     const key = [suggestion.fighter_a_registration_id, suggestion.fighter_b_registration_id].sort().join(':');
@@ -131,6 +174,7 @@ export default function MatchmakingBoardPage() {
     if (result.error) setError(result.error);
     else {
       setMessage('Combate confirmado. El gráfico se generó automáticamente.');
+      setSelectedRegistrationId(null);
       if (profile && !profile.onboarding_completed && !profile.onboarding_dismissed
         && profile.onboarding_event_id === eventId && profile.onboarding_step <= 6) {
         const advancement = await advanceGuidedOnboarding(6, eventId, true);
@@ -139,6 +183,13 @@ export default function MatchmakingBoardPage() {
       await reload();
     }
     setActing(null);
+  };
+
+  const selectRegistrationForPairing = (registrationId: string, groupKey: string) => {
+    setError(null);
+    setMessage(null);
+    setSelectedRegistrationId(registrationId);
+    setCategoryFilter(groupKey);
   };
 
   const regenerate = async () => {
@@ -255,6 +306,175 @@ export default function MatchmakingBoardPage() {
 
       {error && <p className="border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p>}
       {message && <p className="border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p>}
+
+      <section className="border border-zinc-200 bg-zinc-50 p-4 sm:p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#C0001E]">Vista rápida</p>
+            <h2 className="mt-1 text-2xl font-black uppercase text-zinc-900">Peleadores por categoría</h2>
+            <p className="mt-1 max-w-3xl text-sm text-zinc-600">
+              Revisa todos los participantes del evento por disciplina, edad y peso. Elige un peleador y confirma uno de los rivales compatibles sin salir de esta página.
+            </p>
+          </div>
+          <label className="block min-w-64">
+            <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">Categoría</span>
+            <select
+              value={categoryFilter}
+              onChange={(input) => {
+                setCategoryFilter(input.target.value);
+                setSelectedRegistrationId(null);
+              }}
+              className="min-h-11 w-full border border-zinc-300 bg-white px-3 text-sm text-zinc-900"
+            >
+              <option value="all">Todas las categorías ({registrations.length})</option>
+              {categoryGroups.map((group) => (
+                <option key={group.key} value={group.key}>{group.label} ({group.registrations.length})</option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        {selectedRegistrationId && selectedRegistration && (
+          <div className="mt-4 flex flex-col gap-3 border border-[#C0001E]/30 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-zinc-700">
+              <span className="font-bold text-zinc-950">Primer peleador seleccionado:</span>{' '}
+              {participantName(selectedRegistration)}. Elige un rival habilitado en esta categoría.
+            </p>
+            <button
+              type="button"
+              onClick={() => setSelectedRegistrationId(null)}
+              className="min-h-11 border border-zinc-300 px-4 py-2 text-xs font-bold uppercase text-zinc-700"
+            >
+              Cancelar selección
+            </button>
+          </div>
+        )}
+
+        <div className="mt-5 space-y-5">
+          {visibleCategoryGroups.length === 0 ? (
+            <p className="border border-dashed border-zinc-300 bg-white px-4 py-10 text-center text-sm text-zinc-500">
+              Aún no hay participantes registrados para mostrar por categoría.
+            </p>
+          ) : visibleCategoryGroups.map((group) => (
+            <div key={group.key} className="border border-zinc-200 bg-white">
+              <div className="flex flex-col gap-1 border-b border-zinc-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <h3 className="font-black uppercase text-zinc-900">{group.label}</h3>
+                <span className="text-xs font-bold uppercase tracking-wide text-zinc-500">
+                  {group.registrations.length} {group.registrations.length === 1 ? 'peleador' : 'peleadores'}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 gap-px bg-zinc-200 md:grid-cols-2 xl:grid-cols-3">
+                {group.registrations.map((registration) => {
+                  const selected = registration.id === selectedRegistrationId;
+                  const pairKey = selectedRegistrationId
+                    ? suggestionPairKey(selectedRegistrationId, registration.id)
+                    : null;
+                  const suggestion = pairKey ? suggestionByPair.get(pairKey) : undefined;
+                  const pairAlreadyCreated = pairKey ? activePairKeys.has(pairKey) : false;
+                  const canCreatePair = suggestionCanCreateBout(suggestion, pairAlreadyCreated);
+                  const canStartPairing = registration.eligibility_status === 'eligible'
+                    && group.registrations.some((candidate) => {
+                      if (candidate.id === registration.id) return false;
+                      const candidatePairKey = suggestionPairKey(registration.id, candidate.id);
+                      return suggestionCanCreateBout(
+                        suggestionByPair.get(candidatePairKey),
+                        activePairKeys.has(candidatePairKey)
+                      );
+                    });
+                  const activeAssignments = activeAssignmentCounts.get(registration.id) ?? 0;
+
+                  return (
+                    <article key={registration.id} className={`flex min-h-full flex-col p-4 ${selected ? 'bg-red-50 ring-2 ring-inset ring-[#C0001E]' : 'bg-white'}`}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-bold text-zinc-950">{participantName(registration)}</p>
+                          <p className="mt-1 text-xs text-zinc-600">
+                            {formatKg(registration.weigh_in_weight)} · {registration.age_at_event ?? '—'} años · {registration.gender_division ?? 'división pendiente'}
+                          </p>
+                          <p className="mt-1 text-xs text-zinc-500">
+                            {registration.experience_level ?? 'nivel pendiente'} · {registration.team_name ?? 'equipo pendiente'}
+                          </p>
+                        </div>
+                        {activeAssignments > 0 && (
+                          <span className="shrink-0 bg-zinc-900 px-2 py-1 text-[10px] font-bold uppercase text-white">
+                            {activeAssignments} {activeAssignments === 1 ? 'combate' : 'combates'}
+                          </span>
+                        )}
+                      </div>
+
+                      <EligibilityStatus
+                        status={registration.eligibility_status}
+                        reasons={registration.eligibility_reasons}
+                      />
+
+                      <div className="mt-auto pt-4">
+                        {!selectedRegistrationId && registration.eligibility_status !== 'eligible' ? (
+                          <Link
+                            href={`/events/${eventId}/manage/participants`}
+                            className="flex min-h-11 w-full items-center justify-center border border-zinc-300 px-3 py-2 text-center text-xs font-bold uppercase text-zinc-700"
+                          >
+                            Completar información
+                          </Link>
+                        ) : !selectedRegistrationId ? (
+                          <button
+                            type="button"
+                            disabled={!canStartPairing}
+                            onClick={() => selectRegistrationForPairing(registration.id, group.key)}
+                            className="min-h-11 w-full bg-zinc-900 px-3 py-2 text-xs font-bold uppercase text-white disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500"
+                          >
+                            {canStartPairing ? 'Elegir para emparejar' : 'Sin rival compatible'}
+                          </button>
+                        ) : selected ? (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedRegistrationId(null)}
+                            className="min-h-11 w-full border border-[#C0001E] px-3 py-2 text-xs font-bold uppercase text-[#C0001E]"
+                          >
+                            Seleccionado · cancelar
+                          </button>
+                        ) : canCreatePair && suggestion ? (
+                          <button
+                            type="button"
+                            disabled={acting === pairKey}
+                            onClick={() => confirmSuggestion(suggestion)}
+                            className="min-h-11 w-full bg-[#C0001E] px-3 py-2 text-xs font-bold uppercase text-white disabled:bg-zinc-300"
+                          >
+                            {acting === pairKey ? 'Creando combate…' : `Crear combate · ${suggestion.totalScore}%`}
+                          </button>
+                        ) : (
+                          <div>
+                            <button
+                              type="button"
+                              disabled
+                              className="min-h-11 w-full cursor-not-allowed bg-zinc-200 px-3 py-2 text-xs font-bold uppercase text-zinc-500"
+                            >
+                              {pairAlreadyCreated ? 'Combate creado' : 'No compatible'}
+                            </button>
+                            {suggestion && suggestion.hardFailures.length > 0 && (
+                              <p className="mt-2 text-xs text-red-700">
+                                {suggestion.hardFailures.slice(0, 2).map((item) => FAILURE_LABELS[item] ?? item).join(' · ')}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <Link href={`/events/${eventId}/manage/participants`} className="inline-flex min-h-11 items-center justify-center border border-zinc-300 bg-white px-4 py-3 text-xs font-bold uppercase text-zinc-800">
+            Completar datos de peleadores
+          </Link>
+          <button type="button" onClick={regenerate} disabled={acting === 'regenerate'} className="min-h-11 bg-zinc-900 px-4 py-3 text-xs font-bold uppercase text-white disabled:bg-zinc-300">
+            {acting === 'regenerate' ? 'Calculando…' : 'Actualizar compatibilidad'}
+          </button>
+        </div>
+      </section>
 
       <section>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -375,7 +595,7 @@ function FighterCell({ registration }: { registration: CompatibilityResult['figh
         <InlineCombatRecord wins={registration.record_wins} losses={registration.record_losses} draws={registration.record_draws} winLabel="G" lossLabel="P" drawLabel="E" />
       </p>
       <p className="mt-1 text-xs text-zinc-500">KO/TKO: {registration.ko_wins + registration.tko_wins} a favor · {registration.ko_losses + registration.tko_losses} en contra</p>
-      <p className="mt-1 text-xs text-zinc-500">Solicitado: {formatKg(registration.requested_weight_kg)} · rango: {formatRange(registration.acceptable_weight_min_kg, registration.acceptable_weight_max_kg)}</p>
+      <p className="mt-1 text-xs text-zinc-500">Rango aceptable: {formatRange(registration.acceptable_weight_min_kg, registration.acceptable_weight_max_kg)}</p>
       <p className="mt-1 text-xs text-zinc-500">Disponibilidad: {registration.availability_confirmed ? 'confirmada' : 'pendiente'}{registration.available_from || registration.available_to ? ` (${registration.available_from ?? 'ahora'}–${registration.available_to ?? 'abierta'})` : ''}</p>
       {registration.special_restrictions.length > 0 && <p className="mt-2 border border-amber-200 bg-amber-50 p-2 text-xs font-medium text-amber-900">Restricciones: {registration.special_restrictions.join(' · ')}</p>}
     </div>
@@ -397,4 +617,66 @@ function formatKg(value: number | null) {
 function formatRange(minimum: number | null, maximum: number | null) {
   if (minimum == null && maximum == null) return '—';
   return `${minimum ?? '—'}–${maximum ?? '—'} kg`;
+}
+
+function suggestionPairKey(registrationAId: string, registrationBId: string) {
+  return [registrationAId, registrationBId].sort().join(':');
+}
+
+function suggestionCanCreateBout(
+  suggestion: CompatibilityResult | undefined,
+  pairAlreadyCreated: boolean
+) {
+  return Boolean(
+    suggestion
+    && suggestion.eligible
+    && !pairAlreadyCreated
+    && ['active', 'locked', 'changes_requested'].includes(suggestion.status)
+  );
+}
+
+function groupRegistrationsByWeightCategory(
+  registrations: RegistrationWithFighter[]
+): WeightCategoryGroup[] {
+  const groups = new Map<string, WeightCategoryGroup>();
+
+  for (const registration of registrations) {
+    const discipline = registration.registered_discipline?.trim() || 'Sin disciplina';
+    const rawWeightClass = registration.registered_weight_class?.trim();
+    const weightClass = rawWeightClass && rawWeightClass.toLowerCase() !== 'multiple'
+      ? rawWeightClass
+      : 'Sin categoría';
+    const age = registration.age_at_event;
+    const ageGroup = age == null || weightClass === 'Sin categoría'
+      ? null
+      : getCombatWeightGroups(discipline).find((group) =>
+        age >= group.minimumAge
+        && (group.maximumAge == null || age <= group.maximumAge)
+        && group.weights.some((category) => category.toLowerCase() === weightClass.toLowerCase())
+      )?.group ?? null;
+    const label = weightClass === 'Sin categoría'
+      ? `${discipline} · Sin categoría asignada`
+      : [discipline, ageGroup, weightClass].filter(Boolean).join(' · ');
+    const key = [discipline, ageGroup ?? '', weightClass].join('|').toLowerCase();
+    const existing = groups.get(key);
+    if (existing) existing.registrations.push(registration);
+    else groups.set(key, { key, label, registrations: [registration] });
+  }
+
+  return Array.from(groups.values())
+    .map((group) => ({
+      ...group,
+      registrations: group.registrations.sort((registrationA, registrationB) => {
+        const weightA = registrationA.weigh_in_weight ?? Number.POSITIVE_INFINITY;
+        const weightB = registrationB.weigh_in_weight ?? Number.POSITIVE_INFINITY;
+        if (weightA !== weightB) return weightA - weightB;
+        return participantName(registrationA).localeCompare(participantName(registrationB), 'es');
+      }),
+    }))
+    .sort((groupA, groupB) => {
+      const unassignedA = groupA.label.includes('Sin categoría');
+      const unassignedB = groupB.label.includes('Sin categoría');
+      if (unassignedA !== unassignedB) return unassignedA ? 1 : -1;
+      return groupA.label.localeCompare(groupB.label, 'es', { numeric: true });
+    });
 }

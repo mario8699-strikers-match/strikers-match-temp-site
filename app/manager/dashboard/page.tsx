@@ -11,6 +11,7 @@ import { InlineCombatRecord } from '@/components/CombatRecord';
 import { OrganizerPaymentsPanel } from '@/components/OrganizerPaymentsPanel';
 import { formatCalendarDate } from '@/lib/calendarDate';
 import { authService } from '@/services/authService';
+import { eventService } from '@/services/eventService';
 import { managerService } from '@/services/managerService';
 import { fighterService } from '@/services/fighterService';
 import {
@@ -21,7 +22,7 @@ import {
   statusForFighter,
   type MatchWithContext,
 } from '@/services/matchService';
-import type { Profile, Fighter } from '@/types';
+import type { Event, Profile, Fighter } from '@/types';
 
 type FighterWithProfile = Fighter & { profiles: { full_name: string; city: string | null } };
 
@@ -35,6 +36,7 @@ export default function ManagerDashboardPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [roster, setRoster] = useState<FighterWithProfile[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [matches, setMatches] = useState<MatchWithContext[]>([]);
   const [loading, setLoading] = useState(true);
   const [matchAction, setMatchAction] = useState<string | null>(null);
@@ -55,9 +57,14 @@ export default function ManagerDashboardPage() {
       if (!p) { window.location.href = '/login'; return; }
       if (p.role !== 'manager') { window.location.href = '/'; return; }
 
-      Promise.all([managerService.getRoster(p.id), getMatchesForManager(p.id)]).then(([rosterResult, matchResult]) => {
+      Promise.all([
+        managerService.getRoster(p.id),
+        getMatchesForManager(p.id),
+        eventService.getByPromoter(p.id),
+      ]).then(([rosterResult, matchResult, eventResult]) => {
         setRoster((rosterResult.data as FighterWithProfile[]) ?? []);
         setMatches(matchResult.data ?? []);
+        setEvents(eventResult.data ?? []);
         setMatchError(matchResult.error);
         setLoading(false);
       });
@@ -168,6 +175,39 @@ export default function ManagerDashboardPage() {
         </div>
 
         <OrganizerPaymentsPanel />
+
+        <section className="mb-8 border border-zinc-200 p-6">
+          <div className="mb-4 flex items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-[#C0001E]">Mis eventos</p>
+              <p className="mt-1 text-sm text-zinc-500">Abre los peleadores por categoría y arma los combates desde aquí.</p>
+            </div>
+            <span className="text-sm font-bold text-zinc-400">{events.length}</span>
+          </div>
+          {events.length === 0 ? (
+            <div className="border border-dashed border-zinc-200 px-4 py-8 text-center">
+              <p className="text-sm text-zinc-500">Todavía no has creado eventos.</p>
+              <Link href="/events/create" className="mt-4 inline-flex min-h-11 items-center bg-[#C0001E] px-4 py-2 text-xs font-bold uppercase text-white">Crear evento</Link>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {events.map((event) => (
+                <article key={event.id} className="flex flex-col gap-3 border border-zinc-200 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="truncate font-bold text-zinc-950">{event.event_name}</p>
+                    <p className="mt-1 text-xs text-zinc-500">
+                      {event.event_date ? formatCalendarDate(event.event_date) : 'Sin fecha'} · {event.city ?? 'Sin ciudad'} · {event.status}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 sm:flex">
+                    <Link href={`/events/${event.id}/manage/participants`} className="flex min-h-11 items-center justify-center border border-zinc-300 px-3 py-2 text-center text-xs font-bold uppercase text-zinc-700">Participantes</Link>
+                    <Link href={`/events/${event.id}/manage/matchmaking`} className="flex min-h-11 items-center justify-center bg-[#C0001E] px-3 py-2 text-center text-xs font-bold uppercase text-white">Peleadores / Matchmaking</Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
 
         <section className="mb-8 border border-zinc-200 p-6">
           <div className="mb-4 flex items-end justify-between gap-3">

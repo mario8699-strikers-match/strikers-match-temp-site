@@ -115,6 +115,8 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
               const participateHref = profile
                 ? participatePath
                 : `/login?next=${encodeURIComponent(participatePath)}`;
+              const canManageListedEvent = Boolean(profile
+                && (profile.role === 'admin' || event.promoter_id === profile.id));
 
               return (
                 <article key={event.id} className="flex h-full flex-col overflow-hidden border border-zinc-200 bg-white">
@@ -183,11 +185,15 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
                         {t('events.public.viewEvent')}
                       </Link>
                       <Link
-                        href={participateHref}
+                        href={canManageListedEvent
+                          ? `/events/${event.id}/manage/matchmaking`
+                          : participateHref}
                         className="min-h-11 px-4 py-3 text-center text-xs font-bold uppercase tracking-widest text-white transition-colors hover:bg-[#9A0018]"
                         style={{ background: '#C0001E' }}
                       >
-                        {t('events.public.participate')}
+                        {canManageListedEvent
+                          ? 'Peleadores y matchmaking'
+                          : t('events.public.participate')}
                       </Link>
                     </div>
                   </div>

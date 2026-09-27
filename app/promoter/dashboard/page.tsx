@@ -241,6 +241,10 @@ export default function PromoterDashboardPage() {
 
                     {/* Actions */}
                     <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+                      <Link href={`/events/${ev.id}/manage/matchmaking`}
+                        className="bg-[#C0001E] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#9A0018]">
+                        Peleadores / Matchmaking
+                      </Link>
                       <a href={`/events/${ev.id}`}
                         className="text-xs font-medium text-zinc-500 border border-zinc-200 px-3 py-1.5 hover:bg-zinc-50 transition-colors">
                         Editar
