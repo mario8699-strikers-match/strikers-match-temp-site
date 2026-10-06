@@ -570,7 +570,7 @@ export default function FighterProfilePage() {
                 { label:'KO/TKO a favor', value: `${fighter.ko_wins + fighter.tko_wins}` },
                 { label:'KO/TKO en contra', value: `${fighter.ko_losses + fighter.tko_losses}` },
                 { label:'Reglamentos', value: fighter.preferred_rulesets.length ? fighter.preferred_rulesets.join(', ') : '—' },
-                { label:'Peso solicitado', value: fighter.requested_weight_kg ? `${fighter.requested_weight_kg} kg` : '—' },
+                { label:'Peso deseado (informativo)', value: fighter.requested_weight_kg ? `${fighter.requested_weight_kg} kg` : '—' },
                 { label:'Rango aceptable', value: fighter.acceptable_weight_min_kg != null || fighter.acceptable_weight_max_kg != null ? `${fighter.acceptable_weight_min_kg ?? '—'}–${fighter.acceptable_weight_max_kg ?? '—'} kg` : '—' },
                 { label:'Última pelea', value: fighter.last_fight_at ?? '—' },
                 { label:'Estatura', value: fighter.height_cm ? `${fighter.height_cm} cm` : '—' },
@@ -793,10 +793,10 @@ export default function FighterProfilePage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Reglamentos y peso solicitado</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Reglamentos y preferencias</label>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <input value={preferredRulesets} onChange={e => setPreferredRulesets(e.target.value)} placeholder="Reglamentos, separados por coma" className="w-full border border-zinc-300 px-3 py-2 text-sm sm:col-span-2" />
-                <input type="number" min="0" step="0.1" value={requestedWeight} onChange={e => setRequestedWeight(e.target.value)} placeholder="Peso solicitado kg" className="w-full border border-zinc-300 px-3 py-2 text-sm" />
+                <input type="number" min="0" step="0.1" value={requestedWeight} onChange={e => setRequestedWeight(e.target.value)} placeholder="Peso deseado (solo referencia) kg" className="w-full border border-zinc-300 px-3 py-2 text-sm" />
                 <div className="grid grid-cols-2 gap-3">
                   <input type="number" min="0" step="0.1" value={acceptableWeightMin} onChange={e => setAcceptableWeightMin(e.target.value)} placeholder="Mín. kg" className="w-full border border-zinc-300 px-3 py-2 text-sm" />
                   <input type="number" min="0" step="0.1" value={acceptableWeightMax} onChange={e => setAcceptableWeightMax(e.target.value)} placeholder="Máx. kg" className="w-full border border-zinc-300 px-3 py-2 text-sm" />

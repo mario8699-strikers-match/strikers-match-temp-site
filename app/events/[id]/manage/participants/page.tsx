@@ -558,7 +558,7 @@ export default function EventParticipantsPage() {
                     <EligibilityStatus status={registration.eligibility_status} reasons={registration.eligibility_reasons} showReasons />
                     <div className="mt-3 grid grid-cols-1 gap-2 text-xs text-zinc-600 sm:grid-cols-2 lg:grid-cols-3">
                       <Info label="Peso" value={`${weightClassLabel(registration.registered_weight_class)} · ${formatKg(registration.weigh_in_weight)} real`} />
-                      <Info label="Peso solicitado / rango" value={`${formatKg(registration.requested_weight_kg)} · ${formatRange(registration.acceptable_weight_min_kg, registration.acceptable_weight_max_kg)}`} />
+                      <Info label="Peso solicitado (informativo) / rango" value={`${formatKg(registration.requested_weight_kg)} · ${formatRange(registration.acceptable_weight_min_kg, registration.acceptable_weight_max_kg)}`} />
                       <Info label="Edad / división" value={`${registration.age_at_event ?? '—'} años · ${registration.gender_division ?? '—'}`} />
                       <Info label="Disciplina / reglamento" value={`${registration.registered_discipline ?? '—'} · ${registration.ruleset ?? '—'}`} />
                       <Info label="Experiencia / nivel" value={`${registration.experience_level ?? '—'} · ${registration.skill_rating ?? '—'}/10`} />
@@ -625,7 +625,9 @@ function ParticipantFields({ form, setForm, showIdentity, eventDate, eventWeight
       numberValue(next.exact_weight),
       eventWeightClasses
     );
-    setForm(inferredCategory ? { ...next, weight_class: inferredCategory } : next);
+    setForm(next.discipline === 'Boxeo'
+      ? { ...next, weight_class: inferredCategory ?? '' }
+      : inferredCategory ? { ...next, weight_class: inferredCategory } : next);
   };
   return (
     <div className="mt-5 space-y-5">
@@ -650,7 +652,8 @@ function ParticipantFields({ form, setForm, showIdentity, eventDate, eventWeight
           onChange={(value) => change('weight_class', value)}
         />
         <TextField label="Peso real registrado (kg)" type="number" value={form.exact_weight} onChange={(value) => changeAndInferWeightCategory('exact_weight', value)} />
-        <TextField label="Peso solicitado (kg)" type="number" value={form.requested_weight_kg} onChange={(value) => change('requested_weight_kg', value)} />
+        <p className="text-xs text-zinc-500">Al guardar un peso real, también se actualizará el peso del perfil del peleador.</p>
+        <TextField label="Peso solicitado (kg, solo referencia)" type="number" value={form.requested_weight_kg} onChange={(value) => change('requested_weight_kg', value)} />
         <TextField label="Peso mínimo aceptable (kg)" type="number" value={form.acceptable_weight_min_kg} onChange={(value) => change('acceptable_weight_min_kg', value)} />
         <TextField label="Peso máximo aceptable (kg)" type="number" value={form.acceptable_weight_max_kg} onChange={(value) => change('acceptable_weight_max_kg', value)} />
         <TextField label="Reglamento" value={form.ruleset} onChange={(value) => change('ruleset', value)} />

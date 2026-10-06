@@ -230,7 +230,7 @@ export function ManualFighterManager({
             <p className="mb-2 text-xs font-bold uppercase tracking-widest text-zinc-600">Pesos para matchmaking</p>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <RosterInput label="Peso real kg" type="number" value={exactWeight} onChange={setExactWeight} />
-              <RosterInput label="Solicitado kg" type="number" value={requestedWeight} onChange={setRequestedWeight} />
+              <RosterInput label="Peso deseado (informativo) kg" type="number" value={requestedWeight} onChange={setRequestedWeight} />
               <RosterInput label="Mínimo kg" type="number" value={minimumWeight} onChange={setMinimumWeight} />
               <RosterInput label="Máximo kg" type="number" value={maximumWeight} onChange={setMaximumWeight} />
             </div>
@@ -359,7 +359,7 @@ export function ManualFighterManager({
                 </p>
                 <InlineCombatRecord wins={f.record_wins} losses={f.record_losses} draws={f.record_draws} className="mt-1 text-xs" />
                 <p className="mt-1 text-xs text-zinc-500">KO/TKO {f.ko_wins + f.tko_wins} · nivel {f.skill_rating ?? '—'}/10 · {f.gender_division ?? 'división pendiente'}</p>
-                <p className="mt-1 text-xs text-zinc-500">Busca {f.requested_weight_kg ?? '—'} kg · rango {f.acceptable_weight_min_kg ?? '—'}–{f.acceptable_weight_max_kg ?? '—'} kg</p>
+                <p className="mt-1 text-xs text-zinc-500">Peso deseado (informativo): {f.requested_weight_kg ?? '—'} kg · rango {f.acceptable_weight_min_kg ?? '—'}–{f.acceptable_weight_max_kg ?? '—'} kg</p>
                 <div className="flex gap-2 mt-1.5 flex-wrap">
                   <span className={`text-xs font-bold px-1.5 py-0.5 uppercase tracking-widest ${f.experience_level === 'pro' ? 'bg-[#C0001E] text-white' : 'bg-zinc-100 text-zinc-600'}`}>
                     {f.experience_level === 'pro' ? 'Pro' : 'Amateur'}

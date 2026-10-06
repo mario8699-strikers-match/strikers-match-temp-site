@@ -324,7 +324,7 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                     {genderDivision && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">{genderDivision}</span>}
                     {skillRating != null && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">Nivel {skillRating}/10</span>}
                     <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">KO/TKO {koTkoWins}</span>
-                    {requestedWeight != null && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">Busca {requestedWeight} kg</span>}
+                    {requestedWeight != null && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">Peso deseado (informativo): {requestedWeight} kg</span>}
                     {(minimumWeight != null || maximumWeight != null) && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">Rango {minimumWeight ?? '—'}–{maximumWeight ?? '—'} kg</span>}
                     {rulesets.map((ruleset) => <span key={ruleset} className="text-xs border border-zinc-200 px-2 py-1 text-zinc-700">{ruleset}</span>)}
                     {followers !== null && (
