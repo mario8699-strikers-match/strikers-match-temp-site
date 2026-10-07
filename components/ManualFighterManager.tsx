@@ -5,6 +5,7 @@ import { InlineCombatRecord } from '@/components/CombatRecord';
 import { manualFighterService } from '@/services/manualFighterService';
 import type { ManualFighter } from '@/types';
 import { GenderDivisionCheckboxes } from '@/components/GenderDivisionCheckboxes';
+import { DISCIPLINE_OPTIONS, normalizeDisciplineList } from '@/lib/disciplines';
 
 const WEIGHT_CLASSES = [
   'minimosca','mosca','supermosca','gallo','supergallo','pluma','superpluma',
@@ -39,7 +40,7 @@ export function ManualFighterManager({
   const [name, setName] = useState('');
   const [nickname, setNickname] = useState('');
   const [weight, setWeight] = useState('');
-  const [discipline, setDiscipline] = useState('');
+  const [disciplines, setDisciplines] = useState<string[]>([]);
   const [wins, setWins] = useState('0');
   const [losses, setLosses] = useState('0');
   const [draws, setDraws] = useState('0');
@@ -80,7 +81,7 @@ export function ManualFighterManager({
   }, [creatorId]);
 
   const resetForm = () => {
-    setName(''); setNickname(''); setWeight(''); setDiscipline('');
+    setName(''); setNickname(''); setWeight(''); setDisciplines([]);
     setWins('0'); setLosses('0'); setDraws('0');
     setPhone(''); setEmail(''); setCity(''); setStateField(''); setGym('');
     setLevel('amateur'); setNotes(''); setPhotoUrl(''); setBio('');
@@ -99,7 +100,8 @@ export function ManualFighterManager({
       full_name: name.trim(),
       nickname: nickname.trim() || null,
       weight_class: weight || null,
-      discipline: discipline.trim() || null,
+      disciplines,
+      discipline: disciplines[0] ?? null,
       record_wins: parseInt(wins) || 0,
       record_losses: parseInt(losses) || 0,
       record_draws: parseInt(draws) || 0,
@@ -186,7 +188,7 @@ export function ManualFighterManager({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>División</label>
               <select value={weight} onChange={(e) => setWeight(e.target.value)}
@@ -195,12 +197,32 @@ export function ManualFighterManager({
                 {WEIGHT_CLASSES.map((w) => <option key={w} value={w}>{WEIGHT_LABELS[w]}</option>)}
               </select>
             </div>
-            <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Disciplina</label>
-              <input type="text" value={discipline} onChange={(e) => setDiscipline(e.target.value)} placeholder="Boxeo, MMA, etc."
-                className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
-            </div>
           </div>
+
+          <fieldset>
+            <legend className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-600">Disciplinas</legend>
+            <div className="flex flex-wrap gap-2">
+              {DISCIPLINE_OPTIONS.map((discipline) => {
+                const selected = disciplines.includes(discipline);
+                return (
+                  <button
+                    key={discipline}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => setDisciplines((current) => selected
+                      ? current.filter((item) => item !== discipline)
+                      : [...current, discipline])}
+                    className={`min-h-10 border px-3 py-2 text-xs font-bold uppercase tracking-wide transition-colors ${selected
+                      ? 'border-[#C0001E] bg-[#C0001E] text-white'
+                      : 'border-zinc-300 bg-white text-zinc-700 hover:border-zinc-500'}`}
+                  >
+                    {discipline}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-2 text-xs text-zinc-500">Selecciona todas las disciplinas que practica este peleador.</p>
+          </fieldset>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
@@ -364,7 +386,9 @@ export function ManualFighterManager({
                   <span className={`text-xs font-bold px-1.5 py-0.5 uppercase tracking-widest ${f.experience_level === 'pro' ? 'bg-[#C0001E] text-white' : 'bg-zinc-100 text-zinc-600'}`}>
                     {f.experience_level === 'pro' ? 'Pro' : 'Amateur'}
                   </span>
-                  {f.discipline && <span className="text-xs font-bold px-1.5 py-0.5 uppercase tracking-wide bg-zinc-900 text-white">{f.discipline}</span>}
+                  {normalizeDisciplineList(f.disciplines, f.discipline).map((discipline) => (
+                    <span key={discipline} className="bg-zinc-900 px-1.5 py-0.5 text-xs font-bold uppercase tracking-wide text-white">{discipline}</span>
+                  ))}
                   <span className={`text-xs font-semibold px-1.5 py-0.5 ${f.is_available ? 'bg-emerald-50 text-emerald-700' : 'bg-zinc-100 text-zinc-500'}`}>
                     {f.is_available ? 'Disponible' : 'No disponible'}
                   </span>

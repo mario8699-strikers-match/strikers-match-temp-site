@@ -8,6 +8,7 @@ import { InlineCombatRecord } from '@/components/CombatRecord';
 import { EligibilityStatus } from '@/components/EligibilityStatus';
 import { EventManageFrame } from '@/components/EventManageFrame';
 import { getCombatWeightGroups } from '@/lib/combatWeightCategories';
+import { disciplineMatches, sortDisciplines } from '@/lib/disciplines';
 import { authService } from '@/services/authService';
 import { approveMatchAsBout, approveMatchSuggestionAsBout } from '@/services/boutService';
 import {
@@ -31,6 +32,7 @@ import type { Event, Profile, RegistrationWithFighter } from '@/types';
 interface WeightCategoryGroup {
   key: string;
   label: string;
+  discipline: string;
   registrations: RegistrationWithFighter[];
 }
 
@@ -78,6 +80,7 @@ export default function MatchmakingBoardPage() {
   const [registrations, setRegistrations] = useState<RegistrationWithFighter[]>([]);
   const [matches, setMatches] = useState<MatchWithContext[]>([]);
   const [showInvalid, setShowInvalid] = useState(false);
+  const [disciplineFilter, setDisciplineFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [selectedRegistrationId, setSelectedRegistrationId] = useState<string | null>(null);
   const [canManage, setCanManage] = useState(false);
@@ -127,9 +130,22 @@ export default function MatchmakingBoardPage() {
     return () => { void supabase.removeChannel(channel); };
   }, [canManage, eventId, reload]);
 
+  const disciplineOptions = useMemo(() => sortDisciplines([
+    ...(event?.disciplines_needed ?? []),
+    ...registrations.map((registration) => registration.registered_discipline ?? ''),
+  ]), [event?.disciplines_needed, registrations]);
+  const suggestionsForDiscipline = useMemo(
+    () => disciplineFilter === 'all'
+      ? suggestions
+      : suggestions.filter((suggestion) => (
+        disciplineMatches([suggestion.fighterA.registered_discipline], disciplineFilter)
+        || disciplineMatches([suggestion.fighterB.registered_discipline], disciplineFilter)
+      )),
+    [disciplineFilter, suggestions]
+  );
   const visibleSuggestions = useMemo(
-    () => suggestions.filter((suggestion) => showInvalid || suggestion.eligible),
-    [showInvalid, suggestions]
+    () => suggestionsForDiscipline.filter((suggestion) => showInvalid || suggestion.eligible),
+    [showInvalid, suggestionsForDiscipline]
   );
   const activePairKeys = useMemo(() => new Set(
     matches
@@ -154,11 +170,36 @@ export default function MatchmakingBoardPage() {
     ), suggestion])
   ), [suggestions]);
   const categoryGroups = useMemo(() => groupRegistrationsByWeightCategory(registrations), [registrations]);
+  const categoryGroupsForDiscipline = useMemo(
+    () => disciplineFilter === 'all'
+      ? categoryGroups
+      : categoryGroups.filter((group) => disciplineMatches([group.discipline], disciplineFilter)),
+    [categoryGroups, disciplineFilter]
+  );
   const visibleCategoryGroups = useMemo(
     () => categoryFilter === 'all'
-      ? categoryGroups
-      : categoryGroups.filter((group) => group.key === categoryFilter),
-    [categoryFilter, categoryGroups]
+      ? categoryGroupsForDiscipline
+      : categoryGroupsForDiscipline.filter((group) => group.key === categoryFilter),
+    [categoryFilter, categoryGroupsForDiscipline]
+  );
+  const registrationById = useMemo(
+    () => new Map(registrations.map((registration) => [registration.id, registration])),
+    [registrations]
+  );
+  const visibleMatches = useMemo(
+    () => disciplineFilter === 'all'
+      ? matches
+      : matches.filter((match) => {
+        const registrationA = match.fighter_a_registration_id
+          ? registrationById.get(match.fighter_a_registration_id)
+          : null;
+        const registrationB = match.fighter_b_registration_id
+          ? registrationById.get(match.fighter_b_registration_id)
+          : null;
+        return disciplineMatches([registrationA?.registered_discipline], disciplineFilter)
+          || disciplineMatches([registrationB?.registered_discipline], disciplineFilter);
+      }),
+    [disciplineFilter, matches, registrationById]
   );
   const selectedRegistration = useMemo(
     () => registrations.find((registration) => registration.id === selectedRegistrationId) ?? null,
@@ -316,22 +357,41 @@ export default function MatchmakingBoardPage() {
               Revisa todos los participantes del evento por disciplina, edad y peso. Elige un peleador y confirma uno de los rivales compatibles sin salir de esta página.
             </p>
           </div>
-          <label className="block min-w-64">
-            <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">Categoría</span>
-            <select
-              value={categoryFilter}
-              onChange={(input) => {
-                setCategoryFilter(input.target.value);
-                setSelectedRegistrationId(null);
-              }}
-              className="min-h-11 w-full border border-zinc-300 bg-white px-3 text-sm text-zinc-900"
-            >
-              <option value="all">Todas las categorías ({registrations.length})</option>
-              {categoryGroups.map((group) => (
-                <option key={group.key} value={group.key}>{group.label} ({group.registrations.length})</option>
-              ))}
-            </select>
-          </label>
+          <div className="grid min-w-64 grid-cols-1 gap-3 sm:grid-cols-2 lg:min-w-[34rem]">
+            <label className="block">
+              <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">Disciplina</span>
+              <select
+                value={disciplineFilter}
+                onChange={(input) => {
+                  setDisciplineFilter(input.target.value);
+                  setCategoryFilter('all');
+                  setSelectedRegistrationId(null);
+                }}
+                className="min-h-11 w-full border border-zinc-300 bg-white px-3 text-sm text-zinc-900"
+              >
+                <option value="all">Todas las disciplinas</option>
+                {disciplineOptions.map((discipline) => (
+                  <option key={discipline} value={discipline}>{discipline}</option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">Categoría</span>
+              <select
+                value={categoryFilter}
+                onChange={(input) => {
+                  setCategoryFilter(input.target.value);
+                  setSelectedRegistrationId(null);
+                }}
+                className="min-h-11 w-full border border-zinc-300 bg-white px-3 text-sm text-zinc-900"
+              >
+                <option value="all">Todas las categorías ({categoryGroupsForDiscipline.reduce((total, group) => total + group.registrations.length, 0)})</option>
+                {categoryGroupsForDiscipline.map((group) => (
+                  <option key={group.key} value={group.key}>{group.label} ({group.registrations.length})</option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
 
         {selectedRegistrationId && selectedRegistration && (
@@ -551,9 +611,9 @@ export default function MatchmakingBoardPage() {
       <section>
         <h2 className="text-2xl font-black uppercase text-zinc-900">{t('events.engine.matchmaking.proposals')}</h2>
         <div className="mt-4 space-y-3">
-          {matches.length === 0 ? (
+          {visibleMatches.length === 0 ? (
             <p className="border border-dashed border-zinc-300 px-4 py-8 text-center text-sm text-zinc-500">{t('events.engine.matchmaking.noProposals')}</p>
-          ) : matches.map((match) => (
+          ) : visibleMatches.map((match) => (
             <div key={match.id} className="flex flex-col gap-3 border border-zinc-200 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <p className="font-bold text-zinc-900">{match.fighter_a_registration?.display_name ?? match.fighter_a?.profiles?.full_name ?? '—'} vs {match.fighter_b_registration?.display_name ?? match.fighter_b?.profiles?.full_name ?? '—'}</p>
@@ -660,7 +720,7 @@ function groupRegistrationsByWeightCategory(
     const key = [discipline, ageGroup ?? '', weightClass].join('|').toLowerCase();
     const existing = groups.get(key);
     if (existing) existing.registrations.push(registration);
-    else groups.set(key, { key, label, registrations: [registration] });
+    else groups.set(key, { key, label, discipline, registrations: [registration] });
   }
 
   return Array.from(groups.values())

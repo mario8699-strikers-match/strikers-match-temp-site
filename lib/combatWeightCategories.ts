@@ -1,3 +1,5 @@
+export { DISCIPLINE_OPTIONS } from '@/lib/disciplines';
+
 export interface CombatWeightGroup {
   group: string;
   minimumAge: number;
@@ -23,12 +25,6 @@ export const GENERIC_WEIGHT_CLASS_OPTIONS: string[][] = [
   ['semipesado', 'Semipesado'],
   ['crucero', 'Crucero'],
   ['pesado', 'Pesado'],
-];
-
-export const DISCIPLINE_OPTIONS = [
-  'Boxeo', 'Muay Thai', 'MMA', 'Kickboxing', 'Karate', 'Judo', 'Lucha Libre',
-  'Lima Lama', 'Jiu-Jitsu', 'Point Fight', 'Bare Knuckle', 'K1',
-  'Light Contact', 'Kick Light', 'Low Kick', 'Full Contact', 'Otro',
 ];
 
 const LEGACY_MULTIPLE_WEIGHT_CLASS = 'multiple';

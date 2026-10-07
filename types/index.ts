@@ -323,6 +323,8 @@ export interface ManualFighter {
   full_name: string;
   nickname: string | null;
   weight_class: string | null;
+  disciplines: string[];
+  /** @deprecated Compatibility mirror of the first item in disciplines. */
   discipline: string | null;
   record_wins: number;
   record_losses: number;

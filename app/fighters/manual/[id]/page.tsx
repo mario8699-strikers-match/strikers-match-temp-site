@@ -11,6 +11,7 @@ import { manualFighterService } from '@/services/manualFighterService';
 import { eventService } from '@/services/eventService';
 import { requestService } from '@/services/requestService';
 import { authService } from '@/services/authService';
+import { normalizeDisciplineList } from '@/lib/disciplines';
 import type { ManualFighterWithCreator, Profile, Event } from '@/types';
 
 const WEIGHT_LABELS: Record<string, string> = {
@@ -94,6 +95,7 @@ export default function ManualFighterDetailPage() {
   const canSendRequest = profile && (profile.role === 'promoter' || profile.role === 'manager' || profile.role === 'admin');
   const creatorName = fighter.profiles?.full_name ?? '';
   const creatorRole = fighter.profiles?.role ? (ROLE_LABELS[fighter.profiles.role] ?? fighter.profiles.role) : '';
+  const disciplines = normalizeDisciplineList(fighter.disciplines, fighter.discipline);
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -157,11 +159,15 @@ export default function ManualFighterDetailPage() {
           ))}
         </div>
 
-        {/* Discipline pill */}
-        {fighter.discipline && (
+        {/* Discipline pills */}
+        {disciplines.length > 0 && (
           <div className="border border-zinc-100 p-6 mb-6">
-            <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color:'#9A9A9A' }}>Disciplina</p>
-            <span className="text-xs font-bold px-3 py-1.5 uppercase tracking-wide bg-[#0A0A0A] text-white">{fighter.discipline}</span>
+            <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color:'#9A9A9A' }}>Disciplinas</p>
+            <div className="flex flex-wrap gap-2">
+              {disciplines.map((discipline) => (
+                <span key={discipline} className="bg-[#0A0A0A] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white">{discipline}</span>
+              ))}
+            </div>
           </div>
         )}
 

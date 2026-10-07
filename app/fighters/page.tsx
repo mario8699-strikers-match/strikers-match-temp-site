@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { FightersPageClient, type FighterDirectoryEntry } from '@/components/FightersPageClient';
 import { StructuredData } from '@/components/StructuredData';
 import { absoluteUrl } from '@/lib/seo';
@@ -27,7 +28,9 @@ export default async function FightersPage() {
   return (
     <>
       <StructuredData data={itemList} />
-      <FightersPageClient initialEntries={initialEntries} />
+      <Suspense fallback={<div className="min-h-screen bg-white px-6 py-20 text-center text-sm text-zinc-500">Cargando peleadores…</div>}>
+        <FightersPageClient initialEntries={initialEntries} />
+      </Suspense>
     </>
   );
 }

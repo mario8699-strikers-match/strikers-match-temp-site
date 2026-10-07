@@ -41,6 +41,7 @@ export interface PublicManualFighterSeo {
   nickname: string | null;
   bio: string | null;
   weight_class: string | null;
+  disciplines: string[] | null;
   discipline: string | null;
   city: string | null;
   state: string | null;
@@ -121,7 +122,7 @@ export const getPublicManualFighterSeo = cache(async (id: string): Promise<Publi
   try {
     const { data, error } = await client
       .from('public_manual_fighters')
-      .select('id,full_name,nickname,bio,weight_class,discipline,city,state,gym_name,experience_level,photo_url,created_at')
+      .select('id,full_name,nickname,bio,weight_class,discipline,disciplines,city,state,gym_name,experience_level,photo_url,created_at')
       .eq('id', id)
       .maybeSingle();
     if (error || !data) return null;

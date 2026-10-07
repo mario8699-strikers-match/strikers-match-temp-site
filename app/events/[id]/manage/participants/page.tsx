@@ -18,6 +18,7 @@ import {
   sanitizeWeightClasses,
 } from '@/lib/combatWeightCategories';
 import { supabase } from '@/lib/supabaseClient';
+import { disciplineMatches, normalizeDisciplineList, sortDisciplines } from '@/lib/disciplines';
 import { authService } from '@/services/authService';
 import { canUseEventFeature } from '@/services/eventStaffService';
 import { eventService } from '@/services/eventService';
@@ -122,6 +123,7 @@ export default function EventParticipantsPage() {
   const [matches, setMatches] = useState<MatchWithContext[]>([]);
   const [source, setSource] = useState<SourceMode>('event_only');
   const [participantFilter, setParticipantFilter] = useState<ParticipantFilter>('all');
+  const [disciplineFilter, setDisciplineFilter] = useState('all');
   const [selectedFighterId, setSelectedFighterId] = useState('');
   const [publishToRoster, setPublishToRoster] = useState(false);
   const [form, setForm] = useState<ParticipantForm>(EMPTY_FORM);
@@ -213,14 +215,20 @@ export default function EventParticipantsPage() {
     reviewRequired: registrations.filter((registration) => registration.eligibility_status === 'review_required').length,
     ready: registrations.filter((registration) => registration.eligibility_status === 'eligible').length,
   }), [acceptedApplications, registrations]);
+  const disciplineOptions = useMemo(() => sortDisciplines([
+    ...(event?.disciplines_needed ?? []),
+    ...registrations.map((registration) => registration.registered_discipline ?? ''),
+  ]), [event?.disciplines_needed, registrations]);
   const visibleRegistrations = useMemo(() => registrations.filter((registration) => {
+    if (disciplineFilter !== 'all'
+      && !disciplineMatches([registration.registered_discipline], disciplineFilter)) return false;
     if (participantFilter === 'ready') return registration.eligibility_status === 'eligible';
     if (participantFilter === 'needs_attention') {
       return registration.eligibility_status !== 'eligible'
         || !['confirmed', 'waived'].includes(registration.payment_status);
     }
     return true;
-  }), [participantFilter, registrations]);
+  }), [disciplineFilter, participantFilter, registrations]);
   const acceptedAwaitingPayment = useMemo(
     () => registrations.filter((registration) =>
       registration.approval_status === 'accepted'
@@ -533,10 +541,25 @@ export default function EventParticipantsPage() {
             <h2 className="text-2xl font-black uppercase">Roster del evento</h2>
             <span className="text-sm text-zinc-500">{registrations.length} participantes</span>
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            <FilterButton active={participantFilter === 'all'} onClick={() => setParticipantFilter('all')} label="Todos" />
-            <FilterButton active={participantFilter === 'needs_attention'} onClick={() => setParticipantFilter('needs_attention')} label="Necesitan atención" />
-            <FilterButton active={participantFilter === 'ready'} onClick={() => setParticipantFilter('ready')} label="Listos" />
+          <div className="flex w-full flex-col gap-2 sm:w-auto">
+            <label>
+              <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">Disciplina</span>
+              <select
+                value={disciplineFilter}
+                onChange={(input) => setDisciplineFilter(input.target.value)}
+                className="min-h-11 w-full border border-zinc-300 bg-white px-3 text-sm text-zinc-900 sm:min-w-64"
+              >
+                <option value="all">Todas las disciplinas ({registrations.length})</option>
+                {disciplineOptions.map((discipline) => (
+                  <option key={discipline} value={discipline}>{discipline}</option>
+                ))}
+              </select>
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              <FilterButton active={participantFilter === 'all'} onClick={() => setParticipantFilter('all')} label="Todos" />
+              <FilterButton active={participantFilter === 'needs_attention'} onClick={() => setParticipantFilter('needs_attention')} label="Necesitan atención" />
+              <FilterButton active={participantFilter === 'ready'} onClick={() => setParticipantFilter('ready')} label="Listos" />
+            </div>
           </div>
         </div>
         <div className="mt-4 space-y-4">
@@ -771,7 +794,7 @@ function selectExistingParticipant(
   if (source === 'platform') {
     const fighter = platformFighters.find((item) => item.id === fighterId);
     if (!fighter) return;
-    const discipline = fighter.disciplines?.find((item) => eventDisciplines.length === 0 || eventDisciplines.includes(item))
+    const discipline = fighter.disciplines?.find((item) => eventDisciplines.length === 0 || disciplineMatches(eventDisciplines, item))
       ?? fighter.disciplines?.[0]
       ?? '';
     const weightClass = inferCombatWeightCategory(
@@ -794,7 +817,10 @@ function selectExistingParticipant(
   } else {
     const fighter = rosterFighters.find((item) => item.id === fighterId);
     if (!fighter) return;
-    const discipline = fighter.discipline ?? '';
+    const fighterDisciplines = normalizeDisciplineList(fighter.disciplines, fighter.discipline);
+    const discipline = fighterDisciplines.find((item) => eventDisciplines.length === 0 || disciplineMatches(eventDisciplines, item))
+      ?? fighterDisciplines[0]
+      ?? '';
     const weightClass = inferCombatWeightCategory(
       discipline,
       calculateAgeOnDate(fighter.date_of_birth ?? '', eventDate),

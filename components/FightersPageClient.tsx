@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { fighterService } from '@/services/fighterService';
 import { fighterFollowService } from '@/services/fighterFollowService';
@@ -11,6 +11,12 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Pagination } from '@/components/Pagination';
 import { RecordValue } from '@/components/CombatRecord';
+import {
+  DISCIPLINE_OPTIONS,
+  disciplineMatches,
+  normalizeDisciplineList,
+  sortDisciplines,
+} from '@/lib/disciplines';
 import type { FighterWithProfile, ManualFighterWithCreator } from '@/types';
 
 const PAGE_SIZE = 12;
@@ -27,6 +33,8 @@ interface FightersPageClientProps {
 export function FightersPageClient({ initialEntries }: FightersPageClientProps) {
   const { t } = useTranslation('fighters');
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const [entries, setEntries] = useState<FighterDirectoryEntry[]>(initialEntries);
   const [loading, setLoading] = useState(false);
@@ -35,6 +43,11 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const [followerCounts, setFollowerCounts] = useState<Record<string, number>>({});
+  const selectedDisciplines = useMemo(
+    () => normalizeDisciplineList(searchParams.getAll('discipline')),
+    [searchParams]
+  );
+  const selectedDisciplinesKey = selectedDisciplines.join('|');
 
   const loadAll = useCallback(async () => {
     const registeredPromise = filter === 'available'
@@ -68,6 +81,10 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
   useEffect(() => {
     void loadAll();
   }, [loadAll]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [selectedDisciplinesKey]);
 
   // Supabase Realtime: auto-refresh when availability changes
   useEffect(() => {
@@ -109,23 +126,30 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
     }
   };
 
+  const disciplineOptions = useMemo(() => sortDisciplines([
+    ...DISCIPLINE_OPTIONS,
+    ...entries.flatMap(entryDisciplines),
+  ]), [entries]);
+
   const filteredEntries = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    if (!query) return entries;
-
     return entries.filter((entry) => {
+      const disciplines = entryDisciplines(entry);
+      if (selectedDisciplines.length > 0
+        && !selectedDisciplines.some((discipline) => disciplineMatches(disciplines, discipline))) {
+        return false;
+      }
+      if (!query) return true;
+
       const isManual = entry.kind === 'manual';
       const name = isManual ? entry.data.full_name : (entry.data.profiles?.full_name ?? '');
       const city = isManual ? (entry.data.city ?? '') : (entry.data.profiles?.city ?? '');
       const weightClass = entry.data.weight_class ?? '';
       const gym = entry.data.gym_name ?? '';
-      const disciplines = isManual
-        ? (entry.data.discipline ? [entry.data.discipline] : [])
-        : (entry.data.disciplines ?? []);
       return [name, city, weightClass, gym, ...disciplines]
         .some((value) => value.toLowerCase().includes(query));
     });
-  }, [entries, searchQuery]);
+  }, [entries, searchQuery, selectedDisciplines]);
 
   const totalPages = Math.ceil(filteredEntries.length / PAGE_SIZE);
   const pageEntries = useMemo(
@@ -157,6 +181,16 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
     event.preventDefault();
     setPage(1);
     setSearchQuery(searchDraft);
+  };
+
+  const updateDisciplineFilters = (nextDisciplines: string[]) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('discipline');
+    for (const discipline of normalizeDisciplineList(nextDisciplines)) {
+      params.append('discipline', discipline);
+    }
+    const queryString = params.toString();
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
   };
 
   return (
@@ -212,6 +246,41 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
               ))}
             </div>
           </div>
+
+          <fieldset className="border border-zinc-200 bg-zinc-50 p-4">
+            <legend className="px-1 text-xs font-bold uppercase tracking-widest text-zinc-700">Disciplina</legend>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                aria-pressed={selectedDisciplines.length === 0}
+                onClick={() => updateDisciplineFilters([])}
+                className={`min-h-10 border px-3 py-2 text-xs font-bold uppercase tracking-wide transition-colors ${selectedDisciplines.length === 0
+                  ? 'border-zinc-900 bg-zinc-900 text-white'
+                  : 'border-zinc-300 bg-white text-zinc-700 hover:border-zinc-500'}`}
+              >
+                Todas
+              </button>
+              {disciplineOptions.map((discipline) => {
+                const selected = selectedDisciplines.some((item) => item.toLocaleLowerCase('es-MX') === discipline.toLocaleLowerCase('es-MX'));
+                return (
+                  <button
+                    key={discipline}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => updateDisciplineFilters(selected
+                      ? selectedDisciplines.filter((item) => item.toLocaleLowerCase('es-MX') !== discipline.toLocaleLowerCase('es-MX'))
+                      : [...selectedDisciplines, discipline])}
+                    className={`min-h-10 border px-3 py-2 text-xs font-bold uppercase tracking-wide transition-colors ${selected
+                      ? 'border-[#C0001E] bg-[#C0001E] text-white'
+                      : 'border-zinc-300 bg-white text-zinc-700 hover:border-zinc-500'}`}
+                  >
+                    {discipline}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-2 text-xs text-zinc-500">Puedes seleccionar varias disciplinas; se mostrarán atletas que practiquen cualquiera de ellas.</p>
+          </fieldset>
         </div>
 
         {loading ? (
@@ -234,9 +303,7 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
               const age = entry.data.age ?? null;
               const verified = !isManual && entry.data.verified;
               const weightClass = entry.data.weight_class;
-              const disciplines = isManual
-                ? (entry.data.discipline ? [entry.data.discipline] : [])
-                : (entry.data.disciplines ?? []);
+              const disciplines = entryDisciplines(entry);
               const experience = entry.data.experience_level;
               const wins = entry.data.record_wins ?? 0;
               const losses = entry.data.record_losses ?? 0;
@@ -364,4 +431,10 @@ function getInitials(name: string) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join('') || 'SM';
+}
+
+function entryDisciplines(entry: FighterDirectoryEntry): string[] {
+  return entry.kind === 'manual'
+    ? normalizeDisciplineList(entry.data.disciplines, entry.data.discipline)
+    : normalizeDisciplineList(entry.data.disciplines);
 }

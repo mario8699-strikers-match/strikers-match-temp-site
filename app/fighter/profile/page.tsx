@@ -20,17 +20,13 @@ import {
   isValidSocialMediaIdentifier,
   normalizeSocialMediaIdentifier,
 } from '@/lib/socialMedia';
+import { DISCIPLINE_OPTIONS } from '@/lib/disciplines';
 import type { SocialMediaHandles, SocialMediaPlatform } from '@/lib/socialMedia';
 import type { Profile, Fighter, MatchRequest, EventApplication } from '@/types';
 
 const WEIGHT_CLASSES = [
   'minimosca','mosca','supermosca','gallo','supergallo','pluma','superpluma',
   'ligero','superligero','welter','superwelter','medio','supermedio','semipesado','crucero','pesado',
-];
-const DISCIPLINES = [
-  'Boxeo','Muay Thai','MMA','Kickboxing','Karate','Judo','Lucha Libre',
-  'Lima Lama','Jiu-Jitsu','Point Fight','Bare Knuckle','K1',
-  'Light Contact','Kick Light','Low Kick','Full Contact','Otro',
 ];
 const WEIGHT_LABELS: Record<string, string> = {
   minimosca:'Minimosca',mosca:'Mosca',supermosca:'Supermosca',gallo:'Gallo',supergallo:'Supergallo',
@@ -719,7 +715,7 @@ export default function FighterProfilePage() {
             <div className="col-span-2">
               <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color:'#5A5A5A' }}>Disciplinas</label>
               <div className="flex flex-wrap gap-2">
-                {DISCIPLINES.map(d => (
+                {DISCIPLINE_OPTIONS.map(d => (
                   <button
                     key={d}
                     type="button"

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { StructuredData } from '@/components/StructuredData';
 import { absoluteUrl, pageMetadata, truncateDescription } from '@/lib/seo';
 import { getPublicManualFighterSeo } from '@/lib/seoData';
+import { normalizeDisciplineList } from '@/lib/disciplines';
 
 interface ManualFighterLayoutProps {
   children: React.ReactNode;
@@ -9,7 +10,8 @@ interface ManualFighterLayoutProps {
 }
 
 function description(fighter: NonNullable<Awaited<ReturnType<typeof getPublicManualFighterSeo>>>) {
-  const details = [fighter.discipline, fighter.weight_class, fighter.city || fighter.state].filter(Boolean).join(' · ');
+  const disciplines = normalizeDisciplineList(fighter.disciplines, fighter.discipline).join(', ');
+  const details = [disciplines, fighter.weight_class, fighter.city || fighter.state].filter(Boolean).join(' · ');
   return truncateDescription(fighter.bio || `${fighter.full_name}${details ? ` — ${details}` : ''}. Peleador de roster en Strikers Match.`);
 }
 
@@ -53,7 +55,7 @@ export default async function ManualFighterLayout({ children, params }: ManualFi
       description: description(fighter),
       image: fighter.photo_url || undefined,
       affiliation: fighter.gym_name ? { '@type': 'SportsOrganization', name: fighter.gym_name } : undefined,
-      knowsAbout: fighter.discipline || undefined,
+      knowsAbout: normalizeDisciplineList(fighter.disciplines, fighter.discipline),
     },
   };
 
