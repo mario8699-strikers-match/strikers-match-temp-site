@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BoutMethodText, InlineCombatRecord } from '@/components/CombatRecord';
 import { EventManageFrame } from '@/components/EventManageFrame';
+import { toLocalDateTimeInputValue } from '@/lib/boutSchedule';
 import { authService } from '@/services/authService';
 import {
   createEventMat,
@@ -196,7 +197,7 @@ function BoutCard({ bout, mats, registrations, warnings, busy, update, replaceFi
   const [method, setMethod] = useState('');
   const [elapsedSeconds, setElapsedSeconds] = useState('');
   const [matOrder, setMatOrder] = useState(bout.mat_order?.toString() ?? '');
-  const [scheduledTime, setScheduledTime] = useState(toDateTimeLocal(bout.scheduled_time));
+  const [scheduledTime, setScheduledTime] = useState(toLocalDateTimeInputValue(bout.scheduled_time));
   const [showResult, setShowResult] = useState(false);
   const [replacementSide, setReplacementSide] = useState<'a' | 'b'>('a');
   const [replacementRegistrationId, setReplacementRegistrationId] = useState('');
@@ -422,13 +423,6 @@ function safeTranslation(t: (key: string) => string, key: string, fallback: stri
 
 function Frame({ children }: { children: React.ReactNode }) {
   return <EventManageFrame>{children}</EventManageFrame>;
-}
-
-function toDateTimeLocal(value: string | null) {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toISOString().slice(0, 16);
 }
 
 function buildBoutConflictMap(bouts: Bout[]) {

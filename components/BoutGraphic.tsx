@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- operator-supplied graphics must render arbitrary approved asset hosts */
 
 import type { BoutGraphicPayload } from '@/types';
+import { formatBoutScheduledTime } from '@/lib/boutSchedule';
 
 export function BoutGraphic({ payload, variant = 'screen', className = '' }: { payload: BoutGraphicPayload; variant?: 'screen' | 'social' | 'overlay'; className?: string }) {
   const { event, bout, theme } = payload;
@@ -10,6 +11,7 @@ export function BoutGraphic({ payload, variant = 'screen', className = '' }: { p
   const square = variant === 'social';
   const red = bout.redCorner;
   const blue = bout.blueCorner;
+  const scheduledTime = formatBoutScheduledTime(bout.scheduledTime);
   const record = (fighter: typeof red) => `${fighter.record_wins ?? 0}-${fighter.record_losses ?? 0}-${fighter.record_draws ?? 0}`;
 
   return (
@@ -34,10 +36,11 @@ export function BoutGraphic({ payload, variant = 'screen', className = '' }: { p
         )}
 
         <div className={`${overlay ? 'border-l-[clamp(4px,0.7vw,12px)] bg-black/90 p-[2.5%] shadow-2xl backdrop-blur-sm' : ''}`} style={overlay ? { borderColor: theme.accent } : undefined}>
-          <div className="mb-[2%] flex items-center justify-center gap-3 text-center text-[clamp(8px,1.25vw,20px)] font-black uppercase tracking-[0.18em]">
-            <span style={{ color: theme.accent }}>{bout.number ? `Combate ${bout.number}` : 'Próximo combate'}</span>
+          <div className="mb-[2%] flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center text-[clamp(8px,1.25vw,20px)] font-black uppercase tracking-[0.18em]">
+            <span style={{ color: theme.accent }}>Próximo combate{bout.number ? ` · ${bout.number}` : ''}</span>
             <span className="opacity-40">/</span>
             <span>{[bout.discipline, bout.weightClass, bout.ruleset].filter(Boolean).join(' · ')}</span>
+            {scheduledTime && <><span className="opacity-40">/</span><span className="border px-[1.2%] py-[0.5%]" style={{ borderColor: theme.accent, color: theme.accent }}>Hora programada · {scheduledTime}</span></>}
           </div>
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-[3%]">
             <Corner name={red.name} nickname={red.nickname} record={record(red)} team={red.team} side="left" accent={theme.accent} />
@@ -48,7 +51,7 @@ export function BoutGraphic({ payload, variant = 'screen', className = '' }: { p
 
         {!overlay && (
           <footer className="flex items-end justify-between gap-4 text-[clamp(7px,1vw,16px)] uppercase tracking-[0.16em] opacity-75">
-            <p>{bout.format ?? 'Formato por confirmar'}{bout.scheduledTime ? ` · ${new Date(bout.scheduledTime).toLocaleString('es-MX')}` : ''}</p>
+            <p>{bout.format ?? 'Formato por confirmar'}{scheduledTime ? ` · Hora programada: ${scheduledTime}` : ''}</p>
             <div className="flex max-w-[45%] items-center justify-end gap-3">
               {event.sponsorLogoUrls.slice(0, 4).map((url) => <img key={url} src={url} alt="Patrocinador" referrerPolicy="no-referrer" className="max-h-[5vh] max-w-[9vw] object-contain" />)}
             </div>

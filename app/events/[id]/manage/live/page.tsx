@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EventManageFrame } from '@/components/EventManageFrame';
+import { formatBoutScheduledTime } from '@/lib/boutSchedule';
 import { authService } from '@/services/authService';
 import { getBoutsForEvent, getMatsForEvent, updateBoutOperation } from '@/services/boutService';
 import { canUseEventFeature } from '@/services/eventStaffService';
@@ -189,10 +190,14 @@ function LiveBoutCard({ bout, busy, updateBout, primary = false }: {
   const [method, setMethod] = useState('');
   const [elapsedSeconds, setElapsedSeconds] = useState('');
   const [showResult, setShowResult] = useState(false);
+  const scheduledTime = formatBoutScheduledTime(bout.scheduled_time);
 
   return (
     <div className={`border p-4 ${primary ? 'border-zinc-900' : 'border-zinc-200'}`}>
-      <p className="text-xs font-bold uppercase tracking-wide text-[#C0001E]">{t('events.engine.bouts.combatNumber', { number: bout.bout_number ?? t('events.engine.bouts.unassignedNumber') })} · {formatStatus(bout.status, t)}</p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs font-bold uppercase tracking-wide text-[#C0001E]">{t('events.engine.bouts.combatNumber', { number: bout.bout_number ?? t('events.engine.bouts.unassignedNumber') })} · {formatStatus(bout.status, t)}</p>
+        {scheduledTime && <p className="border border-zinc-300 bg-zinc-50 px-2 py-1 text-xs font-black uppercase text-zinc-900">Hora programada · {scheduledTime}</p>}
+      </div>
       <h3 className="mt-2 text-xl font-black text-zinc-900">{bout.fighter_a_snapshot.name}</h3>
       <p className="text-xs font-bold uppercase text-zinc-500">VS</p>
       <h3 className="text-xl font-black text-zinc-900">{bout.fighter_b_snapshot.name}</h3>

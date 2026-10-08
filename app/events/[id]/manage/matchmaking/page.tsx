@@ -64,6 +64,10 @@ const FAILURE_LABELS: Record<string, string> = {
 };
 
 const WARNING_LABELS: Record<string, string> = {
+  weight_class_difference_within_tolerance: 'Categorías distintas; los pesos reales están dentro de la tolerancia',
+  experience_tolerance_exceeded: 'La diferencia de experiencia requiere revisión del organizador',
+  skill_rating_tolerance_exceeded: 'La diferencia de nivel requiere revisión del organizador',
+  recent_opponent: 'Ya se enfrentaron recientemente; revisar antes de confirmar la revancha',
   exact_weight_missing: 'Falta peso exacto',
   age_missing: 'Falta edad',
   skill_rating_missing: 'Falta evaluación de nivel',
@@ -286,11 +290,14 @@ export default function MatchmakingBoardPage() {
     setActing(null);
   };
 
-  const selectRegistrationForPairing = (registrationId: string, groupKey: string) => {
+  const selectRegistrationForPairing = (registrationId: string) => {
     setError(null);
     setMessage(null);
     setSelectedRegistrationId(registrationId);
-    setCategoryFilter(groupKey);
+    // A valid tolerance-based rival may sit in an adjacent stored category.
+    // Show every category after the first selection instead of trapping the
+    // operator inside the selected fighter's label group.
+    setCategoryFilter('all');
   };
 
   const regenerate = async () => {
@@ -433,7 +440,7 @@ export default function MatchmakingBoardPage() {
               : `Strikers Match analizó ${suggestions.length} combinaciones, pero ninguna cumple todavía las reglas del evento.`}
           </p>
           <p className="mt-1">
-            La categoría se calcula automáticamente con la disciplina, la edad y el peso del peleador. Completa únicamente los datos faltantes marcados en Participantes; el sistema volverá a analizar y ordenar los enfrentamientos automáticamente.
+            El sistema compara el peso real y la edad usando las tolerancias del evento; la categoría guardada sirve como referencia y no bloquea una combinación válida. Completa únicamente los datos faltantes marcados en Participantes.
           </p>
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
             <Link href={`/events/${eventId}/manage/participants`} className="inline-flex min-h-11 items-center justify-center bg-zinc-900 px-4 py-3 text-xs font-bold uppercase text-white">
@@ -586,7 +593,7 @@ export default function MatchmakingBoardPage() {
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#C0001E]">Vista rápida</p>
             <h2 className="mt-1 text-2xl font-black uppercase text-zinc-900">Peleadores por categoría</h2>
             <p className="mt-1 max-w-3xl text-sm text-zinc-600">
-              Revisa todos los participantes del evento por disciplina, edad y peso. Elige un peleador y confirma uno de los rivales compatibles sin salir de esta página.
+              Revisa todos los participantes del evento por disciplina, edad y peso. Al elegir un peleador se muestran también rivales de categorías vecinas que cumplen las tolerancias configuradas.
             </p>
           </div>
           <div className="grid min-w-64 grid-cols-1 gap-3 sm:grid-cols-2 lg:min-w-[34rem]">
@@ -630,7 +637,7 @@ export default function MatchmakingBoardPage() {
           <div className="mt-4 flex flex-col gap-3 border border-[#C0001E]/30 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-zinc-700">
               <span className="font-bold text-zinc-950">Primer peleador seleccionado:</span>{' '}
-              {participantName(selectedRegistration)}. Elige un rival habilitado en esta categoría.
+              {participantName(selectedRegistration)}. Elige cualquier rival habilitado por peso real, edad y las demás reglas del evento.
             </p>
             <button
               type="button"
@@ -665,7 +672,7 @@ export default function MatchmakingBoardPage() {
                   const pairAlreadyCreated = pairKey ? activePairKeys.has(pairKey) : false;
                   const canCreatePair = suggestionCanCreateBout(suggestion, pairAlreadyCreated);
                   const canStartPairing = registration.eligibility_status === 'eligible'
-                    && group.registrations.some((candidate) => {
+                    && registrations.some((candidate) => {
                       if (candidate.id === registration.id) return false;
                       const candidatePairKey = suggestionPairKey(registration.id, candidate.id);
                       return suggestionCanCreateBout(
@@ -711,7 +718,7 @@ export default function MatchmakingBoardPage() {
                           <button
                             type="button"
                             disabled={!canStartPairing}
-                            onClick={() => selectRegistrationForPairing(registration.id, group.key)}
+                            onClick={() => selectRegistrationForPairing(registration.id)}
                             className="min-h-11 w-full bg-zinc-900 px-3 py-2 text-xs font-bold uppercase text-white disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500"
                           >
                             {canStartPairing ? 'Elegir para emparejar' : 'Sin rival compatible'}
@@ -876,10 +883,14 @@ function Metric({ label, value }: { label: string; value: number }) {
 
 function FighterCell({ registration }: { registration: CompatibilityResult['fighterA'] }) {
   const { t } = useTranslation('events');
+  const weightCategory = registration.registered_weight_class
+    ?? registration.fighters?.weight_class
+    ?? registration.manual_fighters?.weight_class
+    ?? (registration.weigh_in_weight != null ? 'Categoría flexible por peso real' : t('events.engine.matchmaking.pendingWeight'));
   return (
     <div className="bg-zinc-50 p-4">
       <p className="font-bold text-zinc-900">{participantName(registration)}</p>
-      <p className="mt-1 text-xs text-zinc-600">{registration.registered_weight_class ?? registration.fighters?.weight_class ?? registration.manual_fighters?.weight_class ?? t('events.engine.matchmaking.pendingWeight')} · {formatKg(registration.weigh_in_weight)} real</p>
+      <p className="mt-1 text-xs text-zinc-600">{weightCategory} · {formatKg(registration.weigh_in_weight)} real</p>
       <p className="mt-1 text-xs text-zinc-600">{registration.registered_discipline ?? t('events.engine.matchmaking.pendingDiscipline')} · {registration.ruleset ?? 'reglamento pendiente'}</p>
       <p className="mt-1 text-xs text-zinc-600">{registration.experience_level ?? 'nivel pendiente'} · habilidad {registration.skill_rating ?? '—'}/10 · {registration.gender_division ?? 'división pendiente'} · {registration.age_at_event ?? '—'} años</p>
       <p className="mt-1 text-xs text-zinc-600">{registration.team_name ?? t('events.engine.matchmaking.pendingTeam')} · {[registration.city, registration.state].filter(Boolean).join(', ') || 'ubicación pendiente'}</p>
@@ -1011,9 +1022,11 @@ function groupRegistrationsByWeightCategory(
     const rawWeightClass = registration.registered_weight_class?.trim();
     const weightClass = rawWeightClass && rawWeightClass.toLowerCase() !== 'multiple'
       ? rawWeightClass
-      : 'Sin categoría';
+      : registration.weigh_in_weight != null
+        ? 'Categoría flexible por peso real'
+        : 'Sin categoría';
     const age = registration.age_at_event;
-    const ageGroup = age == null || weightClass === 'Sin categoría'
+    const ageGroup = age == null || ['Sin categoría', 'Categoría flexible por peso real'].includes(weightClass)
       ? null
       : getCombatWeightGroups(discipline).find((group) =>
         age >= group.minimumAge
@@ -1022,6 +1035,8 @@ function groupRegistrationsByWeightCategory(
       )?.group ?? null;
     const label = weightClass === 'Sin categoría'
       ? `${discipline} · Sin categoría asignada`
+      : weightClass === 'Categoría flexible por peso real'
+        ? `${discipline} · Categoría flexible por peso real`
       : [discipline, ageGroup, weightClass].filter(Boolean).join(' · ');
     const key = [discipline, ageGroup ?? '', weightClass].join('|').toLowerCase();
     const existing = groups.get(key);
@@ -1040,8 +1055,8 @@ function groupRegistrationsByWeightCategory(
       }),
     }))
     .sort((groupA, groupB) => {
-      const unassignedA = groupA.label.includes('Sin categoría');
-      const unassignedB = groupB.label.includes('Sin categoría');
+      const unassignedA = groupA.label.includes('Sin categoría') || groupA.label.includes('Categoría flexible');
+      const unassignedB = groupB.label.includes('Sin categoría') || groupB.label.includes('Categoría flexible');
       if (unassignedA !== unassignedB) return unassignedA ? 1 : -1;
       return groupA.label.localeCompare(groupB.label, 'es', { numeric: true });
     });
