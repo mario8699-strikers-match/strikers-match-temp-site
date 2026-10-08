@@ -106,6 +106,8 @@ export default function MatchmakingBoardPage() {
   const [selectedRegistrationId, setSelectedRegistrationId] = useState<string | null>(null);
   const [manualRegistrationAId, setManualRegistrationAId] = useState('');
   const [manualRegistrationBId, setManualRegistrationBId] = useState('');
+  const [manualSearchA, setManualSearchA] = useState('');
+  const [manualSearchB, setManualSearchB] = useState('');
   const [manualOverrideReason, setManualOverrideReason] = useState('');
   const [canManage, setCanManage] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -246,6 +248,15 @@ export default function MatchmakingBoardPage() {
   const manualRegistrationB = manualRegistrationBId
     ? registrationById.get(manualRegistrationBId) ?? null
     : null;
+  const manualCandidatesA = useMemo(
+    () => searchManualPairingCandidates(manualPairingCandidates, manualSearchA),
+    [manualPairingCandidates, manualSearchA]
+  );
+  const manualCandidatesB = useMemo(
+    () => searchManualPairingCandidates(manualPairingCandidates, manualSearchB)
+      .filter((registration) => registration.id !== manualRegistrationAId),
+    [manualPairingCandidates, manualRegistrationAId, manualSearchB]
+  );
   const manualPairKey = manualRegistrationA && manualRegistrationB
     ? suggestionPairKey(manualRegistrationA.id, manualRegistrationB.id)
     : null;
@@ -378,6 +389,8 @@ export default function MatchmakingBoardPage() {
       setMessage(`Combate manual confirmado: ${participantName(manualRegistrationA)} vs ${participantName(manualRegistrationB)}. El gráfico se generó automáticamente.`);
       setManualRegistrationAId('');
       setManualRegistrationBId('');
+      setManualSearchA('');
+      setManualSearchB('');
       setManualOverrideReason('');
       setSelectedRegistrationId(null);
       if (profile && !profile.onboarding_completed && !profile.onboarding_dismissed
@@ -471,49 +484,93 @@ export default function MatchmakingBoardPage() {
         </div>
 
         <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-          <label>
-            <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">Peleador A</span>
+          <div>
+            <label htmlFor="manual-fighter-search-a" className="block">
+              <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">Buscar peleador A por nombre</span>
+              <input
+                id="manual-fighter-search-a"
+                type="search"
+                value={manualSearchA}
+                onChange={(input) => {
+                  setManualSearchA(input.target.value);
+                  setManualRegistrationAId('');
+                  setManualOverrideReason('');
+                  setError(null);
+                }}
+                placeholder="Escribe el nombre del peleador…"
+                autoComplete="off"
+                className="min-h-12 w-full border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none focus:border-zinc-900"
+              />
+            </label>
             <select
+              aria-label="Resultados para peleador A"
               value={manualRegistrationAId}
               onChange={(input) => {
                 const nextId = input.target.value;
                 setManualRegistrationAId(nextId);
-                if (nextId === manualRegistrationBId) setManualRegistrationBId('');
+                const selected = registrationById.get(nextId);
+                if (selected) setManualSearchA(participantName(selected));
+                if (nextId === manualRegistrationBId) {
+                  setManualRegistrationBId('');
+                  setManualSearchB('');
+                }
                 setManualOverrideReason('');
                 setError(null);
               }}
-              className="min-h-12 w-full border border-zinc-300 bg-white px-3 text-sm text-zinc-900"
+              disabled={!manualSearchA.trim() || manualCandidatesA.length === 0}
+              className="mt-2 min-h-12 w-full border border-zinc-300 bg-white px-3 text-sm text-zinc-900 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500"
             >
-              <option value="">Seleccionar primer peleador…</option>
-              {manualPairingCandidates.map((registration) => (
+              <option value="">{manualSearchA.trim() ? 'Seleccionar de los resultados…' : 'Primero escribe un nombre…'}</option>
+              {manualCandidatesA.map((registration) => (
                 <option key={registration.id} value={registration.id}>
                   {manualPairingOptionLabel(registration, activeAssignmentCounts.get(registration.id) ?? 0)}
                 </option>
               ))}
             </select>
-          </label>
+            <SearchResultCount query={manualSearchA} count={manualCandidatesA.length} />
+          </div>
 
-          <label>
-            <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">Peleador B</span>
+          <div>
+            <label htmlFor="manual-fighter-search-b" className="block">
+              <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">Buscar peleador B por nombre</span>
+              <input
+                id="manual-fighter-search-b"
+                type="search"
+                value={manualSearchB}
+                onChange={(input) => {
+                  setManualSearchB(input.target.value);
+                  setManualRegistrationBId('');
+                  setManualOverrideReason('');
+                  setError(null);
+                }}
+                placeholder="Escribe el nombre del rival…"
+                autoComplete="off"
+                className="min-h-12 w-full border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none focus:border-zinc-900"
+              />
+            </label>
             <select
+              aria-label="Resultados para peleador B"
               value={manualRegistrationBId}
               onChange={(input) => {
-                setManualRegistrationBId(input.target.value);
+                const nextId = input.target.value;
+                setManualRegistrationBId(nextId);
+                const selected = registrationById.get(nextId);
+                if (selected) setManualSearchB(participantName(selected));
                 setManualOverrideReason('');
                 setError(null);
               }}
-              className="min-h-12 w-full border border-zinc-300 bg-white px-3 text-sm text-zinc-900"
+              disabled={!manualSearchB.trim() || manualCandidatesB.length === 0}
+              className="mt-2 min-h-12 w-full border border-zinc-300 bg-white px-3 text-sm text-zinc-900 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500"
             >
-              <option value="">Seleccionar rival…</option>
-              {manualPairingCandidates
-                .filter((registration) => registration.id !== manualRegistrationAId)
-                .map((registration) => (
-                  <option key={registration.id} value={registration.id}>
-                    {manualPairingOptionLabel(registration, activeAssignmentCounts.get(registration.id) ?? 0)}
-                  </option>
-                ))}
+              <option value="">{manualSearchB.trim() ? 'Seleccionar de los resultados…' : 'Primero escribe un nombre…'}</option>
+              {manualCandidatesB.map((registration) => (
+                <option key={registration.id} value={registration.id}>
+                  {manualPairingOptionLabel(registration, activeAssignmentCounts.get(registration.id) ?? 0)}
+                </option>
+              ))}
             </select>
-          </label>
+            <SearchResultCount query={manualSearchB} count={manualCandidatesB.length} />
+          </div>
         </div>
 
         {manualRegistrationA && manualRegistrationB && (
@@ -920,6 +977,38 @@ function formatKg(value: number | null) {
 function formatRange(minimum: number | null, maximum: number | null) {
   if (minimum == null && maximum == null) return '—';
   return `${minimum ?? '—'}–${maximum ?? '—'} kg`;
+}
+
+function SearchResultCount({ query, count }: { query: string; count: number }) {
+  if (!query.trim()) {
+    return <p className="mt-1 text-xs text-zinc-500">Escribe un nombre para filtrar la lista.</p>;
+  }
+  return (
+    <p className={`mt-1 text-xs ${count > 0 ? 'text-zinc-500' : 'font-medium text-amber-800'}`}>
+      {count > 0
+        ? `${count} ${count === 1 ? 'peleador encontrado' : 'peleadores encontrados'}`
+        : 'No se encontraron peleadores con ese nombre.'}
+    </p>
+  );
+}
+
+function searchManualPairingCandidates(
+  registrations: RegistrationWithFighter[],
+  query: string
+) {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) return [];
+  return registrations.filter((registration) => (
+    normalizeSearchText(participantName(registration)).includes(normalizedQuery)
+  ));
+}
+
+function normalizeSearchText(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLocaleLowerCase('es-MX');
 }
 
 function manualPairingOptionLabel(
