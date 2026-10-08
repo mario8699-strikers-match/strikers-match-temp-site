@@ -10,7 +10,11 @@ import { EventManageFrame } from '@/components/EventManageFrame';
 import { getCombatWeightGroups } from '@/lib/combatWeightCategories';
 import { disciplineMatches, sortDisciplines } from '@/lib/disciplines';
 import { authService } from '@/services/authService';
-import { approveMatchAsBout, approveMatchSuggestionAsBout } from '@/services/boutService';
+import {
+  approveManualPairingAsBout,
+  approveMatchAsBout,
+  approveMatchSuggestionAsBout,
+} from '@/services/boutService';
 import {
   getEventCompatibilityPool,
   participantName,
@@ -70,6 +74,19 @@ const WARNING_LABELS: Record<string, string> = {
   promoter_preferences_require_review: 'Revisar preferencias del promotor configuradas para el evento',
 };
 
+const MANUAL_PAIRING_BLOCKERS = new Set([
+  'same_fighter',
+  'different_event',
+  'fighter_a_not_eligible',
+  'fighter_b_not_eligible',
+  'fighter_a_already_assigned',
+  'fighter_b_already_assigned',
+  'discipline_mismatch',
+  'ruleset_mismatch',
+  'gender_division_mismatch',
+  'competition_class_mismatch',
+]);
+
 export default function MatchmakingBoardPage() {
   const { t } = useTranslation('events');
   const params = useParams<{ id: string }>();
@@ -83,6 +100,9 @@ export default function MatchmakingBoardPage() {
   const [disciplineFilter, setDisciplineFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [selectedRegistrationId, setSelectedRegistrationId] = useState<string | null>(null);
+  const [manualRegistrationAId, setManualRegistrationAId] = useState('');
+  const [manualRegistrationBId, setManualRegistrationBId] = useState('');
+  const [manualOverrideReason, setManualOverrideReason] = useState('');
   const [canManage, setCanManage] = useState(false);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState<string | null>(null);
@@ -205,6 +225,46 @@ export default function MatchmakingBoardPage() {
     () => registrations.find((registration) => registration.id === selectedRegistrationId) ?? null,
     [registrations, selectedRegistrationId]
   );
+  const manualPairingCandidates = useMemo(
+    () => registrations
+      .filter((registration) => registration.eligibility_status === 'eligible'
+        && ['confirmed', 'waived'].includes(registration.payment_status))
+      .sort((registrationA, registrationB) => participantName(registrationA).localeCompare(
+        participantName(registrationB),
+        'es',
+        { sensitivity: 'base' }
+      )),
+    [registrations]
+  );
+  const manualRegistrationA = manualRegistrationAId
+    ? registrationById.get(manualRegistrationAId) ?? null
+    : null;
+  const manualRegistrationB = manualRegistrationBId
+    ? registrationById.get(manualRegistrationBId) ?? null
+    : null;
+  const manualPairKey = manualRegistrationA && manualRegistrationB
+    ? suggestionPairKey(manualRegistrationA.id, manualRegistrationB.id)
+    : null;
+  const manualSuggestion = manualPairKey ? suggestionByPair.get(manualPairKey) : undefined;
+  const manualBlockingReasons = useMemo(
+    () => manualPairingBlockingReasons(
+      manualRegistrationA,
+      manualRegistrationB,
+      manualSuggestion,
+      manualPairKey ? activePairKeys.has(manualPairKey) : false
+    ),
+    [activePairKeys, manualPairKey, manualRegistrationA, manualRegistrationB, manualSuggestion]
+  );
+  const manualOverrideFailures = manualSuggestion?.hardFailures.filter(
+    (failure) => !MANUAL_PAIRING_BLOCKERS.has(failure)
+  ) ?? [];
+  const manualNeedsReason = Boolean(
+    manualRegistrationA
+    && manualRegistrationB
+    && (!manualSuggestion
+      || !manualSuggestion.eligible
+      || !['active', 'locked', 'changes_requested'].includes(manualSuggestion.status))
+  );
 
   const confirmSuggestion = async (suggestion: CompatibilityResult) => {
     const key = [suggestion.fighter_a_registration_id, suggestion.fighter_b_registration_id].sort().join(':');
@@ -280,6 +340,49 @@ export default function MatchmakingBoardPage() {
     setActing(null);
   };
 
+  const confirmManualPairing = async () => {
+    if (!manualRegistrationA || !manualRegistrationB || !manualPairKey) {
+      setError('Selecciona dos peleadores para crear el combate manual.');
+      return;
+    }
+    if (manualBlockingReasons.length > 0) {
+      setError(manualBlockingReasons.join(' · '));
+      return;
+    }
+    if (manualNeedsReason && !manualOverrideReason.trim()) {
+      setError('Escribe el motivo para aprobar manualmente esta combinación.');
+      return;
+    }
+
+    const actingKey = `manual:${manualPairKey}`;
+    setActing(actingKey);
+    setError(null);
+    setMessage(null);
+    const result = await approveManualPairingAsBout(
+      eventId,
+      manualRegistrationA.id,
+      manualRegistrationB.id,
+      manualOverrideReason
+    );
+
+    if (result.error) {
+      setError(result.error);
+    } else {
+      setMessage(`Combate manual confirmado: ${participantName(manualRegistrationA)} vs ${participantName(manualRegistrationB)}. El gráfico se generó automáticamente.`);
+      setManualRegistrationAId('');
+      setManualRegistrationBId('');
+      setManualOverrideReason('');
+      setSelectedRegistrationId(null);
+      if (profile && !profile.onboarding_completed && !profile.onboarding_dismissed
+        && profile.onboarding_event_id === eventId && profile.onboarding_step <= 6) {
+        const advancement = await advanceGuidedOnboarding(6, eventId, true);
+        if (advancement.data) setProfile(advancement.data);
+      }
+      await reload();
+    }
+    setActing(null);
+  };
+
   if (loading || profile === undefined) {
     return <PageFrame><p className="text-sm text-zinc-500">{t('events.engine.loading.matchmaking')}</p></PageFrame>;
   }
@@ -347,6 +450,135 @@ export default function MatchmakingBoardPage() {
 
       {error && <p className="border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p>}
       {message && <p className="border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p>}
+
+      <section className="border-2 border-zinc-900 bg-white p-4 sm:p-6">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#C0001E]">Control del organizador</p>
+          <h2 className="mt-1 text-2xl font-black uppercase text-zinc-900">Emparejamiento manual</h2>
+          <p className="mt-2 max-w-4xl text-sm text-zinc-600">
+            Selecciona directamente dos participantes elegibles y con pago confirmado. Puedes aprobar diferencias de categoría, peso, edad o experiencia con un motivo. Género, disciplina, clase amateur/pro, reglamentos incompatibles y límites de combates nunca se pueden omitir.
+          </p>
+          <p className="mt-2 text-sm font-semibold text-zinc-900">
+            Tu confirmación crea el combate oficial inmediatamente; los peleadores no necesitan aceptarlo después.
+          </p>
+        </div>
+
+        <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <label>
+            <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">Peleador A</span>
+            <select
+              value={manualRegistrationAId}
+              onChange={(input) => {
+                const nextId = input.target.value;
+                setManualRegistrationAId(nextId);
+                if (nextId === manualRegistrationBId) setManualRegistrationBId('');
+                setManualOverrideReason('');
+                setError(null);
+              }}
+              className="min-h-12 w-full border border-zinc-300 bg-white px-3 text-sm text-zinc-900"
+            >
+              <option value="">Seleccionar primer peleador…</option>
+              {manualPairingCandidates.map((registration) => (
+                <option key={registration.id} value={registration.id}>
+                  {manualPairingOptionLabel(registration, activeAssignmentCounts.get(registration.id) ?? 0)}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">Peleador B</span>
+            <select
+              value={manualRegistrationBId}
+              onChange={(input) => {
+                setManualRegistrationBId(input.target.value);
+                setManualOverrideReason('');
+                setError(null);
+              }}
+              className="min-h-12 w-full border border-zinc-300 bg-white px-3 text-sm text-zinc-900"
+            >
+              <option value="">Seleccionar rival…</option>
+              {manualPairingCandidates
+                .filter((registration) => registration.id !== manualRegistrationAId)
+                .map((registration) => (
+                  <option key={registration.id} value={registration.id}>
+                    {manualPairingOptionLabel(registration, activeAssignmentCounts.get(registration.id) ?? 0)}
+                  </option>
+                ))}
+            </select>
+          </label>
+        </div>
+
+        {manualRegistrationA && manualRegistrationB && (
+          <div className="mt-5">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-stretch">
+              <FighterCell registration={manualRegistrationA} />
+              <div className="flex items-center justify-center border-y border-zinc-200 py-2 text-xs font-black uppercase tracking-widest sm:border-x sm:border-y-0 sm:px-4 sm:py-0">VS</div>
+              <FighterCell registration={manualRegistrationB} />
+            </div>
+
+            <div className="mt-4 border-t border-zinc-200 pt-4">
+              {manualSuggestion ? (
+                <div className={manualSuggestion.eligible ? 'text-emerald-800' : 'text-amber-900'}>
+                  <p className="text-sm font-black uppercase">
+                    {manualSuggestion.eligible
+                      ? `Compatibilidad automática: ${manualSuggestion.totalScore}%`
+                      : 'La combinación requiere decisión manual'}
+                  </p>
+                  {manualSuggestion.hardFailures.length > 0 && (
+                    <p className="mt-1 text-xs">
+                      {manualSuggestion.hardFailures.map((failure) => FAILURE_LABELS[failure] ?? failure).join(' · ')}
+                    </p>
+                  )}
+                  {manualSuggestion.warnings.length > 0 && (
+                    <p className="mt-1 text-xs">
+                      {manualSuggestion.warnings.map((warning) => WARNING_LABELS[warning] ?? warning).join(' · ')}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm font-bold text-amber-900">No existe una recomendación automática para esta pareja; puedes aprobarla manualmente con un motivo.</p>
+              )}
+
+              {manualOverrideFailures.length > 0 && manualBlockingReasons.length === 0 && (
+                <p className="mt-3 border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+                  Vas a omitir estas reglas consultivas: {manualOverrideFailures.map((failure) => FAILURE_LABELS[failure] ?? failure).join(' · ')}.
+                </p>
+              )}
+
+              {manualBlockingReasons.length > 0 && (
+                <p className="mt-3 border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-800">
+                  No se puede crear este combate: {manualBlockingReasons.join(' · ')}
+                </p>
+              )}
+
+              {manualNeedsReason && manualBlockingReasons.length === 0 && (
+                <label className="mt-4 block">
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">Motivo del ajuste manual</span>
+                  <input
+                    type="text"
+                    value={manualOverrideReason}
+                    onChange={(input) => setManualOverrideReason(input.target.value)}
+                    placeholder="Ej. Pesos revisados y combate aprobado por el organizador"
+                    className="min-h-12 w-full border border-zinc-300 px-3 text-sm text-zinc-900 outline-none focus:border-zinc-900"
+                  />
+                </label>
+              )}
+
+              <button
+                type="button"
+                disabled={manualBlockingReasons.length > 0
+                  || (manualNeedsReason && !manualOverrideReason.trim())
+                  || acting === `manual:${manualPairKey}`}
+                onClick={confirmManualPairing}
+                className="mt-4 min-h-12 w-full bg-[#C0001E] px-5 py-3 text-sm font-black uppercase tracking-widest text-white disabled:cursor-not-allowed disabled:bg-zinc-300 sm:w-auto"
+              >
+                {acting === `manual:${manualPairKey}` ? 'Creando combate…' : 'Confirmar combate manual'}
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
 
       <section className="border border-zinc-200 bg-zinc-50 p-4 sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -677,6 +909,80 @@ function formatKg(value: number | null) {
 function formatRange(minimum: number | null, maximum: number | null) {
   if (minimum == null && maximum == null) return '—';
   return `${minimum ?? '—'}–${maximum ?? '—'} kg`;
+}
+
+function manualPairingOptionLabel(
+  registration: RegistrationWithFighter,
+  activeAssignments: number
+) {
+  const details = [
+    registration.registered_discipline,
+    formatKg(registration.weigh_in_weight),
+    registration.registered_weight_class,
+    registration.gender_division,
+    activeAssignments > 0
+      ? `${activeAssignments} ${activeAssignments === 1 ? 'combate activo' : 'combates activos'}`
+      : null,
+  ].filter(Boolean);
+  return `${participantName(registration)}${details.length > 0 ? ` · ${details.join(' · ')}` : ''}`;
+}
+
+function manualPairingBlockingReasons(
+  registrationA: RegistrationWithFighter | null,
+  registrationB: RegistrationWithFighter | null,
+  suggestion: CompatibilityResult | undefined,
+  pairAlreadyCreated: boolean
+) {
+  if (!registrationA || !registrationB) return [];
+  const reasons: string[] = [];
+
+  if (registrationA.id === registrationB.id) reasons.push('Selecciona dos peleadores diferentes.');
+  if (registrationA.eligibility_status !== 'eligible' || registrationB.eligibility_status !== 'eligible') {
+    reasons.push('Ambos peleadores deben estar marcados como elegibles.');
+  }
+  if (!['confirmed', 'waived'].includes(registrationA.payment_status)
+    || !['confirmed', 'waived'].includes(registrationB.payment_status)) {
+    reasons.push('Ambos peleadores deben tener el pago confirmado o exento.');
+  }
+  if (!registrationA.registered_discipline
+    || !registrationB.registered_discipline
+    || !disciplineMatches([registrationA.registered_discipline], registrationB.registered_discipline)) {
+    reasons.push('Las disciplinas son diferentes.');
+  }
+
+  const genderA = canonicalGenderDivision(registrationA.gender_division);
+  const genderB = canonicalGenderDivision(registrationB.gender_division);
+  if (!genderA || !genderB) reasons.push('Ambos peleadores necesitan una división de género válida.');
+  else if (genderA !== genderB) reasons.push('No se permiten combates entre divisiones de género diferentes.');
+
+  const experienceA = registrationA.experience_level?.trim().toLocaleLowerCase('es-MX');
+  const experienceB = registrationB.experience_level?.trim().toLocaleLowerCase('es-MX');
+  if (!experienceA || !experienceB) reasons.push('Ambos peleadores necesitan una clase amateur o profesional.');
+  else if (experienceA !== experienceB) reasons.push('No se permite mezclar clases amateur y profesional.');
+
+  const rulesetA = registrationA.ruleset?.trim().toLocaleLowerCase('es-MX');
+  const rulesetB = registrationB.ruleset?.trim().toLocaleLowerCase('es-MX');
+  if (rulesetA && rulesetB && rulesetA !== rulesetB) {
+    reasons.push('Los reglamentos son diferentes; corrígelos en Participantes.');
+  }
+  if (pairAlreadyCreated) reasons.push('Este combate ya existe y sigue activo.');
+
+  for (const failure of suggestion?.hardFailures ?? []) {
+    if (MANUAL_PAIRING_BLOCKERS.has(failure)) reasons.push(FAILURE_LABELS[failure] ?? failure);
+  }
+
+  return Array.from(new Set(reasons));
+}
+
+function canonicalGenderDivision(value: string | null) {
+  const normalized = value?.trim().toLocaleLowerCase('es-MX');
+  if (['masculino', 'masculina', 'hombre', 'varon', 'varón', 'male', 'm'].includes(normalized ?? '')) {
+    return 'Masculino';
+  }
+  if (['femenino', 'femenina', 'mujer', 'female', 'f'].includes(normalized ?? '')) {
+    return 'Femenino';
+  }
+  return null;
 }
 
 function suggestionPairKey(registrationAId: string, registrationBId: string) {

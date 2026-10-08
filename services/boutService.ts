@@ -17,6 +17,22 @@ export async function approveMatchSuggestionAsBout(suggestionId: string): Promis
   return { data: data as Bout, error: null };
 }
 
+export async function approveManualPairingAsBout(
+  eventId: string,
+  registrationAId: string,
+  registrationBId: string,
+  overrideReason?: string
+): Promise<ServiceResponse<Bout>> {
+  const { data, error } = await supabase.rpc('approve_manual_pairing_as_bout', {
+    target_event_id: eventId,
+    registration_x_id: registrationAId,
+    registration_y_id: registrationBId,
+    override_reason: overrideReason?.trim() || null,
+  });
+  if (error) return { data: null, error: error.message };
+  return { data: data as Bout, error: null };
+}
+
 export async function getBoutsForEvent(eventId: string): Promise<ServiceResponse<Bout[]>> {
   const { data, error } = await supabase
     .from('bouts')
