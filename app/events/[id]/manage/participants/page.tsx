@@ -125,6 +125,7 @@ export default function EventParticipantsPage() {
   const [participantFilter, setParticipantFilter] = useState<ParticipantFilter>('all');
   const [disciplineFilter, setDisciplineFilter] = useState('all');
   const [selectedFighterId, setSelectedFighterId] = useState('');
+  const [fighterSearch, setFighterSearch] = useState('');
   const [publishToRoster, setPublishToRoster] = useState(false);
   const [form, setForm] = useState<ParticipantForm>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -236,6 +237,18 @@ export default function EventParticipantsPage() {
     ),
     [registrations]
   );
+  const existingFighterCandidates = useMemo<Array<PlatformFighter | ManualFighter>>(() => {
+    const candidates: Array<PlatformFighter | ManualFighter> = source === 'platform'
+      ? platformFighters
+      : source === 'roster'
+        ? rosterFighters
+        : [];
+    const normalizedSearch = normalizeSearchText(fighterSearch);
+    if (!normalizedSearch) return [];
+    return candidates.filter((fighter) => (
+      normalizeSearchText(existingFighterName(fighter, source)).includes(normalizedSearch)
+    ));
+  }, [fighterSearch, platformFighters, rosterFighters, source]);
 
   const reset = () => {
     setForm({
@@ -243,6 +256,7 @@ export default function EventParticipantsPage() {
       payment_status: event?.signup_fee && event.signup_fee > 0 ? 'pending' : 'waived',
     });
     setSelectedFighterId('');
+    setFighterSearch('');
     setEditingId(null);
     setPublishToRoster(false);
   };
@@ -307,6 +321,7 @@ export default function EventParticipantsPage() {
     setEditingId(null);
     setPublishToRoster(false);
     setSource('platform');
+    setFighterSearch(fighter.profiles?.full_name ?? '');
     selectExistingParticipant(
       application.fighter_id,
       'platform',
@@ -474,15 +489,44 @@ export default function EventParticipantsPage() {
         )}
 
         {!editingId && source !== 'event_only' && (
-          <label className="mt-4 block">
-            <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">Peleador</span>
-            <select value={selectedFighterId} onChange={(input) => selectExistingParticipant(input.target.value, source, platformFighters, rosterFighters, setSelectedFighterId, event?.signup_fee && event.signup_fee > 0 ? 'pending' : 'waived', event?.event_date ?? null, event?.disciplines_needed ?? [], event?.weight_classes_needed ?? [], setForm)} className="min-h-11 w-full border border-zinc-300 bg-white px-3 text-sm">
-              <option value="">Seleccionar…</option>
-              {(source === 'platform' ? platformFighters : rosterFighters).map((fighter) => (
-                <option key={fighter.id} value={fighter.id}>{source === 'platform' ? (fighter as PlatformFighter).profiles?.full_name : (fighter as ManualFighter).full_name} · {weightClassLabel(fighter.weight_class)}</option>
+          <div className="mt-4">
+            <label htmlFor="participant-fighter-search" className="block">
+              <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">Buscar peleador por nombre</span>
+              <input
+                id="participant-fighter-search"
+                type="search"
+                value={fighterSearch}
+                onChange={(input) => {
+                  setFighterSearch(input.target.value);
+                  setSelectedFighterId('');
+                  setError(null);
+                }}
+                placeholder={source === 'platform'
+                  ? 'Escribe el nombre del perfil de Strikers Match…'
+                  : 'Escribe el nombre de tu roster manual…'}
+                autoComplete="off"
+                className="min-h-11 w-full border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-zinc-900"
+              />
+            </label>
+            <select
+              aria-label="Resultados de búsqueda de peleadores"
+              value={selectedFighterId}
+              onChange={(input) => {
+                const nextId = input.target.value;
+                const selected = existingFighterCandidates.find((fighter) => fighter.id === nextId);
+                if (selected) setFighterSearch(existingFighterName(selected, source));
+                selectExistingParticipant(nextId, source, platformFighters, rosterFighters, setSelectedFighterId, event?.signup_fee && event.signup_fee > 0 ? 'pending' : 'waived', event?.event_date ?? null, event?.disciplines_needed ?? [], event?.weight_classes_needed ?? [], setForm);
+              }}
+              disabled={!fighterSearch.trim() || existingFighterCandidates.length === 0}
+              className="mt-2 min-h-11 w-full border border-zinc-300 bg-white px-3 text-sm disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500"
+            >
+              <option value="">{fighterSearch.trim() ? 'Seleccionar de los resultados…' : 'Primero escribe un nombre…'}</option>
+              {existingFighterCandidates.map((fighter) => (
+                <option key={fighter.id} value={fighter.id}>{existingFighterName(fighter, source)} · {weightClassLabel(fighter.weight_class)}</option>
               ))}
             </select>
-          </label>
+            <ExistingFighterSearchResultCount query={fighterSearch} count={existingFighterCandidates.length} />
+          </div>
         )}
 
         <ParticipantFields
@@ -839,6 +883,28 @@ function selectExistingParticipant(
 }
 
 function participantName(registration: RegistrationWithFighter) { return registration.display_name ?? registration.fighters?.profiles?.full_name ?? registration.manual_fighters?.full_name ?? '—'; }
+function existingFighterName(fighter: PlatformFighter | ManualFighter, source: SourceMode) {
+  return source === 'platform'
+    ? (fighter as PlatformFighter).profiles?.full_name ?? 'Perfil sin nombre'
+    : (fighter as ManualFighter).full_name;
+}
+function normalizeSearchText(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLocaleLowerCase('es-MX');
+}
+function ExistingFighterSearchResultCount({ query, count }: { query: string; count: number }) {
+  if (!query.trim()) return <p className="mt-1 text-xs text-zinc-500">Escribe un nombre para filtrar la lista.</p>;
+  return (
+    <p className={`mt-1 text-xs ${count > 0 ? 'text-zinc-500' : 'font-medium text-amber-800'}`}>
+      {count > 0
+        ? `${count} ${count === 1 ? 'peleador encontrado' : 'peleadores encontrados'}`
+        : 'No se encontraron peleadores con ese nombre.'}
+    </p>
+  );
+}
 function clean(value: string) { return value.trim() || undefined; }
 function numberValue(value: string) { return value === '' ? undefined : Number(value); }
 function stringValue(value: number | null, fallback = '') { return value == null ? fallback : String(value); }
