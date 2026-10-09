@@ -9,6 +9,7 @@ import { EligibilityStatus } from '@/components/EligibilityStatus';
 import { EventManageFrame } from '@/components/EventManageFrame';
 import { getCombatWeightGroups } from '@/lib/combatWeightCategories';
 import { disciplineMatches, sortDisciplines } from '@/lib/disciplines';
+import { searchByClosestName } from '@/lib/personNameSearch';
 import { authService } from '@/services/authService';
 import {
   approveManualPairingAsBout,
@@ -996,19 +997,7 @@ function searchManualPairingCandidates(
   registrations: RegistrationWithFighter[],
   query: string
 ) {
-  const normalizedQuery = normalizeSearchText(query);
-  if (!normalizedQuery) return [];
-  return registrations.filter((registration) => (
-    normalizeSearchText(participantName(registration)).includes(normalizedQuery)
-  ));
-}
-
-function normalizeSearchText(value: string) {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
-    .toLocaleLowerCase('es-MX');
+  return searchByClosestName(registrations, query, participantName);
 }
 
 function manualPairingOptionLabel(

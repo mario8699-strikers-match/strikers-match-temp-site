@@ -19,6 +19,7 @@ import {
 } from '@/lib/combatWeightCategories';
 import { supabase } from '@/lib/supabaseClient';
 import { disciplineMatches, normalizeDisciplineList, sortDisciplines } from '@/lib/disciplines';
+import { searchByClosestName } from '@/lib/personNameSearch';
 import { authService } from '@/services/authService';
 import { canUseEventFeature } from '@/services/eventStaffService';
 import { eventService } from '@/services/eventService';
@@ -243,11 +244,11 @@ export default function EventParticipantsPage() {
       : source === 'roster'
         ? rosterFighters
         : [];
-    const normalizedSearch = normalizeSearchText(fighterSearch);
-    if (!normalizedSearch) return [];
-    return candidates.filter((fighter) => (
-      normalizeSearchText(existingFighterName(fighter, source)).includes(normalizedSearch)
-    ));
+    return searchByClosestName(
+      candidates,
+      fighterSearch,
+      (fighter) => existingFighterName(fighter, source)
+    );
   }, [fighterSearch, platformFighters, rosterFighters, source]);
 
   const reset = () => {
@@ -887,13 +888,6 @@ function existingFighterName(fighter: PlatformFighter | ManualFighter, source: S
   return source === 'platform'
     ? (fighter as PlatformFighter).profiles?.full_name ?? 'Perfil sin nombre'
     : (fighter as ManualFighter).full_name;
-}
-function normalizeSearchText(value: string) {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
-    .toLocaleLowerCase('es-MX');
 }
 function ExistingFighterSearchResultCount({ query, count }: { query: string; count: number }) {
   if (!query.trim()) return <p className="mt-1 text-xs text-zinc-500">Escribe un nombre para filtrar la lista.</p>;
