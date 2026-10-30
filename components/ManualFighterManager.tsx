@@ -25,12 +25,18 @@ interface Props {
   sectionLabel?: string;
   // Description shown under the header
   description?: string;
+  // Pre-fill the team field when the roster belongs to a gym profile.
+  defaultGymName?: string;
+  // Opens the add-fighter form when this roster instance is first mounted.
+  initiallyOpen?: boolean;
 }
 
 export function ManualFighterManager({
   creatorId,
   sectionLabel = 'Mis Peleadores',
   description = 'Peleadores que no están registrados en la plataforma. Aparecerán públicamente con la etiqueta "Roster"; el contacto para peleas llegará a ti dentro de la app.',
+  defaultGymName = '',
+  initiallyOpen = false,
 }: Props) {
   const { i18n } = useTranslation();
   const countryOptions = useMemo(
@@ -39,7 +45,7 @@ export function ManualFighterManager({
   );
   const [manualFighters, setManualFighters] = useState<ManualFighter[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(initiallyOpen);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
@@ -56,7 +62,7 @@ export function ManualFighterManager({
   const [city, setCity] = useState('');
   const [state, setStateField] = useState('');
   const [nationality, setNationality] = useState('');
-  const [gym, setGym] = useState('');
+  const [gym, setGym] = useState(defaultGymName);
   const [level, setLevel] = useState<'amateur' | 'pro'>('amateur');
   const [notes, setNotes] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
@@ -91,7 +97,7 @@ export function ManualFighterManager({
   const resetForm = () => {
     setName(''); setNickname(''); setWeight(''); setDisciplines([]);
     setWins('0'); setLosses('0'); setDraws('0');
-    setPhone(''); setEmail(''); setCity(''); setStateField(''); setNationality(''); setGym('');
+    setPhone(''); setEmail(''); setCity(''); setStateField(''); setNationality(''); setGym(defaultGymName);
     setLevel('amateur'); setNotes(''); setPhotoUrl(''); setBio('');
     setIsAvailable(true); setIsPublic(true); setDateOfBirth(''); setGenderDivision(''); setExactWeight('');
     setRequestedWeight(''); setMinimumWeight(''); setMaximumWeight(''); setSkillRating(''); setRulesets('');

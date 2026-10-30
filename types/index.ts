@@ -332,8 +332,8 @@ export interface ManagerFighter {
   created_at: string;
 }
 
-// Manual fighter (added by manager/promoter, not registered on platform)
-// manager_id semantically means "creator_id" (manager, promoter, or admin).
+// Manual fighter (added by manager/promoter/gym owner, not registered on platform)
+// manager_id semantically means "creator_id" (manager, promoter, gym owner, or admin).
 export interface ManualFighter {
   id: string;
   manager_id: string;

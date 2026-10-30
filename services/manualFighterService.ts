@@ -39,7 +39,7 @@ export const manualFighterService = {
     }
   },
 
-  // Fighters created by a given manager/promoter/admin
+  // Fighters created by a given manager/promoter/gym owner/admin
   async getByCreator(creatorId: string): Promise<ServiceResponse<ManualFighter[]>> {
     try {
       const { data, error } = await supabase

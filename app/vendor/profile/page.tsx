@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { ManualFighterManager } from '@/components/ManualFighterManager';
 import { authService } from '@/services/authService';
 import { VENDOR_ROLES } from '@/types';
 import type { Profile, UserRole } from '@/types';
@@ -35,6 +36,7 @@ export default function VendorProfilePage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [openGymRoster, setOpenGymRoster] = useState(false);
 
   const [fullName, setFullName] = useState('');
   const [city, setCity] = useState('');
@@ -121,6 +123,15 @@ export default function VendorProfilePage() {
       setPhotoFile(null);
       setPhotoPreview(null);
       setSaveSuccess(true);
+      if (profile.role === 'gyms_academies') {
+        setOpenGymRoster(true);
+        window.setTimeout(() => {
+          document.getElementById('gym-fighter-roster')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          });
+        }, 0);
+      }
       setTimeout(() => setSaveSuccess(false), 3000);
     }
   };
@@ -155,12 +166,14 @@ export default function VendorProfilePage() {
 
   if (!profile) return null;
 
+  const isGymOwner = profile.role === 'gyms_academies';
+
   return (
     <div className="min-h-screen bg-white font-sans flex flex-col">
       <Navbar activePage={null} />
 
-      <main className="flex-1 max-w-2xl mx-auto px-4 py-16 w-full">
-        <div className="mb-8">
+      <main className={`flex-1 mx-auto px-4 py-16 w-full ${isGymOwner ? 'max-w-5xl' : 'max-w-2xl'}`}>
+        <div className="mb-8 max-w-2xl">
           <p className="text-xs font-bold tracking-[0.25em] uppercase mb-2" style={{ color: '#C0001E' }}>Strikers Match</p>
           <h1 className="text-3xl font-bold text-zinc-900">Mi Perfil</h1>
           <p className="mt-2 text-sm text-zinc-500">
@@ -177,17 +190,17 @@ export default function VendorProfilePage() {
         </div>
 
         {saveSuccess && (
-          <div className="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 text-sm">
+          <div className="mb-4 max-w-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 text-sm">
             Perfil guardado correctamente.
           </div>
         )}
         {saveError && (
-          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
+          <div className="mb-4 max-w-2xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
             {saveError}
           </div>
         )}
 
-        <form onSubmit={handleSave} className="space-y-5">
+        <form onSubmit={handleSave} className="max-w-2xl space-y-5">
           {/* Avatar */}
           <div className="flex items-center gap-5">
             <div className="relative flex-shrink-0">
@@ -362,6 +375,19 @@ export default function VendorProfilePage() {
             {saving ? 'Guardando...' : 'Guardar Cambios'}
           </button>
         </form>
+
+        {isGymOwner && (
+          <div id="gym-fighter-roster" className="mt-12 scroll-mt-24 border-t border-zinc-200 pt-10">
+            <ManualFighterManager
+              key={openGymRoster ? 'gym-roster-open' : 'gym-roster-closed'}
+              creatorId={profile.id}
+              sectionLabel="Peleadores de mi gimnasio"
+              description="Agrega y administra a los peleadores que representan a tu gimnasio. Sus perfiles podrán aparecer en el directorio público de peleadores con tu gimnasio como equipo."
+              defaultGymName={profile.full_name}
+              initiallyOpen={openGymRoster}
+            />
+          </div>
+        )}
       </main>
 
       <Footer />
