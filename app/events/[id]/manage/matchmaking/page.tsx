@@ -1044,13 +1044,13 @@ function manualPairingBlockingReasons(
   if (!genderA || !genderB) reasons.push('Ambos peleadores necesitan una división de género válida.');
   else if (genderA !== genderB) reasons.push('No se permiten combates entre divisiones de género diferentes.');
 
-  const experienceA = registrationA.experience_level?.trim().toLocaleLowerCase('es-MX');
-  const experienceB = registrationB.experience_level?.trim().toLocaleLowerCase('es-MX');
+  const experienceA = registrationA.experience_level?.trim().toLocaleLowerCase();
+  const experienceB = registrationB.experience_level?.trim().toLocaleLowerCase();
   if (!experienceA || !experienceB) reasons.push('Ambos peleadores necesitan una clase amateur o profesional.');
   else if (experienceA !== experienceB) reasons.push('No se permite mezclar clases amateur y profesional.');
 
-  const rulesetA = registrationA.ruleset?.trim().toLocaleLowerCase('es-MX');
-  const rulesetB = registrationB.ruleset?.trim().toLocaleLowerCase('es-MX');
+  const rulesetA = registrationA.ruleset?.trim().toLocaleLowerCase();
+  const rulesetB = registrationB.ruleset?.trim().toLocaleLowerCase();
   if (rulesetA && rulesetB && rulesetA !== rulesetB) {
     reasons.push('Los reglamentos son diferentes; corrígelos en Participantes.');
   }
@@ -1064,7 +1064,7 @@ function manualPairingBlockingReasons(
 }
 
 function canonicalGenderDivision(value: string | null) {
-  const normalized = value?.trim().toLocaleLowerCase('es-MX');
+  const normalized = value?.trim().toLocaleLowerCase();
   if (['masculino', 'masculina', 'hombre', 'varon', 'varón', 'male', 'm'].includes(normalized ?? '')) {
     return 'Masculino';
   }

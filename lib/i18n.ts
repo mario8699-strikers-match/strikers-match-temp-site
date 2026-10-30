@@ -31,6 +31,20 @@ import enLegal from '@/public/locales/en/legal.json';
 import enOnboarding from '@/public/locales/en/onboarding.json';
 import enSpectator from '@/public/locales/en/spectator.json';
 
+import ruCommon from '@/public/locales/ru/common.json';
+import ruNavigation from '@/public/locales/ru/navigation.json';
+import ruAuth from '@/public/locales/ru/auth.json';
+import ruDashboard from '@/public/locales/ru/dashboard.json';
+import ruEvents from '@/public/locales/ru/events.json';
+import ruAdmin from '@/public/locales/ru/admin.json';
+import ruFighters from '@/public/locales/ru/fighters.json';
+import ruPromoters from '@/public/locales/ru/promoters.json';
+import ruSponsors from '@/public/locales/ru/sponsors.json';
+import ruGallery from '@/public/locales/ru/gallery.json';
+import ruLegal from '@/public/locales/ru/legal.json';
+import ruOnboarding from '@/public/locales/ru/onboarding.json';
+import ruSpectator from '@/public/locales/ru/spectator.json';
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
@@ -41,7 +55,11 @@ i18n
     showSupportNotice: false,
     initImmediate: false,
     lng: i18nConfig.defaultLocale,
-    fallbackLng: i18nConfig.defaultLocale,
+    fallbackLng: {
+      ru: ['en'],
+      en: ['es'],
+      default: [i18nConfig.defaultLocale],
+    },
     supportedLngs: i18nConfig.locales,
     defaultNS: 'common',
     ns: ['common', 'navigation', 'auth', 'dashboard', 'events', 'admin', 'fighters', 'promoters', 'sponsors', 'gallery', 'legal', 'onboarding', 'spectator'],
@@ -75,6 +93,21 @@ i18n
         legal: enLegal,
         onboarding: enOnboarding,
         spectator: enSpectator,
+      },
+      ru: {
+        common: ruCommon,
+        navigation: ruNavigation,
+        auth: ruAuth,
+        dashboard: ruDashboard,
+        events: ruEvents,
+        admin: ruAdmin,
+        fighters: ruFighters,
+        promoters: ruPromoters,
+        sponsors: ruSponsors,
+        gallery: ruGallery,
+        legal: ruLegal,
+        onboarding: ruOnboarding,
+        spectator: ruSpectator,
       },
     },
     detection: {

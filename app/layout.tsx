@@ -30,11 +30,11 @@ const barlowCondensed = Barlow_Condensed({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Strikers Match | Comunidad de boxeo y MMA en México',
+    default: 'Strikers Match | Comunidad internacional de deportes de combate',
     template: '%s | Strikers Match',
   },
   description:
-    'Conecta con atletas, entrenadores, gimnasios y organizadores de boxeo y artes marciales mixtas en México. Encuentra peleas y organiza eventos en un solo lugar.',
+    'Conecta con atletas, entrenadores, gimnasios, representantes y organizadores de deportes de combate. Encuentra peleas y organiza eventos en un solo lugar.',
   authors: [{ name: 'Strikers Match', url: SITE_URL }],
   creator: 'Strikers Match',
   publisher: 'Strikers Match',
@@ -49,18 +49,18 @@ export const metadata: Metadata = {
   manifest: '/site.webmanifest',
   openGraph: {
     type: 'website',
-    locale: 'es_MX',
+    locale: 'es',
     url: SITE_URL,
     siteName: 'Strikers Match',
-    title: 'Strikers Match | Comunidad de boxeo y MMA en México',
+    title: 'Strikers Match | Comunidad internacional de deportes de combate',
     description:
       'Conecta con atletas, entrenadores, gimnasios y organizadores. Desde encontrar una pelea hasta organizar un evento, todo en un solo lugar.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Strikers Match | Comunidad de boxeo y MMA en México',
+    title: 'Strikers Match | Comunidad internacional de deportes de combate',
     description:
-      'Atletas, entrenadores, gimnasios y organizadores de boxeo y MMA en México, en un solo lugar.',
+      'Atletas, entrenadores, gimnasios, representantes y organizadores de deportes de combate, en un solo lugar.',
   },
   robots: {
     index: true,
@@ -75,9 +75,6 @@ export const metadata: Metadata = {
   },
   other: {
     'google-site-verification': 'jWJuHCcAsNFwzfMVPbgj2mo0NAqyGnIVk0umKW0F8OY',
-    'geo.region': 'MX',
-    'geo.placename': 'Mexico',
-    'ICBM': '23.6345, -102.5528',
     'distribution': 'global',
     'rating': 'general',
   },
@@ -89,7 +86,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es-MX">
+    <html lang="es">
       <head>
         <JsonLd />
       </head>

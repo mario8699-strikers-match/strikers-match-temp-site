@@ -11,7 +11,7 @@ const DEFAULT_DATE_OPTIONS: Intl.DateTimeFormatOptions = {
  */
 export function formatCalendarDate(
   value: string,
-  locales: Intl.LocalesArgument = 'es-MX',
+  locales: Intl.LocalesArgument = 'es',
   options: Intl.DateTimeFormatOptions = DEFAULT_DATE_OPTIONS,
 ) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);

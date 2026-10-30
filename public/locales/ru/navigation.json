@@ -1,0 +1,20 @@
+{
+  "nav": {
+    "home": "Главная",
+    "dashboard": "Панель управления",
+    "fighters": "Спортсмены",
+    "events": "События",
+    "professionals": "Услуги",
+    "promoters": "Промоутеры",
+    "sponsors": "Спонсоры",
+    "gallery": "Каталог",
+    "managers": "Менеджеры",
+    "profile": "Профиль",
+    "settings": "Настройки",
+    "logout": "Выйти",
+    "login": "Войти",
+    "register": "Регистрация",
+    "createEvent": "Создать событие",
+    "pricing": "Платформа"
+  }
+}

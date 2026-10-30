@@ -1,0 +1,49 @@
+{
+  "gallery": {
+    "title": "Каталог",
+    "subtitle": "Профили, услуги и компании для сообщества боевых видов спорта.",
+    "loading": "Загрузка каталога...",
+    "empty": "В этой категории пока нет опубликованных записей.",
+    "emptySubtitle": "Одобренные компании и услуги появятся здесь.",
+    "featured": "Рекомендуем",
+    "categories": {
+      "all": "Все",
+      "profiles": "Профили специалистов",
+      "gyms_academies": "Залы и академии",
+      "recovery_wellness": "Восстановление и здоровье",
+      "event_services": "Услуги для событий",
+      "gear_apparel": "Экипировка и одежда",
+      "nutrition_supplements": "Питание и добавки",
+      "local_business": "Местный бизнес",
+      "other": "Другие услуги"
+    },
+    "contact": {
+      "phone": "Телефон",
+      "email": "Электронная почта",
+      "website": "Сайт",
+      "instagram": "Instagram",
+      "viewProfile": "Открыть профиль"
+    },
+    "serviceRoles": {
+      "gyms_academies": "Зал / Академия",
+      "recovery_wellness": "Восстановление и здоровье",
+      "gear_apparel": "Экипировка и одежда",
+      "nutrition_supplements": "Питание и добавки",
+      "local_business": "Местный бизнес",
+      "other_service": "Другая услуга",
+      "ring_card_girl": "Ринг-гёрл",
+      "photographer": "Фотограф",
+      "videographer": "Видеооператор",
+      "broadcast_personality": "Ведущий трансляции",
+      "catering_vendor": "Кейтеринг",
+      "venue_rental": "Аренда площадки",
+      "judge": "Судья / Рефери",
+      "ring_rental": "Аренда ринга",
+      "ring_announcer": "Ринг-анонсер",
+      "cutman": "Катмен",
+      "merchandise_vendor": "Мерчандайзинг",
+      "ringside_doctor": "Врач у ринга",
+      "ringside_emt": "Медик у ринга"
+    }
+  }
+}

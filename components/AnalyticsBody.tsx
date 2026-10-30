@@ -720,5 +720,6 @@ function toneStroke(tone: Tone) {
 function formatDate(value: string, language: string) {
   const [year, month, day] = value.split('-').map(Number);
   if (!year || !month || !day) return value;
-  return new Date(year, month - 1, day).toLocaleDateString(language === 'es' ? 'es-MX' : 'en-US');
+  const locale = language.startsWith('ru') ? 'ru' : language.startsWith('en') ? 'en' : 'es';
+  return new Date(year, month - 1, day).toLocaleDateString(locale);
 }

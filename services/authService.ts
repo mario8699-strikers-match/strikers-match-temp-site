@@ -4,7 +4,8 @@ import type { LoginFormData, RegisterFormData, ServiceResponse, AuthSession, Use
 import type { SocialMediaHandles } from '@/lib/socialMedia';
 
 const SESSION_PROFILE_COLUMNS = `
-  id, full_name, email, role, city, state, country, phone, date_of_birth,
+  id, full_name, email, role, city, state, country, country_code, region_code,
+  timezone, preferred_language, preferred_currency, phone, date_of_birth,
   bio, instagram, photo_url, promoter_federation_status, is_available, additional_roles, is_banned,
   onboarding_completed, onboarding_step, onboarding_dismissed, onboarding_event_id, onboarding_updated_at,
   created_at, updated_at
@@ -210,6 +211,9 @@ export const authService = {
       city?: string | null;
       state?: string | null;
       country?: string | null;
+      country_code?: string | null;
+      region_code?: string | null;
+      timezone?: string | null;
       phone?: string | null;
       date_of_birth?: string | null;
       bio?: string | null;
@@ -222,6 +226,8 @@ export const authService = {
       promoter_federation_status?: PromoterFederationStatus;
       is_available?: boolean;
       additional_roles?: UserRole[];
+      preferred_language?: 'es' | 'en' | 'ru';
+      preferred_currency?: string;
     }
   ): Promise<ServiceResponse<null>> {
     try {

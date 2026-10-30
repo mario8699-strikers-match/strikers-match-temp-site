@@ -12,6 +12,8 @@ import { eventService } from '@/services/eventService';
 import { requestService } from '@/services/requestService';
 import { authService } from '@/services/authService';
 import { normalizeDisciplineList } from '@/lib/disciplines';
+import { countryFlagEmoji, getCountryName } from '@/lib/countries';
+import { useTranslation } from 'react-i18next';
 import type { ManualFighterWithCreator, Profile, Event } from '@/types';
 
 const WEIGHT_LABELS: Record<string, string> = {
@@ -27,6 +29,7 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export default function ManualFighterDetailPage() {
+  const { i18n } = useTranslation();
   const { id } = useParams<{ id: string }>();
 
   const [fighter, setFighter] = useState<ManualFighterWithCreator | null>(null);
@@ -96,6 +99,7 @@ export default function ManualFighterDetailPage() {
   const creatorName = fighter.profiles?.full_name ?? '';
   const creatorRole = fighter.profiles?.role ? (ROLE_LABELS[fighter.profiles.role] ?? fighter.profiles.role) : '';
   const disciplines = normalizeDisciplineList(fighter.disciplines, fighter.discipline);
+  const nationalityCode = fighter.nationalities?.[0];
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -120,7 +124,10 @@ export default function ManualFighterDetailPage() {
               <div>
                 <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#C0001E' }}>Perfil del Peleador</p>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-3xl font-black uppercase" style={{ letterSpacing:'-1px' }}>{fighter.full_name}</h1>
+                  <h1 className="text-3xl font-black uppercase" style={{ letterSpacing:'-1px' }}>
+                    {nationalityCode && <span className="mr-2" title={getCountryName(nationalityCode, i18n.resolvedLanguage)}>{countryFlagEmoji(nationalityCode)}</span>}
+                    {fighter.full_name}
+                  </h1>
                   <span className={`text-xs font-bold px-2 py-1 uppercase tracking-widest ${fighter.experience_level === 'pro' ? 'bg-[#C0001E] text-white' : 'bg-zinc-100 text-zinc-600'}`}>
                     {fighter.experience_level === 'pro' ? 'Pro' : 'Amateur'}
                   </span>
@@ -177,6 +184,7 @@ export default function ManualFighterDetailPage() {
             { label:'División', value: fighter.weight_class ? (WEIGHT_LABELS[fighter.weight_class] ?? fighter.weight_class) : '—' },
             { label:'Gimnasio', value: fighter.gym_name ?? '—' },
             { label:'Estado', value: fighter.state ?? '—' },
+            { label:'Nacionalidad', value: nationalityCode ? `${countryFlagEmoji(nationalityCode)} ${getCountryName(nationalityCode, i18n.resolvedLanguage)}` : '—' },
             { label:'Edad', value: fighter.age != null ? `${fighter.age}` : '—' },
             { label:'División de género', value: fighter.gender_division ?? '—' },
             { label:'Nivel técnico', value: fighter.skill_rating ? `${fighter.skill_rating}/10` : '—' },

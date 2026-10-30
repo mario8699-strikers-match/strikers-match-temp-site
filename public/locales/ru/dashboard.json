@@ -1,0 +1,29 @@
+{
+  "dashboard": {
+    "welcome": "Добро пожаловать, {{name}}",
+    "title": "Панель управления",
+    "stats": {
+      "upcomingEvents": "Предстоящие события",
+      "totalFighters": "Всего спортсменов",
+      "activeContracts": "Активные контракты",
+      "pendingMatches": "Ожидающие бои"
+    },
+    "sections": {
+      "recentActivity": "Последние действия",
+      "upcomingEvents": "Предстоящие события",
+      "topFighters": "Лучшие спортсмены",
+      "quickActions": "Быстрые действия"
+    },
+    "actions": {
+      "createEvent": "Создать событие",
+      "addFighter": "Добавить спортсмена",
+      "viewContracts": "Открыть контракты",
+      "generateReport": "Создать отчёт"
+    },
+    "empty": {
+      "noEvents": "Нет запланированных событий",
+      "noActivity": "Нет недавних действий",
+      "noFighters": "Нет зарегистрированных спортсменов"
+    }
+  }
+}

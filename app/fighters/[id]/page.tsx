@@ -15,6 +15,7 @@ import { authService } from '@/services/authService';
 import { fighterFollowService } from '@/services/fighterFollowService';
 import { supabase } from '@/lib/supabaseClient';
 import { SOCIAL_MEDIA_PLATFORMS, getSocialMediaDisplayValue, getSocialMediaHref } from '@/lib/socialMedia';
+import { countryFlagEmoji, getCountryName } from '@/lib/countries';
 import type { Fighter, Profile, Event } from '@/types';
 
 const WEIGHT_LABELS: Record<string, string> = {
@@ -38,7 +39,7 @@ type FighterDetail = Fighter & {
 type Neighbor = { id: string; name: string };
 
 export default function FighterDetailPage() {
-  const { t } = useTranslation('spectator');
+  const { t, i18n } = useTranslation('spectator');
   const { id } = useParams<{ id: string }>();
 
   const [fighter, setFighter] = useState<FighterDetail | null>(null);
@@ -178,6 +179,7 @@ export default function FighterDetailPage() {
     const href = value ? getSocialMediaHref(platform.key, value) : null;
     return value && href ? [{ ...platform, value, href }] : [];
   });
+  const nationalityCode = fighter.nationalities?.[0];
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -211,7 +213,10 @@ export default function FighterDetailPage() {
               <div>
                 <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#C0001E' }}>Perfil del Peleador</p>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-3xl font-black uppercase" style={{ letterSpacing:'-1px' }}>{fighter.profiles?.full_name ?? '—'}</h1>
+                  <h1 className="text-3xl font-black uppercase" style={{ letterSpacing:'-1px' }}>
+                    {nationalityCode && <span className="mr-2" title={getCountryName(nationalityCode, i18n.resolvedLanguage)}>{countryFlagEmoji(nationalityCode)}</span>}
+                    {fighter.profiles?.full_name ?? '—'}
+                  </h1>
                   <span className={`text-xs font-bold px-2 py-1 uppercase tracking-widest ${fighter.experience_level === 'pro' ? 'bg-[#C0001E] text-white' : 'bg-zinc-100 text-zinc-600'}`}>
                     {fighter.experience_level === 'pro' ? 'Pro' : 'Amateur'}
                   </span>
@@ -262,6 +267,7 @@ export default function FighterDetailPage() {
             { label:'Edad', value: age !== null ? `${age}` : '—' },
             { label:'Seguidores', value: `${followerCount}` },
             { label:'Gimnasio', value: fighter.gym_name ?? '—' },
+            { label:'Nacionalidad', value: nationalityCode ? `${countryFlagEmoji(nationalityCode)} ${getCountryName(nationalityCode, i18n.resolvedLanguage)}` : '—' },
             { label:'División de género', value: fighter.gender_division ?? '—' },
             { label:'Nivel técnico', value: fighter.skill_rating ? `${fighter.skill_rating}/10` : '—' },
             { label:'KO/TKO a favor', value: `${fighter.ko_wins + fighter.tko_wins}` },

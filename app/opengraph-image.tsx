@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 
-export const alt = 'Strikers Match — Comunidad de boxeo y MMA en México';
+export const alt = 'Strikers Match — Comunidad internacional de deportes de combate';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -21,7 +21,7 @@ export default function OpenGraphImage() {
         }}
       >
         <div style={{ color: '#C0001E', fontSize: 24, fontWeight: 800, letterSpacing: 7 }}>
-          STRIKERS MATCH · MÉXICO
+          STRIKERS MATCH · GLOBAL
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ fontSize: 76, lineHeight: 0.95, fontWeight: 900, textTransform: 'uppercase' }}>
@@ -32,7 +32,7 @@ export default function OpenGraphImage() {
           </div>
         </div>
         <div style={{ color: '#B8B8B8', fontSize: 28 }}>
-          Boxeo y artes marciales mixtas en México.
+          Donde se conecta la comunidad de los deportes de combate.
         </div>
       </div>
     ),

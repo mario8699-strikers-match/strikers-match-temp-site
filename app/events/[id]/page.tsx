@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
+import { formatLocalizedCurrency, formatLocalizedDate } from '@/lib/locale';
 import { EventManageFrame } from '@/components/EventManageFrame';
 import { EventWeightCategorySelector } from '@/components/EventWeightCategorySelector';
 import { InlineCombatRecord } from '@/components/CombatRecord';
@@ -71,7 +72,7 @@ type ApplicationWithFighter = EventApplication & {
 
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { t } = useTranslation('events');
+  const { t, i18n } = useTranslation('events');
   const { t: tCommon } = useTranslation('common');
   const initialEvent = useEventInitialData();
 
@@ -413,6 +414,10 @@ export default function EventDetailPage() {
       event_date: event.event_date ?? '',
       event_time: event.event_time ?? '',
       city: event.city ?? '',
+      country_code: event.country_code ?? '',
+      region_code: event.region_code ?? '',
+      timezone: event.timezone ?? '',
+      currency: event.currency ?? 'MXN',
       venue: event.venue ?? '',
       weight_class_needed: event.weight_class_needed ?? '',
       weight_classes_needed: event.weight_classes_needed ?? [],
@@ -556,11 +561,11 @@ export default function EventDetailPage() {
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return t('events.detail.notSpecified');
     const [year, month, day] = dateStr.split('-').map(Number);
-    return new Date(year, month - 1, day).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+    return formatLocalizedDate(new Date(year, month - 1, day), i18n.resolvedLanguage, { day: 'numeric', month: 'long', year: 'numeric' });
   };
   const formatPurse = (amount: number | null) => {
     if (!amount) return t('events.detail.notSpecified');
-    return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(amount);
+    return formatLocalizedCurrency(amount, event?.currency ?? 'MXN', i18n.resolvedLanguage);
   };
 
   if (loading) return <EventManageFrame><p className="text-sm text-zinc-400">{tCommon('common.loading')}</p></EventManageFrame>;
@@ -714,7 +719,7 @@ export default function EventDetailPage() {
               <DetailRow label={t('events.detail.venue')} value={event.venue ?? t('events.detail.notSpecified')} />
               <DetailRow
                 label="Cuota de inscripción"
-                value={event.signup_fee ? new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(event.signup_fee) : 'Gratuito'}
+                value={event.signup_fee ? formatLocalizedCurrency(event.signup_fee, event.currency ?? 'MXN', i18n.resolvedLanguage) : 'Gratuito'}
               />
               {event.purse_amount !== null && (
                 <DetailRow label={t('events.detail.purse')} value={formatPurse(event.purse_amount)} />
@@ -789,7 +794,7 @@ export default function EventDetailPage() {
                           </svg>
                           <p className="text-xs text-zinc-700">
                             <span className="font-bold">Cuota de inscripción:</span>{' '}
-                            {new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(event.signup_fee)} — El promotor te contactará con instrucciones de pago.
+                            {formatLocalizedCurrency(event.signup_fee, event.currency ?? 'MXN', i18n.resolvedLanguage)} — El promotor te contactará con instrucciones de pago.
                           </p>
                         </div>
                       )}
@@ -1121,7 +1126,7 @@ export default function EventDetailPage() {
                       <p className="text-sm text-zinc-500">Esperando confirmación del promotor...</p>
                     </div>
                     <p className="text-xs text-zinc-400 mt-2">
-                      Enviado: {new Date(myRegistration.submitted_at!).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                      Enviado: {formatLocalizedDate(myRegistration.submitted_at!, i18n.resolvedLanguage, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                 ) : (
@@ -1132,7 +1137,7 @@ export default function EventDetailPage() {
                       <p className="text-sm text-zinc-600">Tu pago ha sido verificado por el sistema.</p>
                     </div>
                     <p className="text-xs text-zinc-400 mt-2">
-                      Confirmado: {new Date(myRegistration.confirmed_at!).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                      Confirmado: {formatLocalizedDate(myRegistration.confirmed_at!, i18n.resolvedLanguage, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                 )}
@@ -1534,7 +1539,7 @@ export default function EventDetailPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-sm font-medium text-zinc-700">{t('events.fields.purse_amount')}</label>
+                  <label className="text-sm font-medium text-zinc-700">{t('events.fields.purse_amount', { currency: formData!.currency || 'MXN' })}</label>
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => prev ? { ...prev, purse_enabled: !prev.purse_enabled, purse_amount: '' } : prev)}

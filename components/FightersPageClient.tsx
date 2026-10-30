@@ -18,6 +18,7 @@ import {
   sortDisciplines,
 } from '@/lib/disciplines';
 import type { FighterWithProfile, ManualFighterWithCreator } from '@/types';
+import { countryFlagEmoji } from '@/lib/countries';
 
 const PAGE_SIZE = 12;
 
@@ -261,14 +262,14 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                 Todas
               </button>
               {disciplineOptions.map((discipline) => {
-                const selected = selectedDisciplines.some((item) => item.toLocaleLowerCase('es-MX') === discipline.toLocaleLowerCase('es-MX'));
+                const selected = selectedDisciplines.some((item) => item.toLocaleLowerCase() === discipline.toLocaleLowerCase());
                 return (
                   <button
                     key={discipline}
                     type="button"
                     aria-pressed={selected}
                     onClick={() => updateDisciplineFilters(selected
-                      ? selectedDisciplines.filter((item) => item.toLocaleLowerCase('es-MX') !== discipline.toLocaleLowerCase('es-MX'))
+                      ? selectedDisciplines.filter((item) => item.toLocaleLowerCase() !== discipline.toLocaleLowerCase())
                       : [...selectedDisciplines, discipline])}
                     className={`min-h-10 border px-3 py-2 text-xs font-bold uppercase tracking-wide transition-colors ${selected
                       ? 'border-[#C0001E] bg-[#C0001E] text-white'
@@ -321,6 +322,7 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
               const maximumWeight = entry.data.acceptable_weight_max_kg;
               const rulesets = entry.data.preferred_rulesets ?? [];
               const initials = getInitials(name);
+              const nationalityCode = entry.data.nationalities?.[0];
 
               return (
                 <div
@@ -344,6 +346,7 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                   <div className="flex items-start justify-between mb-3 gap-2">
                     <div>
                       <h2 className="font-display font-black uppercase leading-none text-2xl group-hover:text-[#C0001E] transition-colors" style={{ color: '#0A0A0A' }}>
+                        {nationalityCode && <span className="mr-2" aria-hidden="true">{countryFlagEmoji(nationalityCode)}</span>}
                         {name}
                       </h2>
                       <p className="text-xs mt-1" style={{ color: '#9A9A9A' }}>{city ?? '—'}</p>

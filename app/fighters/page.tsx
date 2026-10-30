@@ -16,7 +16,7 @@ export default async function FightersPage() {
   const itemList = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: 'Peleadores de boxeo y MMA en México',
+    name: 'Atletas internacionales de deportes de combate',
     itemListElement: initialEntries.map((entry, index) => ({
       '@type': 'ListItem',
       position: index + 1,

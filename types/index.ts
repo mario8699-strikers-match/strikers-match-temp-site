@@ -66,7 +66,12 @@ export interface Profile {
   role: UserRole;
   city: string | null;
   state: string | null;
-  country: string;
+  country: string | null;
+  country_code?: string | null;
+  region_code?: string | null;
+  timezone?: string | null;
+  preferred_language?: 'es' | 'en' | 'ru';
+  preferred_currency?: string;
   phone: string | null;
   date_of_birth: string | null;
   bio: string | null;
@@ -143,6 +148,10 @@ export interface Fighter {
   sponsor_phone: string | null;
   verified?: boolean;
   is_hidden?: boolean;
+  nationalities?: string[];
+  available_to_travel_internationally?: boolean;
+  travel_regions?: string[];
+  passport_status?: 'unknown' | 'available' | 'unavailable' | 'expired';
   created_at: string;
   age?: number | null;
 }
@@ -182,6 +191,10 @@ export interface Event {
   event_date: string | null;
   city: string | null;
   venue: string | null;
+  country_code?: string | null;
+  region_code?: string | null;
+  timezone?: string | null;
+  currency?: string;
   weight_class_needed: string | null;
   weight_classes_needed: string[];
   disciplines_needed: string[];
@@ -266,6 +279,10 @@ export interface EventFormData {
   event_date: string;
   event_time: string;
   city: string;
+  country_code: string;
+  region_code: string;
+  timezone: string;
+  currency: string;
   venue: string;
   weight_class_needed: string;
   weight_classes_needed: string[];
@@ -362,6 +379,15 @@ export interface ManualFighter {
   last_fight_at: string | null;
   last_ko_loss_at: string | null;
   country: string;
+  country_code?: string | null;
+  region_code?: string | null;
+  timezone?: string | null;
+  preferred_language?: 'es' | 'en' | 'ru';
+  preferred_currency?: string;
+  nationalities?: string[];
+  available_to_travel_internationally?: boolean;
+  travel_regions?: string[];
+  passport_status?: 'unknown' | 'available' | 'unavailable' | 'expired';
   created_at: string;
   updated_at: string;
   age?: number | null;

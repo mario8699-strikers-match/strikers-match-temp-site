@@ -1,0 +1,9 @@
+{
+  "onboarding": {
+    "welcome": {
+      "title": "Добро пожаловать в Strikers Match",
+      "start": "Начать",
+      "later": "Позже"
+    }
+  }
+}

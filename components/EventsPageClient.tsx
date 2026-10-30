@@ -7,6 +7,7 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Pagination } from '@/components/Pagination';
 import { authService } from '@/services/authService';
+import { formatLocalizedCurrency, formatLocalizedDate } from '@/lib/locale';
 import type { Event, Profile } from '@/types';
 
 const PAGE_SIZE = 15;
@@ -23,7 +24,7 @@ interface EventsPageClientProps {
 }
 
 export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
-  const { t } = useTranslation('events');
+  const { t, i18n } = useTranslation('events');
 
   const [events] = useState<Event[]>(initialEvents);
   const [loading] = useState(false);
@@ -41,16 +42,14 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return t('events.detail.notSpecified');
     const [year, month, day] = dateStr.split('-').map(Number);
-    return new Date(year, month - 1, day).toLocaleDateString('es-MX', {
+    return formatLocalizedDate(new Date(year, month - 1, day), i18n.resolvedLanguage, {
       day: 'numeric', month: 'long', year: 'numeric',
     });
   };
 
-  const formatPurse = (amount: number | null) => {
+  const formatPurse = (amount: number | null, currency = 'MXN') => {
     if (!amount) return t('events.detail.notSpecified');
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency', currency: 'MXN', maximumFractionDigits: 0,
-    }).format(amount);
+    return formatLocalizedCurrency(amount, currency, i18n.resolvedLanguage);
   };
 
   const totalPages = Math.ceil(events.length / PAGE_SIZE);
@@ -165,7 +164,7 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
                         <p>{t(`events.weightClasses.${event.weight_class_needed}`, { defaultValue: event.weight_class_needed })}</p>
                       )}
                       {event.purse_amount && (
-                        <p>{formatPurse(event.purse_amount)}</p>
+                        <p>{formatPurse(event.purse_amount, event.currency)}</p>
                       )}
                     </div>
 

@@ -1,8 +1,8 @@
 import { pageMetadata } from '@/lib/seo';
 
 export const metadata = pageMetadata({
-  title: 'Eventos de boxeo y MMA en México',
-  description: 'Consulta eventos publicados de boxeo, MMA y otros deportes de combate en México. Revisa fechas, sedes, disciplinas y opciones de registro.',
+  title: 'Eventos de boxeo, MMA y deportes de combate',
+  description: 'Consulta eventos publicados de boxeo, MMA y otros deportes de combate. Revisa fechas, sedes, países, disciplinas y opciones de registro.',
   path: '/events',
 });
 

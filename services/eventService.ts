@@ -3,6 +3,20 @@ import { uploadFile } from '@/lib/storageClient';
 import { sanitizeWeightClass, sanitizeWeightClasses } from '@/lib/combatWeightCategories';
 import type { Event, EventFormData, EventApplication, ServiceResponse } from '@/types';
 
+function internationalEventSchemaUnavailable(message: string) {
+  return /(country_code|region_code|timezone|currency)/i.test(message)
+    && /(schema cache|does not exist|could not find)/i.test(message);
+}
+
+function withoutInternationalEventFields<T extends Record<string, unknown>>(payload: T) {
+  const legacyPayload = { ...payload };
+  delete legacyPayload.country_code;
+  delete legacyPayload.region_code;
+  delete legacyPayload.timezone;
+  delete legacyPayload.currency;
+  return legacyPayload;
+}
+
 export const eventService = {
   async uploadFlyer(file: File): Promise<ServiceResponse<string>> {
     try {
@@ -68,6 +82,10 @@ export const eventService = {
         event_date: formData.event_date || null,
         event_time: formData.event_time || null,
         city: formData.city || null,
+        country_code: formData.country_code || null,
+        region_code: formData.region_code || null,
+        timezone: formData.timezone || null,
+        currency: (formData.currency || 'MXN').toUpperCase(),
         venue: formData.venue || null,
         weight_class_needed: sanitizeWeightClass(formData.weight_class_needed),
         weight_classes_needed: sanitizeWeightClasses(formData.weight_classes_needed),
@@ -79,7 +97,11 @@ export const eventService = {
         status: 'draft' as const,
         flyer_url: flyerUrl ?? null,
       };
-      const { data, error } = await supabase.from('events').insert(payload).select().single();
+      let createResult = await supabase.from('events').insert(payload).select().single();
+      if (createResult.error && internationalEventSchemaUnavailable(createResult.error.message)) {
+        createResult = await supabase.from('events').insert(withoutInternationalEventFields(payload)).select().single();
+      }
+      const { data, error } = createResult;
       if (error) return { data: null, error: error.message };
 
       const feeCents = formData.registration_type === 'paid'
@@ -127,6 +149,10 @@ export const eventService = {
       if (formData.event_date !== undefined) payload.event_date = formData.event_date || null;
       if (formData.event_time !== undefined) payload.event_time = formData.event_time || null;
       if (formData.city !== undefined) payload.city = formData.city || null;
+      if (formData.country_code !== undefined) payload.country_code = formData.country_code || null;
+      if (formData.region_code !== undefined) payload.region_code = formData.region_code || null;
+      if (formData.timezone !== undefined) payload.timezone = formData.timezone || null;
+      if (formData.currency !== undefined) payload.currency = (formData.currency || 'MXN').toUpperCase();
       if (formData.venue !== undefined) payload.venue = formData.venue || null;
       if (formData.weight_class_needed !== undefined) payload.weight_class_needed = sanitizeWeightClass(formData.weight_class_needed);
       if (formData.weight_classes_needed !== undefined) payload.weight_classes_needed = sanitizeWeightClasses(formData.weight_classes_needed);
@@ -161,7 +187,11 @@ export const eventService = {
         payload.signup_fee = formData.signup_fee ? parseFloat(formData.signup_fee) : null;
       }
 
-      const { data, error } = await supabase.from('events').update(payload).eq('id', id).select().single();
+      let updateResult = await supabase.from('events').update(payload).eq('id', id).select().single();
+      if (updateResult.error && internationalEventSchemaUnavailable(updateResult.error.message)) {
+        updateResult = await supabase.from('events').update(withoutInternationalEventFields(payload)).eq('id', id).select().single();
+      }
+      const { data, error } = updateResult;
       if (error) return { data: null, error: error.message };
       return { data, error: null };
     } catch {

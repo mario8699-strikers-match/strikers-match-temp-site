@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
@@ -13,6 +13,7 @@ import {
 import { eventService } from '@/services/eventService';
 import { authService } from '@/services/authService';
 import { updateGuidedOnboarding } from '@/services/onboardingService';
+import { getCountryOptions } from '@/lib/countries';
 import { getConnectAccount, openConnectAccount, type ConnectAccountStatus } from '@/services/paymentService';
 import type { EventFormData, Profile } from '@/types';
 
@@ -24,6 +25,10 @@ const EMPTY_FORM: EventFormData = {
   event_date: '',
   event_time: '',
   city: '',
+  country_code: '',
+  region_code: '',
+  timezone: '',
+  currency: 'MXN',
   venue: '',
   weight_class_needed: '',
   weight_classes_needed: [],
@@ -38,7 +43,11 @@ const EMPTY_FORM: EventFormData = {
 };
 
 export default function CreateEventPage() {
-  const { t } = useTranslation('events');
+  const { t, i18n } = useTranslation('events');
+  const countryOptions = useMemo(
+    () => getCountryOptions(i18n.resolvedLanguage || i18n.language),
+    [i18n.resolvedLanguage, i18n.language],
+  );
 
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [formData, setFormData] = useState<EventFormData>(EMPTY_FORM);
@@ -73,6 +82,13 @@ export default function CreateEventPage() {
       } else if (p.role !== 'promoter' && p.role !== 'manager' && p.role !== 'admin') {
         window.location.href = '/events';
       } else {
+        setFormData((current) => ({
+          ...current,
+          country_code: current.country_code || p.country_code || '',
+          region_code: current.region_code || p.region_code || '',
+          timezone: current.timezone || p.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+          currency: current.currency || p.preferred_currency || 'MXN',
+        }));
         void getConnectAccount(returnedFromStripe).then(({ data }) => setPaymentAccount(data ?? null));
       }
     });
@@ -96,6 +112,15 @@ export default function CreateEventPage() {
   const validate = (): boolean => {
     const newErrors: typeof errors = {};
     if (!formData.event_name.trim()) newErrors.event_name = t('events.errors.nameRequired');
+    if (formData.country_code && !/^[A-Z]{2}$/.test(formData.country_code)) {
+      newErrors.country_code = t('events.errors.countryCodeInvalid');
+    }
+    if (!/^[A-Z]{3}$/.test(formData.currency)) {
+      newErrors.currency = t('events.errors.currencyInvalid');
+    }
+    if (formData.registration_type === 'paid' && formData.currency !== 'MXN') {
+      newErrors.currency = t('events.errors.currencyUnsupportedForPayments');
+    }
     const feeCents = Math.round(Number(formData.signup_fee || 0) * 100);
     if (formData.registration_type === 'paid' && feeCents <= 0) {
       newErrors.signup_fee = 'Ingresa una cuota de inscripción válida.';
@@ -306,6 +331,57 @@ export default function CreateEventPage() {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-zinc-700">{t('events.fields.country_code')}</label>
+              <select
+                value={formData.country_code}
+                onChange={(event) => set('country_code', event.target.value)}
+                className="w-full border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+              >
+                <option value="">{t('events.fields.country_codePlaceholder')}</option>
+                {countryOptions.map((country) => (
+                  <option key={country.code} value={country.code}>
+                    {country.label} ({country.code})
+                  </option>
+                ))}
+              </select>
+              {errors.country_code && <p className="mt-1 text-xs text-red-500">{errors.country_code}</p>}
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-zinc-700">{t('events.fields.region_code')}</label>
+              <input
+                type="text"
+                value={formData.region_code}
+                onChange={(event) => set('region_code', event.target.value)}
+                placeholder={t('events.fields.region_codePlaceholder')}
+                className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-zinc-700">{t('events.fields.timezone')}</label>
+              <input
+                type="text"
+                value={formData.timezone}
+                onChange={(event) => set('timezone', event.target.value)}
+                placeholder="Europe/Kyiv"
+                className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-zinc-700">{t('events.fields.currency')}</label>
+              <input
+                type="text"
+                maxLength={3}
+                value={formData.currency}
+                onChange={(event) => set('currency', event.target.value.toUpperCase().replace(/[^A-Z]/g, ''))}
+                placeholder="EUR"
+                className="w-full border border-zinc-300 px-3 py-2 text-sm uppercase text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+              />
+              {errors.currency && <p className="mt-1 text-xs text-red-500">{errors.currency}</p>}
+            </div>
+          </div>
+
           {/* Disciplines needed */}
           <div>
             <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#5A5A5A' }}>
@@ -365,7 +441,7 @@ export default function CreateEventPage() {
           {/* Purse */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="text-sm font-medium text-zinc-700">{t('events.fields.purse_amount')}</label>
+              <label className="text-sm font-medium text-zinc-700">{t('events.fields.purse_amount', { currency: formData.currency || 'MXN' })}</label>
               <button
                 type="button"
                 onClick={() => setFormData((prev) => ({ ...prev, purse_enabled: !prev.purse_enabled, purse_amount: '' }))}

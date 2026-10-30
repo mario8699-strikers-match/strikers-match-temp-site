@@ -19,13 +19,13 @@ export const DISCIPLINE_OPTIONS: readonly string[] = [
 ];
 
 const CANONICAL_DISCIPLINES = new Map(
-  DISCIPLINE_OPTIONS.map((discipline) => [discipline.toLocaleLowerCase('es-MX'), discipline])
+  DISCIPLINE_OPTIONS.map((discipline) => [discipline.toLocaleLowerCase(), discipline])
 );
 
 export function normalizeDiscipline(value: string | null | undefined): string | null {
   const trimmed = value?.trim();
   if (!trimmed) return null;
-  return CANONICAL_DISCIPLINES.get(trimmed.toLocaleLowerCase('es-MX')) ?? trimmed;
+  return CANONICAL_DISCIPLINES.get(trimmed.toLocaleLowerCase()) ?? trimmed;
 }
 
 export function normalizeDisciplineList(
@@ -38,7 +38,7 @@ export function normalizeDisciplineList(
   for (const value of [...(values ?? []), fallback]) {
     const discipline = normalizeDiscipline(value);
     if (!discipline) continue;
-    const key = discipline.toLocaleLowerCase('es-MX');
+    const key = discipline.toLocaleLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
     disciplines.push(discipline);
@@ -52,20 +52,20 @@ export function disciplineMatches(
   selected: string,
   fallback?: string | null
 ): boolean {
-  const selectedKey = normalizeDiscipline(selected)?.toLocaleLowerCase('es-MX');
+  const selectedKey = normalizeDiscipline(selected)?.toLocaleLowerCase();
   if (!selectedKey) return true;
   return normalizeDisciplineList(disciplines, fallback)
-    .some((discipline) => discipline.toLocaleLowerCase('es-MX') === selectedKey);
+    .some((discipline) => discipline.toLocaleLowerCase() === selectedKey);
 }
 
 export function sortDisciplines(values: Iterable<string>): string[] {
   const canonicalOrder = new Map(
-    DISCIPLINE_OPTIONS.map((discipline, index) => [discipline.toLocaleLowerCase('es-MX'), index])
+    DISCIPLINE_OPTIONS.map((discipline, index) => [discipline.toLocaleLowerCase(), index])
   );
 
   return normalizeDisciplineList(Array.from(values)).sort((disciplineA, disciplineB) => {
-    const orderA = canonicalOrder.get(disciplineA.toLocaleLowerCase('es-MX')) ?? Number.MAX_SAFE_INTEGER;
-    const orderB = canonicalOrder.get(disciplineB.toLocaleLowerCase('es-MX')) ?? Number.MAX_SAFE_INTEGER;
+    const orderA = canonicalOrder.get(disciplineA.toLocaleLowerCase()) ?? Number.MAX_SAFE_INTEGER;
+    const orderB = canonicalOrder.get(disciplineB.toLocaleLowerCase()) ?? Number.MAX_SAFE_INTEGER;
     if (orderA !== orderB) return orderA - orderB;
     return disciplineA.localeCompare(disciplineB, 'es', { sensitivity: 'base' });
   });

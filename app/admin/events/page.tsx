@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { adminService } from '@/services/adminService';
 import { eventService } from '@/services/eventService';
 import type { Event } from '@/types';
+import { formatLocalizedCurrency, formatLocalizedDate } from '@/lib/locale';
 
 type EventWithPromoter = Event & { profiles: { full_name: string } };
 
@@ -17,7 +18,7 @@ const STATUS_COLORS: Record<Event['status'], string> = {
 };
 
 export default function AdminEventsPage() {
-  const { t } = useTranslation('admin');
+  const { t, i18n } = useTranslation('admin');
   const { t: tEvents } = useTranslation('events');
 
   const [events, setEvents] = useState<EventWithPromoter[]>([]);
@@ -35,16 +36,14 @@ export default function AdminEventsPage() {
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '—';
     const [year, month, day] = dateStr.split('-').map(Number);
-    return new Date(year, month - 1, day).toLocaleDateString('es-MX', {
+    return formatLocalizedDate(new Date(year, month - 1, day), i18n.resolvedLanguage, {
       day: 'numeric', month: 'short', year: 'numeric',
     });
   };
 
   const formatPurse = (amount: number | null) => {
     if (!amount) return '—';
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency', currency: 'MXN', maximumFractionDigits: 0,
-    }).format(amount);
+    return formatLocalizedCurrency(amount, 'MXN', i18n.resolvedLanguage);
   };
 
   return (

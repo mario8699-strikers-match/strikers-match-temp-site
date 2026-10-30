@@ -8,17 +8,17 @@ export function JsonLd() {
     logo: 'https://strikersmatch.com/strikers-logo.png',
     knowsAbout: ['Boxeo', 'Artes marciales mixtas', 'Kickboxing', 'Muay Thai'],
     description:
-      'Plataforma que conecta a la comunidad del boxeo y las artes marciales mixtas en México: atletas, entrenadores, gimnasios, organizadores y profesionales de eventos.',
+      'Plataforma internacional que conecta a atletas, entrenadores, gimnasios, representantes, organizadores y profesionales de los deportes de combate.',
     email: 'info@strikersmatch.com',
     sameAs: ['https://www.instagram.com/strikersmatch/'],
     contactPoint: {
       '@type': 'ContactPoint',
       email: 'info@strikersmatch.com',
       contactType: 'customer support',
-      availableLanguage: ['Spanish'],
-      areaServed: 'MX',
+      availableLanguage: ['Spanish', 'English', 'Russian'],
+      areaServed: 'Worldwide',
     },
-    areaServed: { '@type': 'Country', name: 'México' },
+    areaServed: 'Worldwide',
   };
 
   const websiteSchema = {
@@ -27,7 +27,7 @@ export function JsonLd() {
     '@id': 'https://strikersmatch.com/#website',
     name: 'Strikers Match',
     url: 'https://strikersmatch.com',
-    inLanguage: 'es-MX',
+    inLanguage: ['es', 'en', 'ru'],
     publisher: { '@id': 'https://strikersmatch.com/#organization' },
   };
 

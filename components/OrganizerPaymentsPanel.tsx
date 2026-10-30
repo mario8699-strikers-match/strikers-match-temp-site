@@ -10,6 +10,8 @@ import {
   type OrganizerPaymentSummary,
 } from '@/services/paymentService';
 import type { RegistrationPayment } from '@/types';
+import { useTranslation } from 'react-i18next';
+import { formatLocalizedCurrency, formatLocalizedDate } from '@/lib/locale';
 
 const EMPTY_SUMMARY: OrganizerPaymentSummary = {
   paid_count: 0,
@@ -32,15 +34,11 @@ const STATUS_LABELS: Record<RegistrationPayment['payment_status'], string> = {
   disputed: 'En disputa',
 };
 
-function money(cents: number) {
-  return new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency: 'MXN',
-    maximumFractionDigits: 2,
-  }).format(cents / 100);
-}
-
 export function OrganizerPaymentsPanel({ eventId }: { eventId?: string }) {
+  const { i18n } = useTranslation();
+  const money = (cents: number, currency = 'MXN') => (
+    formatLocalizedCurrency(cents / 100, currency, i18n.resolvedLanguage)
+  );
   const [account, setAccount] = useState<ConnectAccountStatus | null>(null);
   const [payments, setPayments] = useState<RegistrationPayment[]>([]);
   const [summary, setSummary] = useState(EMPTY_SUMMARY);
@@ -168,11 +166,11 @@ export function OrganizerPaymentsPanel({ eventId }: { eventId?: string }) {
                   <article key={payment.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-bold text-zinc-900">{payment.payer_display_name ?? 'Participante'}</p>
-                      <p className="mt-0.5 truncate text-xs text-zinc-500">{payment.events?.event_name ?? 'Evento'} · {new Date(payment.created_at).toLocaleDateString('es-MX')}</p>
+                      <p className="mt-0.5 truncate text-xs text-zinc-500">{payment.events?.event_name ?? 'Evento'} · {formatLocalizedDate(payment.created_at, i18n.resolvedLanguage)}</p>
                     </div>
                     <div className="flex items-center justify-between gap-3 sm:justify-end">
                       <div className="text-right">
-                        <p className="text-sm font-black text-zinc-900">{money(payment.amount_cents)}</p>
+                        <p className="text-sm font-black text-zinc-900">{money(payment.amount_cents, payment.currency)}</p>
                         <p className="text-xs text-zinc-500">{STATUS_LABELS[payment.payment_status]}</p>
                       </div>
                       {['paid', 'partially_refunded'].includes(payment.payment_status) && (

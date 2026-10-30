@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { InlineCombatRecord } from '@/components/CombatRecord';
 import { manualFighterService } from '@/services/manualFighterService';
 import type { ManualFighter } from '@/types';
 import { GenderDivisionCheckboxes } from '@/components/GenderDivisionCheckboxes';
 import { DISCIPLINE_OPTIONS, normalizeDisciplineList } from '@/lib/disciplines';
+import { countryFlagEmoji, getCountryOptions } from '@/lib/countries';
 
 const WEIGHT_CLASSES = [
   'minimosca','mosca','supermosca','gallo','supergallo','pluma','superpluma',
@@ -30,6 +32,11 @@ export function ManualFighterManager({
   sectionLabel = 'Mis Peleadores',
   description = 'Peleadores que no están registrados en la plataforma. Aparecerán públicamente con la etiqueta "Roster"; el contacto para peleas llegará a ti dentro de la app.',
 }: Props) {
+  const { i18n } = useTranslation();
+  const countryOptions = useMemo(
+    () => getCountryOptions(i18n.resolvedLanguage || i18n.language),
+    [i18n.resolvedLanguage, i18n.language],
+  );
   const [manualFighters, setManualFighters] = useState<ManualFighter[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -48,6 +55,7 @@ export function ManualFighterManager({
   const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
   const [state, setStateField] = useState('');
+  const [nationality, setNationality] = useState('');
   const [gym, setGym] = useState('');
   const [level, setLevel] = useState<'amateur' | 'pro'>('amateur');
   const [notes, setNotes] = useState('');
@@ -83,7 +91,7 @@ export function ManualFighterManager({
   const resetForm = () => {
     setName(''); setNickname(''); setWeight(''); setDisciplines([]);
     setWins('0'); setLosses('0'); setDraws('0');
-    setPhone(''); setEmail(''); setCity(''); setStateField(''); setGym('');
+    setPhone(''); setEmail(''); setCity(''); setStateField(''); setNationality(''); setGym('');
     setLevel('amateur'); setNotes(''); setPhotoUrl(''); setBio('');
     setIsAvailable(true); setIsPublic(true); setDateOfBirth(''); setGenderDivision(''); setExactWeight('');
     setRequestedWeight(''); setMinimumWeight(''); setMaximumWeight(''); setSkillRating(''); setRulesets('');
@@ -116,6 +124,7 @@ export function ManualFighterManager({
       height_cm: null,
       reach_cm: null,
       state: state.trim() || null,
+      nationalities: nationality ? [nationality] : [],
       is_available: isAvailable,
       is_public: isPublic,
       date_of_birth: dateOfBirth || null,
@@ -224,7 +233,7 @@ export function ManualFighterManager({
             <p className="mt-2 text-xs text-zinc-500">Selecciona todas las disciplinas que practica este peleador.</p>
           </fieldset>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Victorias</label>
               <input type="number" min="0" value={wins} onChange={(e) => setWins(e.target.value)}
@@ -302,6 +311,21 @@ export function ManualFighterManager({
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
             </div>
             <div>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Nacionalidad / Bandera</label>
+              <select
+                value={nationality}
+                onChange={(event) => setNationality(event.target.value)}
+                className="w-full border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+              >
+                <option value="">Seleccionar...</option>
+                {countryOptions.map((option) => (
+                  <option key={option.code} value={option.code}>
+                    {countryFlagEmoji(option.code)} {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
               <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Gimnasio</label>
               <input type="text" value={gym} onChange={(e) => setGym(e.target.value)} placeholder="Gimnasio"
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
@@ -371,6 +395,7 @@ export function ManualFighterManager({
               <div className="flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <a href={`/fighters/manual/${f.id}`} className="text-sm font-bold text-zinc-900 hover:text-[#C0001E] transition-colors">
+                    {countryFlagEmoji(f.nationalities?.[0]) && <span className="mr-1" aria-hidden="true">{countryFlagEmoji(f.nationalities?.[0])}</span>}
                     {f.full_name}
                   </a>
                   {f.nickname && <span className="text-xs text-zinc-400">&ldquo;{f.nickname}&rdquo;</span>}

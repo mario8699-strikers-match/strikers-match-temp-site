@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
@@ -21,6 +22,7 @@ import {
   normalizeSocialMediaIdentifier,
 } from '@/lib/socialMedia';
 import { DISCIPLINE_OPTIONS } from '@/lib/disciplines';
+import { countryFlagEmoji, getCountryName, getCountryOptions } from '@/lib/countries';
 import type { SocialMediaHandles, SocialMediaPlatform } from '@/lib/socialMedia';
 import type { Profile, Fighter, MatchRequest, EventApplication } from '@/types';
 
@@ -46,6 +48,11 @@ type RequestWithDetails = MatchRequest & {
 };
 
 export default function FighterProfilePage() {
+  const { i18n } = useTranslation();
+  const countryOptions = useMemo(
+    () => getCountryOptions(i18n.resolvedLanguage || i18n.language),
+    [i18n.resolvedLanguage, i18n.language],
+  );
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [fighter, setFighter] = useState<Fighter | null | undefined>(undefined);
   const [editing, setEditing] = useState(false);
@@ -58,7 +65,8 @@ export default function FighterProfilePage() {
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
-  const [country, setCountry] = useState('Mexico');
+  const [country, setCountry] = useState('');
+  const [nationality, setNationality] = useState('');
 
   // Fighter profile fields
   const [nickname, setNickname] = useState('');
@@ -136,10 +144,11 @@ export default function FighterProfilePage() {
     setDateOfBirth(p.date_of_birth ?? '');
     setCity(p.city ?? '');
     setState(p.state ?? '');
-    setCountry(p.country ?? 'Mexico');
+    setCountry(p.country ?? '');
   };
 
   const syncFormFromFighter = (f: Fighter) => {
+    setNationality(f.nationalities?.[0] ?? '');
     setNickname(f.nickname ?? '');
     setBio(f.bio ?? '');
     setWeightClass(f.weight_class ?? '');
@@ -328,6 +337,7 @@ export default function FighterProfilePage() {
       bio: bio.trim() || null,
       weight_class: weightClass || null,
       disciplines: disciplines,
+      nationalities: nationality ? [nationality] : [],
       gym_name: gymName.trim() || null,
       exact_weight: exactWeight ? parseFloat(exactWeight) : null,
       height_cm: heightCm ? parseFloat(heightCm) : null,
@@ -384,7 +394,7 @@ export default function FighterProfilePage() {
       date_of_birth: dateOfBirth || null,
       city: city.trim() || null,
       state: state.trim() || null,
-      country: country.trim() || 'Mexico',
+      country: country.trim() || null,
       ...socialUpdates,
     };
     const profileResult = await authService.updateProfile(profile.id, profileUpdates);
@@ -449,6 +459,9 @@ export default function FighterProfilePage() {
     const href = value ? getSocialMediaHref(platform.key, value) : null;
     return href ? [{ ...platform, value, href }] : [];
   });
+  const nationalityLabel = nationality
+    ? `${countryFlagEmoji(nationality)} ${getCountryName(nationality, i18n.resolvedLanguage)}`
+    : '—';
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -518,7 +531,8 @@ export default function FighterProfilePage() {
                   { label:'Fecha de nacimiento', value: profile.date_of_birth ?? '—' },
                   { label:'Ciudad', value: profile.city ?? '—' },
                   { label:'Estado', value: profile.state ?? '—' },
-                  { label:'País', value: profile.country || 'México' },
+                  { label:'País', value: profile.country || '—' },
+                  { label:'Nacionalidad', value: nationalityLabel },
                   { label:'Correo de la cuenta', value: profile.email },
                 ].map(({ label, value }) => (
                   <div key={label}>
@@ -685,6 +699,21 @@ export default function FighterProfilePage() {
                   <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">País</span>
                   <input type="text" value={country} onChange={e => setCountry(e.target.value)} maxLength={100}
                     className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                </label>
+                <label>
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">Nacionalidad / Bandera</span>
+                  <select
+                    value={nationality}
+                    onChange={(event) => setNationality(event.target.value)}
+                    className="w-full border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                  >
+                    <option value="">Selecciona un país</option>
+                    {countryOptions.map((option) => (
+                      <option key={option.code} value={option.code}>
+                        {countryFlagEmoji(option.code)} {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <label>
                   <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">Correo de la cuenta</span>

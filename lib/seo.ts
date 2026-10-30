@@ -48,7 +48,7 @@ export function pageMetadata({
       : { index: false, follow: false, nocache: true },
     openGraph: {
       type,
-      locale: 'es_MX',
+      locale: 'es',
       url: canonical,
       siteName: SITE_NAME,
       title: socialTitle,

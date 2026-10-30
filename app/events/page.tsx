@@ -11,7 +11,7 @@ export default async function EventsPage() {
   const itemList = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: 'Eventos de boxeo y MMA en México',
+    name: 'Eventos internacionales de deportes de combate',
     itemListElement: events.map((event, index) => ({
       '@type': 'ListItem',
       position: index + 1,

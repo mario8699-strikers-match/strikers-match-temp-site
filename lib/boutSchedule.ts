@@ -13,7 +13,7 @@ export function toLocalDateTimeInputValue(value: string | null) {
 
 export function formatBoutScheduledTime(
   value: string | null | undefined,
-  locales: Intl.LocalesArgument = 'es-MX',
+  locales: Intl.LocalesArgument = 'es',
 ) {
   if (!value) return null;
   const date = new Date(value);
@@ -27,7 +27,7 @@ export function formatBoutScheduledTime(
 
 export function formatBoutScheduledDateTime(
   value: string | null | undefined,
-  locales: Intl.LocalesArgument = 'es-MX',
+  locales: Intl.LocalesArgument = 'es',
 ) {
   if (!value) return null;
   const date = new Date(value);

@@ -386,7 +386,7 @@ function officialsWinner(bout: Bout): Bout['fighter_a_snapshot'] | null {
 function formatBoutTime(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
 }
 
 function formatElapsed(seconds: number) {

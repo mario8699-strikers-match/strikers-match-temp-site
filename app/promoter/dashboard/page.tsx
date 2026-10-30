@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
@@ -12,6 +13,7 @@ import { eventService } from '@/services/eventService';
 import { getEventRegistrations, confirmPayment } from '@/services/registrationService';
 import type { Event, EventApplication, Profile } from '@/types';
 import type { RegistrationWithFighter } from '@/types';
+import { formatLocalizedDate } from '@/lib/locale';
 
 const STATUS_COLORS: Record<Event['status'], string> = {
   draft:     'bg-zinc-100 text-zinc-600',
@@ -37,6 +39,7 @@ type ApplicationWithFighter = EventApplication & {
 };
 
 export default function PromoterDashboardPage() {
+  const { i18n } = useTranslation();
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -118,7 +121,7 @@ export default function PromoterDashboardPage() {
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return 'Sin fecha';
     const [year, month, day] = dateStr.split('-').map(Number);
-    return new Date(year, month - 1, day).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+    return formatLocalizedDate(new Date(year, month - 1, day), i18n.resolvedLanguage, { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
   if (profile === undefined) return <div className="min-h-screen bg-white flex items-center justify-center"><p className="text-sm" style={{ color: '#9A9A9A' }}>...</p></div>;
@@ -370,7 +373,7 @@ export default function PromoterDashboardPage() {
                                       <p className="text-xs text-zinc-500">{reg.registered_weight_class ?? reg.fighters?.weight_class ?? reg.manual_fighters?.weight_class ?? '—'} · {reg.city ?? reg.fighters?.profiles?.city ?? reg.manual_fighters?.city ?? '—'}</p>
                                       {reg.submitted_at && (
                                         <p className="text-xs text-blue-500 mt-0.5">
-                                          Enviado: {new Date(reg.submitted_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                          Enviado: {formatLocalizedDate(reg.submitted_at, i18n.resolvedLanguage, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                         </p>
                                       )}
                                       <EligibilityStatus status={reg.eligibility_status} reasons={reg.eligibility_reasons} showReasons />
@@ -403,7 +406,7 @@ export default function PromoterDashboardPage() {
                                       <p className="text-xs text-zinc-500">{reg.registered_weight_class ?? reg.fighters?.weight_class ?? reg.manual_fighters?.weight_class ?? '—'} · {reg.city ?? reg.fighters?.profiles?.city ?? reg.manual_fighters?.city ?? '—'}</p>
                                       {reg.confirmed_at && (
                                         <p className="text-xs text-emerald-500 mt-0.5">
-                                          Confirmado: {new Date(reg.confirmed_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                          Confirmado: {formatLocalizedDate(reg.confirmed_at, i18n.resolvedLanguage, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                         </p>
                                       )}
                                       <EligibilityStatus status={reg.eligibility_status} reasons={reg.eligibility_reasons} showReasons />

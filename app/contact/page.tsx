@@ -4,7 +4,7 @@ import { pageMetadata } from '@/lib/seo';
 
 export const metadata = pageMetadata({
   title: 'Contacto',
-  description: 'Contacta al equipo de Strikers Match para soporte, preguntas sobre cuentas, perfiles, eventos o el directorio de boxeo y MMA en México.',
+  description: 'Contacta al equipo de Strikers Match para soporte, preguntas sobre cuentas, perfiles, eventos o el directorio de deportes de combate.',
   path: '/contact',
 });
 

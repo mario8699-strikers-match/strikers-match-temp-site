@@ -10,7 +10,7 @@ export default async function DirectoryPage() {
   const itemList = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: 'Directorio de boxeo y MMA en México',
+    name: 'Directorio internacional de deportes de combate',
     itemListElement: profiles.map((profile, index) => ({
       '@type': 'ListItem',
       position: index + 1,

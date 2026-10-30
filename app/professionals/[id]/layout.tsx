@@ -36,7 +36,7 @@ function roleLabel(role: string) {
 
 function description(profile: NonNullable<Awaited<ReturnType<typeof getPublicProfessionalSeo>>>) {
   const location = [profile.city, profile.state].filter(Boolean).join(', ');
-  return truncateDescription(profile.bio || `${profile.full_name}, ${roleLabel(profile.role).toLowerCase()}${location ? ` en ${location}` : ' en México'}. Perfil profesional en Strikers Match.`);
+  return truncateDescription(profile.bio || `${profile.full_name}, ${roleLabel(profile.role).toLowerCase()}${location ? ` en ${location}` : ''}. Perfil profesional en Strikers Match.`);
 }
 
 export async function generateMetadata({ params }: Omit<ProfessionalLayoutProps, 'children'>): Promise<Metadata> {

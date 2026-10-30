@@ -101,7 +101,7 @@ interface ParticipantForm {
 }
 
 const EMPTY_FORM: ParticipantForm = {
-  full_name: '', nickname: '', photo_url: '', phone: '', email: '', city: '', state: '', country: 'Mexico',
+  full_name: '', nickname: '', photo_url: '', phone: '', email: '', city: '', state: '', country: '',
   date_of_birth: '', gender_division: '', weight_class: '', exact_weight: '', requested_weight_kg: '',
   acceptable_weight_min_kg: '', acceptable_weight_max_kg: '', discipline: '', ruleset: '', bout_format: '',
   experience_level: 'amateur', skill_rating: '', record_wins: '0', record_losses: '0', record_draws: '0',
@@ -809,7 +809,7 @@ function toRegistrationPatch(form: ParticipantForm): Partial<EventRegistration> 
 function formFromRegistration(registration: RegistrationWithFighter): ParticipantForm {
   return {
     ...EMPTY_FORM,
-    full_name: participantName(registration), nickname: registration.nickname ?? '', photo_url: registration.photo_url ?? '', city: registration.city ?? '', state: registration.state ?? '', country: registration.country ?? 'Mexico',
+    full_name: participantName(registration), nickname: registration.nickname ?? '', photo_url: registration.photo_url ?? '', city: registration.city ?? '', state: registration.state ?? '', country: registration.country ?? '',
     date_of_birth: registration.date_of_birth ?? '', gender_division: registration.gender_division ?? '', weight_class: registration.registered_weight_class ?? '', exact_weight: stringValue(registration.weigh_in_weight),
     requested_weight_kg: stringValue(registration.requested_weight_kg), acceptable_weight_min_kg: stringValue(registration.acceptable_weight_min_kg), acceptable_weight_max_kg: stringValue(registration.acceptable_weight_max_kg),
     discipline: registration.registered_discipline ?? '', ruleset: registration.ruleset ?? '', bout_format: registration.bout_format ?? '', experience_level: registration.experience_level ?? 'amateur', skill_rating: stringValue(registration.skill_rating),
@@ -852,7 +852,7 @@ function selectExistingParticipant(
       ...EMPTY_FORM,
       payment_status: defaultPaymentStatus,
       full_name: fighter.profiles?.full_name ?? '', nickname: fighter.nickname ?? '', photo_url: fighter.photo_url ?? '',
-      city: fighter.profiles?.city ?? '', state: fighter.state ?? fighter.profiles?.state ?? '', country: fighter.profiles?.country ?? 'Mexico',
+      city: fighter.profiles?.city ?? '', state: fighter.state ?? fighter.profiles?.state ?? '', country: fighter.profiles?.country ?? '',
       date_of_birth: fighter.profiles?.date_of_birth ?? '', gender_division: fighter.gender_division ?? '', weight_class: weightClass, exact_weight: stringValue(fighter.exact_weight),
       requested_weight_kg: stringValue(fighter.requested_weight_kg), acceptable_weight_min_kg: stringValue(fighter.acceptable_weight_min_kg), acceptable_weight_max_kg: stringValue(fighter.acceptable_weight_max_kg),
       discipline, ruleset: fighter.preferred_rulesets?.[0] ?? '', experience_level: fighter.experience_level ?? 'amateur', skill_rating: stringValue(fighter.skill_rating),
@@ -875,7 +875,7 @@ function selectExistingParticipant(
     setForm({
       ...EMPTY_FORM,
       payment_status: defaultPaymentStatus,
-      full_name: fighter.full_name, nickname: fighter.nickname ?? '', photo_url: fighter.photo_url ?? '', phone: fighter.phone ?? '', email: fighter.email ?? '', city: fighter.city ?? '', state: fighter.state ?? '', country: fighter.country ?? 'Mexico',
+      full_name: fighter.full_name, nickname: fighter.nickname ?? '', photo_url: fighter.photo_url ?? '', phone: fighter.phone ?? '', email: fighter.email ?? '', city: fighter.city ?? '', state: fighter.state ?? '', country: fighter.country ?? '',
       date_of_birth: fighter.date_of_birth ?? '', gender_division: fighter.gender_division ?? '', weight_class: weightClass, exact_weight: stringValue(fighter.exact_weight), requested_weight_kg: stringValue(fighter.requested_weight_kg), acceptable_weight_min_kg: stringValue(fighter.acceptable_weight_min_kg), acceptable_weight_max_kg: stringValue(fighter.acceptable_weight_max_kg),
       discipline, ruleset: fighter.preferred_rulesets?.[0] ?? '', experience_level: fighter.experience_level ?? 'amateur', skill_rating: stringValue(fighter.skill_rating), record_wins: String(fighter.record_wins ?? 0), record_losses: String(fighter.record_losses ?? 0), record_draws: String(fighter.record_draws ?? 0), ko_wins: String(fighter.ko_wins ?? 0), tko_wins: String(fighter.tko_wins ?? 0), ko_losses: String(fighter.ko_losses ?? 0), tko_losses: String(fighter.tko_losses ?? 0),
       gym_name: fighter.gym_name ?? '', special_restrictions: fighter.special_restrictions?.join(', ') ?? '', available_from: fighter.available_from ?? '', available_to: fighter.available_to ?? '', medical_clearance_date: fighter.medical_clearance_date ?? '', last_fight_at: fighter.last_fight_at ?? '', last_ko_loss_at: fighter.last_ko_loss_at ?? '',

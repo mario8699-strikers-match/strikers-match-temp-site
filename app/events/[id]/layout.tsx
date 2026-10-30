@@ -19,7 +19,7 @@ function eventDescription(event: NonNullable<Awaited<ReturnType<typeof getPublic
     event.venue ? `en ${event.venue}` : null,
   ].filter(Boolean).join(' ');
   return truncateDescription(
-    event.notes || `${event.event_name}${details ? `: evento de deportes de combate ${details}` : ', evento de deportes de combate en México'}. Consulta la información y el registro en Strikers Match.`
+    event.notes || `${event.event_name}${details ? `: evento de deportes de combate ${details}` : ', evento de deportes de combate'}. Consulta la información y el registro en Strikers Match.`
   );
 }
 

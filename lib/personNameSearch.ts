@@ -1,10 +1,10 @@
 export function normalizePersonName(value: string) {
   return value
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9]+/g, ' ')
+    .replace(/\p{M}+/gu, '')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim()
-    .toLocaleLowerCase('es-MX')
+    .toLocaleLowerCase()
     .replace(/\s+/g, ' ');
 }
 
@@ -26,7 +26,7 @@ export function searchByClosestName<T>(
     .filter((result) => result.score !== null)
     .sort((resultA, resultB) => (
       resultA.score! - resultB.score!
-      || resultA.name.localeCompare(resultB.name, 'es', { sensitivity: 'base' })
+      || resultA.name.localeCompare(resultB.name, undefined, { sensitivity: 'base' })
     ))
     .slice(0, maximumResults)
     .map((result) => result.entry);

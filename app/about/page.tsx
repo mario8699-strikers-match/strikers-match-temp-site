@@ -4,7 +4,7 @@ import { pageMetadata } from '@/lib/seo';
 
 export const metadata = pageMetadata({
   title: 'Acerca de Strikers Match',
-  description: 'Conoce la misión de Strikers Match y cómo conecta a atletas, entrenadores, gimnasios, organizadores y profesionales del boxeo y MMA en México.',
+  description: 'Conoce la misión de Strikers Match y cómo conecta internacionalmente a atletas, entrenadores, gimnasios, organizadores y profesionales de los deportes de combate.',
   path: '/about',
 });
 
@@ -20,13 +20,13 @@ export default function AboutPage() {
           <section>
             <h2 className="mb-3 text-2xl font-black uppercase text-zinc-950">La comunidad del combate, conectada</h2>
             <p>
-              Strikers Match es una plataforma mexicana creada para conectar a la comunidad del boxeo y las artes marciales mixtas: atletas, entrenadores, gimnasios, representantes, promotores, patrocinadores y profesionales de eventos.
+              Strikers Match es una plataforma creada para conectar internacionalmente a la comunidad de los deportes de combate: atletas, entrenadores, gimnasios, representantes, promotores, patrocinadores y profesionales de eventos.
             </p>
           </section>
           <section>
             <h2 className="mb-3 text-2xl font-black uppercase text-zinc-950">Nuestra misión</h2>
             <p>
-              Buscamos hacer más sencilla la forma de encontrar peleas, publicar eventos, completar carteleras y localizar los servicios necesarios para operar un evento de deportes de combate en México.
+              Buscamos hacer más sencilla la forma de encontrar peleas, publicar eventos, completar carteleras y localizar los servicios necesarios para operar eventos de deportes de combate en cualquier mercado.
             </p>
           </section>
           <section>
