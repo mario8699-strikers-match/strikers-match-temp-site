@@ -154,7 +154,8 @@ export function ManualFighterManager({
 
     setSaving(false);
     if (err) {
-      setError('Error al agregar. Intenta de nuevo.');
+      console.error('Manual fighter insert failed:', err);
+      setError(`No se pudo agregar el peleador. ${err}`);
     } else if (data) {
       setManualFighters((prev) => [data, ...prev]);
       resetForm();

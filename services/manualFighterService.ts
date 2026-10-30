@@ -7,6 +7,21 @@ export type ManualFighterInput = Pick<ManualFighter, 'full_name'> & Partial<Omit
   'id' | 'manager_id' | 'created_at' | 'updated_at' | 'full_name'
 >>;
 
+function isMissingDisciplinesColumn(error: { code?: string; message?: string } | null) {
+  if (!error) return false;
+  return error.code === 'PGRST204'
+    && (error.message ?? '').includes("'disciplines'")
+    && (error.message ?? '').includes("'manual_fighters'");
+}
+
+function withoutDisciplines<T extends { discipline?: string | null; disciplines?: string[] }>(payload: T) {
+  const { disciplines, ...legacyPayload } = payload;
+  return {
+    ...legacyPayload,
+    discipline: legacyPayload.discipline ?? disciplines?.[0] ?? null,
+  };
+}
+
 export const manualFighterService = {
   // Public list — intentionally excludes private medical/contact fields.
   async getAllPublic(): Promise<ServiceResponse<ManualFighterWithCreator[]>> {
@@ -60,11 +75,23 @@ export const manualFighterService = {
     fighter: ManualFighterInput
   ): Promise<ServiceResponse<ManualFighter>> {
     try {
-      const { data, error } = await supabase
+      const payload = { manager_id: creatorId, ...fighter };
+      let { data, error } = await supabase
         .from('manual_fighters')
-        .insert({ manager_id: creatorId, ...fighter })
+        .insert(payload)
         .select()
         .single();
+
+      // Keep roster creation functional while older production schemas are
+      // upgraded. The singular discipline column has always existed, so no
+      // fighter data is lost; only additional disciplines wait for migration.
+      if (isMissingDisciplinesColumn(error)) {
+        ({ data, error } = await supabase
+          .from('manual_fighters')
+          .insert(withoutDisciplines(payload))
+          .select()
+          .single());
+      }
 
       if (error) return { data: null, error: error.message };
       return { data, error: null };
@@ -78,12 +105,21 @@ export const manualFighterService = {
     patch: Partial<ManualFighterInput>
   ): Promise<ServiceResponse<ManualFighter>> {
     try {
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('manual_fighters')
         .update(patch)
         .eq('id', id)
         .select()
         .single();
+
+      if (isMissingDisciplinesColumn(error)) {
+        ({ data, error } = await supabase
+          .from('manual_fighters')
+          .update(withoutDisciplines(patch))
+          .eq('id', id)
+          .select()
+          .single());
+      }
 
       if (error) return { data: null, error: error.message };
       return { data, error: null };
