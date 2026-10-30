@@ -10,12 +10,14 @@ interface EventWeightCategorySelectorProps {
   disciplines: string[];
   selected: string[];
   onChange: (next: string[]) => void;
+  defaultAllSelected?: boolean;
 }
 
 export function EventWeightCategorySelector({
   disciplines,
   selected,
   onChange,
+  defaultAllSelected = false,
 }: EventWeightCategorySelectorProps) {
   const selectedCategories = sanitizeWeightClasses(selected);
   const disciplineSections = disciplines.map((discipline) => ({
@@ -39,7 +41,9 @@ export function EventWeightCategorySelector({
   return (
     <div className="space-y-5">
       <p className="text-xs text-zinc-500">
-        Selecciona todas las categorías que tendrá el evento. Cada peleador recibirá una categoría concreta en Participantes.
+        {defaultAllSelected
+          ? 'Todas las categorías disponibles se seleccionan automáticamente. Haz clic en una categoría únicamente si deseas excluirla del evento.'
+          : 'Selecciona todas las categorías que tendrá el evento. Cada peleador recibirá una categoría concreta en Participantes.'}
       </p>
       {disciplineSections.filter(({ groups }) => groups.length > 0).map(({ discipline, groups }) => (
         <section key={discipline} className="border border-zinc-200 p-4">

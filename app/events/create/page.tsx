@@ -5,7 +5,11 @@ import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import { EventWeightCategorySelector } from '@/components/EventWeightCategorySelector';
-import { DISCIPLINE_OPTIONS } from '@/lib/combatWeightCategories';
+import {
+  DISCIPLINE_OPTIONS,
+  getEventWeightClassesForDisciplines,
+  sanitizeWeightClasses,
+} from '@/lib/combatWeightCategories';
 import { eventService } from '@/services/eventService';
 import { authService } from '@/services/authService';
 import { updateGuidedOnboarding } from '@/services/onboardingService';
@@ -313,12 +317,25 @@ export default function CreateEventPage() {
                   key={d}
                   type="button"
                   onClick={() =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      disciplines_needed: prev.disciplines_needed.includes(d)
-                        ? prev.disciplines_needed.filter((x) => x !== d)
-                        : [...prev.disciplines_needed, d],
-                    }))
+                    setFormData((prev) => {
+                      const removingDiscipline = prev.disciplines_needed.includes(d);
+                      const nextDisciplines = removingDiscipline
+                        ? prev.disciplines_needed.filter((discipline) => discipline !== d)
+                        : [...prev.disciplines_needed, d];
+                      const availableWeightClasses = getEventWeightClassesForDisciplines(nextDisciplines);
+                      const weightClassesNeeded = removingDiscipline
+                        ? prev.weight_classes_needed.filter((weightClass) => availableWeightClasses.includes(weightClass))
+                        : sanitizeWeightClasses([
+                            ...prev.weight_classes_needed,
+                            ...getEventWeightClassesForDisciplines([d]),
+                          ]);
+
+                      return {
+                        ...prev,
+                        disciplines_needed: nextDisciplines,
+                        weight_classes_needed: weightClassesNeeded,
+                      };
+                    })
                   }
                   className={`px-3 py-1.5 text-xs font-bold tracking-wide uppercase border transition-colors ${
                     formData.disciplines_needed.includes(d)
@@ -341,6 +358,7 @@ export default function CreateEventPage() {
               disciplines={formData.disciplines_needed}
               selected={formData.weight_classes_needed}
               onChange={(weightClasses) => setFormData((prev) => ({ ...prev, weight_classes_needed: weightClasses }))}
+              defaultAllSelected
             />
           </div>
 

@@ -146,6 +146,14 @@ export function getCombatWeightGroups(discipline: string): CombatWeightGroup[] {
   return [];
 }
 
+export function getEventWeightClassesForDisciplines(disciplines: string[]): string[] {
+  return sanitizeWeightClasses(disciplines.flatMap((discipline) => {
+    const groups = getCombatWeightGroups(discipline);
+    if (groups.length > 0) return groups.flatMap((group) => group.weights);
+    return GENERIC_WEIGHT_CLASS_OPTIONS.slice(1).map(([value]) => value);
+  }));
+}
+
 export function calculateAgeOnDate(dateOfBirth: string, eventDate: string | null): number | null {
   if (!dateOfBirth || !eventDate) return null;
   const birthParts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateOfBirth);
