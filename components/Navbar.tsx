@@ -14,27 +14,27 @@ interface NavbarProps {
   activePage?: ActivePage;
 }
 
-const NAV_LINKS: { href: string; key: ActivePage; label?: string }[] = [
+const NAV_LINKS: { href: string; key: ActivePage }[] = [
   { href: '/events',        key: 'events' },
   { href: '/fighters',      key: 'fighters' },
   { href: '/directorio',    key: 'gallery' },
   { href: '/promoters',     key: 'promoters' },
-  { href: '/managers',      key: 'managers', label: 'Representantes' },
+  { href: '/managers',      key: 'managers' },
   { href: '/sponsors',      key: 'sponsors' },
   { href: '/pricing',       key: 'pricing' },
 ];
 
-function profileLink(role: string): { label: string; href: string }[] {
+function profileLink(role: string): { labelKey: string; href: string }[] {
   switch (role) {
-    case 'fighter':  return [{ label: 'Mi Perfil', href: '/fighter/profile' }, { label: 'Mis Peleas', href: '/fighter/matches' }];
-    case 'spectator': return [{ label: 'Mi Panel', href: '/spectator/dashboard' }, { label: 'Mi Perfil', href: '/profile' }];
-    case 'promoter': return [{ label: 'Mi Panel', href: '/promoter/dashboard' }, { label: 'Estadísticas', href: '/promoter/analytics' }, { label: 'Mi Perfil', href: '/profile' }];
-    case 'manager':  return [{ label: 'Mi Panel', href: '/manager/dashboard' }, { label: 'Estadísticas', href: '/promoter/analytics' }, { label: 'Mi Perfil', href: '/manager/profile' }];
-    case 'sponsor':  return [{ label: 'Mi Panel', href: '/sponsor/dashboard' }, { label: 'Mi Perfil', href: '/profile' }];
-    case 'admin':    return [{ label: 'Admin', href: '/admin' }];
+    case 'fighter':  return [{ labelKey: 'nav.myProfile', href: '/fighter/profile' }, { labelKey: 'nav.myFights', href: '/fighter/matches' }];
+    case 'spectator': return [{ labelKey: 'nav.myDashboard', href: '/spectator/dashboard' }, { labelKey: 'nav.myProfile', href: '/profile' }];
+    case 'promoter': return [{ labelKey: 'nav.myDashboard', href: '/promoter/dashboard' }, { labelKey: 'nav.analytics', href: '/promoter/analytics' }, { labelKey: 'nav.myProfile', href: '/profile' }];
+    case 'manager':  return [{ labelKey: 'nav.myDashboard', href: '/manager/dashboard' }, { labelKey: 'nav.analytics', href: '/promoter/analytics' }, { labelKey: 'nav.myProfile', href: '/manager/profile' }];
+    case 'sponsor':  return [{ labelKey: 'nav.myDashboard', href: '/sponsor/dashboard' }, { labelKey: 'nav.myProfile', href: '/profile' }];
+    case 'admin':    return [{ labelKey: 'nav.admin', href: '/admin' }];
     default:
       if (VENDOR_ROLES.includes(role as typeof VENDOR_ROLES[number])) {
-        return [{ label: 'Mi Perfil', href: '/vendor/profile' }];
+        return [{ labelKey: 'nav.myProfile', href: '/vendor/profile' }];
       }
       return [];
   }
@@ -120,7 +120,7 @@ export function Navbar({ activePage }: NavbarProps) {
     <button
       onClick={() => setMobileOpen((o) => !o)}
       className="flex flex-col justify-center items-center w-9 h-9 gap-1.5 border border-[#3A3A3A] hover:border-[#5A5A5A] transition-colors flex-shrink-0"
-      aria-label="Menú"
+      aria-label={t('nav.menu')}
     >
       <span className={`block w-5 h-0.5 bg-white transition-all duration-200 ${mobileOpen ? 'rotate-45 translate-y-2' : ''}`} />
       <span className={`block w-5 h-0.5 bg-white transition-all duration-200 ${mobileOpen ? 'opacity-0' : ''}`} />
@@ -151,9 +151,9 @@ export function Navbar({ activePage }: NavbarProps) {
               {!isLoggedIn && (
                 <Link href="/" className={linkClass('home')}>{t('nav.home')}</Link>
               )}
-              {NAV_LINKS.map(({ href, key, label }) => (
+              {NAV_LINKS.map(({ href, key }) => (
                 <Link key={href} href={href} className={linkClass(key as ActivePage)}>
-                  {label ?? t(`nav.${key}`)}
+                  {t(`nav.${key}`)}
                 </Link>
               ))}
             </nav>
@@ -199,14 +199,14 @@ export function Navbar({ activePage }: NavbarProps) {
                             </p>
                           </div>
                           <div className="py-1">
-                            {profileLink(profile.role).map(({ label, href }) => (
+                            {profileLink(profile.role).map(({ labelKey, href }) => (
                               <Link
                                 key={href}
                                 href={href}
                                 onClick={() => setUserMenuOpen(false)}
                                 className="block px-4 py-2.5 text-sm font-semibold text-[#CCCCCC] hover:text-white hover:bg-[#1A1A1A] transition-colors"
                               >
-                                {label}
+                                {t(labelKey)}
                               </Link>
                             ))}
                           </div>
@@ -215,7 +215,7 @@ export function Navbar({ activePage }: NavbarProps) {
                               onClick={resetDemoGuide}
                               className="w-full text-left px-4 py-2.5 text-sm font-semibold text-[#CCCCCC] hover:text-white hover:bg-[#1A1A1A] transition-colors"
                             >
-                              Reiniciar guía
+                              {t('nav.resetGuide')}
                             </button>
                             <button
                               onClick={() => { setUserMenuOpen(false); handleLogout(); }}
@@ -265,9 +265,9 @@ export function Navbar({ activePage }: NavbarProps) {
             {!isLoggedIn && (
               <Link href="/" onClick={() => setMobileOpen(false)} className={mobileLinkClass('home')}>{t('nav.home')}</Link>
             )}
-            {NAV_LINKS.map(({ href, key, label }) => (
+            {NAV_LINKS.map(({ href, key }) => (
               <Link key={href} href={href} onClick={() => setMobileOpen(false)} className={mobileLinkClass(key as ActivePage)}>
-                {label ?? t(`nav.${key}`)}
+                {t(`nav.${key}`)}
               </Link>
             ))}
           </nav>
@@ -276,14 +276,14 @@ export function Navbar({ activePage }: NavbarProps) {
             <>
               {/* Profile links */}
               <div className="py-2">
-                {profileLink(profile.role).map(({ label, href }) => (
+                {profileLink(profile.role).map(({ labelKey, href }) => (
                   <Link
                     key={href}
                     href={href}
                     onClick={() => setMobileOpen(false)}
                     className="block px-6 py-3 text-sm font-bold text-white hover:bg-[#1A1A1A] transition-colors"
                   >
-                    {label}
+                    {t(labelKey)}
                   </Link>
                 ))}
                 {(profile.role === 'promoter' || profile.role === 'manager' || profile.role === 'admin') && (
@@ -302,7 +302,7 @@ export function Navbar({ activePage }: NavbarProps) {
                   onClick={resetDemoGuide}
                   className="w-full text-left px-6 py-3 text-sm font-bold text-white hover:bg-[#1A1A1A] transition-colors"
                 >
-                  Reiniciar guía
+                  {t('nav.resetGuide')}
                 </button>
                 <button
                   onClick={handleLogout}

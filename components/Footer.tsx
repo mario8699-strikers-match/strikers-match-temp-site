@@ -8,6 +8,7 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 export function Footer() {
   const { t } = useTranslation('legal');
   const { t: tCommon } = useTranslation('common');
+  const { t: tNav } = useTranslation('navigation');
   return (
     <footer className="bg-brand-black mt-auto">
       {/* App Store Banner */}
@@ -60,22 +61,22 @@ export function Footer() {
           {/* Links */}
           <nav className="flex flex-wrap gap-x-6 gap-y-2">
             {[
-              { href: '/events',    label: 'Eventos' },
-              { href: '/fighters',  label: 'Atletas' },
-              { href: '/promoters', label: 'Promotores' },
-              { href: '/managers',  label: 'Representantes' },
-              { href: '/sponsors',  label: 'Patrocinadores' },
-              { href: '/directorio', label: 'Directorio' },
-              { href: '/about', label: 'Nosotros' },
-              { href: '/contact', label: 'Contacto' },
-            ].map(({ href, label }) => (
+              { href: '/events', key: 'events' },
+              { href: '/fighters', key: 'fighters' },
+              { href: '/promoters', key: 'promoters' },
+              { href: '/managers', key: 'managers' },
+              { href: '/sponsors', key: 'sponsors' },
+              { href: '/directorio', key: 'gallery' },
+              { href: '/about', key: 'about' },
+              { href: '/contact', key: 'contact' },
+            ].map(({ href, key }) => (
               <Link
                 key={href}
                 href={href}
                 className="text-xs font-semibold tracking-widest uppercase transition-colors hover:text-white"
                 style={{ color: '#5A5A5A' }}
               >
-                {label}
+                {tNav(`nav.${key}`)}
               </Link>
             ))}
           </nav>
@@ -117,7 +118,7 @@ export function Footer() {
               &copy; {new Date().getFullYear()} Strikers Match
             </p>
             <p className="text-[10px] tracking-widest" style={{ color: '#3A3A3A' }}>
-              Designed by{' '}
+              {tCommon('common.designedBy')}{' '}
               <a
                 href="https://codevostudio.com"
                 target="_blank"

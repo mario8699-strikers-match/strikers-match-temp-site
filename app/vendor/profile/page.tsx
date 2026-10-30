@@ -78,7 +78,10 @@ export default function VendorProfilePage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile) return;
-    if (!fullName.trim()) { setSaveError('El nombre es obligatorio.'); return; }
+    if (!fullName.trim()) {
+      setSaveError(profile.role === 'gyms_academies' ? 'El nombre del gimnasio es obligatorio.' : 'El nombre es obligatorio.');
+      return;
+    }
     setSaving(true);
     setSaveError(null);
     setSaveSuccess(false);
@@ -248,15 +251,21 @@ export default function VendorProfilePage() {
 
           <div>
             <label htmlFor="full_name" className="block text-sm font-medium text-zinc-700 mb-1">
-              Nombre Completo
+              {isGymOwner ? 'Nombre del gimnasio / academia' : 'Nombre Completo'}
             </label>
             <input
               id="full_name"
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
+              placeholder={isGymOwner ? 'Ej. Strikers Boxing Club' : undefined}
               className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 text-sm"
             />
+            {isGymOwner && (
+              <p className="mt-1 text-xs text-zinc-500">
+                Este nombre aparecerá en el directorio y se asignará automáticamente a los peleadores de tu gimnasio.
+              </p>
+            )}
           </div>
 
           <div>

@@ -68,7 +68,7 @@ interface DirectoryPageClientProps {
 }
 
 export function DirectoryPageClient({ initialListings, initialProfiles }: DirectoryPageClientProps) {
-  const { t } = useTranslation('gallery');
+  const { t, i18n } = useTranslation('gallery');
   const [profile, setProfile] = useState<Profile | null>(null);
   const [listings, setListings] = useState<BusinessListing[]>(initialListings);
   const [serviceProfiles, setServiceProfiles] = useState<Profile[]>(initialProfiles);
@@ -85,6 +85,10 @@ export function DirectoryPageClient({ initialListings, initialProfiles }: Direct
   const [selectedServiceRoles, setSelectedServiceRoles] = useState<UserRole[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    document.title = `${t('gallery.title')} | Strikers Match`;
+  }, [i18n.resolvedLanguage, t]);
 
   const [form, setForm] = useState({
     title: '',

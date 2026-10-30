@@ -9,7 +9,7 @@ interface LanguageSwitcherProps {
 }
 
 export function LanguageSwitcher({ variant = 'light' }: LanguageSwitcherProps) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation('common');
   const currentLocale = (i18n.resolvedLanguage || i18n.language).split('-')[0] as Locale;
 
   const handleLanguageChange = (locale: Locale) => {
@@ -42,7 +42,7 @@ export function LanguageSwitcher({ variant = 'light' }: LanguageSwitcherProps) {
           className={`flex-1 whitespace-nowrap text-center px-2 py-1 text-xs font-bold tracking-wide ${
             currentLocale === locale ? activeClass : inactiveClass
           }`}
-          aria-label={`Switch to ${i18nConfig.localeLabels[locale]}`}
+          aria-label={t('common.switchToLanguage', { language: i18nConfig.localeLabels[locale] })}
         >
           {i18nConfig.localeLabels[locale]}
         </button>

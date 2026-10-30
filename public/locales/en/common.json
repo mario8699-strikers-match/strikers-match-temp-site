@@ -21,6 +21,7 @@
     "continue": "Continue",
     "confirm": "Confirm",
     "language": "Language",
+    "switchToLanguage": "Switch to {{language}}",
     "hero": {
       "line1": "Where the combat",
       "line2": "sports community",
@@ -32,6 +33,67 @@
     },
     "comingSoon": "Coming soon to",
     "appStore": "App Store",
-    "googlePlay": "Google Play"
+    "googlePlay": "Google Play",
+    "designedBy": "Designed by",
+    "pages": {
+      "about": {
+        "title": "About us",
+        "communityTitle": "The combat sports community, connected",
+        "communityBody": "Strikers Match is built to connect the international combat sports community: athletes, coaches, gyms, managers, promoters, sponsors, and event professionals.",
+        "missionTitle": "Our mission",
+        "missionBody": "We make it easier to find fights, publish events, complete fight cards, and locate the services needed to operate combat sports events in any market.",
+        "workTitle": "What we do",
+        "workBody": "The platform offers public profiles, directories, registration tools, matchmaking, and event operations. Strikers Match provides technology that facilitates connections; it is not a promoter, organizer, coach, or sanctioning body."
+      },
+      "contact": {
+        "title": "Contact",
+        "body": "For support or questions about your account, profiles, events, or the directory, contact the Strikers Match team."
+      },
+      "pricing": {
+        "title": "Platform tools",
+        "subtitle": "Features for creating events, registering athletes, matching fighters, managing bouts, and printing event sheets.",
+        "available": "Available",
+        "included": "Included features",
+        "comingSoon": "Coming soon",
+        "studioDescription": "Production tools for preparing local cameras, graphics, and broadcast operations from the event.",
+        "viewEvents": "View events",
+        "viewDirectory": "View directory",
+        "groups": {
+          "events": {
+            "title": "Events",
+            "createPublishEvents": "Create and publish events",
+            "editEventInformation": "Edit event information",
+            "uploadEventPoster": "Upload the event poster",
+            "athleteRegistration": "Athlete registration",
+            "manualRegistrationPayments": "Manage manual registration payments"
+          },
+          "matchmaking": {
+            "title": "Matchmaking",
+            "fightRequests": "Fight requests",
+            "matchSuggestions": "Match suggestions",
+            "disciplineValidation": "Discipline validation",
+            "compatibilityReview": "Compatibility review",
+            "manualBoutApproval": "Manual bout approval"
+          },
+          "operations": {
+            "title": "Operations",
+            "bouts": "Bouts",
+            "ringAssignment": "Ring assignment",
+            "boutOrder": "Bout order",
+            "printCenter": "Print center",
+            "eventOperations": "Event operations",
+            "results": "Results"
+          },
+          "dashboards": {
+            "title": "Dashboards",
+            "promoterDashboard": "Promoter dashboard",
+            "managerDashboard": "Manager dashboard",
+            "statistics": "Statistics",
+            "eventTeam": "Event team",
+            "publicDirectory": "Public directory"
+          }
+        }
+      }
+    }
   }
 }

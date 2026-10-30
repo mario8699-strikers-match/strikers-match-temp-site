@@ -66,6 +66,7 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState(false);
 
   const isVendorRole = !!formData.role && VENDOR_ROLES.includes(formData.role);
+  const isGymOwner = formData.role === 'gyms_academies';
 
   const pickAccountType = (type: AccountType) => {
     setAccountType(type);
@@ -103,7 +104,9 @@ export default function RegisterPage() {
 
   const validate = (): boolean => {
     const newErrors: typeof errors = {};
-    if (!formData.full_name.trim()) newErrors.full_name = t('auth.errors.fullNameRequired');
+    if (!formData.full_name.trim()) {
+      newErrors.full_name = t(isGymOwner ? 'auth.errors.gymNameRequired' : 'auth.errors.fullNameRequired');
+    }
     if (!formData.email) newErrors.email = t('auth.errors.emailRequired');
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = t('auth.errors.emailInvalid');
     if (!formData.password) newErrors.password = t('auth.errors.passwordRequired');
@@ -362,7 +365,7 @@ export default function RegisterPage() {
           {/* Full Name */}
           <div>
             <label htmlFor="full_name" className="block text-sm font-medium text-zinc-700 mb-1">
-              {t('auth.register.fullName')}
+              {t(isGymOwner ? 'auth.register.gymOwnerName' : 'auth.register.fullName')}
             </label>
             <input
               id="full_name"
@@ -370,11 +373,14 @@ export default function RegisterPage() {
               autoComplete="name"
               value={formData.full_name}
               onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-              placeholder={t('auth.register.fullNamePlaceholder')}
+              placeholder={t(isGymOwner ? 'auth.register.gymOwnerNamePlaceholder' : 'auth.register.fullNamePlaceholder')}
               className={`w-full border px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 text-sm ${
                 errors.full_name ? 'border-red-400' : 'border-zinc-300'
               }`}
             />
+            {isGymOwner && !errors.full_name && (
+              <p className="mt-1 text-xs text-zinc-500">{t('auth.register.gymOwnerNameHelp')}</p>
+            )}
             {errors.full_name && <p className="mt-1 text-xs text-red-500">{errors.full_name}</p>}
           </div>
 

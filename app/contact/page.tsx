@@ -1,5 +1,6 @@
 import { Footer } from '@/components/Footer';
 import { Navbar } from '@/components/Navbar';
+import { LocalizedText } from '@/components/LocalizedText';
 import { pageMetadata } from '@/lib/seo';
 
 export const metadata = pageMetadata({
@@ -14,9 +15,9 @@ export default function ContactPage() {
       <Navbar activePage={null} />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-16 text-center sm:px-6 lg:px-8">
         <p className="mb-3 text-xs font-bold uppercase tracking-[0.3em] text-[#C0001E]">Strikers Match</p>
-        <h1 className="font-display text-5xl font-black uppercase leading-none sm:text-7xl">Contacto</h1>
+        <h1 className="font-display text-5xl font-black uppercase leading-none sm:text-7xl"><LocalizedText i18nKey="common.pages.contact.title" /></h1>
         <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-zinc-600">
-          Para soporte, preguntas sobre tu cuenta, perfiles, eventos o el directorio, comunícate con el equipo de Strikers Match.
+          <LocalizedText i18nKey="common.pages.contact.body" />
         </p>
         <a
           href="mailto:info@strikersmatch.com"

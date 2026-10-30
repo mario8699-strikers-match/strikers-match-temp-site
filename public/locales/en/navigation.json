@@ -15,6 +15,15 @@
     "login": "Login",
     "register": "Register",
     "createEvent": "Create Event",
-    "pricing": "Platform"
+    "pricing": "Platform",
+    "about": "About",
+    "contact": "Contact",
+    "myDashboard": "My Dashboard",
+    "myProfile": "My Profile",
+    "myFights": "My Fights",
+    "analytics": "Analytics",
+    "admin": "Admin",
+    "resetGuide": "Restart guide",
+    "menu": "Menu"
   }
 }

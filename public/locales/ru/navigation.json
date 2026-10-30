@@ -8,13 +8,22 @@
     "promoters": "Промоутеры",
     "sponsors": "Спонсоры",
     "gallery": "Каталог",
-    "managers": "Менеджеры",
+    "managers": "Представители",
     "profile": "Профиль",
     "settings": "Настройки",
     "logout": "Выйти",
     "login": "Войти",
     "register": "Регистрация",
     "createEvent": "Создать событие",
-    "pricing": "Платформа"
+    "pricing": "Платформа",
+    "about": "О нас",
+    "contact": "Контакты",
+    "myDashboard": "Моя панель",
+    "myProfile": "Мой профиль",
+    "myFights": "Мои бои",
+    "analytics": "Статистика",
+    "admin": "Администрирование",
+    "resetGuide": "Перезапустить руководство",
+    "menu": "Меню"
   }
 }

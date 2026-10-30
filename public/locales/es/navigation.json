@@ -15,6 +15,15 @@
     "login": "Iniciar Sesión",
     "register": "Registrarse",
     "createEvent": "Crear Evento",
-    "pricing": "Plataforma"
+    "pricing": "Plataforma",
+    "about": "Nosotros",
+    "contact": "Contacto",
+    "myDashboard": "Mi Panel",
+    "myProfile": "Mi Perfil",
+    "myFights": "Mis Peleas",
+    "analytics": "Estadísticas",
+    "admin": "Administración",
+    "resetGuide": "Reiniciar guía",
+    "menu": "Menú"
   }
 }

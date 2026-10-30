@@ -1,5 +1,6 @@
 import { Footer } from '@/components/Footer';
 import { Navbar } from '@/components/Navbar';
+import { LocalizedText } from '@/components/LocalizedText';
 import { pageMetadata } from '@/lib/seo';
 
 export const metadata = pageMetadata({
@@ -14,26 +15,20 @@ export default function AboutPage() {
       <Navbar activePage={null} />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-16 sm:px-6 lg:px-8">
         <p className="mb-3 text-xs font-bold uppercase tracking-[0.3em] text-[#C0001E]">Strikers Match</p>
-        <h1 className="font-display text-5xl font-black uppercase leading-none sm:text-7xl">Acerca de nosotros</h1>
+        <h1 className="font-display text-5xl font-black uppercase leading-none sm:text-7xl"><LocalizedText i18nKey="common.pages.about.title" /></h1>
 
         <div className="mt-10 space-y-8 text-base leading-relaxed text-zinc-700">
           <section>
-            <h2 className="mb-3 text-2xl font-black uppercase text-zinc-950">La comunidad del combate, conectada</h2>
-            <p>
-              Strikers Match es una plataforma creada para conectar internacionalmente a la comunidad de los deportes de combate: atletas, entrenadores, gimnasios, representantes, promotores, patrocinadores y profesionales de eventos.
-            </p>
+            <h2 className="mb-3 text-2xl font-black uppercase text-zinc-950"><LocalizedText i18nKey="common.pages.about.communityTitle" /></h2>
+            <p><LocalizedText i18nKey="common.pages.about.communityBody" /></p>
           </section>
           <section>
-            <h2 className="mb-3 text-2xl font-black uppercase text-zinc-950">Nuestra misión</h2>
-            <p>
-              Buscamos hacer más sencilla la forma de encontrar peleas, publicar eventos, completar carteleras y localizar los servicios necesarios para operar eventos de deportes de combate en cualquier mercado.
-            </p>
+            <h2 className="mb-3 text-2xl font-black uppercase text-zinc-950"><LocalizedText i18nKey="common.pages.about.missionTitle" /></h2>
+            <p><LocalizedText i18nKey="common.pages.about.missionBody" /></p>
           </section>
           <section>
-            <h2 className="mb-3 text-2xl font-black uppercase text-zinc-950">Qué hacemos</h2>
-            <p>
-              La plataforma ofrece perfiles públicos, directorios, herramientas de registro, matchmaking y operación de eventos. Strikers Match proporciona la tecnología para facilitar conexiones; no actúa como promotor, organizador, entrenador ni organismo sancionador.
-            </p>
+            <h2 className="mb-3 text-2xl font-black uppercase text-zinc-950"><LocalizedText i18nKey="common.pages.about.workTitle" /></h2>
+            <p><LocalizedText i18nKey="common.pages.about.workBody" /></p>
           </section>
         </div>
       </main>

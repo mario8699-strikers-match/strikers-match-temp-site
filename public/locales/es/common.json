@@ -21,6 +21,7 @@
     "continue": "Continuar",
     "confirm": "Confirmar",
     "language": "Idioma",
+    "switchToLanguage": "Cambiar a {{language}}",
     "hero": {
       "line1": "Donde se conecta la",
       "line2": "comunidad de los",
@@ -32,6 +33,67 @@
     },
     "comingSoon": "Proximamente en",
     "appStore": "App Store",
-    "googlePlay": "Google Play"
+    "googlePlay": "Google Play",
+    "designedBy": "Diseñado por",
+    "pages": {
+      "about": {
+        "title": "Acerca de nosotros",
+        "communityTitle": "La comunidad del combate, conectada",
+        "communityBody": "Strikers Match es una plataforma creada para conectar internacionalmente a la comunidad de los deportes de combate: atletas, entrenadores, gimnasios, representantes, promotores, patrocinadores y profesionales de eventos.",
+        "missionTitle": "Nuestra misión",
+        "missionBody": "Buscamos hacer más sencilla la forma de encontrar peleas, publicar eventos, completar carteleras y localizar los servicios necesarios para operar eventos de deportes de combate en cualquier mercado.",
+        "workTitle": "Qué hacemos",
+        "workBody": "La plataforma ofrece perfiles públicos, directorios, herramientas de registro, matchmaking y operación de eventos. Strikers Match proporciona la tecnología para facilitar conexiones; no actúa como promotor, organizador, entrenador ni organismo sancionador."
+      },
+      "contact": {
+        "title": "Contacto",
+        "body": "Para soporte, preguntas sobre tu cuenta, perfiles, eventos o el directorio, comunícate con el equipo de Strikers Match."
+      },
+      "pricing": {
+        "title": "Herramientas de la plataforma",
+        "subtitle": "Funciones disponibles para crear eventos, registrar atletas, emparejar peleadores, administrar combates e imprimir hojas del evento.",
+        "available": "Disponible",
+        "included": "Funciones incluidas",
+        "comingSoon": "Próximamente",
+        "studioDescription": "Herramientas de producción para preparar cámaras locales, gráficos y operación de transmisión desde el evento.",
+        "viewEvents": "Ver eventos",
+        "viewDirectory": "Ver directorio",
+        "groups": {
+          "events": {
+            "title": "Eventos",
+            "createPublishEvents": "Crear y publicar eventos",
+            "editEventInformation": "Editar información del evento",
+            "uploadEventPoster": "Subir cartel del evento",
+            "athleteRegistration": "Registro de atletas",
+            "manualRegistrationPayments": "Gestión de pagos manuales de inscripción"
+          },
+          "matchmaking": {
+            "title": "Matchmaking",
+            "fightRequests": "Solicitudes de pelea",
+            "matchSuggestions": "Sugerencias de emparejamiento",
+            "disciplineValidation": "Validación por disciplina",
+            "compatibilityReview": "Revisión de compatibilidad",
+            "manualBoutApproval": "Aprobación manual de combates"
+          },
+          "operations": {
+            "title": "Operación",
+            "bouts": "Combates",
+            "ringAssignment": "Asignación de rings",
+            "boutOrder": "Orden de combates",
+            "printCenter": "Centro de impresión",
+            "eventOperations": "Operación del evento",
+            "results": "Resultados"
+          },
+          "dashboards": {
+            "title": "Paneles",
+            "promoterDashboard": "Panel de promotor",
+            "managerDashboard": "Panel de representante",
+            "statistics": "Estadísticas",
+            "eventTeam": "Equipo del evento",
+            "publicDirectory": "Directorio público"
+          }
+        }
+      }
+    }
   }
 }

@@ -54,7 +54,6 @@ i18n
     debug: false,
     showSupportNotice: false,
     initImmediate: false,
-    lng: i18nConfig.defaultLocale,
     fallbackLng: {
       ru: ['en'],
       en: ['es'],
@@ -113,6 +112,8 @@ i18n
     detection: {
       order: ['localStorage', 'cookie', 'htmlTag', 'navigator'],
       caches: ['localStorage', 'cookie'],
+      lookupLocalStorage: 'i18nextLng',
+      lookupCookie: 'i18next',
     },
     interpolation: {
       escapeValue: false,
