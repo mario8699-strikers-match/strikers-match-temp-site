@@ -11,7 +11,7 @@ import { IdleTimeout } from "@/components/IdleTimeout";
 import { JsonLd } from "@/components/JsonLd";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { SITE_URL } from "@/lib/seo";
+import { DEFAULT_CONTENT_LANGUAGE, DEFAULT_OG_IMAGE, SITE_URL } from "@/lib/seo";
 
 const barlow = Barlow({
   subsets: ["latin"],
@@ -29,12 +29,14 @@ const barlowCondensed = Barlow_Condensed({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  applicationName: 'Strikers Match',
+  category: 'sports',
   title: {
-    default: 'Strikers Match | Comunidad internacional de deportes de combate',
+    default: 'Strikers Match | Matchmaking y eventos de deportes de combate',
     template: '%s | Strikers Match',
   },
   description:
-    'Conecta con atletas, entrenadores, gimnasios, representantes y organizadores de deportes de combate. Encuentra peleas y organiza eventos en un solo lugar.',
+    'Plataforma internacional para conectar atletas, gimnasios, managers y promotores, encontrar peleas y organizar eventos de deportes de combate.',
   authors: [{ name: 'Strikers Match', url: SITE_URL }],
   creator: 'Strikers Match',
   publisher: 'Strikers Match',
@@ -49,18 +51,20 @@ export const metadata: Metadata = {
   manifest: '/site.webmanifest',
   openGraph: {
     type: 'website',
-    locale: 'es',
+    locale: DEFAULT_CONTENT_LANGUAGE,
     url: SITE_URL,
     siteName: 'Strikers Match',
-    title: 'Strikers Match | Comunidad internacional de deportes de combate',
+    title: 'Strikers Match | Matchmaking y eventos de deportes de combate',
     description:
-      'Conecta con atletas, entrenadores, gimnasios y organizadores. Desde encontrar una pelea hasta organizar un evento, todo en un solo lugar.',
+      'Conecta atletas, gimnasios, managers y promotores de boxeo, MMA, Muay Thai, kickboxing, K-1 y bare knuckle.',
+    images: [{ url: DEFAULT_OG_IMAGE, alt: 'Strikers Match — Comunidad internacional de deportes de combate' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Strikers Match | Comunidad internacional de deportes de combate',
+    title: 'Strikers Match | Matchmaking y eventos de deportes de combate',
     description:
       'Atletas, entrenadores, gimnasios, representantes y organizadores de deportes de combate, en un solo lugar.',
+    images: [DEFAULT_OG_IMAGE],
   },
   robots: {
     index: true,
@@ -74,9 +78,11 @@ export const metadata: Metadata = {
     },
   },
   other: {
-    'google-site-verification': 'jWJuHCcAsNFwzfMVPbgj2mo0NAqyGnIVk0umKW0F8OY',
     'distribution': 'global',
     'rating': 'general',
+  },
+  verification: {
+    google: 'jWJuHCcAsNFwzfMVPbgj2mo0NAqyGnIVk0umKW0F8OY',
   },
 };
 

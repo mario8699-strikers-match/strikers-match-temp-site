@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { StructuredData } from '@/components/StructuredData';
-import { absoluteUrl, pageMetadata, truncateDescription } from '@/lib/seo';
+import { getCountryName } from '@/lib/countries';
+import { absoluteUrl, formatSeoDate, joinLocationParts, pageMetadata, schemaEventStartDate, truncateDescription } from '@/lib/seo';
 import { getPublicEventSeo } from '@/lib/seoData';
 import { EventInitialDataProvider } from './EventInitialData';
 
@@ -13,9 +14,12 @@ interface EventLayoutProps {
 }
 
 function eventDescription(event: NonNullable<Awaited<ReturnType<typeof getPublicEventSeo>>>) {
+  const country = getCountryName(event.country_code, 'es');
+  const eventDate = formatSeoDate(event.event_date);
+  const eventLocation = joinLocationParts([event.city, country]);
   const details = [
-    event.event_date ? `el ${event.event_date}` : null,
-    event.city ? `en ${event.city}` : null,
+    eventDate ? `el ${eventDate}` : null,
+    eventLocation ? `en ${eventLocation}` : null,
     event.venue ? `en ${event.venue}` : null,
   ].filter(Boolean).join(' ');
   return truncateDescription(
@@ -51,8 +55,15 @@ export default async function EventLayout({ children, params }: EventLayoutProps
   if (!event || event.status !== 'published') return children;
 
   const eventUrl = absoluteUrl(`/events/${id}`);
-  const startDate = event.event_date
-    ? `${event.event_date}${event.event_time ? `T${event.event_time}` : ''}`
+  const startDate = schemaEventStartDate(event.event_date, event.event_time, event.timezone);
+  const countryName = getCountryName(event.country_code, 'es');
+  const address = event.city || event.region_code || event.country_code
+    ? {
+        '@type': 'PostalAddress',
+        addressLocality: event.city || undefined,
+        addressRegion: event.region_code || undefined,
+        addressCountry: event.country_code || undefined,
+      }
     : undefined;
   const schema = {
     '@context': 'https://schema.org',
@@ -66,15 +77,11 @@ export default async function EventLayout({ children, params }: EventLayoutProps
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     image: event.flyer_url || undefined,
     sport: event.disciplines_needed?.length ? event.disciplines_needed : ['Boxeo', 'Artes marciales mixtas'],
-    location: event.city || event.venue
+    location: event.city || event.venue || countryName
       ? {
           '@type': 'Place',
-          name: event.venue || event.city,
-          address: {
-            '@type': 'PostalAddress',
-            addressLocality: event.city || undefined,
-            addressCountry: 'MX',
-          },
+          name: event.venue || joinLocationParts([event.city, countryName]),
+          address,
         }
       : undefined,
     organizer: {
@@ -82,6 +89,7 @@ export default async function EventLayout({ children, params }: EventLayoutProps
       name: event.profiles?.full_name || 'Strikers Match',
       url: absoluteUrl('/promoters'),
     },
+    inLanguage: 'es',
   };
   const breadcrumbs = {
     '@context': 'https://schema.org',

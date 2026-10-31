@@ -1,5 +1,23 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /admin/
+Disallow: /consent
+Disallow: /events/create
+Disallow: /events/*/display
+Disallow: /events/*/manage/
+Disallow: /fighter/
+Disallow: /forgot-password
+Disallow: /login
+Disallow: /manager/
+Disallow: /pricing/success
+Disallow: /profile
+Disallow: /promoter/
+Disallow: /register
+Disallow: /reset-password
+Disallow: /search
+Disallow: /spectator/
+Disallow: /sponsor/
+Disallow: /vendor/
 
 Sitemap: https://strikersmatch.com/sitemap.xml

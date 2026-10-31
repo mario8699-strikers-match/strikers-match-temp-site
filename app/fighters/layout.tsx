@@ -1,8 +1,8 @@
 import { pageMetadata } from '@/lib/seo';
 
 export const metadata = pageMetadata({
-  title: 'Atletas de boxeo, MMA y deportes de combate',
-  description: 'Encuentra atletas de boxeo, MMA y deportes de combate por disciplina, división, experiencia, ubicación y disponibilidad para viajar.',
+  title: 'Peleadores internacionales de boxeo y deportes de combate',
+  description: 'Encuentra peleadores de boxeo, MMA, Muay Thai, kickboxing, K-1 y bare knuckle por disciplina, división, experiencia, país y disponibilidad.',
   path: '/fighters',
 });
 

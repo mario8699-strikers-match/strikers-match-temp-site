@@ -1,8 +1,8 @@
 import { pageMetadata } from '@/lib/seo';
 
 export const metadata = pageMetadata({
-  title: 'Eventos de boxeo, MMA y deportes de combate',
-  description: 'Consulta eventos publicados de boxeo, MMA y otros deportes de combate. Revisa fechas, sedes, países, disciplinas y opciones de registro.',
+  title: 'Eventos internacionales de boxeo y deportes de combate',
+  description: 'Descubre eventos de boxeo, MMA, Muay Thai, kickboxing, K-1, bare knuckle y otros deportes de combate. Consulta fechas, países, sedes y registro.',
   path: '/events',
 });
 

@@ -1,8 +1,8 @@
 import { pageMetadata } from '@/lib/seo';
 
 export const metadata = pageMetadata({
-  title: 'Representantes de atletas de deportes de combate',
-  description: 'Encuentra representantes y revisa sus rosters internacionales de atletas de boxeo, MMA y otros deportes de combate.',
+  title: 'Managers y representantes de peleadores',
+  description: 'Encuentra managers y representantes con rosters internacionales de peleadores de boxeo, MMA, Muay Thai, kickboxing y otros deportes de combate.',
   path: '/managers',
 });
 

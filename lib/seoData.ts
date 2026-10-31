@@ -31,6 +31,9 @@ export interface PublicFighterSeo {
   profiles: {
     full_name: string;
     city: string | null;
+    state: string | null;
+    country: string | null;
+    country_code?: string | null;
     is_banned: boolean | null;
   } | null;
 }
@@ -45,6 +48,7 @@ export interface PublicManualFighterSeo {
   discipline: string | null;
   city: string | null;
   state: string | null;
+  country: string | null;
   gym_name: string | null;
   experience_level: string | null;
   photo_url: string | null;
@@ -90,7 +94,7 @@ export const getPublicEventSeo = cache(async (id: string): Promise<PublicEventSe
   try {
     const { data, error } = await client
       .from('events')
-      .select('id,promoter_id,event_name,event_date,event_time,city,venue,weight_class_needed,weight_classes_needed,disciplines_needed,purse_amount,signup_fee,notes,flyer_url,status,created_at,profiles!events_promoter_id_fkey(full_name)')
+      .select('id,promoter_id,event_name,event_date,event_time,city,venue,country_code,region_code,timezone,currency,weight_class_needed,weight_classes_needed,disciplines_needed,purse_amount,signup_fee,notes,flyer_url,status,created_at,profiles!events_promoter_id_fkey(full_name)')
       .eq('id', id)
       .maybeSingle();
     if (error || !data) return null;
@@ -122,7 +126,7 @@ export const getPublicManualFighterSeo = cache(async (id: string): Promise<Publi
   try {
     const { data, error } = await client
       .from('public_manual_fighters')
-      .select('id,full_name,nickname,bio,weight_class,discipline,disciplines,city,state,gym_name,experience_level,photo_url,created_at')
+      .select('id,full_name,nickname,bio,weight_class,discipline,disciplines,city,state,country,gym_name,experience_level,photo_url,created_at')
       .eq('id', id)
       .maybeSingle();
     if (error || !data) return null;

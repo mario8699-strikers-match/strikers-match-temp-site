@@ -1,9 +1,9 @@
 {
   "name": "Strikers Match",
   "short_name": "StrikersMatch",
-  "description": "Comunidad de boxeo y artes marciales mixtas en México.",
+  "description": "Plataforma internacional para conectar atletas, gimnasios, representantes, promotores y eventos de deportes de combate.",
   "start_url": "/",
-  "lang": "es-MX",
+  "lang": "es",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",

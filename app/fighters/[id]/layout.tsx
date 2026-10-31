@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { StructuredData } from '@/components/StructuredData';
-import { absoluteUrl, pageMetadata, truncateDescription } from '@/lib/seo';
+import { getCountryName } from '@/lib/countries';
+import { absoluteUrl, joinLocationParts, pageMetadata, truncateDescription } from '@/lib/seo';
 import { getPublicFighterSeo } from '@/lib/seoData';
 
 interface FighterLayoutProps {
@@ -10,11 +11,12 @@ interface FighterLayoutProps {
 
 function fighterDescription(fighter: NonNullable<Awaited<ReturnType<typeof getPublicFighterSeo>>>) {
   const name = fighter.profiles?.full_name || 'Peleador';
+  const country = getCountryName(fighter.profiles?.country_code, 'es') || fighter.profiles?.country;
   const details = [
     fighter.experience_level === 'pro' ? 'profesional' : fighter.experience_level === 'amateur' ? 'amateur' : null,
     fighter.disciplines?.join(', '),
     fighter.weight_class ? `división ${fighter.weight_class}` : null,
-    fighter.profiles?.city || fighter.state,
+    joinLocationParts([fighter.profiles?.city, fighter.profiles?.state || fighter.state, country]),
   ].filter(Boolean).join(' · ');
   return truncateDescription(fighter.bio || `${name}${details ? ` — ${details}` : ''}. Consulta su perfil deportivo en Strikers Match.`);
 }
@@ -49,6 +51,8 @@ export default async function FighterLayout({ children, params }: FighterLayoutP
 
   const name = fighter.profiles?.full_name || 'Peleador';
   const profileUrl = absoluteUrl(`/fighters/${id}`);
+  const country = getCountryName(fighter.profiles?.country_code, 'es') || fighter.profiles?.country;
+  const locationName = joinLocationParts([fighter.profiles?.city, fighter.profiles?.state || fighter.state, country]);
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'ProfilePage',
@@ -62,16 +66,22 @@ export default async function FighterLayout({ children, params }: FighterLayoutP
       alternateName: fighter.nickname || undefined,
       description: fighterDescription(fighter),
       image: fighter.photo_url || undefined,
-      homeLocation: fighter.profiles?.city || fighter.state
+      homeLocation: locationName
         ? {
             '@type': 'Place',
-            name: [fighter.profiles?.city, fighter.state].filter(Boolean).join(', '),
-            address: { '@type': 'PostalAddress', addressCountry: 'MX' },
+            name: locationName,
+            address: {
+              '@type': 'PostalAddress',
+              addressLocality: fighter.profiles?.city || undefined,
+              addressRegion: fighter.profiles?.state || fighter.state || undefined,
+              addressCountry: fighter.profiles?.country_code || fighter.profiles?.country || undefined,
+            },
           }
         : undefined,
       affiliation: fighter.gym_name ? { '@type': 'SportsOrganization', name: fighter.gym_name } : undefined,
       knowsAbout: fighter.disciplines?.length ? fighter.disciplines : undefined,
     },
+    isPartOf: { '@id': 'https://strikersmatch.com/#website' },
   };
   const breadcrumbs = {
     '@context': 'https://schema.org',

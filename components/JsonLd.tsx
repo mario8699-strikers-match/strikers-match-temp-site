@@ -6,7 +6,7 @@ export function JsonLd() {
     name: 'Strikers Match',
     url: 'https://strikersmatch.com',
     logo: 'https://strikersmatch.com/strikers-logo.png',
-    knowsAbout: ['Boxeo', 'Artes marciales mixtas', 'Kickboxing', 'Muay Thai'],
+    knowsAbout: ['Boxing', 'Mixed martial arts', 'Muay Thai', 'Kickboxing', 'K-1', 'Bare-knuckle boxing'],
     description:
       'Plataforma internacional que conecta a atletas, entrenadores, gimnasios, representantes, organizadores y profesionales de los deportes de combate.',
     email: 'info@strikersmatch.com',

@@ -2,6 +2,10 @@ import type { MetadataRoute } from 'next';
 import { SITE_URL } from '@/lib/seo';
 import { getSitemapRecords } from '@/lib/seoData';
 
+// Public records change independently of deployments, so the sitemap must not
+// be frozen to whichever rows existed during the last build.
+export const dynamic = 'force-dynamic';
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   /* ── Static public pages ────────────────────────────────────── */
   const staticPages: MetadataRoute.Sitemap = [

@@ -1,8 +1,8 @@
 import { pageMetadata } from '@/lib/seo';
 
 export const metadata = pageMetadata({
-  title: 'Herramientas para organizar eventos de combate',
-  description: 'Conoce las herramientas de Strikers Match para publicar eventos, registrar atletas, crear combates, gestionar pagos e imprimir hojas del evento.',
+  title: 'Software para organizar eventos de deportes de combate',
+  description: 'Publica eventos, registra atletas, crea emparejamientos, confirma combates, gestiona pagos y genera gráficos y hojas operativas con Strikers Match.',
   path: '/pricing',
 });
 

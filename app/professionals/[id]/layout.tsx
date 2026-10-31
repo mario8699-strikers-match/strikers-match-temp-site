@@ -86,7 +86,7 @@ export default async function ProfessionalLayout({ children, params }: Professio
             '@type': 'PostalAddress',
             addressLocality: profile.city || undefined,
             addressRegion: profile.state || undefined,
-            addressCountry: profile.country || 'MX',
+            addressCountry: profile.country || undefined,
           }
         : undefined,
     },
