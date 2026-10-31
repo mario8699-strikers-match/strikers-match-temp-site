@@ -38,8 +38,12 @@ export function formatLocalizedCurrency(
   currency: string,
   language?: string | null,
 ) {
+  const hasFractionalAmount = !Number.isInteger(value);
   return formatLocalizedNumber(value, language, {
     style: 'currency',
     currency: currency.toUpperCase(),
+    currencyDisplay: 'code',
+    minimumFractionDigits: hasFractionalAmount ? 2 : 0,
+    maximumFractionDigits: hasFractionalAmount ? 2 : 0,
   });
 }
