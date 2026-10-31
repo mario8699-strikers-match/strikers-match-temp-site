@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { InlineCombatRecord } from '@/components/CombatRecord';
@@ -8,6 +9,10 @@ import type { ManualFighter } from '@/types';
 import { GenderDivisionCheckboxes } from '@/components/GenderDivisionCheckboxes';
 import { DISCIPLINE_OPTIONS, normalizeDisciplineList } from '@/lib/disciplines';
 import { countryFlagEmoji, getCountryOptions } from '@/lib/countries';
+import { deleteFile, uploadFile } from '@/lib/storageClient';
+
+const ACCEPTED_PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/gif,image/avif';
+const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 
 const WEIGHT_CLASSES = [
   'minimosca','mosca','supermosca','gallo','supergallo','pluma','superpluma',
@@ -49,6 +54,7 @@ export function ManualFighterManager({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
+  const [uploadingPhotoId, setUploadingPhotoId] = useState<string | null>(null);
 
   const [name, setName] = useState('');
   const [nickname, setNickname] = useState('');
@@ -65,7 +71,8 @@ export function ManualFighterManager({
   const [gym, setGym] = useState(defaultGymName);
   const [level, setLevel] = useState<'amateur' | 'pro'>('amateur');
   const [notes, setNotes] = useState('');
-  const [photoUrl, setPhotoUrl] = useState('');
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [bio, setBio] = useState('');
   const [isAvailable, setIsAvailable] = useState(true);
   const [isPublic, setIsPublic] = useState(true);
@@ -94,11 +101,15 @@ export function ManualFighterManager({
     });
   }, [creatorId]);
 
+  useEffect(() => () => {
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+  }, [photoPreview]);
+
   const resetForm = () => {
     setName(''); setNickname(''); setWeight(''); setDisciplines([]);
     setWins('0'); setLosses('0'); setDraws('0');
     setPhone(''); setEmail(''); setCity(''); setStateField(''); setNationality(''); setGym(defaultGymName);
-    setLevel('amateur'); setNotes(''); setPhotoUrl(''); setBio('');
+    setLevel('amateur'); setNotes(''); setPhotoFile(null); setPhotoPreview(null); setBio('');
     setIsAvailable(true); setIsPublic(true); setDateOfBirth(''); setGenderDivision(''); setExactWeight('');
     setRequestedWeight(''); setMinimumWeight(''); setMaximumWeight(''); setSkillRating(''); setRulesets('');
     setKoWins('0'); setTkoWins('0'); setKoLosses('0'); setTkoLosses('0'); setAvailableFrom(''); setAvailableTo('');
@@ -109,6 +120,17 @@ export function ManualFighterManager({
     if (!name.trim()) { setError('El nombre es obligatorio.'); return; }
     setSaving(true);
     setError(null);
+
+    let uploadedPhoto: { url: string; key: string } | null = null;
+    if (photoFile) {
+      const uploadResult = await uploadFile(photoFile, 'fighter-photos');
+      if (uploadResult.error || !uploadResult.data) {
+        setSaving(false);
+        setError(`No se pudo subir la foto. ${uploadResult.error ?? 'Intenta de nuevo.'}`);
+        return;
+      }
+      uploadedPhoto = uploadResult.data;
+    }
 
     const { data, error: err } = await manualFighterService.add(creatorId, {
       full_name: name.trim(),
@@ -125,7 +147,7 @@ export function ManualFighterManager({
       gym_name: gym.trim() || null,
       experience_level: level,
       notes: notes.trim() || null,
-      photo_url: photoUrl.trim() || null,
+      photo_url: uploadedPhoto?.url ?? null,
       bio: bio.trim() || null,
       height_cm: null,
       reach_cm: null,
@@ -154,6 +176,7 @@ export function ManualFighterManager({
 
     setSaving(false);
     if (err) {
+      if (uploadedPhoto) await deleteFile(uploadedPhoto.key);
       console.error('Manual fighter insert failed:', err);
       setError(`No se pudo agregar el peleador. ${err}`);
     } else if (data) {
@@ -161,6 +184,56 @@ export function ManualFighterManager({
       resetForm();
       setShowForm(false);
     }
+  };
+
+  const selectPhoto = (file: File | null) => {
+    if (!file) return;
+    if (!ACCEPTED_PHOTO_TYPES.split(',').includes(file.type)) {
+      setError('La foto debe ser JPG, PNG, WebP, GIF o AVIF.');
+      return;
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      setError('La foto no puede superar 10 MB.');
+      return;
+    }
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+    setError(null);
+  };
+
+  const replaceFighterPhoto = async (fighterId: string, file: File | null) => {
+    if (!file) return;
+    if (!ACCEPTED_PHOTO_TYPES.split(',').includes(file.type) || file.size > MAX_PHOTO_BYTES) {
+      setError(file.size > MAX_PHOTO_BYTES
+        ? 'La foto no puede superar 10 MB.'
+        : 'La foto debe ser JPG, PNG, WebP, GIF o AVIF.');
+      return;
+    }
+
+    setUploadingPhotoId(fighterId);
+    setError(null);
+    const uploadResult = await uploadFile(file, 'fighter-photos');
+    if (uploadResult.error || !uploadResult.data) {
+      setUploadingPhotoId(null);
+      setError(`No se pudo subir la foto. ${uploadResult.error ?? 'Intenta de nuevo.'}`);
+      return;
+    }
+
+    const updateResult = await manualFighterService.update(fighterId, {
+      photo_url: uploadResult.data.url,
+    });
+    if (updateResult.error || !updateResult.data) {
+      await deleteFile(uploadResult.data.key);
+      setUploadingPhotoId(null);
+      setError(`La foto se subió, pero no pudo guardarse en el perfil. ${updateResult.error ?? ''}`.trim());
+      return;
+    }
+
+    setManualFighters((current) => current.map((fighter) => (
+      fighter.id === fighterId ? updateResult.data! : fighter
+    )));
+    setUploadingPhotoId(null);
   };
 
   const handleRemove = async (id: string) => {
@@ -362,9 +435,29 @@ export function ManualFighterManager({
           </div>
 
           <div>
-            <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>URL de foto</label>
-            <input type="url" value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} placeholder="https://..."
-              className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+            <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-600">Foto del peleador</label>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="relative h-24 w-24 shrink-0 overflow-hidden border border-zinc-300 bg-zinc-100">
+                {photoPreview ? (
+                  <Image src={photoPreview} alt="Vista previa de la foto" fill className="object-cover" unoptimized />
+                ) : (
+                  <span className="flex h-full items-center justify-center text-center text-xs text-zinc-400">Sin foto</span>
+                )}
+              </div>
+              <div>
+                <label className="inline-flex cursor-pointer items-center border border-zinc-900 bg-zinc-900 px-4 py-2 text-xs font-bold uppercase tracking-widest text-white hover:bg-zinc-700">
+                  {photoFile ? 'Cambiar foto' : 'Seleccionar foto'}
+                  <input
+                    type="file"
+                    accept={ACCEPTED_PHOTO_TYPES}
+                    className="sr-only"
+                    onChange={(event) => selectPhoto(event.target.files?.[0] ?? null)}
+                  />
+                </label>
+                <p className="mt-2 text-xs text-zinc-500">JPG, PNG, WebP, GIF o AVIF. Máximo 10 MB.</p>
+                {photoFile && <p className="mt-1 text-xs font-medium text-zinc-700">{photoFile.name}</p>}
+              </div>
+            </div>
           </div>
 
           <div>
@@ -398,34 +491,58 @@ export function ManualFighterManager({
       ) : manualFighters.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {manualFighters.map((f) => (
-            <div key={f.id} className="border border-zinc-200 p-4 flex items-start justify-between gap-3">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <a href={`/fighters/manual/${f.id}`} className="text-sm font-bold text-zinc-900 hover:text-[#C0001E] transition-colors">
-                    {countryFlagEmoji(f.nationalities?.[0]) && <span className="mr-1" aria-hidden="true">{countryFlagEmoji(f.nationalities?.[0])}</span>}
-                    {f.full_name}
-                  </a>
-                  {f.nickname && <span className="text-xs text-zinc-400">&ldquo;{f.nickname}&rdquo;</span>}
-                  <span className="text-xs font-bold uppercase tracking-widest text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5">Roster</span>
+            <div key={f.id} className="flex items-start justify-between gap-3 border border-zinc-200 p-4">
+              <div className="flex min-w-0 flex-1 items-start gap-3">
+                <div className="shrink-0">
+                  <div className="relative h-16 w-16 overflow-hidden border border-zinc-200 bg-zinc-100">
+                    {f.photo_url ? (
+                      <Image src={f.photo_url} alt={`Foto de ${f.full_name}`} fill className="object-cover" />
+                    ) : (
+                      <span className="flex h-full items-center justify-center text-[10px] uppercase text-zinc-400">Sin foto</span>
+                    )}
+                  </div>
+                  <label className="mt-1 block cursor-pointer text-center text-[10px] font-bold uppercase tracking-wide text-[#C0001E] hover:underline">
+                    {uploadingPhotoId === f.id ? 'Subiendo…' : f.photo_url ? 'Cambiar' : 'Agregar foto'}
+                    <input
+                      type="file"
+                      accept={ACCEPTED_PHOTO_TYPES}
+                      className="sr-only"
+                      disabled={uploadingPhotoId === f.id}
+                      onChange={(event) => {
+                        void replaceFighterPhoto(f.id, event.target.files?.[0] ?? null);
+                        event.currentTarget.value = '';
+                      }}
+                    />
+                  </label>
                 </div>
-                <p className="text-xs mt-0.5" style={{ color: '#5A5A5A' }}>
-                  {f.weight_class ? WEIGHT_LABELS[f.weight_class] ?? f.weight_class : '—'} · {f.city ?? '—'}
-                </p>
-                <InlineCombatRecord wins={f.record_wins} losses={f.record_losses} draws={f.record_draws} className="mt-1 text-xs" />
-                <p className="mt-1 text-xs text-zinc-500">KO/TKO {f.ko_wins + f.tko_wins} · nivel {f.skill_rating ?? '—'}/10 · {f.gender_division ?? 'división pendiente'}</p>
-                <p className="mt-1 text-xs text-zinc-500">Peso deseado (informativo): {f.requested_weight_kg ?? '—'} kg · rango {f.acceptable_weight_min_kg ?? '—'}–{f.acceptable_weight_max_kg ?? '—'} kg</p>
-                <div className="flex gap-2 mt-1.5 flex-wrap">
-                  <span className={`text-xs font-bold px-1.5 py-0.5 uppercase tracking-widest ${f.experience_level === 'pro' ? 'bg-[#C0001E] text-white' : 'bg-zinc-100 text-zinc-600'}`}>
-                    {f.experience_level === 'pro' ? 'Pro' : 'Amateur'}
-                  </span>
-                  {normalizeDisciplineList(f.disciplines, f.discipline).map((discipline) => (
-                    <span key={discipline} className="bg-zinc-900 px-1.5 py-0.5 text-xs font-bold uppercase tracking-wide text-white">{discipline}</span>
-                  ))}
-                  <span className={`text-xs font-semibold px-1.5 py-0.5 ${f.is_available ? 'bg-emerald-50 text-emerald-700' : 'bg-zinc-100 text-zinc-500'}`}>
-                    {f.is_available ? 'Disponible' : 'No disponible'}
-                  </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <a href={`/fighters/manual/${f.id}`} className="text-sm font-bold text-zinc-900 hover:text-[#C0001E] transition-colors">
+                      {countryFlagEmoji(f.nationalities?.[0]) && <span className="mr-1" aria-hidden="true">{countryFlagEmoji(f.nationalities?.[0])}</span>}
+                      {f.full_name}
+                    </a>
+                    {f.nickname && <span className="text-xs text-zinc-400">&ldquo;{f.nickname}&rdquo;</span>}
+                    <span className="text-xs font-bold uppercase tracking-widest text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5">Roster</span>
+                  </div>
+                  <p className="text-xs mt-0.5" style={{ color: '#5A5A5A' }}>
+                    {f.weight_class ? WEIGHT_LABELS[f.weight_class] ?? f.weight_class : '—'} · {f.city ?? '—'}
+                  </p>
+                  <InlineCombatRecord wins={f.record_wins} losses={f.record_losses} draws={f.record_draws} className="mt-1 text-xs" />
+                  <p className="mt-1 text-xs text-zinc-500">KO/TKO {f.ko_wins + f.tko_wins} · nivel {f.skill_rating ?? '—'}/10 · {f.gender_division ?? 'división pendiente'}</p>
+                  <p className="mt-1 text-xs text-zinc-500">Peso deseado (informativo): {f.requested_weight_kg ?? '—'} kg · rango {f.acceptable_weight_min_kg ?? '—'}–{f.acceptable_weight_max_kg ?? '—'} kg</p>
+                  <div className="flex gap-2 mt-1.5 flex-wrap">
+                    <span className={`text-xs font-bold px-1.5 py-0.5 uppercase tracking-widest ${f.experience_level === 'pro' ? 'bg-[#C0001E] text-white' : 'bg-zinc-100 text-zinc-600'}`}>
+                      {f.experience_level === 'pro' ? 'Pro' : 'Amateur'}
+                    </span>
+                    {normalizeDisciplineList(f.disciplines, f.discipline).map((discipline) => (
+                      <span key={discipline} className="bg-zinc-900 px-1.5 py-0.5 text-xs font-bold uppercase tracking-wide text-white">{discipline}</span>
+                    ))}
+                    <span className={`text-xs font-semibold px-1.5 py-0.5 ${f.is_available ? 'bg-emerald-50 text-emerald-700' : 'bg-zinc-100 text-zinc-500'}`}>
+                      {f.is_available ? 'Disponible' : 'No disponible'}
+                    </span>
+                  </div>
+                  {f.notes && <p className="text-xs text-zinc-400 mt-1 italic">{f.notes}</p>}
                 </div>
-                {f.notes && <p className="text-xs text-zinc-400 mt-1 italic">{f.notes}</p>}
               </div>
               <button onClick={() => handleRemove(f.id)} disabled={removing === f.id}
                 className="text-xs text-zinc-400 hover:text-red-600 disabled:opacity-50 transition-colors flex-shrink-0 pt-1">

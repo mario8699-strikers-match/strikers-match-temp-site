@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -20,6 +21,7 @@ import {
 import { supabase } from '@/lib/supabaseClient';
 import { disciplineMatches, normalizeDisciplineList, sortDisciplines } from '@/lib/disciplines';
 import { searchByClosestName } from '@/lib/personNameSearch';
+import { deleteFile, uploadFile } from '@/lib/storageClient';
 import { authService } from '@/services/authService';
 import { canUseEventFeature } from '@/services/eventStaffService';
 import { eventService } from '@/services/eventService';
@@ -55,6 +57,8 @@ type EventApplicationWithFighter = EventApplication & {
 };
 
 const WEIGHT_CLASS_LABELS = Object.fromEntries(GENERIC_WEIGHT_CLASS_OPTIONS.slice(1));
+const ACCEPTED_PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/gif,image/avif';
+const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 
 interface ParticipantForm {
   full_name: string;
@@ -129,6 +133,8 @@ export default function EventParticipantsPage() {
   const [fighterSearch, setFighterSearch] = useState('');
   const [publishToRoster, setPublishToRoster] = useState(false);
   const [form, setForm] = useState<ParticipantForm>(EMPTY_FORM);
+  const [participantPhotoFile, setParticipantPhotoFile] = useState<File | null>(null);
+  const [participantPhotoPreview, setParticipantPhotoPreview] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [histories, setHistories] = useState<Record<string, EventParticipantHistoryItem[]>>({});
   const [historyLoading, setHistoryLoading] = useState<string | null>(null);
@@ -190,6 +196,10 @@ export default function EventParticipantsPage() {
       .subscribe();
     return () => { void supabase.removeChannel(channel); };
   }, [canManage, eventId, reload]);
+
+  useEffect(() => () => {
+    if (participantPhotoPreview) URL.revokeObjectURL(participantPhotoPreview);
+  }, [participantPhotoPreview]);
 
   const assignmentCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -260,6 +270,24 @@ export default function EventParticipantsPage() {
     setFighterSearch('');
     setEditingId(null);
     setPublishToRoster(false);
+    setParticipantPhotoFile(null);
+    setParticipantPhotoPreview(null);
+  };
+
+  const selectParticipantPhoto = (file: File | null) => {
+    if (!file) return;
+    if (!ACCEPTED_PHOTO_TYPES.split(',').includes(file.type)) {
+      setError('La foto debe ser JPG, PNG, WebP, GIF o AVIF.');
+      return;
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      setError('La foto no puede superar 10 MB.');
+      return;
+    }
+    if (participantPhotoPreview) URL.revokeObjectURL(participantPhotoPreview);
+    setParticipantPhotoFile(file);
+    setParticipantPhotoPreview(URL.createObjectURL(file));
+    setError(null);
   };
 
   const save = async () => {
@@ -278,10 +306,21 @@ export default function EventParticipantsPage() {
     setActing(true);
     setError(null);
     setMessage(null);
-    const payload = toPayload(form);
+    let uploadedPhoto: { url: string; key: string } | null = null;
+    if (participantPhotoFile) {
+      const uploadResult = await uploadFile(participantPhotoFile, 'fighter-photos');
+      if (uploadResult.error || !uploadResult.data) {
+        setActing(false);
+        setError(`No se pudo subir la foto. ${uploadResult.error ?? 'Intenta de nuevo.'}`);
+        return;
+      }
+      uploadedPhoto = uploadResult.data;
+    }
+    const formToSave = uploadedPhoto ? { ...form, photo_url: uploadedPhoto.url } : form;
+    const payload = toPayload(formToSave);
     let result;
     if (editingId) {
-      result = await updateEventParticipant(editingId, toRegistrationPatch(form));
+      result = await updateEventParticipant(editingId, toRegistrationPatch(formToSave));
     } else if (source === 'platform') {
       result = await registerPlatformParticipant(eventId, selectedFighterId, payload);
     } else if (source === 'roster') {
@@ -290,9 +329,12 @@ export default function EventParticipantsPage() {
       result = await createManualEventParticipant(eventId, payload, publishToRoster);
     }
     if (!editingId && source !== 'event_only' && !result.error && result.data) {
-      result = await updateEventParticipant(result.data.id, toRegistrationPatch(form));
+      result = await updateEventParticipant(result.data.id, toRegistrationPatch(formToSave));
     }
-    if (result.error) setError(result.error);
+    if (result.error) {
+      if (uploadedPhoto) await deleteFile(uploadedPhoto.key);
+      setError(result.error);
+    }
     else {
       setMessage(editingId
         ? 'Participante actualizado. La elegibilidad y las sugerencias de matchmaking se recalcularon automáticamente.'
@@ -304,6 +346,8 @@ export default function EventParticipantsPage() {
   };
 
   const edit = (registration: RegistrationWithFighter) => {
+    setParticipantPhotoFile(null);
+    setParticipantPhotoPreview(null);
     setEditingId(registration.id);
     setSource(registration.manual_fighter_id ? 'roster' : 'platform');
     setSelectedFighterId(registration.manual_fighter_id ?? registration.fighter_id ?? '');
@@ -321,6 +365,8 @@ export default function EventParticipantsPage() {
     setMessage('Completa los datos pendientes y agrega al peleador como participante.');
     setEditingId(null);
     setPublishToRoster(false);
+    setParticipantPhotoFile(null);
+    setParticipantPhotoPreview(null);
     setSource('platform');
     setFighterSearch(fighter.profiles?.full_name ?? '');
     selectExistingParticipant(
@@ -516,6 +562,8 @@ export default function EventParticipantsPage() {
                 const nextId = input.target.value;
                 const selected = existingFighterCandidates.find((fighter) => fighter.id === nextId);
                 if (selected) setFighterSearch(existingFighterName(selected, source));
+                setParticipantPhotoFile(null);
+                setParticipantPhotoPreview(null);
                 selectExistingParticipant(nextId, source, platformFighters, rosterFighters, setSelectedFighterId, event?.signup_fee && event.signup_fee > 0 ? 'pending' : 'waived', event?.event_date ?? null, event?.disciplines_needed ?? [], event?.weight_classes_needed ?? [], setForm);
               }}
               disabled={!fighterSearch.trim() || existingFighterCandidates.length === 0}
@@ -536,6 +584,9 @@ export default function EventParticipantsPage() {
           showIdentity={source === 'event_only' || Boolean(editingId)}
           eventDate={event?.event_date ?? null}
           eventWeightClasses={event?.weight_classes_needed ?? []}
+          photoFile={participantPhotoFile}
+          photoPreview={participantPhotoPreview}
+          onSelectPhoto={selectParticipantPhoto}
         />
 
         {!editingId && source === 'event_only' && (
@@ -683,7 +734,25 @@ export default function EventParticipantsPage() {
   );
 }
 
-function ParticipantFields({ form, setForm, showIdentity, eventDate, eventWeightClasses }: { form: ParticipantForm; setForm: (form: ParticipantForm) => void; showIdentity: boolean; eventDate: string | null; eventWeightClasses: string[] }) {
+function ParticipantFields({
+  form,
+  setForm,
+  showIdentity,
+  eventDate,
+  eventWeightClasses,
+  photoFile,
+  photoPreview,
+  onSelectPhoto,
+}: {
+  form: ParticipantForm;
+  setForm: (form: ParticipantForm) => void;
+  showIdentity: boolean;
+  eventDate: string | null;
+  eventWeightClasses: string[];
+  photoFile: File | null;
+  photoPreview: string | null;
+  onSelectPhoto: (file: File | null) => void;
+}) {
   const change = <K extends keyof ParticipantForm>(key: K, value: ParticipantForm[K]) => setForm({ ...form, [key]: value });
   const changeAndInferWeightCategory = <K extends 'discipline' | 'date_of_birth' | 'exact_weight'>(key: K, value: ParticipantForm[K]) => {
     const next = { ...form, [key]: value };
@@ -704,7 +773,36 @@ function ParticipantFields({ form, setForm, showIdentity, eventDate, eventWeight
         <TextField label="Apodo" value={form.nickname} onChange={(value) => change('nickname', value)} />
         <TextField label="Teléfono privado" value={form.phone} onChange={(value) => change('phone', value)} />
         <TextField label="Email privado" type="email" value={form.email} onChange={(value) => change('email', value)} />
-        <TextField label="URL de foto" value={form.photo_url} onChange={(value) => change('photo_url', value)} />
+        <label>
+          <span className="mb-1 block text-xs font-bold uppercase text-zinc-600">Foto del peleador</span>
+          <span className="flex items-center gap-3">
+            <span className="relative block h-16 w-16 shrink-0 overflow-hidden border border-zinc-300 bg-zinc-100">
+              {photoPreview || form.photo_url ? (
+                <Image
+                  src={photoPreview ?? form.photo_url}
+                  alt="Foto del peleador"
+                  fill
+                  className="object-cover"
+                  unoptimized={Boolean(photoPreview)}
+                />
+              ) : (
+                <span className="flex h-full items-center justify-center text-center text-[10px] uppercase text-zinc-400">Sin foto</span>
+              )}
+            </span>
+            <span>
+              <span className="inline-flex min-h-11 cursor-pointer items-center border border-zinc-900 bg-zinc-900 px-3 text-xs font-bold uppercase tracking-wide text-white">
+                {photoFile || form.photo_url ? 'Cambiar foto' : 'Seleccionar foto'}
+                <input
+                  type="file"
+                  accept={ACCEPTED_PHOTO_TYPES}
+                  className="sr-only"
+                  onChange={(input) => onSelectPhoto(input.target.files?.[0] ?? null)}
+                />
+              </span>
+              <span className="mt-1 block text-[11px] text-zinc-500">JPG, PNG, WebP, GIF o AVIF · máximo 10 MB</span>
+            </span>
+          </span>
+        </label>
       </FieldGroup>}
       <FieldGroup title="Datos de combate">
         <SelectField label="Disciplina" value={form.discipline} onChange={(value) => changeAndInferWeightCategory('discipline', value)} options={disciplineOptions(form.discipline)} />
