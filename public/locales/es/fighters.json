@@ -14,6 +14,18 @@
     "follower": "seguidor",
     "followers": "seguidores",
     "age": "Edad",
+    "manualProfile": {
+      "backToFighters": "Volver a atletas",
+      "accountlessTitle": "Peleador sin cuenta",
+      "noticeStart": "Este peleador no tiene cuenta. Toda solicitud se envía a",
+      "noticeEnd": ", quien gestionará el contacto dentro de la plataforma.",
+      "roles": {
+        "manager": "su representante",
+        "promoter": "su promotor",
+        "gyms_academies": "su gimnasio",
+        "admin": "el administrador"
+      }
+    },
     "search": {
       "label": "Buscar atleta",
       "placeholder": "Nombre, ciudad, gimnasio, peso o disciplina",

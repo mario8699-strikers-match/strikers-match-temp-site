@@ -14,6 +14,18 @@
     "follower": "follower",
     "followers": "followers",
     "age": "Age",
+    "manualProfile": {
+      "backToFighters": "Back to fighters",
+      "accountlessTitle": "Fighter without an account",
+      "noticeStart": "This fighter does not have an account. Every request is sent to",
+      "noticeEnd": ", who will manage contact within the platform.",
+      "roles": {
+        "manager": "their manager",
+        "promoter": "their promoter",
+        "gyms_academies": "their gym",
+        "admin": "the administrator"
+      }
+    },
     "search": {
       "label": "Search fighter",
       "placeholder": "Name, city, gym, weight, or discipline",

@@ -22,14 +22,8 @@ const WEIGHT_LABELS: Record<string, string> = {
   superwelter:'Superwelter',medio:'Medio',supermedio:'Supermedio',semipesado:'Semipesado',crucero:'Crucero',pesado:'Pesado',
 };
 
-const ROLE_LABELS: Record<string, string> = {
-  manager: 'Representante',
-  promoter: 'Promotor',
-  admin: 'Admin',
-};
-
 export default function ManualFighterDetailPage() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation('fighters');
   const { id } = useParams<{ id: string }>();
 
   const [fighter, setFighter] = useState<ManualFighterWithCreator | null>(null);
@@ -97,7 +91,7 @@ export default function ManualFighterDetailPage() {
 
   const canSendRequest = profile && (profile.role === 'promoter' || profile.role === 'manager' || profile.role === 'admin');
   const creatorName = fighter.profiles?.full_name ?? '';
-  const creatorRole = fighter.profiles?.role ? (ROLE_LABELS[fighter.profiles.role] ?? fighter.profiles.role) : '';
+  const creatorRole = fighter.profiles?.role ?? 'manager';
   const disciplines = normalizeDisciplineList(fighter.disciplines, fighter.discipline);
   const nationalityCode = fighter.nationalities?.[0];
 
@@ -105,6 +99,12 @@ export default function ManualFighterDetailPage() {
     <div className="min-h-screen bg-white flex flex-col">
       <Navbar activePage="fighters" />
       <main className="flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-10 w-full">
+        <Link
+          href="/fighters"
+          className="mb-8 inline-flex min-h-11 items-center border border-zinc-300 px-4 py-3 text-xs font-bold uppercase tracking-widest text-zinc-700 transition-colors hover:border-zinc-950 hover:text-zinc-950"
+        >
+          ← {t('fighters.manualProfile.backToFighters')}
+        </Link>
 
         {/* Header: photo + name */}
         <div className="flex items-start gap-6 mb-8">
@@ -144,11 +144,11 @@ export default function ManualFighterDetailPage() {
 
         {/* Roster notice */}
         <div className="border border-amber-200 bg-amber-50/50 p-4 mb-6">
-          <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#92400E' }}>Peleador sin cuenta</p>
+          <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#92400E' }}>{t('fighters.manualProfile.accountlessTitle')}</p>
           <p className="text-sm" style={{ color:'#5A5A5A' }}>
-            Este peleador no tiene cuenta. Toda solicitud se envía a su {creatorRole.toLowerCase() || 'representante'}
+            {t('fighters.manualProfile.noticeStart')} {t(`fighters.manualProfile.roles.${creatorRole}`, { defaultValue: t('fighters.manualProfile.roles.manager') })}
             {creatorName ? <> <span className="font-semibold text-zinc-900">{creatorName}</span></> : null}
-            , quien gestionará el contacto dentro de la plataforma.
+            {t('fighters.manualProfile.noticeEnd')}
           </p>
         </div>
 
