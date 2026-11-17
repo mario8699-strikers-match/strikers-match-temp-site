@@ -42,6 +42,7 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
   const [entries, setEntries] = useState<FighterDirectoryEntry[]>(initialEntries);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<'all' | 'available'>('all');
+  const [competitionLevel, setCompetitionLevel] = useState<'pro' | 'amateur' | 'all'>('pro');
   const [searchDraft, setSearchDraft] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
@@ -143,6 +144,9 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
     const query = searchQuery.trim().toLowerCase();
     return entries.filter((entry) => {
       const disciplines = entryDisciplines(entry);
+      const experienceLevel = entry.data.experience_level ?? 'amateur';
+      if (competitionLevel === 'pro' && experienceLevel !== 'pro') return false;
+      if (competitionLevel === 'amateur' && experienceLevel === 'pro') return false;
       if (selectedDisciplines.length > 0
         && !selectedDisciplines.some((discipline) => disciplineMatches(disciplines, discipline))) {
         return false;
@@ -158,6 +162,8 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
       return [name, city, weightClass, gym, ...disciplines]
         .some((value) => value.toLowerCase().includes(query));
     }).sort((entryA, entryB) => {
+      const rankComparison = entryDirectoryRank(entryA) - entryDirectoryRank(entryB);
+      if (rankComparison !== 0) return rankComparison;
       const countryA = getCountryName(entryCountryCode(entryA), i18n.resolvedLanguage)
         || t('fighters.countryFilter.unspecified');
       const countryB = getCountryName(entryCountryCode(entryB), i18n.resolvedLanguage)
@@ -166,7 +172,7 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
       if (countryComparison !== 0) return countryComparison;
       return entryName(entryA).localeCompare(entryName(entryB), i18n.resolvedLanguage, { sensitivity: 'base' });
     });
-  }, [entries, i18n.resolvedLanguage, searchQuery, selectedCountry, selectedDisciplines, t]);
+  }, [competitionLevel, entries, i18n.resolvedLanguage, searchQuery, selectedCountry, selectedDisciplines, t]);
 
   const totalPages = Math.ceil(filteredEntries.length / PAGE_SIZE);
   const pageEntries = useMemo(
@@ -287,6 +293,33 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
               ))}
             </select>
           </label>
+
+          <fieldset>
+            <legend className="mb-2 text-xs font-bold uppercase tracking-widest text-zinc-700">
+              {t('fighters.levelFilter.label')}
+            </legend>
+            <div className="flex flex-wrap gap-0">
+              {(['pro', 'amateur', 'all'] as const).map((level) => (
+                <button
+                  key={level}
+                  type="button"
+                  aria-pressed={competitionLevel === level}
+                  onClick={() => {
+                    setCompetitionLevel(level);
+                    setPage(1);
+                  }}
+                  className={`min-h-11 border px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors ${
+                    competitionLevel === level
+                      ? 'border-[#C0001E] bg-[#C0001E] text-white'
+                      : 'border-zinc-300 bg-white text-zinc-700 hover:border-zinc-500'
+                  }`}
+                >
+                  {t(`fighters.levelFilter.${level}`)}
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-zinc-500">{t('fighters.levelFilter.help')}</p>
+          </fieldset>
 
           <fieldset className="border border-zinc-200 bg-zinc-50 p-4">
             <legend className="px-1 text-xs font-bold uppercase tracking-widest text-zinc-700">{t('fighters.disciplineFilter.label')}</legend>
@@ -537,4 +570,9 @@ function entryCountryCode(entry: FighterDirectoryEntry): string {
     ? entry.data.country_code
     : entry.data.profiles?.country_code;
   return value?.trim().toUpperCase() ?? '';
+}
+
+function entryDirectoryRank(entry: FighterDirectoryEntry): number {
+  if (entry.data.age != null && entry.data.age < 18) return 2;
+  return entry.data.experience_level === 'pro' ? 0 : 1;
 }

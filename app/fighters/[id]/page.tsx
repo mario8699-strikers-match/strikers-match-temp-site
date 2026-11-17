@@ -88,13 +88,12 @@ export default function FighterDetailPage() {
     if (!id) return;
     let cancelled = false;
     supabase
-      .from('fighters')
-      .select('id, profiles(full_name)')
-      .neq('is_hidden', true)
+      .from('public_fighters')
+      .select('id, profiles')
       .order('created_at', { ascending: false })
       .then(({ data }) => {
         if (cancelled || !data) return;
-        const list = data as unknown as Array<{ id: string; profiles: { full_name: string } | null }>;
+        const list = data as unknown as Array<{ id: string; profiles: { full_name?: string } | null }>;
         const idx = list.findIndex((f) => f.id === id);
         if (idx < 0) {
           setNeighbors({ prev: null, next: null });

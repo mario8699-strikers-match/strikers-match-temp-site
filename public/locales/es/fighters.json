@@ -47,6 +47,13 @@
       "all": "Todas",
       "help": "Puedes seleccionar varias disciplinas; se mostrarán atletas que practiquen cualquiera de ellas."
     },
+    "levelFilter": {
+      "label": "Nivel competitivo",
+      "pro": "Profesionales",
+      "amateur": "Amateurs",
+      "all": "Todos",
+      "help": "Se muestran profesionales primero. En la vista Todos, los menores aparecen al final."
+    },
     "profile": {
       "eyebrow": "Perfil del atleta",
       "photoAlt": "Retrato de {{name}}",
@@ -124,7 +131,7 @@
       "submit": "Registrar consentimiento"
     },
     "rosterManager": {
-      "sectionLabel": "Mis peleadores", "description": "Peleadores que no tienen una cuenta en la plataforma. Aparecerán públicamente con la etiqueta “Roster” y las solicitudes de pelea te llegarán dentro de la aplicación.", "cancel": "Cancelar", "addFighter": "Agregar peleador", "newFighter": "Nuevo peleador", "select": "Seleccionar…",
+      "sectionLabel": "Mis peleadores", "description": "Peleadores que no tienen una cuenta en la plataforma. Aparecerán públicamente con la etiqueta “Roster” y las solicitudes de pelea te llegarán dentro de la aplicación.", "publicProfileRule": "El perfil solo será visible públicamente cuando tenga foto, nombre y apellido, país actual, nacionalidad, Instagram, disciplina, categoría de peso y gimnasio/equipo.", "cancel": "Cancelar", "addFighter": "Agregar peleador", "newFighter": "Nuevo peleador", "select": "Seleccionar…",
       "disciplinesHelp": "Selecciona todas las disciplinas que practica este peleador.", "matchmakingWeights": "Pesos para matchmaking", "knockoutRecord": "Récord KO / TKO", "availableForFights": "Disponible para peleas", "showPublic": "Mostrar en el directorio público", "willingToTravel": "Disponible para viajar internacionalmente",
       "photoPreview": "Vista previa de la foto", "changePhoto": "Cambiar foto", "selectPhoto": "Seleccionar foto", "photoHelp": "JPG, PNG, WebP, GIF o AVIF. Máximo 10 MB.", "saving": "Guardando…", "saveFighter": "Guardar peleador", "loading": "Cargando…", "empty": "No tienes peleadores agregados manualmente.", "uploading": "Subiendo…", "change": "Cambiar", "addPhoto": "Agregar foto", "save": "Guardar", "remove": "Quitar", "pendingDivision": "división pendiente",
       "photoOf": "Foto de {{name}}", "instagramOf": "Instagram de {{name}}", "currentCountryOf": "País actual de {{name}}", "cardStats": "KO/TKO {{knockouts}} · nivel {{level}}/10", "cardWeight": "Peso deseado (informativo): {{requested}} kg · rango {{minimum}}–{{maximum}} kg",

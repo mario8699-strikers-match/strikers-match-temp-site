@@ -374,6 +374,9 @@ export function ManualFighterManager({
         </button>
       </div>
       <p className="text-xs text-zinc-400 mb-4">{resolvedDescription}</p>
+      <p className="mb-4 border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">
+        {t('fighters.rosterManager.publicProfileRule')}
+      </p>
 
       {showForm && (
         <div className="border border-zinc-200 p-6 mb-6 space-y-4">

@@ -11,7 +11,12 @@ export default async function FightersPage() {
   const initialEntries: FighterDirectoryEntry[] = [
     ...registered.map((fighter) => ({ kind: 'registered' as const, data: fighter })),
     ...manual.map((fighter) => ({ kind: 'manual' as const, data: fighter })),
-  ].sort((a, b) => new Date(b.data.created_at).getTime() - new Date(a.data.created_at).getTime());
+  ].sort((a, b) => {
+    const aRank = a.data.age != null && a.data.age < 18 ? 2 : a.data.experience_level === 'pro' ? 0 : 1;
+    const bRank = b.data.age != null && b.data.age < 18 ? 2 : b.data.experience_level === 'pro' ? 0 : 1;
+    if (aRank !== bRank) return aRank - bRank;
+    return new Date(b.data.created_at).getTime() - new Date(a.data.created_at).getTime();
+  });
 
   const itemList = {
     '@context': 'https://schema.org',

@@ -99,7 +99,7 @@ export default function SearchPage() {
     queryKey: ['manual-fighters-public', managerId],
     queryFn: async () => {
       const { data: result, error } = managerId
-        ? await manualFighterService.getByCreator(managerId)
+        ? await manualFighterService.getPublicByCreator(managerId)
         : await manualFighterService.getAllPublic();
       if (error) throw new Error(error);
       return (result ?? []) as ManualFighter[];

@@ -51,6 +51,21 @@ export const manualFighterService = {
     }
   },
 
+  async getPublicByCreator(creatorId: string): Promise<ServiceResponse<ManualFighterWithCreator[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('public_manual_fighters')
+        .select('*')
+        .eq('manager_id', creatorId)
+        .order('created_at', { ascending: false });
+
+      if (error) return { data: null, error: error.message };
+      return { data: (data as ManualFighterWithCreator[]) ?? [], error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
   // Single manual fighter with creator info
   async getById(id: string): Promise<ServiceResponse<ManualFighterWithCreator>> {
     try {
