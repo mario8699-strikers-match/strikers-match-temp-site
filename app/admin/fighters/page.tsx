@@ -6,10 +6,19 @@ import { useTranslation } from 'react-i18next';
 import { InlineCombatRecord } from '@/components/CombatRecord';
 import { adminService } from '@/services/adminService';
 import { getMissingFighterRegistrationProfileFields } from '@/lib/fighterRegistrationProfile';
+import { buildFighterProfileReminderEmail } from '@/lib/fighterProfileReminderEmail';
 import type { FighterWithProfile, ManualFighterWithCreator } from '@/types';
 
 type Confirm = { fighterId: string; action: 'verify' | 'unverify' | 'hide' | 'unhide' } | null;
 type Tab = 'registered' | 'manual';
+type ReminderPreview = {
+  fighterId: string;
+  fighterName: string;
+  recipientEmail: string;
+  language: string;
+  subject: string;
+  html: string;
+};
 
 const REP_LABELS = ['manager', 'promoter', 'sponsor'] as const;
 
@@ -26,6 +35,7 @@ export default function AdminFightersPage() {
   const [tab, setTab] = useState<Tab>('registered');
   const [remindingId, setRemindingId] = useState<string | null>(null);
   const [reminderSentIds, setReminderSentIds] = useState<Set<string>>(() => new Set());
+  const [reminderPreview, setReminderPreview] = useState<ReminderPreview | null>(null);
 
   const missingFieldsByFighterId = useMemo(() => new Map(
     fighters.map((fighter) => [
@@ -83,6 +93,24 @@ export default function AdminFightersPage() {
     setConfirm(null);
   };
 
+  const openReminderPreview = (fighter: FighterWithProfile) => {
+    const missingFields = missingFieldsByFighterId.get(fighter.id) ?? [];
+    const email = buildFighterProfileReminderEmail({
+      fullName: fighter.profiles.full_name,
+      language: fighter.profiles.preferred_language,
+      missingFields,
+      profileUrl: `${window.location.origin}/fighter/profile`,
+    });
+    setReminderPreview({
+      fighterId: fighter.id,
+      fighterName: fighter.profiles.full_name,
+      recipientEmail: fighter.profiles.email,
+      language: fighter.profiles.preferred_language ?? 'es',
+      subject: email.subject,
+      html: email.html,
+    });
+  };
+
   const handleProfileReminder = async (fighterId: string) => {
     setRemindingId(fighterId);
     setError(null);
@@ -90,9 +118,10 @@ export default function AdminFightersPage() {
     setRemindingId(null);
     if (result.error) {
       setError(result.error);
-      return;
+      return false;
     }
     setReminderSentIds((current) => new Set(current).add(fighterId));
+    return true;
   };
 
   return (
@@ -187,15 +216,13 @@ export default function AdminFightersPage() {
                     </p>
                     <button
                       type="button"
-                      onClick={() => void handleProfileReminder(fighter.id)}
-                      disabled={remindingId === fighter.id || reminderSentIds.has(fighter.id)}
+                      onClick={() => openReminderPreview(fighter)}
+                      disabled={reminderSentIds.has(fighter.id)}
                       className="mt-2 text-xs font-bold text-[#C0001E] hover:underline disabled:text-emerald-700 disabled:no-underline"
                     >
-                      {remindingId === fighter.id
-                        ? t('admin.fighters.sendingReminder')
-                        : reminderSentIds.has(fighter.id)
-                          ? t('admin.fighters.reminderSent')
-                          : t('admin.fighters.sendReminder')}
+                      {reminderSentIds.has(fighter.id)
+                        ? t('admin.fighters.reminderSent')
+                        : t('admin.fighters.previewReminder')}
                     </button>
                   </>
                 ) : (
@@ -331,15 +358,13 @@ export default function AdminFightersPage() {
                       {(missingFieldsByFighterId.get(fighter.id) ?? []).length > 0 && (
                         <button
                           type="button"
-                          onClick={() => void handleProfileReminder(fighter.id)}
-                          disabled={remindingId === fighter.id || reminderSentIds.has(fighter.id)}
+                          onClick={() => openReminderPreview(fighter)}
+                          disabled={reminderSentIds.has(fighter.id)}
                           className="text-xs font-medium text-[#C0001E] hover:underline disabled:text-emerald-700 disabled:no-underline"
                         >
-                          {remindingId === fighter.id
-                            ? t('admin.fighters.sendingReminder')
-                            : reminderSentIds.has(fighter.id)
-                              ? t('admin.fighters.reminderSent')
-                              : t('admin.fighters.sendReminder')}
+                          {reminderSentIds.has(fighter.id)
+                            ? t('admin.fighters.reminderSent')
+                            : t('admin.fighters.previewReminder')}
                         </button>
                       )}
                       {fighter.verified ? (
@@ -525,6 +550,59 @@ export default function AdminFightersPage() {
           </div>
           </>
         )
+      )}
+
+      {reminderPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6">
+          <div className="flex max-h-[92vh] w-full max-w-4xl flex-col bg-white shadow-xl">
+            <div className="border-b border-zinc-200 px-5 py-4 sm:px-6">
+              <h2 className="text-lg font-bold text-zinc-950">{t('admin.fighters.emailPreviewTitle')}</h2>
+              <dl className="mt-3 grid gap-2 text-xs text-zinc-600 sm:grid-cols-2">
+                <div>
+                  <dt className="font-bold uppercase tracking-wide text-zinc-400">{t('admin.fighters.emailTo')}</dt>
+                  <dd className="mt-0.5 break-all">{reminderPreview.fighterName} · {reminderPreview.recipientEmail}</dd>
+                </div>
+                <div>
+                  <dt className="font-bold uppercase tracking-wide text-zinc-400">{t('admin.fighters.emailLanguage')}</dt>
+                  <dd className="mt-0.5 uppercase">{reminderPreview.language}</dd>
+                </div>
+                <div className="sm:col-span-2">
+                  <dt className="font-bold uppercase tracking-wide text-zinc-400">{t('admin.fighters.emailSubject')}</dt>
+                  <dd className="mt-0.5 font-semibold text-zinc-800">{reminderPreview.subject}</dd>
+                </div>
+              </dl>
+            </div>
+            <iframe
+              title={t('admin.fighters.emailPreviewFrameTitle')}
+              srcDoc={reminderPreview.html}
+              sandbox=""
+              className="h-[60vh] w-full bg-zinc-100"
+            />
+            <div className="flex flex-col-reverse gap-3 border-t border-zinc-200 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
+              <button
+                type="button"
+                onClick={() => setReminderPreview(null)}
+                disabled={remindingId === reminderPreview.fighterId}
+                className="min-h-11 border border-zinc-300 px-5 py-2 text-sm font-semibold text-zinc-700 disabled:opacity-50"
+              >
+                {t('admin.fighters.closePreview')}
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const sent = await handleProfileReminder(reminderPreview.fighterId);
+                  if (sent) setReminderPreview(null);
+                }}
+                disabled={remindingId === reminderPreview.fighterId}
+                className="min-h-11 bg-[#C0001E] px-5 py-2 text-sm font-bold uppercase tracking-wide text-white disabled:opacity-50"
+              >
+                {remindingId === reminderPreview.fighterId
+                  ? t('admin.fighters.sendingReminder')
+                  : t('admin.fighters.sendReminder')}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Confirm modal */}

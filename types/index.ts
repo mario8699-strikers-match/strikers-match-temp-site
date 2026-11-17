@@ -166,6 +166,7 @@ export interface FighterWithProfile extends Fighter {
     country?: string | null;
     country_code?: string | null;
     instagram?: string | null;
+    preferred_language?: 'es' | 'en' | 'ru';
     date_of_birth?: string | null;
     phone: string | null;
     is_banned?: boolean;

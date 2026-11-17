@@ -123,6 +123,7 @@ export default function AdminDashboardPage() {
         {[
           { href: '/admin/users', label: t('admin.nav.users') },
           { href: '/admin/fighters', label: t('admin.nav.fighters') },
+          { href: '/admin/emails', label: t('admin.nav.emails') },
           { href: '/admin/promoters', label: t('admin.nav.promoters') },
           { href: '/admin/managers', label: t('admin.nav.managers') },
           { href: '/admin/sponsors', label: t('admin.nav.sponsors') },
