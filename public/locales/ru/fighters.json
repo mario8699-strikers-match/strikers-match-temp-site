@@ -134,6 +134,7 @@
       "pendingDivision": "ожидается разделение",
       "photoOf": "Фотография{{name}}",
       "instagramOf": "Инстаграм{{name}}",
+      "currentCountryOf": "Текущая страна проживания: {{name}}",
       "cardStats": "Нокаут/технический нокаут{{knockouts}}· уровень{{level}}/10 ·{{gender}}",
       "cardWeight": "Желаемый вес (информационный):{{requested}}кг · диапазон{{minimum}}–{{maximum}}кг",
       "fields": {
@@ -161,6 +162,7 @@
         "privateEmail": "Электронная почта (его видите только вы)",
         "city": "Город",
         "state": "Государство / Провинция / Регион",
+        "currentCountry": "Текущая страна *",
         "nationality": "Национальность/флаг",
         "gym": "Спортзал",
         "publicInstagram": "Публичный Инстаграм",
@@ -178,6 +180,8 @@
       },
       "errors": {
         "nameRequired": "Требуется имя.",
+        "countryRequired": "Выберите текущую страну проживания бойца.",
+        "countrySave": "Не удалось сохранить текущую страну. {{error}}",
         "invalidInstagram": "Введите действительное имя пользователя Instagram или ссылку.",
         "tryAgain": "Попробуйте еще раз.",
         "uploadPhoto": "Не удалось загрузить фотографию.{{error}}",

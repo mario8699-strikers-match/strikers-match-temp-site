@@ -383,7 +383,7 @@ export interface ManualFighter {
   medical_clearance_date: string | null;
   last_fight_at: string | null;
   last_ko_loss_at: string | null;
-  country: string;
+  country: string | null;
   country_code?: string | null;
   region_code?: string | null;
   timezone?: string | null;

@@ -8,7 +8,7 @@ import { manualFighterService } from '@/services/manualFighterService';
 import type { ManualFighter } from '@/types';
 import { GenderDivisionCheckboxes } from '@/components/GenderDivisionCheckboxes';
 import { DISCIPLINE_OPTIONS, normalizeDisciplineList } from '@/lib/disciplines';
-import { countryFlagEmoji, getCountryOptions } from '@/lib/countries';
+import { countryFlagEmoji, getCountryName, getCountryOptions } from '@/lib/countries';
 import { deleteFile, uploadFile } from '@/lib/storageClient';
 import {
   getSocialMediaDisplayValue,
@@ -64,7 +64,9 @@ export function ManualFighterManager({
   const [removing, setRemoving] = useState<string | null>(null);
   const [uploadingPhotoId, setUploadingPhotoId] = useState<string | null>(null);
   const [savingInstagramId, setSavingInstagramId] = useState<string | null>(null);
+  const [savingCountryId, setSavingCountryId] = useState<string | null>(null);
   const [instagramDrafts, setInstagramDrafts] = useState<Record<string, string>>({});
+  const [countryDrafts, setCountryDrafts] = useState<Record<string, string>>({});
 
   const [name, setName] = useState('');
   const [nickname, setNickname] = useState('');
@@ -77,6 +79,7 @@ export function ManualFighterManager({
   const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
   const [state, setStateField] = useState('');
+  const [currentCountry, setCurrentCountry] = useState('');
   const [nationality, setNationality] = useState('');
   const [gym, setGym] = useState(defaultGymName);
   const [instagram, setInstagram] = useState('');
@@ -112,6 +115,9 @@ export function ManualFighterManager({
       setInstagramDrafts(Object.fromEntries(
         fighters.map((fighter) => [fighter.id, fighter.instagram ?? '']),
       ));
+      setCountryDrafts(Object.fromEntries(
+        fighters.map((fighter) => [fighter.id, fighter.country_code ?? '']),
+      ));
       setLoading(false);
     });
   }, [creatorId]);
@@ -123,7 +129,7 @@ export function ManualFighterManager({
   const resetForm = () => {
     setName(''); setNickname(''); setWeight(''); setDisciplines([]);
     setWins('0'); setLosses('0'); setDraws('0');
-    setPhone(''); setEmail(''); setCity(''); setStateField(''); setNationality(''); setGym(defaultGymName); setInstagram('');
+    setPhone(''); setEmail(''); setCity(''); setStateField(''); setCurrentCountry(''); setNationality(''); setGym(defaultGymName); setInstagram('');
     setLevel('amateur'); setNotes(''); setPhotoFile(null); setPhotoPreview(null); setBio('');
     setIsAvailable(true); setIsPublic(true); setDateOfBirth(''); setGenderDivision(''); setExactWeight('');
     setRequestedWeight(''); setMinimumWeight(''); setMaximumWeight(''); setSkillRating(''); setRulesets('');
@@ -133,6 +139,7 @@ export function ManualFighterManager({
 
   const handleAdd = async () => {
     if (!name.trim()) { setError(t('fighters.rosterManager.errors.nameRequired')); return; }
+    if (!currentCountry) { setError(t('fighters.rosterManager.errors.countryRequired')); return; }
     if (!isValidSocialMediaIdentifier('instagram', instagram)) {
       setError(t('fighters.rosterManager.errors.invalidInstagram'));
       return;
@@ -172,6 +179,8 @@ export function ManualFighterManager({
       height_cm: null,
       reach_cm: null,
       state: state.trim() || null,
+      country_code: currentCountry,
+      country: getCountryName(currentCountry, 'en') || currentCountry,
       nationalities: nationality ? [nationality] : [],
       is_available: isAvailable,
       is_public: isPublic,
@@ -202,9 +211,30 @@ export function ManualFighterManager({
     } else if (data) {
       setManualFighters((prev) => [data, ...prev]);
       setInstagramDrafts((current) => ({ ...current, [data.id]: data.instagram ?? '' }));
+      setCountryDrafts((current) => ({ ...current, [data.id]: data.country_code ?? '' }));
       resetForm();
       setShowForm(false);
     }
+  };
+
+  const saveFighterCountry = async (fighterId: string) => {
+    const countryCode = countryDrafts[fighterId]?.trim().toUpperCase() ?? '';
+    if (!countryCode) {
+      setError(t('fighters.rosterManager.errors.countryRequired'));
+      return;
+    }
+    setSavingCountryId(fighterId);
+    setError(null);
+    const { data, error: updateError } = await manualFighterService.update(fighterId, {
+      country_code: countryCode,
+      country: getCountryName(countryCode, 'en') || countryCode,
+    });
+    setSavingCountryId(null);
+    if (updateError || !data) {
+      setError(t('fighters.rosterManager.errors.countrySave', { error: updateError ?? t('fighters.rosterManager.errors.tryAgain') }));
+      return;
+    }
+    setManualFighters((current) => current.map((fighter) => fighter.id === fighterId ? data : fighter));
   };
 
   const selectPhoto = (file: File | null) => {
@@ -380,7 +410,7 @@ export function ManualFighterManager({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <RosterInput label={t('fighters.rosterManager.fields.dateOfBirth')} type="date" value={dateOfBirth} onChange={setDateOfBirth} />
             <GenderDivisionCheckboxes value={genderDivision} onChange={setGenderDivision} />
             <RosterInput label={t('fighters.rosterManager.fields.skillRating')} type="number" value={skillRating} onChange={setSkillRating} />
@@ -438,6 +468,21 @@ export function ManualFighterManager({
               <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.rosterManager.fields.state')}</label>
               <input type="text" value={state} onChange={(e) => setStateField(e.target.value)} placeholder={t('fighters.rosterManager.fields.state')}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.rosterManager.fields.currentCountry')}</label>
+              <select
+                value={currentCountry}
+                onChange={(event) => setCurrentCountry(event.target.value)}
+                className="w-full border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+              >
+                <option value="">{t('fighters.rosterManager.select')}</option>
+                {countryOptions.map((option) => (
+                  <option key={option.code} value={option.code}>
+                    {countryFlagEmoji(option.code)} {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.rosterManager.fields.nationality')}</label>
@@ -616,6 +661,29 @@ export function ManualFighterManager({
                       className="border border-zinc-900 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wide text-zinc-900 disabled:opacity-50"
                     >
                       {savingInstagramId === f.id ? t('fighters.rosterManager.saving') : t('fighters.rosterManager.save')}
+                    </button>
+                  </div>
+                  <div className="mt-2 flex max-w-sm gap-2">
+                    <select
+                      value={countryDrafts[f.id] ?? ''}
+                      onChange={(event) => setCountryDrafts((current) => ({ ...current, [f.id]: event.target.value }))}
+                      aria-label={t('fighters.rosterManager.currentCountryOf', { name: f.full_name })}
+                      className="min-w-0 flex-1 border border-zinc-300 bg-white px-2 py-1.5 text-xs"
+                    >
+                      <option value="">{t('fighters.rosterManager.fields.currentCountry')}</option>
+                      {countryOptions.map((option) => (
+                        <option key={option.code} value={option.code}>
+                          {countryFlagEmoji(option.code)} {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => void saveFighterCountry(f.id)}
+                      disabled={savingCountryId === f.id}
+                      className="border border-zinc-900 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wide text-zinc-900 disabled:opacity-50"
+                    >
+                      {savingCountryId === f.id ? t('fighters.rosterManager.saving') : t('fighters.rosterManager.save')}
                     </button>
                   </div>
                   <p className="mt-1 text-xs text-zinc-500">{t('fighters.rosterManager.cardStats', { knockouts: f.ko_wins + f.tko_wins, level: f.skill_rating ?? '—', gender: f.gender_division ?? t('fighters.rosterManager.pendingDivision') })}</p>
