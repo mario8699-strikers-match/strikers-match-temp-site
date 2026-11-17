@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { RecordValue } from '@/components/CombatRecord';
 import { countryFlagEmoji, getCountryName } from '@/lib/countries';
 import { getSocialMediaDisplayValue, getSocialMediaHref } from '@/lib/socialMedia';
+import { disciplineI18nKey } from '@/lib/disciplines';
+import { fighterWeightClassI18nKey } from '@/lib/fighterDisplay';
 
 interface FighterProfileHeroProps {
   fullName: string;
@@ -51,7 +53,7 @@ export function FighterProfileHero({
   verified = false,
   roster = false,
 }: FighterProfileHeroProps) {
-  const { t, i18n } = useTranslation('fighters');
+  const { t, i18n } = useTranslation(['fighters', 'events']);
   const language = i18n.resolvedLanguage || i18n.language;
   const flagCode = nationalityCode || countryCode;
   const flag = countryFlagEmoji(flagCode);
@@ -62,10 +64,18 @@ export function FighterProfileHero({
     || country?.trim()
     || nationalityName;
   const instagramHref = instagram ? getSocialMediaHref('instagram', instagram) : null;
+  const disciplineKey = disciplineI18nKey(primaryDiscipline);
+  const localizedDiscipline = disciplineKey
+    ? t(`fighters.disciplines.${disciplineKey}`, { defaultValue: primaryDiscipline ?? '' })
+    : primaryDiscipline;
+  const weightClassKey = fighterWeightClassI18nKey(weight);
+  const localizedWeight = weightClassKey
+    ? t(`events:events.weightClasses.${weightClassKey}`, { defaultValue: weight ?? '' })
+    : weight;
 
   const facts = [
-    { label: t('fighters.profile.primarySport'), value: primaryDiscipline },
-    { label: t('fighters.profile.weight'), value: weight },
+    { label: t('fighters.profile.primarySport'), value: localizedDiscipline },
+    { label: t('fighters.profile.weight'), value: localizedWeight },
     { label: t('fighters.profile.country'), value: countryName ? `${flag ? `${flag} ` : ''}${countryName}` : null },
     { label: t('fighters.profile.team'), value: team },
   ];

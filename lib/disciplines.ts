@@ -22,6 +22,32 @@ const CANONICAL_DISCIPLINES = new Map(
   DISCIPLINE_OPTIONS.map((discipline) => [discipline.toLocaleLowerCase(), discipline])
 );
 
+const DISCIPLINE_I18N_KEYS: Readonly<Record<string, string>> = {
+  'boxeo': 'boxing',
+  'muay thai': 'muayThai',
+  'mma': 'mma',
+  'kickboxing': 'kickboxing',
+  'karate': 'karate',
+  'judo': 'judo',
+  'lucha libre': 'wrestling',
+  'lima lama': 'limaLama',
+  'jiu-jitsu': 'jiuJitsu',
+  'point fight': 'pointFight',
+  'bare knuckle': 'bareKnuckle',
+  'k1': 'k1',
+  'light contact': 'lightContact',
+  'kick light': 'kickLight',
+  'low kick': 'lowKick',
+  'full contact': 'fullContact',
+  'otro': 'other',
+};
+
+export function disciplineI18nKey(value: string | null | undefined): string | null {
+  const discipline = normalizeDiscipline(value);
+  if (!discipline) return null;
+  return DISCIPLINE_I18N_KEYS[discipline.toLocaleLowerCase()] ?? null;
+}
+
 export function normalizeDiscipline(value: string | null | undefined): string | null {
   const trimmed = value?.trim();
   if (!trimmed) return null;

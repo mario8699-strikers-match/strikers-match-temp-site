@@ -13,12 +13,14 @@ import { Pagination } from '@/components/Pagination';
 import { RecordValue } from '@/components/CombatRecord';
 import {
   DISCIPLINE_OPTIONS,
+  disciplineI18nKey,
   disciplineMatches,
   normalizeDisciplineList,
   sortDisciplines,
 } from '@/lib/disciplines';
 import type { FighterWithProfile, ManualFighterWithCreator } from '@/types';
 import { countryFlagEmoji, getCountryName } from '@/lib/countries';
+import { fighterGenderI18nKey, fighterWeightClassI18nKey } from '@/lib/fighterDisplay';
 
 const PAGE_SIZE = 12;
 
@@ -32,7 +34,7 @@ interface FightersPageClientProps {
 }
 
 export function FightersPageClient({ initialEntries }: FightersPageClientProps) {
-  const { t, i18n } = useTranslation('fighters');
+  const { t, i18n } = useTranslation(['fighters', 'events']);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -301,6 +303,7 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
               </button>
               {disciplineOptions.map((discipline) => {
                 const selected = selectedDisciplines.some((item) => item.toLocaleLowerCase() === discipline.toLocaleLowerCase());
+                const translationKey = disciplineI18nKey(discipline);
                 return (
                   <button
                     key={discipline}
@@ -313,7 +316,9 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                       ? 'border-[#C0001E] bg-[#C0001E] text-white'
                       : 'border-zinc-300 bg-white text-zinc-700 hover:border-zinc-500'}`}
                   >
-                    {discipline}
+                    {translationKey
+                      ? t(`fighters.disciplines.${translationKey}`, { defaultValue: discipline })
+                      : discipline}
                   </button>
                 );
               })}
@@ -355,6 +360,8 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
               const koTkoWins = (entry.data.ko_wins ?? 0) + (entry.data.tko_wins ?? 0);
               const skillRating = entry.data.skill_rating;
               const genderDivision = entry.data.gender_division;
+              const genderKey = fighterGenderI18nKey(genderDivision);
+              const weightClassKey = fighterWeightClassI18nKey(weightClass);
               const requestedWeight = entry.data.requested_weight_kg;
               const minimumWeight = entry.data.acceptable_weight_min_kg;
               const maximumWeight = entry.data.acceptable_weight_max_kg;
@@ -438,9 +445,19 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                       </span>
                     )}
                     {weightClass && (
-                      <span className="text-xs bg-zinc-100 text-zinc-700 px-2 py-1">{weightClass}</span>
+                      <span className="text-xs bg-zinc-100 text-zinc-700 px-2 py-1">
+                        {weightClassKey
+                          ? t(`events:events.weightClasses.${weightClassKey}`, { defaultValue: weightClass })
+                          : weightClass}
+                      </span>
                     )}
-                    {genderDivision && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">{genderDivision}</span>}
+                    {genderDivision && (
+                      <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">
+                        {genderKey
+                          ? t(`fighters.gender.${genderKey}`, { defaultValue: genderDivision })
+                          : genderDivision}
+                      </span>
+                    )}
                     {skillRating != null && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">{t('fighters.skillLevel')} {skillRating}/10</span>}
                     <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">KO/TKO {koTkoWins}</span>
                     {requestedWeight != null && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">{t('fighters.requestedWeight')}: {requestedWeight} kg</span>}
@@ -451,11 +468,18 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                         {followers} {followers === 1 ? t('fighters.follower') : t('fighters.followers')}
                       </span>
                     )}
-                    {disciplines.map(d => (
-                      <span key={d} className="text-xs font-bold px-2 py-1 uppercase tracking-wide bg-[#0A0A0A] text-white">{d}</span>
-                    ))}
+                    {disciplines.map((discipline) => {
+                      const translationKey = disciplineI18nKey(discipline);
+                      return (
+                        <span key={discipline} className="text-xs font-bold px-2 py-1 uppercase tracking-wide bg-[#0A0A0A] text-white">
+                          {translationKey
+                            ? t(`fighters.disciplines.${translationKey}`, { defaultValue: discipline })
+                            : discipline}
+                        </span>
+                      );
+                    })}
                     <span className={`text-xs font-bold px-2 py-1 uppercase tracking-widest ${experience === 'pro' ? 'bg-[#C0001E] text-white' : 'bg-zinc-100 text-zinc-600'}`}>
-                      {experience === 'pro' ? 'Pro' : 'Amateur'}
+                      {experience === 'pro' ? t('fighters.profile.pro') : t('fighters.profile.amateur')}
                     </span>
                     <span className={`text-xs px-2 py-1 ${isAvailable ? 'bg-emerald-50 text-emerald-700' : 'bg-zinc-100 text-zinc-500'}`}>
                       {isAvailable ? t('fighters.available') : t('fighters.unavailable')}

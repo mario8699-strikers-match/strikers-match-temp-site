@@ -17,6 +17,29 @@
     "skillLevel": "Уровень",
     "requestedWeight": "Желаемый вес (для информации)",
     "weightRange": "Диапазон",
+    "gender": {
+      "male": "Мужской",
+      "female": "Женский"
+    },
+    "disciplines": {
+      "boxing": "Бокс",
+      "muayThai": "Муай-тай",
+      "mma": "ММА",
+      "kickboxing": "Кикбоксинг",
+      "karate": "Каратэ",
+      "judo": "Дзюдо",
+      "wrestling": "Борьба",
+      "limaLama": "Лима-лама",
+      "jiuJitsu": "Джиу-джитсу",
+      "pointFight": "Поинт-файтинг",
+      "bareKnuckle": "Бои на голых кулаках",
+      "k1": "K-1",
+      "lightContact": "Лайт-контакт",
+      "kickLight": "Кик-лайт",
+      "lowKick": "Лоу-кик",
+      "fullContact": "Фулл-контакт",
+      "other": "Другое"
+    },
     "countryFilter": {
       "label": "Текущая страна",
       "all": "Все страны",

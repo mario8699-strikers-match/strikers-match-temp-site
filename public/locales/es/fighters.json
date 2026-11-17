@@ -17,6 +17,29 @@
     "skillLevel": "Nivel",
     "requestedWeight": "Peso deseado (informativo)",
     "weightRange": "Rango",
+    "gender": {
+      "male": "Masculino",
+      "female": "Femenino"
+    },
+    "disciplines": {
+      "boxing": "Boxeo",
+      "muayThai": "Muay Thai",
+      "mma": "MMA",
+      "kickboxing": "Kickboxing",
+      "karate": "Karate",
+      "judo": "Judo",
+      "wrestling": "Lucha libre",
+      "limaLama": "Lima Lama",
+      "jiuJitsu": "Jiu-Jitsu",
+      "pointFight": "Point Fight",
+      "bareKnuckle": "Bare Knuckle",
+      "k1": "K-1",
+      "lightContact": "Light Contact",
+      "kickLight": "Kick Light",
+      "lowKick": "Low Kick",
+      "fullContact": "Full Contact",
+      "other": "Otro"
+    },
     "countryFilter": {
       "label": "País actual",
       "all": "Todos los países",
