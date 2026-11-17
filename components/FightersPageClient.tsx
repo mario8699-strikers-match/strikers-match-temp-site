@@ -360,9 +360,6 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
               const koTkoWins = (entry.data.ko_wins ?? 0) + (entry.data.tko_wins ?? 0);
               const skillRating = entry.data.skill_rating;
               const weightClassKey = fighterWeightClassI18nKey(weightClass);
-              const requestedWeight = entry.data.requested_weight_kg;
-              const minimumWeight = entry.data.acceptable_weight_min_kg;
-              const maximumWeight = entry.data.acceptable_weight_max_kg;
               const rulesets = entry.data.preferred_rulesets ?? [];
               const initials = getInitials(name);
               const nationalityCode = entry.data.nationalities?.[0];
@@ -451,8 +448,6 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                     )}
                     {skillRating != null && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">{t('fighters.skillLevel')} {skillRating}/10</span>}
                     <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">KO/TKO {koTkoWins}</span>
-                    {requestedWeight != null && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">{t('fighters.requestedWeight')}: {requestedWeight} kg</span>}
-                    {(minimumWeight != null || maximumWeight != null) && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">{t('fighters.weightRange')} {minimumWeight ?? '—'}–{maximumWeight ?? '—'} kg</span>}
                     {rulesets.map((ruleset) => <span key={ruleset} className="text-xs border border-zinc-200 px-2 py-1 text-zinc-700">{ruleset}</span>)}
                     {followers !== null && (
                       <span className="text-xs bg-zinc-100 text-zinc-700 px-2 py-1">
