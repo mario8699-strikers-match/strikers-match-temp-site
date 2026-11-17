@@ -8,11 +8,3 @@ export function fighterWeightClassI18nKey(value: string | null | undefined): str
   const normalized = value?.trim().toLocaleLowerCase();
   return normalized && WEIGHT_CLASS_KEYS.has(normalized) ? normalized : null;
 }
-
-export function fighterGenderI18nKey(value: string | null | undefined): 'male' | 'female' | null {
-  const normalized = value?.trim().toLocaleLowerCase();
-  if (!normalized) return null;
-  if (['masculino', 'masculina', 'hombre', 'varon', 'varón', 'male', 'm'].includes(normalized)) return 'male';
-  if (['femenino', 'femenina', 'mujer', 'female', 'f'].includes(normalized)) return 'female';
-  return null;
-}

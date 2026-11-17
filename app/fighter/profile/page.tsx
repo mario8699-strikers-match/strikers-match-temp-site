@@ -590,7 +590,6 @@ export default function FighterProfilePage() {
                 { label:t('fighters.accountProfile.fields.division'), value: fighter.weight_class ? (WEIGHT_LABELS[fighter.weight_class] ?? fighter.weight_class) : '—' },
                 { label:t('fighters.accountProfile.gym'), value: fighter.gym_name ?? '—' },
                 { label:t('fighters.accountProfile.exactWeight'), value: fighter.exact_weight ? `${fighter.exact_weight} kg` : '—' },
-                { label:t('fighters.accountProfile.fields.genderDivision'), value: fighter.gender_division ?? '—' },
                 { label:t('fighters.accountProfile.fields.skillLevel'), value: fighter.skill_rating ? `${fighter.skill_rating}/10` : '—' },
                 { label:t('fighters.accountProfile.koTkoFor'), value: `${fighter.ko_wins + fighter.tko_wins}` },
                 { label:t('fighters.accountProfile.koTkoAgainst'), value: `${fighter.ko_losses + fighter.tko_losses}` },

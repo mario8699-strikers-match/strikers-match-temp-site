@@ -17,10 +17,6 @@
     "skillLevel": "Level",
     "requestedWeight": "Desired weight (informational)",
     "weightRange": "Range",
-    "gender": {
-      "male": "Male",
-      "female": "Female"
-    },
     "disciplines": {
       "boxing": "Boxing",
       "muayThai": "Muay Thai",
@@ -130,7 +126,7 @@
       "sectionLabel": "My fighters", "description": "Fighters who do not have an account on the platform. They will appear publicly with the “Roster” label, and fight requests will reach you inside the app.", "cancel": "Cancel", "addFighter": "Add fighter", "newFighter": "New fighter", "select": "Select…",
       "disciplinesHelp": "Select every discipline this fighter practices.", "matchmakingWeights": "Matchmaking weights", "knockoutRecord": "KO / TKO record", "availableForFights": "Available for fights", "showPublic": "Show in the public directory",
       "photoPreview": "Photo preview", "changePhoto": "Change photo", "selectPhoto": "Select photo", "photoHelp": "JPG, PNG, WebP, GIF, or AVIF. Maximum 10 MB.", "saving": "Saving…", "saveFighter": "Save fighter", "loading": "Loading…", "empty": "You have not added any fighters manually.", "uploading": "Uploading…", "change": "Change", "addPhoto": "Add photo", "save": "Save", "remove": "Remove", "pendingDivision": "division pending",
-      "photoOf": "Photo of {{name}}", "instagramOf": "{{name}}'s Instagram", "currentCountryOf": "Current country for {{name}}", "cardStats": "KO/TKO {{knockouts}} · level {{level}}/10 · {{gender}}", "cardWeight": "Desired weight (informational): {{requested}} kg · range {{minimum}}–{{maximum}} kg",
+      "photoOf": "Photo of {{name}}", "instagramOf": "{{name}}'s Instagram", "currentCountryOf": "Current country for {{name}}", "cardStats": "KO/TKO {{knockouts}} · level {{level}}/10", "cardWeight": "Desired weight (informational): {{requested}} kg · range {{minimum}}–{{maximum}} kg",
       "fields": {
         "fullName": "Full name *", "nickname": "Nickname", "division": "Division", "disciplines": "Disciplines", "dateOfBirth": "Date of birth", "skillRating": "Skill level 1–10", "actualWeight": "Actual weight kg", "requestedWeight": "Desired weight (informational) kg", "minimumWeight": "Minimum kg", "maximumWeight": "Maximum kg", "koWins": "KO wins", "tkoWins": "TKO wins", "koLosses": "KO losses", "tkoLosses": "TKO losses", "rulesets": "Rulesets (comma-separated)", "privateRestrictions": "Private restrictions (comma-separated)", "availableFrom": "Available from", "availableTo": "Available until", "lastFight": "Last fight", "lastKoLoss": "Last KO loss", "privatePhone": "Phone (only you can see it)", "privateEmail": "Email (only you can see it)", "city": "City", "state": "State / province / region", "currentCountry": "Current country *", "nationality": "Nationality / flag", "gym": "Gym", "publicInstagram": "Public Instagram", "level": "Level", "availability": "Availability", "photo": "Fighter photo", "publicBio": "Public bio", "privateNotes": "Private notes"
       },

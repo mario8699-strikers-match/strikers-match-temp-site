@@ -17,10 +17,6 @@
     "skillLevel": "Уровень",
     "requestedWeight": "Желаемый вес (для информации)",
     "weightRange": "Диапазон",
-    "gender": {
-      "male": "Мужской",
-      "female": "Женский"
-    },
     "disciplines": {
       "boxing": "Бокс",
       "muayThai": "Муай-тай",
@@ -158,7 +154,7 @@
       "photoOf": "Фотография{{name}}",
       "instagramOf": "Инстаграм{{name}}",
       "currentCountryOf": "Текущая страна проживания: {{name}}",
-      "cardStats": "Нокаут/технический нокаут{{knockouts}}· уровень{{level}}/10 ·{{gender}}",
+      "cardStats": "Нокаут/технический нокаут {{knockouts}} · уровень {{level}}/10",
       "cardWeight": "Желаемый вес (информационный):{{requested}}кг · диапазон{{minimum}}–{{maximum}}кг",
       "fields": {
         "fullName": "Полное имя *",

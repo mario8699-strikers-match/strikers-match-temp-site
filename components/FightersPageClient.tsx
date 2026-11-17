@@ -20,7 +20,7 @@ import {
 } from '@/lib/disciplines';
 import type { FighterWithProfile, ManualFighterWithCreator } from '@/types';
 import { countryFlagEmoji, getCountryName } from '@/lib/countries';
-import { fighterGenderI18nKey, fighterWeightClassI18nKey } from '@/lib/fighterDisplay';
+import { fighterWeightClassI18nKey } from '@/lib/fighterDisplay';
 
 const PAGE_SIZE = 12;
 
@@ -359,8 +359,6 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
               const photoUrl = entry.data.photo_url;
               const koTkoWins = (entry.data.ko_wins ?? 0) + (entry.data.tko_wins ?? 0);
               const skillRating = entry.data.skill_rating;
-              const genderDivision = entry.data.gender_division;
-              const genderKey = fighterGenderI18nKey(genderDivision);
               const weightClassKey = fighterWeightClassI18nKey(weightClass);
               const requestedWeight = entry.data.requested_weight_kg;
               const minimumWeight = entry.data.acceptable_weight_min_kg;
@@ -449,13 +447,6 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                         {weightClassKey
                           ? t(`events:events.weightClasses.${weightClassKey}`, { defaultValue: weightClass })
                           : weightClass}
-                      </span>
-                    )}
-                    {genderDivision && (
-                      <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">
-                        {genderKey
-                          ? t(`fighters.gender.${genderKey}`, { defaultValue: genderDivision })
-                          : genderDivision}
                       </span>
                     )}
                     {skillRating != null && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">{t('fighters.skillLevel')} {skillRating}/10</span>}

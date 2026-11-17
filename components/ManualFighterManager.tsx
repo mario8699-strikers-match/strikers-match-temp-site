@@ -686,7 +686,7 @@ export function ManualFighterManager({
                       {savingCountryId === f.id ? t('fighters.rosterManager.saving') : t('fighters.rosterManager.save')}
                     </button>
                   </div>
-                  <p className="mt-1 text-xs text-zinc-500">{t('fighters.rosterManager.cardStats', { knockouts: f.ko_wins + f.tko_wins, level: f.skill_rating ?? '—', gender: f.gender_division ?? t('fighters.rosterManager.pendingDivision') })}</p>
+                  <p className="mt-1 text-xs text-zinc-500">{t('fighters.rosterManager.cardStats', { knockouts: f.ko_wins + f.tko_wins, level: f.skill_rating ?? '—' })}</p>
                   <p className="mt-1 text-xs text-zinc-500">{t('fighters.rosterManager.cardWeight', { requested: f.requested_weight_kg ?? '—', minimum: f.acceptable_weight_min_kg ?? '—', maximum: f.acceptable_weight_max_kg ?? '—' })}</p>
                   <div className="flex gap-2 mt-1.5 flex-wrap">
                     <span className={`text-xs font-bold px-1.5 py-0.5 uppercase tracking-widest ${f.experience_level === 'pro' ? 'bg-[#C0001E] text-white' : 'bg-zinc-100 text-zinc-600'}`}>
