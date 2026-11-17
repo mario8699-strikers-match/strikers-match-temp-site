@@ -22,11 +22,11 @@ const STATUS_COLORS: Record<Event['status'], string> = {
   completed: 'bg-blue-50 text-blue-700',
 };
 
-const APP_STATUS_LABELS: Record<string, { label: string; cls: string }> = {
-  pending:   { label: 'Pendiente',  cls: 'bg-amber-50 text-amber-700' },
-  accepted:  { label: 'Aceptado',   cls: 'bg-emerald-50 text-emerald-700' },
-  declined:  { label: 'Rechazado',  cls: 'bg-red-50 text-red-700' },
-  withdrawn: { label: 'Retirado',   cls: 'bg-zinc-100 text-zinc-500' },
+const APP_STATUS_CLASSES: Record<string, string> = {
+  pending: 'bg-amber-50 text-amber-700',
+  accepted: 'bg-emerald-50 text-emerald-700',
+  declined: 'bg-red-50 text-red-700',
+  withdrawn: 'bg-zinc-100 text-zinc-500',
 };
 
 type ApplicationWithFighter = EventApplication & {
@@ -39,7 +39,7 @@ type ApplicationWithFighter = EventApplication & {
 };
 
 export default function PromoterDashboardPage() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation('promoters');
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,7 +119,7 @@ export default function PromoterDashboardPage() {
   };
 
   const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return 'Sin fecha';
+    if (!dateStr) return t('promoters.dashboard.noDate');
     const [year, month, day] = dateStr.split('-').map(Number);
     return formatLocalizedDate(new Date(year, month - 1, day), i18n.resolvedLanguage, { day: 'numeric', month: 'short', year: 'numeric' });
   };
@@ -138,7 +138,7 @@ export default function PromoterDashboardPage() {
         {/* Header */}
         <div className="mb-8 flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#C0001E' }}>Panel del Promotor</p>
+            <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#C0001E' }}>{t('promoters.dashboard.title')}</p>
             <h1 className="text-3xl font-black uppercase" style={{ letterSpacing: '-1px' }}>{profile!.full_name}</h1>
             <p className="text-sm mt-1" style={{ color: '#5A5A5A' }}>{profile!.city ?? ''}</p>
           </div>
@@ -147,7 +147,7 @@ export default function PromoterDashboardPage() {
             style={{ background: '#C0001E' }}
             onMouseOver={(e) => (e.currentTarget.style.background = '#9A0018')}
             onMouseOut={(e) => (e.currentTarget.style.background = '#C0001E')}>
-            + Nuevo evento
+            + {t('promoters.dashboard.newEvent')}
           </Link>
         </div>
 
@@ -156,7 +156,7 @@ export default function PromoterDashboardPage() {
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
           </svg>
-          <span className="font-semibold">Publica y administra tus eventos desde este panel.</span>
+          <span className="font-semibold">{t('promoters.dashboard.description')}</span>
         </div>
 
         <OrganizerPaymentsPanel />
@@ -164,9 +164,9 @@ export default function PromoterDashboardPage() {
         {/* Stats row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
           {[
-            { label: 'Eventos publicados', value: publishedEvents.length },
-            { label: 'Borradores', value: draftEvents.length },
-            { label: 'Solicitudes pendientes', value: totalPending },
+            { label: t('promoters.dashboard.publishedEvents'), value: publishedEvents.length },
+            { label: t('promoters.dashboard.drafts'), value: draftEvents.length },
+            { label: t('promoters.dashboard.pendingApplications'), value: totalPending },
           ].map(({ label, value }) => (
             <div key={label} className="border border-zinc-100 p-5 text-center">
               <p className="text-3xl font-black" style={{ fontFamily: 'var(--font-barlow-condensed)', letterSpacing: '-1px' }}>{value}</p>
@@ -178,19 +178,19 @@ export default function PromoterDashboardPage() {
         {/* Events list */}
         <div className="mb-2 flex items-center justify-between">
           <p className="text-xs font-bold tracking-widest uppercase" style={{ color: '#C0001E' }}>
-            Mis Eventos ({events.length})
+            {t('promoters.dashboard.myEvents', { count: events.length })}
           </p>
         </div>
 
         {loading ? (
-          <p className="text-sm text-zinc-400 py-8">Cargando...</p>
+          <p className="text-sm text-zinc-400 py-8">{t('promoters.dashboard.loading')}</p>
         ) : events.length === 0 ? (
           <div className="border border-dashed border-zinc-200 py-16 text-center">
-            <p className="text-sm text-zinc-400 mb-2">No has creado ningún evento todavía.</p>
-            <p className="text-xs text-emerald-700 font-semibold mb-4">Crea tu primer evento para empezar a organizar tu cartelera.</p>
+            <p className="text-sm text-zinc-400 mb-2">{t('promoters.dashboard.noEvents')}</p>
+            <p className="text-xs text-emerald-700 font-semibold mb-4">{t('promoters.dashboard.noEventsHint')}</p>
             <Link href="/events/create" className="text-xs font-bold tracking-widest uppercase text-white px-5 py-2.5 transition-colors"
               style={{ background: '#C0001E' }}>
-              Crear primer evento
+              {t('promoters.dashboard.createFirstEvent')}
             </Link>
           </div>
         ) : (
@@ -226,7 +226,7 @@ export default function PromoterDashboardPage() {
                         </span>
                         {pending > 0 && (
                           <span className="text-xs font-bold px-2 py-0.5 bg-[#C0001E] text-white flex-shrink-0">
-                            {pending} pendiente{pending !== 1 ? 's' : ''}
+                            {t('promoters.dashboard.pendingCount', { count: pending })}
                           </span>
                         )}
                       </div>
@@ -246,23 +246,23 @@ export default function PromoterDashboardPage() {
                     <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
                       <Link href={`/events/${ev.id}/manage/matchmaking`}
                         className="bg-[#C0001E] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#9A0018]">
-                        Peleadores / Matchmaking
+                        {t('promoters.dashboard.fightersMatchmaking')}
                       </Link>
                       <a href={`/events/${ev.id}`}
                         className="text-xs font-medium text-zinc-500 border border-zinc-200 px-3 py-1.5 hover:bg-zinc-50 transition-colors">
-                        Editar
+                        {t('promoters.dashboard.edit')}
                       </a>
                       <button onClick={() => loadApplications(ev.id)}
                         className={`text-xs font-bold tracking-wide uppercase px-3 py-1.5 border transition-colors ${
                           isOpen ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-700 border-zinc-300 hover:bg-zinc-50'
                         }`}>
-                        Solicitudes
+                        {t('promoters.dashboard.applications')}
                       </button>
                       <button onClick={() => loadRegistrations(ev.id)}
                         className={`text-xs font-bold tracking-wide uppercase px-3 py-1.5 border transition-colors ${
                           selectedRegEventId === ev.id ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-700 border-zinc-300 hover:bg-zinc-50'
                         }`}>
-                        Registro y pagos
+                        {t('promoters.dashboard.registrationPayments')}
                       </button>
                     </div>
                   </div>
@@ -271,16 +271,16 @@ export default function PromoterDashboardPage() {
                   {isOpen && (
                     <div className="border-t border-zinc-100 bg-zinc-50 px-4 sm:px-5 py-4">
                       <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: '#5A5A5A' }}>
-                        Solicitudes para este evento
+                        {t('promoters.dashboard.eventApplications')}
                       </p>
                       {appsLoading ? (
-                        <p className="text-sm text-zinc-400">Cargando...</p>
+                        <p className="text-sm text-zinc-400">{t('promoters.dashboard.loading')}</p>
                       ) : applications.length === 0 ? (
-                        <p className="text-sm text-zinc-400">No hay solicitudes para este evento aún.</p>
+                        <p className="text-sm text-zinc-400">{t('promoters.dashboard.noApplications')}</p>
                       ) : (
                         <div className="space-y-3">
                           {applications.map((app) => {
-                            const s = APP_STATUS_LABELS[app.status] ?? { label: app.status, cls: 'bg-zinc-100 text-zinc-500' };
+                            const statusClass = APP_STATUS_CLASSES[app.status] ?? 'bg-zinc-100 text-zinc-500';
                             const f = app.fighters;
                             return (
                               <div key={app.id} className="bg-white border border-zinc-200 p-4">
@@ -298,7 +298,7 @@ export default function PromoterDashboardPage() {
                                       </div>
                                     )}
                                   </div>
-                                  <span className={`text-xs font-bold px-2 py-1 flex-shrink-0 ${s.cls}`}>{s.label}</span>
+                                  <span className={`text-xs font-bold px-2 py-1 flex-shrink-0 ${statusClass}`}>{t(`promoters.dashboard.applicationStatus.${app.status}`, { defaultValue: app.status })}</span>
                                 </div>
                                 {app.message && (
                                   <p className="text-xs text-zinc-600 bg-zinc-50 px-3 py-2 mb-3 italic border border-zinc-100">
@@ -309,12 +309,12 @@ export default function PromoterDashboardPage() {
                                   <div className="flex gap-2 justify-end">
                                     <button onClick={() => handleAppStatus(app.id, 'declined')} disabled={updatingApp === app.id}
                                       className="px-3 py-1.5 text-xs font-semibold border border-zinc-300 text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 transition-colors">
-                                      Rechazar
+                                      {t('promoters.dashboard.decline')}
                                     </button>
                                     <button onClick={() => handleAppStatus(app.id, 'accepted')} disabled={updatingApp === app.id}
                                       className="px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50 transition-colors"
                                       style={{ background: '#C0001E' }}>
-                                      {updatingApp === app.id ? '...' : 'Aceptar'}
+                                      {updatingApp === app.id ? '...' : t('promoters.dashboard.accept')}
                                     </button>
                                   </div>
                                 )}
@@ -330,19 +330,19 @@ export default function PromoterDashboardPage() {
                   {selectedRegEventId === ev.id && (
                     <div className="border-t border-zinc-100 bg-zinc-50 px-4 sm:px-5 py-4">
                       <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: '#5A5A5A' }}>
-                        Registro y Pagos
+                        {t('promoters.dashboard.registrationPayments')}
                       </p>
                       {regsLoading ? (
-                        <p className="text-sm text-zinc-400">Cargando...</p>
+                        <p className="text-sm text-zinc-400">{t('promoters.dashboard.loading')}</p>
                       ) : registrations.length === 0 ? (
-                        <p className="text-sm text-zinc-400">Ningún peleador se ha registrado para este evento aún.</p>
+                        <p className="text-sm text-zinc-400">{t('promoters.dashboard.noRegistrations')}</p>
                       ) : (
                         <div className="space-y-6">
                           {/* Section 1: Pending */}
                           {registrations.filter(r => r.payment_status === 'pending').length > 0 && (
                             <div>
                               <p className="text-xs font-bold uppercase tracking-widest text-amber-700 mb-2">
-                                Pendientes ({registrations.filter(r => r.payment_status === 'pending').length})
+                                {t('promoters.dashboard.pendingPayments', { count: registrations.filter(r => r.payment_status === 'pending').length })}
                               </p>
                               <div className="space-y-2">
                                 {registrations.filter(r => r.payment_status === 'pending').map((reg) => (
@@ -352,7 +352,7 @@ export default function PromoterDashboardPage() {
                                       <p className="text-xs text-zinc-500">{reg.registered_weight_class ?? reg.fighters?.weight_class ?? reg.manual_fighters?.weight_class ?? '—'} · {reg.city ?? reg.fighters?.profiles?.city ?? reg.manual_fighters?.city ?? '—'}</p>
                                       <EligibilityStatus status={reg.eligibility_status} reasons={reg.eligibility_reasons} showReasons />
                                     </div>
-                                    <span className="self-start text-xs font-bold px-2 py-1 bg-amber-50 text-amber-700 flex-shrink-0">PENDIENTE</span>
+                                    <span className="self-start text-xs font-bold px-2 py-1 bg-amber-50 text-amber-700 flex-shrink-0">{t('promoters.dashboard.pending')}</span>
                                   </div>
                                 ))}
                               </div>
@@ -363,7 +363,7 @@ export default function PromoterDashboardPage() {
                           {registrations.filter(r => r.payment_status === 'submitted').length > 0 && (
                             <div>
                               <p className="text-xs font-bold uppercase tracking-widest text-blue-700 mb-2">
-                                Esperando Confirmación ({registrations.filter(r => r.payment_status === 'submitted').length})
+                                {t('promoters.dashboard.awaitingConfirmation', { count: registrations.filter(r => r.payment_status === 'submitted').length })}
                               </p>
                               <div className="space-y-2">
                                 {registrations.filter(r => r.payment_status === 'submitted').map((reg) => (
@@ -373,7 +373,7 @@ export default function PromoterDashboardPage() {
                                       <p className="text-xs text-zinc-500">{reg.registered_weight_class ?? reg.fighters?.weight_class ?? reg.manual_fighters?.weight_class ?? '—'} · {reg.city ?? reg.fighters?.profiles?.city ?? reg.manual_fighters?.city ?? '—'}</p>
                                       {reg.submitted_at && (
                                         <p className="text-xs text-blue-500 mt-0.5">
-                                          Enviado: {formatLocalizedDate(reg.submitted_at, i18n.resolvedLanguage, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                          {t('promoters.dashboard.submitted')}: {formatLocalizedDate(reg.submitted_at, i18n.resolvedLanguage, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                         </p>
                                       )}
                                       <EligibilityStatus status={reg.eligibility_status} reasons={reg.eligibility_reasons} showReasons />
@@ -384,7 +384,7 @@ export default function PromoterDashboardPage() {
                                       className="min-h-11 w-full px-3 py-2 text-xs font-bold text-white disabled:opacity-50 transition-colors sm:min-h-0 sm:w-auto flex-shrink-0"
                                       style={{ background: '#C0001E' }}
                                     >
-                                      {confirmingReg === reg.id ? '...' : 'Confirmar Pago'}
+                                      {confirmingReg === reg.id ? '...' : t('promoters.dashboard.confirmPayment')}
                                     </button>
                                   </div>
                                 ))}
@@ -396,7 +396,7 @@ export default function PromoterDashboardPage() {
                           {registrations.filter(r => ['confirmed', 'waived'].includes(r.payment_status)).length > 0 && (
                             <div>
                               <p className="text-xs font-bold uppercase tracking-widest text-emerald-700 mb-2">
-                                Pago confirmado ({registrations.filter(r => ['confirmed', 'waived'].includes(r.payment_status)).length})
+                                {t('promoters.dashboard.confirmedPayments', { count: registrations.filter(r => ['confirmed', 'waived'].includes(r.payment_status)).length })}
                               </p>
                               <div className="space-y-2">
                                 {registrations.filter(r => ['confirmed', 'waived'].includes(r.payment_status)).map((reg) => (
@@ -406,12 +406,12 @@ export default function PromoterDashboardPage() {
                                       <p className="text-xs text-zinc-500">{reg.registered_weight_class ?? reg.fighters?.weight_class ?? reg.manual_fighters?.weight_class ?? '—'} · {reg.city ?? reg.fighters?.profiles?.city ?? reg.manual_fighters?.city ?? '—'}</p>
                                       {reg.confirmed_at && (
                                         <p className="text-xs text-emerald-500 mt-0.5">
-                                          Confirmado: {formatLocalizedDate(reg.confirmed_at, i18n.resolvedLanguage, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                          {t('promoters.dashboard.confirmed')}: {formatLocalizedDate(reg.confirmed_at, i18n.resolvedLanguage, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                         </p>
                                       )}
                                       <EligibilityStatus status={reg.eligibility_status} reasons={reg.eligibility_reasons} showReasons />
                                     </div>
-                                    <span className="self-start text-xs font-bold px-2 py-1 bg-emerald-50 text-emerald-700 flex-shrink-0">{reg.payment_status === 'waived' ? 'EXENTO' : 'PAGADO'}</span>
+                                    <span className="self-start text-xs font-bold px-2 py-1 bg-emerald-50 text-emerald-700 flex-shrink-0">{reg.payment_status === 'waived' ? t('promoters.dashboard.waived') : t('promoters.dashboard.paid')}</span>
                                   </div>
                                 ))}
                               </div>
@@ -430,11 +430,7 @@ export default function PromoterDashboardPage() {
         {/* ── Manual fighters (roster) ── */}
         {profile && (
           <div className="mt-12 border-t border-zinc-100 pt-8">
-            <ManualFighterManager
-              creatorId={profile.id}
-              sectionLabel="Mi Roster"
-              description="Peleadores que no tienen cuenta en la plataforma. Se mostrarán públicamente con la etiqueta Roster; cualquier solicitud de pelea llegará a ti dentro de la app."
-            />
+            <ManualFighterManager creatorId={profile.id} />
           </div>
         )}
       </main>

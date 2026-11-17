@@ -104,6 +104,7 @@ SELECT
   CASE WHEN fighter.date_of_birth IS NULL THEN NULL
     ELSE EXTRACT(YEAR FROM age(current_date, fighter.date_of_birth))::integer END AS age,
   jsonb_build_object('full_name', creator.full_name, 'role', creator.role) AS profiles,
+  fighter.disciplines,
   fighter.nationalities,
   fighter.country_code
 FROM public.manual_fighters fighter

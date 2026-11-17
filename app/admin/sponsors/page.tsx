@@ -27,7 +27,7 @@ export default function AdminSponsorsPage() {
     <div>
       <div className="mb-8">
         <h1 className="text-xl font-bold text-zinc-900">{t('admin.nav.sponsors')}</h1>
-        <p className="mt-1 text-sm text-zinc-500">Todos los patrocinadores registrados en la plataforma.</p>
+        <p className="mt-1 text-sm text-zinc-500">{t('admin.directory.sponsorsSubtitle')}</p>
       </div>
 
       {error && (
@@ -40,7 +40,7 @@ export default function AdminSponsorsPage() {
         <div className="py-16 text-center text-zinc-400 text-sm">—</div>
       ) : profiles.length === 0 ? (
         <div className="py-16 text-center border border-dashed border-zinc-200 text-zinc-500 text-sm">
-          No hay patrocinadores registrados.
+          {t('admin.directory.noSponsors')}
         </div>
       ) : (
         <>
@@ -58,14 +58,14 @@ export default function AdminSponsorsPage() {
                 <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium flex-shrink-0 ${
                   p.is_banned ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'
                 }`}>
-                  {p.is_banned ? 'Baneado' : 'Activo'}
+                  {p.is_banned ? t('admin.users.banned') : t('admin.users.active')}
                 </span>
               </div>
               <p className="mt-1 text-xs text-zinc-500 truncate">{p.email}</p>
               <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-                <dt className="text-zinc-500">Ciudad:</dt>
+                <dt className="text-zinc-500">{t('admin.users.city')}:</dt>
                 <dd className="text-zinc-700">{p.city ?? '—'}</dd>
-                <dt className="text-zinc-500">Teléfono:</dt>
+                <dt className="text-zinc-500">{t('admin.directory.phone')}:</dt>
                 <dd className="text-zinc-700">{p.phone ?? '—'}</dd>
               </dl>
               <div className="mt-3 pt-3 border-t border-zinc-100">
@@ -73,7 +73,7 @@ export default function AdminSponsorsPage() {
                   onClick={() => setExpandedId(expandedId === p.id ? null : p.id)}
                   className="text-xs font-medium text-zinc-700 hover:text-[#C0001E] hover:underline"
                 >
-                  {expandedId === p.id ? 'Ocultar' : 'Ver detalle'}
+                  {expandedId === p.id ? t('admin.directory.hide') : t('admin.directory.viewDetail')}
                 </button>
               </div>
               {expandedId === p.id && (
@@ -83,9 +83,9 @@ export default function AdminSponsorsPage() {
                     <p><span className="font-medium text-zinc-500">Tel:</span> {p.phone || '---'}</p>
                   </div>
                   <div className="border border-zinc-200 p-3">
-                    <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#C0001E' }}>Cuenta</p>
-                    <p><span className="font-medium text-zinc-500">Rol:</span> Patrocinador</p>
-                    <p><span className="font-medium text-zinc-500">Estado:</span> {p.is_banned ? 'Baneado' : 'Activo'}</p>
+                    <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#C0001E' }}>{t('admin.directory.account')}</p>
+                    <p><span className="font-medium text-zinc-500">{t('admin.directory.role')}:</span> {t('admin.users.roles.sponsor')}</p>
+                    <p><span className="font-medium text-zinc-500">{t('admin.directory.status')}:</span> {p.is_banned ? t('admin.users.banned') : t('admin.users.active')}</p>
                   </div>
                 </div>
               )}
@@ -98,9 +98,9 @@ export default function AdminSponsorsPage() {
           <table className="min-w-full divide-y divide-zinc-100 text-sm">
             <thead className="bg-zinc-50">
               <tr>
-                {['Nombre', 'Correo', 'Ciudad', 'Teléfono', 'Estado', 'Acciones'].map((col) => (
+                {['name', 'email', 'city', 'phone', 'status', 'actions'].map((col) => (
                   <th key={col} className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wide">
-                    {col}
+                    {t(`admin.directory.${col}`)}
                   </th>
                 ))}
               </tr>
@@ -124,7 +124,7 @@ export default function AdminSponsorsPage() {
                       <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium ${
                         p.is_banned ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'
                       }`}>
-                        {p.is_banned ? 'Baneado' : 'Activo'}
+                        {p.is_banned ? t('admin.users.banned') : t('admin.users.active')}
                       </span>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
@@ -132,7 +132,7 @@ export default function AdminSponsorsPage() {
                         onClick={() => setExpandedId(expandedId === p.id ? null : p.id)}
                         className="text-xs font-medium text-zinc-500 hover:text-zinc-900 hover:underline"
                       >
-                        {expandedId === p.id ? 'Ocultar' : 'Ver detalle'}
+                        {expandedId === p.id ? t('admin.directory.hide') : t('admin.directory.viewDetail')}
                       </button>
                     </td>
                   </tr>
@@ -143,22 +143,22 @@ export default function AdminSponsorsPage() {
                           <div className="border border-zinc-200 p-3">
                             <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#C0001E' }}>Contacto</p>
                             <div className="space-y-1 text-xs text-zinc-700">
-                              <p><span className="font-medium text-zinc-500">Nombre:</span> {p.full_name || '---'}</p>
-                              <p><span className="font-medium text-zinc-500">Correo:</span> {p.email || '---'}</p>
+                              <p><span className="font-medium text-zinc-500">{t('admin.directory.name')}:</span> {p.full_name || '---'}</p>
+                              <p><span className="font-medium text-zinc-500">{t('admin.directory.email')}:</span> {p.email || '---'}</p>
                               <p><span className="font-medium text-zinc-500">Tel:</span> {p.phone || '---'}</p>
                             </div>
                           </div>
                           <div className="border border-zinc-200 p-3">
-                            <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#C0001E' }}>Ubicación</p>
+                            <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#C0001E' }}>{t('admin.directory.location')}</p>
                             <div className="space-y-1 text-xs text-zinc-700">
-                              <p><span className="font-medium text-zinc-500">Ciudad:</span> {p.city || '---'}</p>
+                              <p><span className="font-medium text-zinc-500">{t('admin.directory.city')}:</span> {p.city || '---'}</p>
                             </div>
                           </div>
                           <div className="border border-zinc-200 p-3">
-                            <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#C0001E' }}>Cuenta</p>
+                            <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#C0001E' }}>{t('admin.directory.account')}</p>
                             <div className="space-y-1 text-xs text-zinc-700">
-                              <p><span className="font-medium text-zinc-500">Rol:</span> Patrocinador</p>
-                              <p><span className="font-medium text-zinc-500">Estado:</span> {p.is_banned ? 'Baneado' : 'Activo'}</p>
+                              <p><span className="font-medium text-zinc-500">{t('admin.directory.role')}:</span> {t('admin.users.roles.sponsor')}</p>
+                              <p><span className="font-medium text-zinc-500">{t('admin.directory.status')}:</span> {p.is_banned ? t('admin.users.banned') : t('admin.users.active')}</p>
                             </div>
                           </div>
                         </div>

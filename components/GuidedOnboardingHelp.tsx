@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabaseClient';
 import { authService } from '@/services/authService';
 import { setEventDisplay } from '@/services/graphicsService';
@@ -26,13 +27,13 @@ interface HelpTopic {
   path: (eventId: string | null) => string;
 }
 
-const HELP_TOPICS: HelpTopic[] = [
-  { title: 'Crear un evento', body: 'Crea el nombre, fecha, ciudad, recinto y disciplinas de tu nueva cartelera.', action: 'Crear evento', path: () => '/events/create' },
-  { title: 'Registrar peleadores', body: 'Agrega perfiles de Strikers Match, peleadores de tu roster o altas rápidas exclusivas del evento.', action: 'Abrir participantes', requiresEvent: true, path: (id) => id ? `/events/${id}/manage/participants` : '/events/create?onboarding=1' },
-  { title: 'Encontrar enfrentamientos', body: 'Revisa las combinaciones calculadas por peso, edad, experiencia, récord, disciplina y disponibilidad.', action: 'Abrir matchmaking', requiresEvent: true, path: (id) => id ? `/events/${id}/manage/matchmaking` : '/events/create?onboarding=1' },
-  { title: 'Revisar peleas', body: 'Tú decides qué propuesta aceptar, rechazar, modificar o fijar antes de hacerla oficial.', action: 'Revisar propuestas', requiresEvent: true, path: (id) => id ? `/events/${id}/manage/matchmaking` : '/events/create?onboarding=1' },
-  { title: 'Generar gráficos', body: 'Los combates oficiales generan borradores que puedes aprobar, publicar y descargar.', action: 'Abrir gráficos', requiresEvent: true, path: (id) => id ? `/events/${id}/manage/graphics` : '/events/create?onboarding=1' },
-  { title: 'Mostrar peleas en pantalla', body: 'Publica un gráfico y abre el modo pantalla directamente dentro de Strikers Match.', action: 'Configurar pantalla', requiresEvent: true, path: (id) => id ? `/events/${id}/manage/graphics` : '/events/create?onboarding=1' },
+const HELP_TOPIC_SPECS: Array<Pick<HelpTopic, 'requiresEvent' | 'path'> & { key: string }> = [
+  { key: 'createEvent', path: () => '/events/create' },
+  { key: 'registerFighters', requiresEvent: true, path: (id) => id ? `/events/${id}/manage/participants` : '/events/create?onboarding=1' },
+  { key: 'findMatches', requiresEvent: true, path: (id) => id ? `/events/${id}/manage/matchmaking` : '/events/create?onboarding=1' },
+  { key: 'reviewBouts', requiresEvent: true, path: (id) => id ? `/events/${id}/manage/matchmaking` : '/events/create?onboarding=1' },
+  { key: 'generateGraphics', requiresEvent: true, path: (id) => id ? `/events/${id}/manage/graphics` : '/events/create?onboarding=1' },
+  { key: 'displayBouts', requiresEvent: true, path: (id) => id ? `/events/${id}/manage/graphics` : '/events/create?onboarding=1' },
 ];
 
 function setOnboardingActive(active: boolean) {
@@ -50,6 +51,7 @@ function validStep(value: number): value is GuidedOnboardingStep {
 }
 
 export function GuidedOnboardingHelp() {
+  const { t } = useTranslation('onboarding');
   const pathname = usePathname();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [panel, setPanel] = useState<Panel>(null);
@@ -62,6 +64,12 @@ export function GuidedOnboardingHelp() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const helpTopics = useMemo<HelpTopic[]>(() => HELP_TOPIC_SPECS.map((topic) => ({
+    ...topic,
+    title: t(`guided.topics.${topic.key}.title`),
+    body: t(`guided.topics.${topic.key}.body`),
+    action: t(`guided.topics.${topic.key}.action`),
+  })), [t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -241,12 +249,12 @@ export function GuidedOnboardingHelp() {
   };
 
   const shareRegistration = async (nativeShare: boolean) => {
-    if (!eventId) { setError('Primero crea o selecciona un evento.'); return; }
+    if (!eventId) { setError(t('guided.errors.eventRequired')); return; }
     const url = `${window.location.origin}/events/${eventId}`;
     setBusy(true); setError(null);
     try {
       if (nativeShare && navigator.share) {
-        await navigator.share({ title: eventName ?? 'Registro del evento', text: 'Regístrate para participar en este evento de Strikers Match.', url });
+        await navigator.share({ title: eventName ?? t('guided.share.title'), text: t('guided.share.text'), url });
       } else {
         await navigator.clipboard.writeText(url);
         setCopied(true);
@@ -257,7 +265,7 @@ export function GuidedOnboardingHelp() {
       else { setStep(4); setPanel(null); }
     } catch (shareError) {
       if (shareError instanceof DOMException && shareError.name === 'AbortError') return;
-      setError('No se pudo compartir el enlace. Puedes copiarlo manualmente desde la página del evento.');
+      setError(t('guided.errors.shareFailed'));
     } finally {
       setBusy(false);
     }
@@ -304,29 +312,29 @@ export function GuidedOnboardingHelp() {
   const topic = selectedTopic;
   return (
     <>
-      <button type="button" onClick={() => { setPanel('help'); setError(null); }} className="fixed bottom-5 right-4 z-[85] min-h-11 bg-zinc-950 px-4 py-3 text-xs font-black uppercase tracking-widest text-white shadow-xl hover:bg-[#C0001E] print:hidden sm:bottom-6 sm:right-6" aria-label="Abrir ayuda">
-        <span aria-hidden>?</span> Ayuda
+      <button type="button" onClick={() => { setPanel('help'); setError(null); }} className="fixed bottom-5 right-4 z-[85] min-h-11 bg-zinc-950 px-4 py-3 text-xs font-black uppercase tracking-widest text-white shadow-xl hover:bg-[#C0001E] print:hidden sm:bottom-6 sm:right-6" aria-label={t('guided.openHelp')}>
+        <span aria-hidden>?</span> {t('guided.help')}
       </button>
-      {copied && <p role="status" className="fixed bottom-20 right-4 z-[86] bg-emerald-700 px-4 py-3 text-xs font-bold uppercase tracking-widest text-white shadow-xl print:hidden sm:right-6">Enlace copiado</p>}
+      {copied && <p role="status" className="fixed bottom-20 right-4 z-[86] bg-emerald-700 px-4 py-3 text-xs font-bold uppercase tracking-widest text-white shadow-xl print:hidden sm:right-6">{t('guided.linkCopied')}</p>}
 
       {panel && (
         <div className="fixed inset-0 z-[115] flex items-end justify-center bg-black/60 print:hidden sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="guided-help-title">
           <div className="max-h-[95vh] w-full overflow-y-auto bg-white sm:max-w-xl">
             {panel === 'welcome' ? (
               <>
-                <PanelHeader eyebrow="Strikers Match" title="Welcome to Strikers Match" onClose={dismiss} />
-                <div className="p-5 sm:p-6"><p className="text-lg font-bold text-zinc-900">Vamos a configurar tu primer evento.</p><p className="mt-2 text-sm leading-relaxed text-zinc-600">Te guiaremos paso a paso. No necesitas conocimientos técnicos.</p>{error && <ErrorMessage value={error} />}</div>
-                <div className="grid grid-cols-1 gap-2 border-t border-zinc-100 p-4 sm:grid-cols-2 sm:p-5"><button type="button" onClick={dismiss} disabled={busy} className="min-h-11 border border-zinc-300 px-4 text-xs font-bold uppercase text-zinc-700">Lo haré después</button><button type="button" onClick={start} disabled={busy} className="min-h-11 bg-[#C0001E] px-4 text-xs font-bold uppercase text-white">Comenzar</button></div>
+                <PanelHeader eyebrow="Strikers Match" title={t('guided.welcome.title')} onClose={dismiss} />
+                <div className="p-5 sm:p-6"><p className="text-lg font-bold text-zinc-900">{t('guided.welcome.bodyTitle')}</p><p className="mt-2 text-sm leading-relaxed text-zinc-600">{t('guided.welcome.body')}</p>{error && <ErrorMessage value={error} />}</div>
+                <div className="grid grid-cols-1 gap-2 border-t border-zinc-100 p-4 sm:grid-cols-2 sm:p-5"><button type="button" onClick={dismiss} disabled={busy} className="min-h-11 border border-zinc-300 px-4 text-xs font-bold uppercase text-zinc-700">{t('guided.doLater')}</button><button type="button" onClick={start} disabled={busy} className="min-h-11 bg-[#C0001E] px-4 text-xs font-bold uppercase text-white">{t('guided.start')}</button></div>
               </>
             ) : panel === 'help' ? (
               <>
-                <PanelHeader eyebrow="Ayuda contextual" title="¿Qué quieres hacer?" onClose={closePanel} />
-                <div className="p-5 sm:p-6"><Progress completed={completedSteps} /><div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2">{HELP_TOPICS.map((item) => <button key={item.title} type="button" onClick={() => { setSelectedTopic(item); setPanel('topic'); }} className="min-h-14 border border-zinc-200 p-3 text-left text-sm font-bold text-zinc-900 hover:border-[#C0001E] hover:text-[#C0001E]">{item.title}</button>)}</div>{error && <ErrorMessage value={error} />}<button type="button" onClick={continueGuide} disabled={busy} className="mt-5 min-h-11 w-full bg-zinc-950 px-4 text-xs font-bold uppercase tracking-widest text-white">{profile.onboarding_completed ? 'Recorrer guía completa' : dismissed ? 'Continuar guía pendiente' : 'Ver mi siguiente paso'}</button></div>
+                <PanelHeader eyebrow={t('guided.contextualHelp')} title={t('guided.whatToDo')} onClose={closePanel} />
+                <div className="p-5 sm:p-6"><Progress completed={completedSteps} /><div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2">{helpTopics.map((item) => <button key={item.title} type="button" onClick={() => { setSelectedTopic(item); setPanel('topic'); }} className="min-h-14 border border-zinc-200 p-3 text-left text-sm font-bold text-zinc-900 hover:border-[#C0001E] hover:text-[#C0001E]">{item.title}</button>)}</div>{error && <ErrorMessage value={error} />}<button type="button" onClick={continueGuide} disabled={busy} className="mt-5 min-h-11 w-full bg-zinc-950 px-4 text-xs font-bold uppercase tracking-widest text-white">{profile.onboarding_completed ? t('guided.fullGuide') : dismissed ? t('guided.continueGuide') : t('guided.nextStep')}</button></div>
               </>
             ) : panel === 'topic' && topic ? (
               <>
-                <PanelHeader eyebrow="Guía rápida" title={topic.title} onClose={() => setPanel('help')} />
-                <div className="p-5 sm:p-6"><p className="text-sm leading-relaxed text-zinc-600">{topic.body}</p>{topic.requiresEvent && !eventId && <p className="mt-4 border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-900">Primero necesitas crear tu evento. Al terminar, te llevaremos al siguiente paso.</p>}<button type="button" onClick={() => go(topic.path(eventId))} className="mt-5 min-h-11 w-full bg-[#C0001E] px-4 text-xs font-bold uppercase tracking-widest text-white">{topic.requiresEvent && !eventId ? 'Crear mi primer evento' : topic.action}</button></div>
+                <PanelHeader eyebrow={t('guided.quickGuide')} title={topic.title} onClose={() => setPanel('help')} />
+                <div className="p-5 sm:p-6"><p className="text-sm leading-relaxed text-zinc-600">{topic.body}</p>{topic.requiresEvent && !eventId && <p className="mt-4 border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-900">{t('guided.createFirstHint')}</p>}<button type="button" onClick={() => go(topic.path(eventId))} className="mt-5 min-h-11 w-full bg-[#C0001E] px-4 text-xs font-bold uppercase tracking-widest text-white">{topic.requiresEvent && !eventId ? t('guided.createFirstEvent') : topic.action}</button></div>
               </>
             ) : (
               <WizardStep step={step} eventId={eventId} eventName={eventName} participantReady={participantReady} busy={busy} copied={copied} error={error} onDismiss={dismiss} onGo={go} onShare={shareRegistration} onMatchmaking={openMatchmaking} onGraphics={openGraphics} onDisplay={openDisplay} onClose={closePanel} />
@@ -342,45 +350,42 @@ function WizardStep({ step, eventId, eventName, participantReady, busy, copied, 
   step: GuidedOnboardingStep; eventId: string | null; eventName: string | null; participantReady: boolean; busy: boolean; copied: boolean; error: string | null;
   onDismiss: () => void; onGo: (path: string) => void; onShare: (native: boolean) => void; onMatchmaking: () => void; onGraphics: () => void; onDisplay: () => void; onClose: () => void;
 }) {
-  const content = STEP_CONTENT[step];
+  const { t } = useTranslation('onboarding');
+  const content = {
+    title: t(`guided.steps.${step}.title`),
+    body: t(`guided.steps.${step}.body`),
+  };
   return <>
-    <PanelHeader eyebrow={`Paso ${step} de 8`} title={content.title} onClose={onDismiss} />
-    <div className="p-5 sm:p-6"><Progress completed={step - 1} /><p className="mt-5 text-sm leading-relaxed text-zinc-600">{content.body}</p>{eventName && step > 1 && <p className="mt-3 border-l-2 border-[#C0001E] pl-3 text-sm font-bold text-zinc-900">{eventName}</p>}{step === 3 && eventId && <p className="mt-4 break-all border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-600">{typeof window !== 'undefined' ? `${window.location.origin}/events/${eventId}` : `/events/${eventId}`}</p>}{step === 4 && !participantReady && <p className="mt-4 border border-amber-200 bg-amber-50 p-3 text-xs font-medium text-amber-900">La guía continuará automáticamente cuando llegue el primer registro. También puedes agregar un peleador manualmente.</p>}{error && <ErrorMessage value={error} />}</div>
+    <PanelHeader eyebrow={t('guided.stepProgress', { step, total: 8 })} title={content.title} onClose={onDismiss} />
+    <div className="p-5 sm:p-6"><Progress completed={step - 1} /><p className="mt-5 text-sm leading-relaxed text-zinc-600">{content.body}</p>{eventName && step > 1 && <p className="mt-3 border-l-2 border-[#C0001E] pl-3 text-sm font-bold text-zinc-900">{eventName}</p>}{step === 3 && eventId && <p className="mt-4 break-all border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-600">{typeof window !== 'undefined' ? `${window.location.origin}/events/${eventId}` : `/events/${eventId}`}</p>}{step === 4 && !participantReady && <p className="mt-4 border border-amber-200 bg-amber-50 p-3 text-xs font-medium text-amber-900">{t('guided.waitingForRegistration')}</p>}{error && <ErrorMessage value={error} />}</div>
     <div className="border-t border-zinc-100 p-4 sm:p-5">
-      {step === 1 && <PrimaryButton label="Crear mi evento" busy={busy} onClick={() => onGo('/events/create?onboarding=1')} />}
-      {step === 2 && <PrimaryButton label="Configurar registro" busy={busy || !eventId} onClick={() => eventId && onGo(`/events/${eventId}/manage/settings`)} />}
-      {step === 3 && <div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => onShare(false)} disabled={busy || !eventId} className="min-h-11 border border-zinc-300 px-3 text-xs font-bold uppercase">{copied ? 'Enlace copiado' : 'Copiar enlace'}</button><button type="button" onClick={() => onShare(true)} disabled={busy || !eventId} className="min-h-11 bg-[#C0001E] px-3 text-xs font-bold uppercase text-white">Compartir</button></div>}
-      {step === 4 && <PrimaryButton label={participantReady ? 'Ver posibles enfrentamientos' : 'Esperando registros'} busy={busy || !participantReady} onClick={onMatchmaking} />}
-      {step === 5 && <PrimaryButton label="Entendido, yo decido" busy={busy} onClick={onClose} />}
-      {step === 6 && <PrimaryButton label="Continuar a gráficos" busy={busy || !eventId} onClick={onGraphics} />}
-      {step === 7 && <PrimaryButton label="Ver gráficos" busy={busy || !eventId} onClick={() => eventId && onGo(`/events/${eventId}/manage/graphics`)} />}
-      {step === 8 && <PrimaryButton label="Abrir modo pantalla" busy={busy || !eventId} onClick={onDisplay} />}
-      <button type="button" onClick={onDismiss} disabled={busy} className="mt-2 min-h-10 w-full text-xs font-bold uppercase text-zinc-500 hover:text-zinc-900">Lo haré después</button>
+      {step === 1 && <PrimaryButton label={t('guided.actions.createEvent')} busy={busy} onClick={() => onGo('/events/create?onboarding=1')} />}
+      {step === 2 && <PrimaryButton label={t('guided.actions.configureRegistration')} busy={busy || !eventId} onClick={() => eventId && onGo(`/events/${eventId}/manage/settings`)} />}
+      {step === 3 && <div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => onShare(false)} disabled={busy || !eventId} className="min-h-11 border border-zinc-300 px-3 text-xs font-bold uppercase">{copied ? t('guided.linkCopied') : t('guided.actions.copyLink')}</button><button type="button" onClick={() => onShare(true)} disabled={busy || !eventId} className="min-h-11 bg-[#C0001E] px-3 text-xs font-bold uppercase text-white">{t('guided.actions.share')}</button></div>}
+      {step === 4 && <PrimaryButton label={participantReady ? t('guided.actions.viewMatches') : t('guided.actions.waitingRegistrations')} busy={busy || !participantReady} onClick={onMatchmaking} />}
+      {step === 5 && <PrimaryButton label={t('guided.actions.understood')} busy={busy} onClick={onClose} />}
+      {step === 6 && <PrimaryButton label={t('guided.actions.continueGraphics')} busy={busy || !eventId} onClick={onGraphics} />}
+      {step === 7 && <PrimaryButton label={t('guided.actions.viewGraphics')} busy={busy || !eventId} onClick={() => eventId && onGo(`/events/${eventId}/manage/graphics`)} />}
+      {step === 8 && <PrimaryButton label={t('guided.actions.openDisplay')} busy={busy || !eventId} onClick={onDisplay} />}
+      <button type="button" onClick={onDismiss} disabled={busy} className="mt-2 min-h-10 w-full text-xs font-bold uppercase text-zinc-500 hover:text-zinc-900">{t('guided.doLater')}</button>
     </div>
   </>;
 }
 
-const STEP_CONTENT: Record<GuidedOnboardingStep, { title: string; body: string }> = {
-  1: { title: 'Primero vamos a crear tu evento.', body: 'Aquí ingresarás el nombre, fecha, lugar y tipo de evento.' },
-  2: { title: 'Ahora configura el registro de peleadores.', body: 'Selecciona las categorías, pesos y disciplinas que estarán disponibles.' },
-  3: { title: 'Tu evento ya tiene un enlace de registro.', body: 'Comparte este enlace con tus peleadores, managers y gimnasios. Cuando alguien se registre, aparecerá automáticamente en tu lista de participantes.' },
-  4: { title: 'Aquí comienza el matchmaking.', body: 'Strikers Match analizará los peleadores registrados y te mostrará posibles enfrentamientos.' },
-  5: { title: 'Tú tienes la última palabra.', body: 'Revisa cada enfrentamiento y decide si quieres aprobarlo, rechazarlo o modificarlo. El sistema nunca hace oficial una pelea sin tu decisión.' },
-  6: { title: 'Tu pelea ya es oficial.', body: 'Una vez aprobada, Strikers Match genera automáticamente la información y los gráficos correspondientes.' },
-  7: { title: 'Tus gráficos están listos.', body: 'Puedes utilizarlos en redes sociales, pantallas, proyectores y material promocional.' },
-  8: { title: '¿Listo para el evento?', body: 'Abre el modo pantalla para mostrar automáticamente los enfrentamientos durante tu evento.' },
-};
-
 function Progress({ completed }: { completed: number }) {
-  return <div aria-label={`${completed} de 8 pasos completados`}><div className="flex items-center gap-1">{Array.from({ length: 8 }, (_, index) => <span key={index} className={`h-2 flex-1 ${index < completed ? 'bg-[#C0001E]' : 'bg-zinc-200'}`} />)}</div><p className="mt-2 text-xs font-bold uppercase tracking-widest text-zinc-500">{completed} de 8 pasos completados</p></div>;
+  const { t } = useTranslation('onboarding');
+  const label = t('guided.completedSteps', { completed, total: 8 });
+  return <div aria-label={label}><div className="flex items-center gap-1">{Array.from({ length: 8 }, (_, index) => <span key={index} className={`h-2 flex-1 ${index < completed ? 'bg-[#C0001E]' : 'bg-zinc-200'}`} />)}</div><p className="mt-2 text-xs font-bold uppercase tracking-widest text-zinc-500">{label}</p></div>;
 }
 
 function PanelHeader({ eyebrow, title, onClose }: { eyebrow: string; title: string; onClose: () => void }) {
-  return <header className="relative bg-zinc-950 px-5 py-5 pr-16 text-white sm:px-6"><p className="text-xs font-bold uppercase tracking-[0.24em] text-[#C0001E]">{eyebrow}</p><h2 id="guided-help-title" className="mt-1 font-display text-3xl font-black uppercase leading-none">{title}</h2><button type="button" onClick={onClose} aria-label="Cerrar guía" className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center border border-zinc-700 text-xl text-zinc-300 hover:border-zinc-400 hover:text-white">×</button></header>;
+  const { t } = useTranslation('onboarding');
+  return <header className="relative bg-zinc-950 px-5 py-5 pr-16 text-white sm:px-6"><p className="text-xs font-bold uppercase tracking-[0.24em] text-[#C0001E]">{eyebrow}</p><h2 id="guided-help-title" className="mt-1 font-display text-3xl font-black uppercase leading-none">{title}</h2><button type="button" onClick={onClose} aria-label={t('guided.close')} className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center border border-zinc-700 text-xl text-zinc-300 hover:border-zinc-400 hover:text-white">×</button></header>;
 }
 
 function PrimaryButton({ label, busy, onClick }: { label: string; busy: boolean; onClick: () => void }) {
-  return <button type="button" disabled={busy} onClick={onClick} className="min-h-11 w-full bg-[#C0001E] px-4 text-xs font-bold uppercase tracking-widest text-white disabled:bg-zinc-300">{busy ? 'Espera…' : label}</button>;
+  const { t } = useTranslation('onboarding');
+  return <button type="button" disabled={busy} onClick={onClick} className="min-h-11 w-full bg-[#C0001E] px-4 text-xs font-bold uppercase tracking-widest text-white disabled:bg-zinc-300">{busy ? t('guided.wait') : label}</button>;
 }
 
 function ErrorMessage({ value }: { value: string }) { return <p className="mt-4 border border-red-200 bg-red-50 p-3 text-sm text-red-700">{value}</p>; }

@@ -8,11 +8,13 @@ import { formatLocalizedCurrency, formatLocalizedDate } from '@/lib/locale';
 import { EventManageFrame } from '@/components/EventManageFrame';
 import { EventWeightCategorySelector } from '@/components/EventWeightCategorySelector';
 import { InlineCombatRecord } from '@/components/CombatRecord';
+import { FighterProfileCompletionNotice } from '@/components/FighterProfileCompletionNotice';
 import { eventService } from '@/services/eventService';
 import { authService } from '@/services/authService';
 import { canAccessEventTools, canUseEventFeature } from '@/services/eventStaffService';
 import { fighterService } from '@/services/fighterService';
 import { supabase } from '@/lib/supabaseClient';
+import { getMissingFighterRegistrationProfileFields } from '@/lib/fighterRegistrationProfile';
 import {
   DISCIPLINE_OPTIONS,
   GENERIC_WEIGHT_CLASS_OPTIONS,
@@ -54,11 +56,9 @@ const STATUS_COLORS: Record<Event['status'], string> = {
   completed: 'bg-blue-50 text-blue-700',
 };
 
-const APP_STATUS_LABELS: Record<string, { label: string; cls: string }> = {
-  pending:   { label: 'Pendiente',  cls: 'bg-amber-50 text-amber-700' },
-  accepted:  { label: 'Aceptado',   cls: 'bg-emerald-50 text-emerald-700' },
-  declined:  { label: 'Rechazado',  cls: 'bg-red-50 text-red-700' },
-  withdrawn: { label: 'Retirado',   cls: 'bg-zinc-100 text-zinc-500' },
+const APP_STATUS_CLASSES: Record<string, string> = {
+  pending: 'bg-amber-50 text-amber-700', accepted: 'bg-emerald-50 text-emerald-700',
+  declined: 'bg-red-50 text-red-700', withdrawn: 'bg-zinc-100 text-zinc-500',
 };
 
 type ApplicationWithFighter = EventApplication & {
@@ -215,6 +215,7 @@ export default function EventDetailPage() {
           if (
             wantsToParticipate &&
             ev.status === 'published' &&
+            getMissingFighterRegistrationProfileFields(f, p).length === 0 &&
             (!currentApplication || currentApplication.status === 'withdrawn')
           ) {
             const preferredDiscipline = f.disciplines?.find((discipline) =>
@@ -351,7 +352,7 @@ export default function EventDetailPage() {
     setSendingEmergency(false);
     setSelectedEmergency(new Set());
     setEmergencyConfirm(false);
-    setEmergencyFeedback(`${sentCount} solicitud${sentCount !== 1 ? 'es' : ''} enviada${sentCount !== 1 ? 's' : ''} con exito.`);
+    setEmergencyFeedback(t('events.detail.emergencyRequestsSent', { count: sentCount }));
   };
 
   // ── Promoter: load proposed matches + confirmed-paid roster ──
@@ -507,6 +508,10 @@ export default function EventDetailPage() {
 
   const handleApply = async () => {
     if (!myFighter || !id) return;
+    if (missingRegistrationProfileFields.length > 0) {
+      setApplyError(t('events.registration.profileRequiredTitle'));
+      return;
+    }
     setApplying(true);
     setApplyError(null);
     const { data, error } = await eventService.applyToEvent(id, myFighter.id, {
@@ -524,7 +529,7 @@ export default function EventDetailPage() {
       corner_name: applyCornerName,
     });
     setApplying(false);
-    if (error) { setApplyError('No se pudo enviar la solicitud. Intenta de nuevo.'); }
+    if (error) { setApplyError(t('events.detail.applicationFailed')); }
     else { setMyApplication(data); setApplyOpen(false); setApplyMessage(''); setApplyCornerName(''); setApplyConfirmWeight(false); setApplyConfirmAvailability(false); setApplyWeightClass(''); setApplyDiscipline(''); setApplyBelt(''); }
   };
 
@@ -545,6 +550,7 @@ export default function EventDetailPage() {
 
   const openApplicationForm = () => {
     if (!event || !myFighter) return;
+    if (missingRegistrationProfileFields.length > 0) return;
     const preferredDiscipline = myFighter.disciplines?.find((discipline) =>
       event.disciplines_needed.length === 0 || event.disciplines_needed.includes(discipline)
     ) ?? myFighter.disciplines?.[0] ?? event.disciplines_needed[0] ?? '';
@@ -583,6 +589,9 @@ export default function EventDetailPage() {
   const canManageEvent = canOperateThisEvent;
   const canEditEvent = profile && (event.promoter_id === profile.id || profile.role === 'admin');
   const isFighter = profile?.role === 'fighter';
+  const missingRegistrationProfileFields = myFighter && profile
+    ? getMissingFighterRegistrationProfileFields(myFighter, profile)
+    : [];
 
   // Discipline mismatch warning for fighters
   const eventDisciplines = event.disciplines_needed ?? [];
@@ -676,7 +685,7 @@ export default function EventDetailPage() {
                 </button>
               )}
               {eventToolAccess.graphics && (
-                <a href={`/events/${event.id}/manage/graphics`} className="flex min-h-11 items-center justify-center border border-[#C0001E] px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-[#C0001E]">Gráficos</a>
+                <a href={`/events/${event.id}/manage/graphics`} className="flex min-h-11 items-center justify-center border border-[#C0001E] px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-[#C0001E]">{t('events.detail.graphics')}</a>
               )}
               {canEditEvent && (
                 <>
@@ -714,12 +723,12 @@ export default function EventDetailPage() {
             {/* Details grid */}
             <div className="grid grid-cols-2 gap-6 border border-zinc-100 p-6">
               <DetailRow label={t('events.detail.date')} value={formatDate(event.event_date)} />
-              <DetailRow label="Hora de inicio" value={event.event_time ? event.event_time.slice(0, 5) + ' hrs' : t('events.detail.notSpecified')} />
+              <DetailRow label={t('events.detail.startTime')} value={event.event_time ? event.event_time.slice(0, 5) : t('events.detail.notSpecified')} />
               <DetailRow label={t('events.detail.city')} value={event.city ?? t('events.detail.notSpecified')} />
               <DetailRow label={t('events.detail.venue')} value={event.venue ?? t('events.detail.notSpecified')} />
               <DetailRow
-                label="Cuota de inscripción"
-                value={event.signup_fee ? formatLocalizedCurrency(event.signup_fee, event.currency ?? 'MXN', i18n.resolvedLanguage) : 'Gratuito'}
+                label={t('events.detail.signupFee')}
+                value={event.signup_fee ? formatLocalizedCurrency(event.signup_fee, event.currency ?? 'MXN', i18n.resolvedLanguage) : t('events.detail.free')}
               />
               {event.purse_amount !== null && (
                 <DetailRow label={t('events.detail.purse')} value={formatPurse(event.purse_amount)} />
@@ -730,7 +739,7 @@ export default function EventDetailPage() {
             {/* Weight classes needed pills */}
             {eventWeightClasses.length > 0 && (
               <div className="border border-zinc-100 p-6">
-                <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: '#9A9A9A' }}>Categorías de peso requeridas</p>
+                <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: '#9A9A9A' }}>{t('events.detail.requiredWeightCategories')}</p>
                 <div className="flex flex-wrap gap-2">
                   {eventWeightClasses.map((wc) => (
                     <span key={wc} className="text-xs font-bold px-3 py-1.5 uppercase tracking-wide bg-[#0A0A0A] text-white">
@@ -742,14 +751,14 @@ export default function EventDetailPage() {
             )}
             {hasLegacyMultipleWeightClass && canOperateThisEvent && (
               <div className="border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                Este evento conserva la configuración anterior “multiple”. Edita el evento y selecciona las categorías concretas por edad y peso.
+                {t('events.detail.legacyMultiple')}
               </div>
             )}
 
             {/* Disciplines needed pills */}
             {eventDisciplines.length > 0 && (
               <div className="border border-zinc-100 p-6">
-                <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: '#9A9A9A' }}>Disciplinas requeridas</p>
+                <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: '#9A9A9A' }}>{t('events.detail.requiredDisciplines')}</p>
                 <div className="flex flex-wrap gap-2">
                   {eventDisciplines.map((d) => (
                     <span key={d} className="text-xs font-bold px-3 py-1.5 uppercase tracking-wide bg-[#0A0A0A] text-white">{d}</span>
@@ -769,21 +778,28 @@ export default function EventDetailPage() {
             {/* ── Fighter: Apply CTA ── */}
             {isFighter && myFighter && event.status === 'published' && (
               <div className="border border-zinc-100 p-6">
-                <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: '#C0001E' }}>Aplicar a este evento</p>
+                <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: '#C0001E' }}>{t('events.detail.applyToEvent')}</p>
+
+                {missingRegistrationProfileFields.length > 0
+                  && (!myApplication || myApplication.status === 'withdrawn') && (
+                  <FighterProfileCompletionNotice missingFields={missingRegistrationProfileFields} />
+                )}
 
                 {/* Discipline mismatch warning */}
-                {hasMismatch && (
+                {hasMismatch && missingRegistrationProfileFields.length === 0 && (
                   <div className="mb-4 flex items-start gap-2 bg-amber-50 border border-amber-200 px-4 py-3">
                     <svg className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
                     <p className="text-xs text-amber-700">
-                      <span className="font-bold">Disciplina no coincide.</span> Este evento requiere {eventDisciplines.join(', ')} pero tus disciplinas son {fighterDisciplines.length > 0 ? fighterDisciplines.join(', ') : 'no especificadas'}. Puedes aplicar de todas formas.
+                      <span className="font-bold">{t('events.detail.disciplineMismatchTitle')}</span> {t('events.detail.disciplineMismatchBody', { required: eventDisciplines.join(', '), current: fighterDisciplines.length > 0 ? fighterDisciplines.join(', ') : t('events.detail.unspecified') })}
                     </p>
                   </div>
                 )}
 
-                {!myApplication || myApplication.status === 'withdrawn' ? (
+                {missingRegistrationProfileFields.length > 0
+                  && (!myApplication || myApplication.status === 'withdrawn') ? null
+                  : !myApplication || myApplication.status === 'withdrawn' ? (
                   applyOpen ? (
                     <div className="space-y-4">
                       {/* Signup fee notice */}
@@ -793,8 +809,8 @@ export default function EventDetailPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                           <p className="text-xs text-zinc-700">
-                            <span className="font-bold">Cuota de inscripción:</span>{' '}
-                            {formatLocalizedCurrency(event.signup_fee, event.currency ?? 'MXN', i18n.resolvedLanguage)} — El promotor te contactará con instrucciones de pago.
+                            <span className="font-bold">{t('events.detail.signupFee')}:</span>{' '}
+                            {formatLocalizedCurrency(event.signup_fee, event.currency ?? 'MXN', i18n.resolvedLanguage)} — {t('events.detail.paymentContact')}
                           </p>
                         </div>
                       )}
@@ -803,7 +819,7 @@ export default function EventDetailPage() {
                       {(event.disciplines_needed ?? []).length > 0 && (
                         <div>
                           <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#5A5A5A' }}>
-                            Disciplina con la que compites <span className="text-red-500">*</span>
+                            {t('events.detail.competitionDiscipline')} <span className="text-red-500">*</span>
                           </label>
                           <div className="flex flex-wrap gap-2">
                             {(event.disciplines_needed ?? []).map((d) => (
@@ -832,12 +848,12 @@ export default function EventDetailPage() {
                       {/* Weight class selector — discipline-aware */}
                       <div>
                         <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#5A5A5A' }}>
-                          Categoría de peso <span className="text-red-500">*</span>
+                          {t('events.detail.weightCategory')} <span className="text-red-500">*</span>
                         </label>
 
                         {inferredApplicantWeightClass && (
                           <p className="mb-3 text-xs text-emerald-700">
-                            Categoría asignada automáticamente con tu edad y peso de perfil: <strong>{inferredApplicantWeightClass}</strong>. Puedes corregirla si tu peso cambió.
+                            {t('events.detail.autoCategoryPrefix')} <strong>{inferredApplicantWeightClass}</strong>. {t('events.detail.autoCategorySuffix')}
                           </p>
                         )}
 
@@ -906,7 +922,7 @@ export default function EventDetailPage() {
                           </div>
 
                           {/* Kids */}
-                          <p className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-1.5">Niños (4–15)</p>
+                          <p className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-1.5">{t('events.detail.childrenAges')}</p>
                           <div className="flex flex-wrap gap-2">
                             {BJJ_BELTS_KIDS.map((b) => {
                               const key = `kids-${b}`;
@@ -926,7 +942,7 @@ export default function EventDetailPage() {
 
                       {/* Corner / Team name */}
                       <div>
-                        <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Nombre del equipo / córner <span className="text-zinc-400 font-normal normal-case tracking-normal">(opcional)</span></label>
+                        <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('events.detail.cornerName')} <span className="text-zinc-400 font-normal normal-case tracking-normal">({t('events.detail.optional')})</span></label>
                         <input
                           type="text"
                           value={applyCornerName}
@@ -943,7 +959,7 @@ export default function EventDetailPage() {
                           value={applyMessage}
                           onChange={(e) => setApplyMessage(e.target.value)}
                           rows={3}
-                          placeholder="Preséntate, menciona tu experiencia..."
+                          placeholder={t('events.detail.introductionPlaceholder')}
                           className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 resize-none"
                         />
                       </div>
@@ -961,8 +977,8 @@ export default function EventDetailPage() {
                             <span className="text-xs text-zinc-700">
                               Confirmo que puedo pelear en{' '}
                               {eventWeightClasses.length === 1
-                                ? <span className="font-bold">la categoría {eventWeightClasses[0]}</span>
-                                : <span className="font-bold">alguna de las categorías: {eventWeightClasses.join(', ')}</span>
+                                ? <span className="font-bold">{t('events.detail.singleCategory', { category: eventWeightClasses[0] })}</span>
+                                : <span className="font-bold">{t('events.detail.multipleCategories', { categories: eventWeightClasses.join(', ') })}</span>
                               }
                             </span>
                           </label>
@@ -976,7 +992,7 @@ export default function EventDetailPage() {
                               className="mt-0.5 h-4 w-4 accent-[#C0001E] flex-shrink-0"
                             />
                             <span className="text-xs text-zinc-700">
-                              Confirmo que estoy disponible el <span className="font-bold">{formatDate(event.event_date)}</span>
+                              {t('events.detail.confirmAvailability')} <span className="font-bold">{formatDate(event.event_date)}</span>
                             </span>
                           </label>
                         )}
@@ -985,10 +1001,10 @@ export default function EventDetailPage() {
                       {applyError && <p className="text-xs text-red-600">{applyError}</p>}
                       <div className="flex gap-3">
                         <button onClick={() => { setApplyOpen(false); setApplyError(null); }} className="px-4 py-2 text-sm font-medium border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition-colors">
-                          Cancelar
+                          {t('events.detail.cancel')}
                         </button>
                         <button onClick={handleApply} disabled={applying} className="px-5 py-2 text-sm font-bold tracking-wide uppercase text-white disabled:opacity-50 transition-colors" style={{ background: '#C0001E' }}>
-                          {applying ? 'Enviando...' : 'Enviar solicitud'}
+                          {applying ? t('events.detail.sending') : t('events.detail.sendApplication')}
                         </button>
                       </div>
                     </div>
@@ -996,17 +1012,17 @@ export default function EventDetailPage() {
                     <button onClick={openApplicationForm} className="px-6 py-2.5 text-sm font-bold tracking-widest uppercase text-white transition-colors" style={{ background: '#C0001E' }}
                       onMouseOver={(e) => (e.currentTarget.style.background = '#9A0018')}
                       onMouseOut={(e) => (e.currentTarget.style.background = '#C0001E')}>
-                      Aplicar a este evento
+                      {t('events.detail.applyToEvent')}
                     </button>
                   )
                 ) : (
                   <div className="flex items-center gap-4">
-                    <span className={`text-xs font-bold px-3 py-1.5 uppercase tracking-wide ${APP_STATUS_LABELS[myApplication.status]?.cls ?? 'bg-zinc-100 text-zinc-500'}`}>
-                      {APP_STATUS_LABELS[myApplication.status]?.label ?? myApplication.status}
+                    <span className={`text-xs font-bold px-3 py-1.5 uppercase tracking-wide ${APP_STATUS_CLASSES[myApplication.status] ?? 'bg-zinc-100 text-zinc-500'}`}>
+                      {t(`events.detail.applicationStatus.${myApplication.status}`, { defaultValue: myApplication.status })}
                     </span>
                     {myApplication.status === 'pending' && (
                       <button onClick={handleWithdraw} disabled={withdrawing} className="text-xs text-zinc-400 hover:text-red-600 disabled:opacity-50 transition-colors">
-                        {withdrawing ? '...' : 'Retirar solicitud'}
+                        {withdrawing ? '...' : t('events.detail.withdrawApplication')}
                       </button>
                     )}
                   </div>
@@ -1015,83 +1031,93 @@ export default function EventDetailPage() {
             )}
 
             {/* ── Fighter: Event Registration & Payment ── */}
-            {profile?.role === 'fighter' && myFighter && event.status === 'published' && (paymentSettings || (event.signup_fee && event.signup_fee > 0)) && (
+            {profile?.role === 'fighter'
+              && myFighter
+              && event.status === 'published'
+              && (myRegistration || missingRegistrationProfileFields.length === 0)
+              && (paymentSettings || (event.signup_fee && event.signup_fee > 0)) && (
               <div className="border border-zinc-200 p-6 mt-6">
                 <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color: '#C0001E' }}>
-                  {paymentSettings?.registration_type === 'free' ? 'Registro del Evento' : 'Registro y Pago del Evento'}
+                  {paymentSettings?.registration_type === 'free' ? t('events.detail.eventRegistration') : t('events.detail.eventRegistrationPayment')}
                 </p>
 
                 {usesStripeRegistration && (
                   <div className="mb-4 border border-zinc-100 bg-zinc-50 p-3 text-xs text-zinc-600">
-                    El cobro lo realiza <span className="font-bold text-zinc-900">{event.profiles?.full_name ?? 'el organizador del evento'}</span> mediante su cuenta conectada de Stripe. Strikers Match proporciona la tecnología de registro.
+                    {t('events.detail.stripeDisclosurePrefix')} <span className="font-bold text-zinc-900">{event.profiles?.full_name ?? t('events.detail.eventOrganizer')}</span> {t('events.detail.stripeDisclosureSuffix')}
                   </div>
                 )}
 
                 {!myRegistration ? (
                   /* Step 1: Register */
                   <div>
-                    <p className="text-sm text-zinc-600 mb-3">
-                      {paymentSettings?.registration_type === 'free' ? (
-                        <>La inscripción a este evento es gratuita. Regístrate para que el organizador revise tu participación.</>
-                      ) : (
-                        <>Este evento requiere un pago de inscripción de <span className="font-bold text-zinc-900">${event.signup_fee} MXN</span>.
-                          {usesStripeRegistration ? ' Regístrate para continuar al pago seguro.' : ' Regístrate para recibir las instrucciones de pago.'}</>
-                      )}
-                    </p>
-                    {regError && <p className="text-xs text-red-600 mb-2">{regError}</p>}
-                    <button
-                      onClick={async () => {
-                        setRegistering(true);
-                        setRegError(null);
-                        const { data, error } = await registerForEvent(event.id, myFighter.id);
-                        if (error) setRegError(error);
-                        else setMyRegistration(data);
-                        setRegistering(false);
-                      }}
-                      disabled={registering}
-                      className="px-5 py-2.5 text-xs font-bold tracking-widest uppercase text-white transition-colors disabled:opacity-50"
-                      style={{ background: '#C0001E' }}
-                      onMouseOver={(e) => (e.currentTarget.style.background = '#9A0018')}
-                      onMouseOut={(e) => (e.currentTarget.style.background = '#C0001E')}
-                    >
-                      {registering ? 'Registrando...' : 'Registrarme al Evento'}
-                    </button>
+                    {missingRegistrationProfileFields.length > 0 ? (
+                      <FighterProfileCompletionNotice missingFields={missingRegistrationProfileFields} />
+                    ) : (
+                      <>
+                        <p className="text-sm text-zinc-600 mb-3">
+                          {paymentSettings?.registration_type === 'free' ? (
+                            <>{t('events.detail.freeRegistration')}</>
+                          ) : (
+                            <>{t('events.detail.paidRegistrationPrefix')} <span className="font-bold text-zinc-900">${event.signup_fee} MXN</span>.
+                              {usesStripeRegistration ? ` ${t('events.detail.registerForSecurePayment')}` : ` ${t('events.detail.registerForPaymentInstructions')}`}</>
+                          )}
+                        </p>
+                        {regError && <p className="text-xs text-red-600 mb-2">{regError}</p>}
+                        <button
+                          onClick={async () => {
+                            setRegistering(true);
+                            setRegError(null);
+                            const { data, error } = await registerForEvent(event.id, myFighter.id);
+                            if (error) setRegError(error);
+                            else setMyRegistration(data);
+                            setRegistering(false);
+                          }}
+                          disabled={registering}
+                          className="px-5 py-2.5 text-xs font-bold tracking-widest uppercase text-white transition-colors disabled:opacity-50"
+                          style={{ background: '#C0001E' }}
+                          onMouseOver={(e) => (e.currentTarget.style.background = '#9A0018')}
+                          onMouseOut={(e) => (e.currentTarget.style.background = '#C0001E')}
+                        >
+                          {registering ? t('events.detail.registering') : t('events.detail.registerForEvent')}
+                        </button>
+                      </>
+                    )}
                   </div>
                 ) : paymentSettings?.registration_type === 'free' || myRegistration.payment_status === 'waived' ? (
                   <div className="flex items-center gap-3 border border-emerald-200 bg-emerald-50 p-4">
-                    <span className="text-xs font-bold text-emerald-700">REGISTRO SIN COSTO</span>
-                    <p className="text-sm text-emerald-800">No se requiere pago. El organizador revisará tu participación para el matchmaking.</p>
+                    <span className="text-xs font-bold text-emerald-700">{t('events.detail.freeRegistrationBadge')}</span>
+                    <p className="text-sm text-emerald-800">{t('events.detail.noPaymentRequired')}</p>
                   </div>
                 ) : usesStripeRegistration && ['refunded', 'partially_refunded', 'disputed'].includes(registrationPayment?.payment_status ?? '') ? (
                   <div className="border border-amber-200 bg-amber-50 p-4">
-                    <p className="text-sm font-bold text-amber-900">Este pago requiere revisión del organizador.</p>
-                    <p className="mt-1 text-xs text-amber-800">Estado: {registrationPayment?.payment_status === 'disputed' ? 'en disputa' : 'reembolsado'}.</p>
+                    <p className="text-sm font-bold text-amber-900">{t('events.detail.paymentNeedsReview')}</p>
+                    <p className="mt-1 text-xs text-amber-800">{t('events.detail.paymentStatus', { status: registrationPayment?.payment_status === 'disputed' ? t('events.detail.disputed') : t('events.detail.refunded') })}</p>
                   </div>
                 ) : usesStripeRegistration && registrationPayment?.payment_status === 'processing' ? (
                   <div className="flex items-center gap-3 border border-blue-200 bg-blue-50 p-4">
-                    <span className="text-xs font-bold text-blue-700">VERIFICANDO PAGO</span>
-                    <p className="text-sm text-blue-800">Stripe está procesando el pago. Esta página se actualizará al confirmarse.</p>
+                    <span className="text-xs font-bold text-blue-700">{t('events.detail.verifyingPayment')}</span>
+                    <p className="text-sm text-blue-800">{t('events.detail.paymentProcessing')}</p>
                   </div>
                 ) : myRegistration.payment_status === 'pending' ? (
                   /* Step 2: Stripe Checkout or legacy manual payment */
                   <div>
                     {usesStripeRegistration ? (
                       <div className="mb-4 border border-zinc-100 bg-zinc-50 p-4">
-                        <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Pago seguro con Stripe</p>
-                        <p className="text-sm text-zinc-700">Paga <span className="font-bold">${event.signup_fee} MXN</span>. Tu lugar se habilita para revisión y matchmaking únicamente después de que Stripe confirme el pago.</p>
+                        <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">{t('events.detail.secureStripePayment')}</p>
+                        <p className="text-sm text-zinc-700">{t('events.detail.payPrefix')} <span className="font-bold">${event.signup_fee} MXN</span>. {t('events.detail.paySuffix')}</p>
                         {registrationPayment?.payment_status === 'failed' && (
-                          <p className="mt-2 text-xs text-red-700">El intento anterior no se completó. Puedes volver a intentarlo.</p>
+                          <p className="mt-2 text-xs text-red-700">{t('events.detail.paymentRetry')}</p>
                         )}
                       </div>
                     ) : (
                       <div className="bg-zinc-50 border border-zinc-100 p-4 mb-4">
-                        <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Instrucciones de Pago</p>
-                        <p className="text-sm text-zinc-700 mb-2">Realiza el pago de <span className="font-bold">${event.signup_fee} MXN</span> al promotor del evento.</p>
-                        <p className="text-sm text-zinc-500">Contacta al promotor para obtener los datos de pago (transferencia, efectivo, etc.)</p>
+                        <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">{t('events.detail.paymentInstructions')}</p>
+                        <p className="text-sm text-zinc-700 mb-2">{t('events.detail.payOrganizer', { amount: `$${event.signup_fee} MXN` })}</p>
+                        <p className="text-sm text-zinc-500">{t('events.detail.contactOrganizerForPayment')}</p>
                       </div>
                     )}
                     <div className="flex items-center gap-3">
-                      <span className="text-xs font-bold px-2 py-1 bg-amber-50 text-amber-700">PENDIENTE</span>
+                      <span className="text-xs font-bold px-2 py-1 bg-amber-50 text-amber-700">{t('events.detail.pending')}</span>
                       {regError && <p className="text-xs text-red-600">{regError}</p>}
                     </div>
                     <button
@@ -1115,7 +1141,7 @@ export default function EventDetailPage() {
                       onMouseOver={(e) => (e.currentTarget.style.background = '#333')}
                       onMouseOut={(e) => (e.currentTarget.style.background = '#0A0A0A')}
                     >
-                      {submittingPayment ? 'Abriendo...' : usesStripeRegistration ? 'Continuar al pago seguro' : 'Ya Pagué'}
+                      {submittingPayment ? t('events.detail.opening') : usesStripeRegistration ? t('events.detail.continueSecurePayment') : t('events.detail.alreadyPaid')}
                     </button>
                   </div>
                 ) : myRegistration.payment_status === 'submitted' ? (
@@ -1123,10 +1149,10 @@ export default function EventDetailPage() {
                   <div>
                     <div className="flex items-center gap-3">
                       <span className="text-xs font-bold px-2 py-1 bg-blue-50 text-blue-700">PAGO ENVIADO</span>
-                      <p className="text-sm text-zinc-500">Esperando confirmación del promotor...</p>
+                      <p className="text-sm text-zinc-500">{t('events.detail.waitingForConfirmation')}</p>
                     </div>
                     <p className="text-xs text-zinc-400 mt-2">
-                      Enviado: {formatLocalizedDate(myRegistration.submitted_at!, i18n.resolvedLanguage, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                      {t('events.detail.submitted')}: {formatLocalizedDate(myRegistration.submitted_at!, i18n.resolvedLanguage, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                 ) : (
@@ -1134,10 +1160,10 @@ export default function EventDetailPage() {
                   <div>
                     <div className="flex items-center gap-3">
                       <span className="text-xs font-bold px-2 py-1 bg-emerald-50 text-emerald-700">PAGO CONFIRMADO</span>
-                      <p className="text-sm text-zinc-600">Tu pago ha sido verificado por el sistema.</p>
+                      <p className="text-sm text-zinc-600">{t('events.detail.paymentVerified')}</p>
                     </div>
                     <p className="text-xs text-zinc-400 mt-2">
-                      Confirmado: {formatLocalizedDate(myRegistration.confirmed_at!, i18n.resolvedLanguage, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                      {t('events.detail.confirmed')}: {formatLocalizedDate(myRegistration.confirmed_at!, i18n.resolvedLanguage, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                 )}
@@ -1168,22 +1194,22 @@ export default function EventDetailPage() {
             {canManageEvent && eventRequests.length > 0 && (
               <div className="border-t border-zinc-100 pt-8">
                 <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color: '#C0001E' }}>
-                  Solicitudes de pelea ({eventRequests.length})
+                  {t('events.detail.fightRequests', { count: eventRequests.length })}
                 </p>
                 <div className="space-y-2">
                   {eventRequests.map((req) => {
                     const statusMap: Record<string, { label: string; cls: string }> = {
-                      pending: { label: 'Esperando respuesta', cls: 'bg-amber-50 text-amber-700' },
-                      accepted: { label: 'Aceptado', cls: 'bg-emerald-50 text-emerald-700' },
-                      declined: { label: 'Rechazado', cls: 'bg-red-50 text-red-700' },
-                      cancelled: { label: 'Cancelado', cls: 'bg-zinc-100 text-zinc-500' },
+                      pending: { label: t('events.detail.awaitingResponse'), cls: 'bg-amber-50 text-amber-700' },
+                      accepted: { label: t('events.detail.applicationStatus.accepted'), cls: 'bg-emerald-50 text-emerald-700' },
+                      declined: { label: t('events.detail.applicationStatus.declined'), cls: 'bg-red-50 text-red-700' },
+                      cancelled: { label: t('events.detail.applicationStatus.cancelled'), cls: 'bg-zinc-100 text-zinc-500' },
                     };
                     const s = statusMap[req.status] ?? { label: req.status, cls: 'bg-zinc-100 text-zinc-500' };
                     const fi = (req as unknown as { fighters?: { profiles?: { full_name?: string; city?: string } } }).fighters;
                     return (
                       <div key={req.id} className={`border p-3 flex items-center justify-between gap-3 ${req.status === 'accepted' ? 'border-emerald-300 bg-emerald-50/30' : 'border-zinc-200'}`}>
                         <div>
-                          <p className="text-sm font-bold text-zinc-900">{fi?.profiles?.full_name ?? 'Peleador'}</p>
+                          <p className="text-sm font-bold text-zinc-900">{fi?.profiles?.full_name ?? t('events.detail.fighter')}</p>
                           <p className="text-xs text-zinc-500">{fi?.profiles?.city ?? ''}</p>
                         </div>
                         <span className={`text-xs font-bold px-2 py-1 flex-shrink-0 ${s.cls}`}>{s.label}</span>
@@ -1197,18 +1223,18 @@ export default function EventDetailPage() {
             {canManageEvent && (
               <div className="border-t border-zinc-100 pt-8">
                 <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color: '#C0001E' }}>
-                  Solicitudes ({applications.length})
+                  {t('events.detail.applications', { count: applications.length })}
                 </p>
                 {appsLoading ? (
-                  <p className="text-sm text-zinc-400">Cargando...</p>
+                  <p className="text-sm text-zinc-400">{t('events.detail.loading')}</p>
                 ) : applications.length === 0 ? (
                   <div className="border border-dashed border-zinc-200 py-8 text-center">
-                    <p className="text-sm text-zinc-400">No hay solicitudes para este evento aún.</p>
+                    <p className="text-sm text-zinc-400">{t('events.detail.noApplications')}</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {applications.map((app) => {
-                      const s = APP_STATUS_LABELS[app.status] ?? { label: app.status, cls: 'bg-zinc-100 text-zinc-500' };
+                      const statusClass = APP_STATUS_CLASSES[app.status] ?? 'bg-zinc-100 text-zinc-500';
                       const f = app.fighters;
                       return (
                         <div key={app.id} className="border border-zinc-200 p-4">
@@ -1220,20 +1246,20 @@ export default function EventDetailPage() {
                               </p>
                               {app.fighter_discipline && (
                                 <p className="text-xs mt-1">
-                                  <span className="font-bold text-zinc-700">Disciplina:</span>{' '}
+                                  <span className="font-bold text-zinc-700">{t('events.detail.discipline')}:</span>{' '}
                                   <span className="px-2 py-0.5 text-xs font-bold uppercase tracking-wide bg-zinc-900 text-white">{app.fighter_discipline}</span>
                                 </p>
                               )}
                               {app.fighter_weight_class && (
                                 <p className="text-xs mt-1">
-                                  <span className="font-bold text-zinc-700">Pelea en:</span>{' '}
+                                  <span className="font-bold text-zinc-700">{t('events.detail.fightsAt')}:</span>{' '}
                                   <span className="px-2 py-0.5 text-xs font-bold uppercase tracking-wide bg-[#C0001E] text-white">{app.fighter_weight_class}</span>
                                 </p>
                               )}
                               {app.jiu_jitsu_belt && (
                                 <p className="text-xs mt-1">
-                                  <span className="font-bold text-zinc-700">Cinta BJJ:</span>{' '}
-                                  <span className="text-zinc-700">{app.jiu_jitsu_belt.replace('adult-', 'Adulto: ').replace('kids-', 'Niño: ')}</span>
+                                  <span className="font-bold text-zinc-700">{t('events.detail.bjjBelt')}:</span>{' '}
+                                  <span className="text-zinc-700">{app.jiu_jitsu_belt.replace('adult-', `${t('events.detail.adult')}: `).replace('kids-', `${t('events.detail.child')}: `)}</span>
                                 </p>
                               )}
                               {f?.disciplines && f.disciplines.length > 0 && (
@@ -1244,18 +1270,18 @@ export default function EventDetailPage() {
                                 </div>
                               )}
                             </div>
-                            <span className={`text-xs font-bold px-2 py-1 flex-shrink-0 ${s.cls}`}>{s.label}</span>
+                            <span className={`text-xs font-bold px-2 py-1 flex-shrink-0 ${statusClass}`}>{t(`events.detail.applicationStatus.${app.status}`, { defaultValue: app.status })}</span>
                           </div>
                           {app.message && <p className="text-xs text-zinc-600 bg-zinc-50 px-3 py-2 mb-3 italic">&ldquo;{app.message}&rdquo;</p>}
                           {app.status === 'pending' && (
                             <div className="flex gap-2 justify-end">
                               <button onClick={() => handleAppStatus(app.id, 'declined')} disabled={updatingApp === app.id}
                                 className="px-3 py-1.5 text-xs font-semibold border border-zinc-300 text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 transition-colors">
-                                Rechazar
+                                {t('events.detail.decline')}
                               </button>
                               <button onClick={() => handleAppStatus(app.id, 'accepted')} disabled={updatingApp === app.id}
                                 className="px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50 transition-colors" style={{ background: '#C0001E' }}>
-                                {updatingApp === app.id ? '...' : 'Aceptar'}
+                                {updatingApp === app.id ? '...' : t('events.detail.accept')}
                               </button>
                             </div>
                           )}
@@ -1271,7 +1297,7 @@ export default function EventDetailPage() {
             {canManageEvent && (
               <div className="border-t border-zinc-100 pt-8">
                 <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color: '#C0001E' }}>
-                  Peleadores Recomendados
+                  {t('events.detail.recommendedFighters')}
                 </p>
                 {recsLoading ? (
                   <div className="space-y-3">
@@ -1284,7 +1310,7 @@ export default function EventDetailPage() {
                   </div>
                 ) : recommendations.length === 0 ? (
                   <div className="border border-dashed border-zinc-200 py-8 text-center">
-                    <p className="text-sm text-zinc-400">No se encontraron peleadores recomendados para este evento.</p>
+                    <p className="text-sm text-zinc-400">{t('events.detail.noRecommendedFighters')}</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -1327,8 +1353,11 @@ export default function EventDetailPage() {
                                   <div className="mt-1">
                                     <span className={`inline-block text-[10px] font-bold px-2 py-0.5 border ${tone}`}>
                                       {isNew
-                                        ? 'Atleta Nuevo'
-                                        : `Confiabilidad ${rec.fighter.profiles?.reliability_score} · ${tier.label}`}
+                                        ? t('events.reliability.newAthlete')
+                                        : t('events.reliability.score', {
+                                            score: rec.fighter.profiles?.reliability_score,
+                                            tier: t(`events.reliability.tier.${tier.key}`),
+                                          })}
                                     </span>
                                   </div>
                                 );
@@ -1350,7 +1379,11 @@ export default function EventDetailPage() {
                                   reqStatus === 'declined' ? 'bg-red-50 text-red-700' :
                                   'bg-amber-50 text-amber-700'
                                 }`}>
-                                  {reqStatus === 'accepted' ? 'Aceptado' : reqStatus === 'declined' ? 'Rechazado' : 'Enviado'}
+                                  {reqStatus === 'accepted'
+                                    ? t('events.detail.applicationStatus.accepted')
+                                    : reqStatus === 'declined'
+                                      ? t('events.detail.applicationStatus.declined')
+                                      : t('events.detail.sent')}
                                 </span>
                               ) : (
                                 <button
@@ -1358,7 +1391,7 @@ export default function EventDetailPage() {
                                   className="px-3 py-1.5 text-xs font-bold tracking-wide uppercase text-white transition-colors"
                                   style={{ background: '#C0001E' }}
                                 >
-                                  Enviar Solicitud
+                                  {t('events.detail.sendRequest')}
                                 </button>
                               )}
                             </div>
@@ -1377,7 +1410,7 @@ export default function EventDetailPage() {
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Encontrar Reemplazo de Ultimo Momento
+                  {t('events.detail.findEmergencyReplacement')}
                 </button>
 
                 {/* ── Propose Match (two-sided) ── */}
@@ -1390,7 +1423,7 @@ export default function EventDetailPage() {
                   {confirmedRegistrations.length < 2 ? (
                     <div className="border border-dashed border-zinc-200 py-6 text-center">
                       <p className="text-xs text-zinc-400">
-                        Necesitas al menos 2 peleadores con pago confirmado para proponer una pelea.
+                        {t('events.detail.minimumPaidFighters')}
                       </p>
                     </div>
                   ) : (
@@ -1458,7 +1491,7 @@ export default function EventDetailPage() {
                           const label =
                             m.match_status === 'confirmed' ? t('events.matches.statusConfirmed') :
                             m.match_status === 'cancelled' ? t('events.matches.statusCancelled') :
-                            'Pendiente';
+                            t('events.detail.pending');
                           return (
                             <div key={m.id} className="border border-zinc-200 p-3 flex items-center justify-between gap-3">
                               <div className="min-w-0">
@@ -1508,7 +1541,7 @@ export default function EventDetailPage() {
                   className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 text-sm bg-white" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">Hora de inicio</label>
+                <label className="block text-sm font-medium text-zinc-700 mb-1">{t('events.detail.startTime')}</label>
                 <input type="time" value={formData!.event_time} onChange={(e) => set('event_time', e.target.value)}
                   className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 text-sm bg-white" />
               </div>
@@ -1555,25 +1588,25 @@ export default function EventDetailPage() {
                     placeholder={t('events.fields.purse_amountPlaceholder')}
                     className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 text-sm" />
                 ) : (
-                  <p className="text-xs text-zinc-400">Sin bolsa (desactivado)</p>
+                  <p className="text-xs text-zinc-400">{t('events.detail.purseDisabled')}</p>
                 )}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">Cuota de inscripción <span className="text-zinc-400 font-normal">(opcional)</span></label>
-                <input type="text" value={formData!.signup_fee ? `$${formData!.signup_fee} MXN` : 'Gratuito'} disabled
+                <label className="block text-sm font-medium text-zinc-700 mb-1">{t('events.detail.signupFee')} <span className="text-zinc-400 font-normal">({t('events.detail.optional')})</span></label>
+                <input type="text" value={formData!.signup_fee ? formatLocalizedCurrency(Number(formData!.signup_fee), formData!.currency || 'MXN', i18n.resolvedLanguage) : t('events.detail.free')} disabled
                   className="w-full border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-500" />
                 <a href={`/events/${event.id}/manage/settings`} className="mt-1 inline-block text-xs font-semibold text-[#C0001E]">
-                  Cambiar registro y cobro en Configuración
+                  {t('events.detail.changePaymentSettings')}
                 </a>
               </div>
             </div>
 
             {/* Disciplines multi-select */}
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#5A5A5A' }}>Disciplinas requeridas</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#5A5A5A' }}>{t('events.detail.requiredDisciplines')}</label>
               <div className="flex flex-wrap gap-2">
                 {DISCIPLINE_OPTIONS.map((d) => (
                   <button key={d} type="button"
@@ -1589,7 +1622,7 @@ export default function EventDetailPage() {
 
             {/* Weight classes multi-select */}
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#5A5A5A' }}>Categorías de Peso Requeridas</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#5A5A5A' }}>{t('events.detail.requiredWeightCategories')}</label>
               <EventWeightCategorySelector
                 disciplines={editDisciplines}
                 selected={editWeightClasses}
@@ -1599,18 +1632,18 @@ export default function EventDetailPage() {
 
             {/* Flyer */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">Flyer del evento</label>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">{t('events.detail.eventFlyer')}</label>
               {(editFlyerPreview ?? event.flyer_url) && (
                 <div className="mb-2 border border-zinc-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={editFlyerPreview ?? event.flyer_url!} alt="Flyer" className="w-full max-h-48 object-contain bg-zinc-50" />
-                  {editFlyerPreview && <p className="text-xs text-center text-zinc-400 py-1 border-t border-zinc-100">Nuevo flyer seleccionado</p>}
+                  <img src={editFlyerPreview ?? event.flyer_url!} alt={t('events.detail.eventFlyer')} className="w-full max-h-48 object-contain bg-zinc-50" />
+                  {editFlyerPreview && <p className="text-xs text-center text-zinc-400 py-1 border-t border-zinc-100">{t('events.detail.newFlyerSelected')}</p>}
                 </div>
               )}
               <div className="border-2 border-dashed border-zinc-300 p-4 text-center cursor-pointer hover:border-zinc-400 transition-colors"
                 onClick={() => document.getElementById('edit-flyer-input')?.click()}>
-                <p className="text-sm text-zinc-500">{event.flyer_url ? 'Haz clic para reemplazar el flyer' : 'Sube el flyer del evento'}</p>
-                <p className="text-xs text-zinc-400 mt-1">PNG, JPG, WEBP · Máx. 5MB</p>
+                <p className="text-sm text-zinc-500">{event.flyer_url ? t('events.detail.replaceFlyer') : t('events.detail.uploadFlyer')}</p>
+                <p className="text-xs text-zinc-400 mt-1">{t('events.detail.imageUploadHint')}</p>
               </div>
               <input id="edit-flyer-input" type="file" accept="image/png,image/jpeg,image/webp" onChange={handleEditFlyerChange} className="hidden" />
             </div>
@@ -1640,8 +1673,8 @@ export default function EventDetailPage() {
           <div className="bg-white max-w-lg w-full p-6 shadow-xl max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-base font-bold text-zinc-900">Reemplazo de Ultimo Momento</h2>
-                <p className="text-xs text-red-600 font-bold uppercase tracking-widest mt-1">Modo reemplazo de ultimo momento</p>
+                <h2 className="text-base font-bold text-zinc-900">{t('events.detail.emergencyReplacement')}</h2>
+                <p className="text-xs text-red-600 font-bold uppercase tracking-widest mt-1">{t('events.detail.emergencyReplacementMode')}</p>
               </div>
               <button onClick={() => { setEmergencyOpen(false); setSelectedEmergency(new Set()); setEmergencyConfirm(false); setEmergencyFeedback(null); }}
                 className="text-zinc-400 hover:text-zinc-700 text-lg">X</button>
@@ -1656,11 +1689,11 @@ export default function EventDetailPage() {
             {emergencyLoading ? (
               <div className="py-12 text-center">
                 <div className="inline-block w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                <p className="text-sm text-zinc-400 mt-3">Buscando peleadores disponibles...</p>
+                <p className="text-sm text-zinc-400 mt-3">{t('events.detail.searchingAvailableFighters')}</p>
               </div>
             ) : emergencyResults.length === 0 ? (
               <div className="py-8 text-center border border-dashed border-zinc-200">
-                <p className="text-sm text-zinc-400">No se encontraron peleadores disponibles de ultimo momento.</p>
+                <p className="text-sm text-zinc-400">{t('events.detail.noEmergencyFighters')}</p>
               </div>
             ) : (
               <>
@@ -1684,7 +1717,7 @@ export default function EventDetailPage() {
                           <p className="text-sm font-bold text-zinc-900 truncate">{em.fighter.profiles?.full_name ?? '—'}</p>
                           <p className="text-xs text-zinc-500">
                             {em.fighter.weight_class ?? '—'} · {em.fighter.profiles?.city ?? '—'}
-                            {em.fighter.short_notice_ready && <span className="ml-1 text-red-600 font-bold">· Corto aviso</span>}
+                            {em.fighter.short_notice_ready && <span className="ml-1 text-red-600 font-bold">· {t('events.detail.shortNotice')}</span>}
                           </p>
                         </div>
                         <div className="flex-shrink-0 flex items-center gap-2">
@@ -1695,7 +1728,11 @@ export default function EventDetailPage() {
                               reqStatus === 'declined' ? 'bg-red-50 text-red-700' :
                               'bg-amber-50 text-amber-700'
                             }`}>
-                              {reqStatus === 'accepted' ? 'Aceptado' : reqStatus === 'declined' ? 'Rechazado' : 'Enviado'}
+                              {reqStatus === 'accepted'
+                                ? t('events.detail.applicationStatus.accepted')
+                                : reqStatus === 'declined'
+                                  ? t('events.detail.applicationStatus.declined')
+                                  : t('events.detail.sent')}
                             </span>
                           )}
                         </div>
@@ -1710,20 +1747,20 @@ export default function EventDetailPage() {
                     onClick={() => setEmergencyConfirm(true)}
                     className="w-full px-4 py-2.5 text-sm font-bold tracking-wide uppercase text-white bg-red-600 hover:bg-red-700 transition-colors"
                   >
-                    Enviar a {selectedEmergency.size} seleccionado{selectedEmergency.size !== 1 ? 's' : ''}
+                    {t('events.detail.sendToSelected', { count: selectedEmergency.size })}
                   </button>
                 )}
                 {emergencyConfirm && (
                   <div className="border border-red-200 bg-red-50 p-4">
                     <p className="text-sm text-red-700 font-medium mb-3">
-                      Enviar solicitud urgente a {selectedEmergency.size} peleador{selectedEmergency.size !== 1 ? 'es' : ''}?
+                      {t('events.detail.confirmEmergencyRequest', { count: selectedEmergency.size })}
                     </p>
                     <div className="flex gap-2">
                       <button onClick={() => setEmergencyConfirm(false)}
-                        className="flex-1 px-3 py-2 text-sm font-medium border border-zinc-300 text-zinc-700 hover:bg-zinc-50">Cancelar</button>
+                        className="flex-1 px-3 py-2 text-sm font-medium border border-zinc-300 text-zinc-700 hover:bg-zinc-50">{t('events.detail.cancel')}</button>
                       <button onClick={handleBatchEmergencySend} disabled={sendingEmergency}
                         className="flex-1 px-3 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50">
-                        {sendingEmergency ? 'Enviando...' : 'Confirmar envío'}
+                        {sendingEmergency ? t('events.detail.sending') : t('events.detail.confirmSend')}
                       </button>
                     </div>
                   </div>

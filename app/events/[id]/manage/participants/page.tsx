@@ -4,6 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { EventManageFrame } from '@/components/EventManageFrame';
 import { InlineCombatRecord } from '@/components/CombatRecord';
 import { EligibilityStatus } from '@/components/EligibilityStatus';
@@ -116,6 +118,7 @@ const EMPTY_FORM: ParticipantForm = {
 };
 
 export default function EventParticipantsPage() {
+  const { t } = useTranslation('events');
   const { id: eventId } = useParams<{ id: string }>();
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [event, setEvent] = useState<Event | null>(null);
@@ -257,9 +260,9 @@ export default function EventParticipantsPage() {
     return searchByClosestName(
       candidates,
       fighterSearch,
-      (fighter) => existingFighterName(fighter, source)
+      (fighter) => existingFighterName(fighter, source, t('events.engine.participantsPage.unnamedProfile'))
     );
-  }, [fighterSearch, platformFighters, rosterFighters, source]);
+  }, [fighterSearch, platformFighters, rosterFighters, source, t]);
 
   const reset = () => {
     setForm({
@@ -277,11 +280,11 @@ export default function EventParticipantsPage() {
   const selectParticipantPhoto = (file: File | null) => {
     if (!file) return;
     if (!ACCEPTED_PHOTO_TYPES.split(',').includes(file.type)) {
-      setError('La foto debe ser JPG, PNG, WebP, GIF o AVIF.');
+      setError(t('events.engine.participantsPage.errors.photoType'));
       return;
     }
     if (file.size > MAX_PHOTO_BYTES) {
-      setError('La foto no puede superar 10 MB.');
+      setError(t('events.engine.participantsPage.errors.photoSize'));
       return;
     }
     if (participantPhotoPreview) URL.revokeObjectURL(participantPhotoPreview);
@@ -292,15 +295,15 @@ export default function EventParticipantsPage() {
 
   const save = async () => {
     if (!form.representative_confirmed) {
-      setError('Debes confirmar que tienes autorización del peleador o su representante.');
+      setError(t('events.engine.participantsPage.authorizationRequired'));
       return;
     }
     if (source === 'event_only' && !form.full_name.trim()) {
-      setError('El nombre completo es obligatorio.');
+      setError(t('events.engine.participantsPage.errors.nameRequired'));
       return;
     }
     if (source !== 'event_only' && !selectedFighterId && !editingId) {
-      setError('Selecciona un peleador.');
+      setError(t('events.engine.participantsPage.errors.selectFighter'));
       return;
     }
     setActing(true);
@@ -311,7 +314,7 @@ export default function EventParticipantsPage() {
       const uploadResult = await uploadFile(participantPhotoFile, 'fighter-photos');
       if (uploadResult.error || !uploadResult.data) {
         setActing(false);
-        setError(`No se pudo subir la foto. ${uploadResult.error ?? 'Intenta de nuevo.'}`);
+        setError(t('events.engine.participantsPage.errors.photoUpload', { error: uploadResult.error ?? t('events.engine.participantsPage.errors.tryAgain') }));
         return;
       }
       uploadedPhoto = uploadResult.data;
@@ -337,8 +340,8 @@ export default function EventParticipantsPage() {
     }
     else {
       setMessage(editingId
-        ? 'Participante actualizado. La elegibilidad y las sugerencias de matchmaking se recalcularon automáticamente.'
-        : 'Peleador agregado. La elegibilidad y las sugerencias de matchmaking se calcularon automáticamente.');
+        ? t('events.engine.participantsPage.participantUpdated')
+        : t('events.engine.participantsPage.fighterAdded'));
       reset();
       await reload();
     }
@@ -358,11 +361,11 @@ export default function EventParticipantsPage() {
   const prepareAcceptedApplication = (application: EventApplicationWithFighter) => {
     const fighter = platformFighters.find((item) => item.id === application.fighter_id);
     if (!fighter) {
-      setError('No se pudo cargar el perfil del peleador aceptado.');
+      setError(t('events.engine.participantsPage.errors.acceptedProfileLoad'));
       return;
     }
     setError(null);
-    setMessage('Completa los datos pendientes y agrega al peleador como participante.');
+    setMessage(t('events.engine.participantsPage.completeAcceptedParticipant'));
     setEditingId(null);
     setPublishToRoster(false);
     setParticipantPhotoFile(null);
@@ -401,7 +404,7 @@ export default function EventParticipantsPage() {
   };
 
   const remove = async (registration: RegistrationWithFighter) => {
-    if (!window.confirm(`¿Quitar a ${participantName(registration)} de este evento?`)) return;
+    if (!window.confirm(t('events.engine.participantsPage.removeConfirm', { name: participantName(registration) }))) return;
     setActing(true);
     const result = await removeEventParticipant(registration.id);
     if (result.error) setError(result.error);
@@ -427,14 +430,14 @@ export default function EventParticipantsPage() {
   };
 
   const confirmManualPayment = async (registration: RegistrationWithFighter) => {
-    if (!window.confirm(`¿Confirmar que recibiste el pago de ${participantName(registration)}?`)) return;
+    if (!window.confirm(t('events.engine.participantsPage.paymentConfirm', { name: participantName(registration) }))) return;
     setActing(true);
     setError(null);
     setMessage(null);
     const result = await confirmManualEventParticipantPayment(registration.id);
     if (result.error) setError(result.error);
     else {
-      setMessage(`Pago de ${participantName(registration)} confirmado. Matchmaking se actualizó automáticamente.`);
+      setMessage(t('events.engine.participantsPage.paymentConfirmed', { name: participantName(registration) }));
       await reload();
     }
     setActing(false);
@@ -442,7 +445,7 @@ export default function EventParticipantsPage() {
 
   const confirmAllAcceptedManualPayments = async () => {
     if (acceptedAwaitingPayment.length === 0) return;
-    if (!window.confirm(`¿Confirmar como pagados a los ${acceptedAwaitingPayment.length} participantes aceptados pendientes de pago?`)) return;
+    if (!window.confirm(t('events.engine.participantsPage.confirmAllPaymentsPrompt', { count: acceptedAwaitingPayment.length }))) return;
     setActing(true);
     setError(null);
     setMessage(null);
@@ -450,7 +453,7 @@ export default function EventParticipantsPage() {
     if (result.error) setError(result.error);
     else {
       const confirmedCount = result.data?.length ?? 0;
-      setMessage(`${confirmedCount} pagos confirmados. La elegibilidad y el matchmaking se actualizaron automáticamente.`);
+      setMessage(t('events.engine.participantsPage.paymentsConfirmed', { count: confirmedCount }));
       await reload();
     }
     setActing(false);
@@ -472,20 +475,20 @@ export default function EventParticipantsPage() {
     setHistoryLoading(null);
   };
 
-  if (loading || profile === undefined) return <Frame><p className="text-sm text-zinc-500">Cargando participantes…</p></Frame>;
-  if (!canManage) return <Frame><h1 className="text-3xl font-black uppercase">Participantes</h1><p className="mt-3 text-sm text-zinc-600">No tienes permiso para administrar este evento.</p></Frame>;
+  if (loading || profile === undefined) return <Frame><p className="text-sm text-zinc-500">{t('events.engine.participantsPage.loading')}</p></Frame>;
+  if (!canManage) return <Frame><h1 className="text-3xl font-black uppercase">{t('events.engine.participantsPage.title')}</h1><p className="mt-3 text-sm text-zinc-600">{t('events.engine.participantsPage.noPermission')}</p></Frame>;
 
   return (
     <Frame>
       <header className="flex flex-col gap-4 border-b border-zinc-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#C0001E]">Strikers Match</p>
-          <h1 className="mt-2 text-4xl font-black uppercase text-zinc-900 sm:text-5xl">Participantes</h1>
-          <p className="mt-2 text-sm text-zinc-600">{event?.event_name} · roster autorizado para matchmaking</p>
+          <h1 className="mt-2 text-4xl font-black uppercase text-zinc-900 sm:text-5xl">{t('events.engine.participantsPage.title')}</h1>
+          <p className="mt-2 text-sm text-zinc-600">{event?.event_name} · {t('events.engine.participantsPage.authorizedRoster')}</p>
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <Link href={`/events/${eventId}/manage/matchmaking`} className="flex min-h-11 items-center justify-center bg-zinc-900 px-4 text-xs font-bold uppercase text-white">Matchmaking</Link>
-          <Link href={`/events/${eventId}/manage/settings`} className="flex min-h-11 items-center justify-center border border-zinc-300 px-4 text-xs font-bold uppercase text-zinc-800">Configuración</Link>
+          <Link href={`/events/${eventId}/manage/matchmaking`} className="flex min-h-11 items-center justify-center bg-zinc-900 px-4 text-xs font-bold uppercase text-white">{t('events.engine.matchmaking.title')}</Link>
+          <Link href={`/events/${eventId}/manage/settings`} className="flex min-h-11 items-center justify-center border border-zinc-300 px-4 text-xs font-bold uppercase text-zinc-800">{t('events.engine.nav.settings')}</Link>
         </div>
       </header>
 
@@ -493,19 +496,19 @@ export default function EventParticipantsPage() {
       {message && <p className="border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p>}
 
       <section className="grid grid-cols-2 gap-px border border-zinc-200 bg-zinc-200 sm:grid-cols-3 lg:grid-cols-6">
-        <Metric label="Solicitudes aceptadas" value={participantMetrics.accepted} />
-        <Metric label="Pago pendiente" value={participantMetrics.pendingPayment} />
-        <Metric label="Pago enviado" value={participantMetrics.submittedPayment} />
-        <Metric label="Pago confirmado" value={participantMetrics.confirmedPayment} />
-        <Metric label="Requieren revisión" value={participantMetrics.reviewRequired} />
-        <Metric label="Listos para matchmaking" value={participantMetrics.ready} />
+        <Metric label={t('events.engine.participantsPage.metrics.accepted')} value={participantMetrics.accepted} />
+        <Metric label={t('events.engine.participantsPage.metrics.pendingPayment')} value={participantMetrics.pendingPayment} />
+        <Metric label={t('events.engine.participantsPage.metrics.submittedPayment')} value={participantMetrics.submittedPayment} />
+        <Metric label={t('events.engine.participantsPage.metrics.confirmedPayment')} value={participantMetrics.confirmedPayment} />
+        <Metric label={t('events.engine.participantsPage.metrics.reviewRequired')} value={participantMetrics.reviewRequired} />
+        <Metric label={t('events.engine.participantsPage.metrics.ready')} value={participantMetrics.ready} />
       </section>
 
       {acceptedAwaitingPayment.length > 0 && paymentSettings?.payment_method !== 'stripe' && (
         <section className="flex flex-col gap-3 border border-emerald-200 bg-emerald-50 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-bold text-emerald-950">{acceptedAwaitingPayment.length} participantes aceptados todavía aparecen sin pago confirmado.</p>
-            <p className="mt-1 text-xs text-emerald-800">Confírmalos juntos o usa “Marcar pagado” en cada ficha. Al confirmar, el motor vuelve a evaluar el matchmaking.</p>
+            <p className="text-sm font-bold text-emerald-950">{t('events.engine.participantsPage.awaitingPayment', { count: acceptedAwaitingPayment.length })}</p>
+            <p className="mt-1 text-xs text-emerald-800">{t('events.engine.participantsPage.awaitingPaymentHelp')}</p>
           </div>
           <button
             type="button"
@@ -513,7 +516,7 @@ export default function EventParticipantsPage() {
             disabled={acting}
             className="min-h-11 shrink-0 bg-emerald-700 px-4 text-xs font-bold uppercase text-white disabled:opacity-40"
           >
-            Confirmar todos ({acceptedAwaitingPayment.length})
+            {t('events.engine.participantsPage.confirmAll', { count: acceptedAwaitingPayment.length })}
           </button>
         </section>
       )}
@@ -521,24 +524,24 @@ export default function EventParticipantsPage() {
       <section className="border border-zinc-200 p-4 sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-xl font-black uppercase">{editingId ? 'Editar datos para este evento' : 'Agregar peleador'}</h2>
-            <p className="mt-1 max-w-3xl text-sm text-zinc-500">Los datos de esta ficha son los que usa el motor. Fecha de nacimiento, contacto, médico y restricciones son privados para el equipo autorizado.</p>
+            <h2 className="text-xl font-black uppercase">{editingId ? t('events.engine.participantsPage.editEventData') : t('events.engine.participantsPage.addFighter')}</h2>
+            <p className="mt-1 max-w-3xl text-sm text-zinc-500">{t('events.engine.participantsPage.formPrivacyHelp')}</p>
           </div>
-          {editingId && <button type="button" onClick={reset} className="min-h-11 border border-zinc-300 px-4 text-xs font-bold uppercase">Cancelar edición</button>}
+          {editingId && <button type="button" onClick={reset} className="min-h-11 border border-zinc-300 px-4 text-xs font-bold uppercase">{t('events.engine.participantsPage.cancelEdit')}</button>}
         </div>
 
         {!editingId && (
           <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <ModeButton active={source === 'platform'} onClick={() => { reset(); setSource('platform'); }} label="Perfil Strikers Match" />
-            <ModeButton active={source === 'roster'} onClick={() => { reset(); setSource('roster'); }} label="Mi roster manual" />
-            <ModeButton active={source === 'event_only'} onClick={() => { reset(); setSource('event_only'); }} label="Alta rápida del evento" />
+            <ModeButton active={source === 'platform'} onClick={() => { reset(); setSource('platform'); }} label={t('events.engine.participantsPage.platformProfile')} />
+            <ModeButton active={source === 'roster'} onClick={() => { reset(); setSource('roster'); }} label={t('events.engine.participantsPage.manualRoster')} />
+            <ModeButton active={source === 'event_only'} onClick={() => { reset(); setSource('event_only'); }} label={t('events.engine.participantsPage.quickEventEntry')} />
           </div>
         )}
 
         {!editingId && source !== 'event_only' && (
           <div className="mt-4">
             <label htmlFor="participant-fighter-search" className="block">
-              <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">Buscar peleador por nombre</span>
+              <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">{t('events.engine.participantsPage.searchFighter')}</span>
               <input
                 id="participant-fighter-search"
                 type="search"
@@ -549,19 +552,19 @@ export default function EventParticipantsPage() {
                   setError(null);
                 }}
                 placeholder={source === 'platform'
-                  ? 'Escribe el nombre del perfil de Strikers Match…'
-                  : 'Escribe el nombre de tu roster manual…'}
+                  ? t('events.engine.participantsPage.searchPlatformPlaceholder')
+                  : t('events.engine.participantsPage.searchRosterPlaceholder')}
                 autoComplete="off"
                 className="min-h-11 w-full border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-zinc-900"
               />
             </label>
             <select
-              aria-label="Resultados de búsqueda de peleadores"
+              aria-label={t('events.engine.participantsPage.searchResults')}
               value={selectedFighterId}
               onChange={(input) => {
                 const nextId = input.target.value;
                 const selected = existingFighterCandidates.find((fighter) => fighter.id === nextId);
-                if (selected) setFighterSearch(existingFighterName(selected, source));
+                if (selected) setFighterSearch(existingFighterName(selected, source, t('events.engine.participantsPage.unnamedProfile')));
                 setParticipantPhotoFile(null);
                 setParticipantPhotoPreview(null);
                 selectExistingParticipant(nextId, source, platformFighters, rosterFighters, setSelectedFighterId, event?.signup_fee && event.signup_fee > 0 ? 'pending' : 'waived', event?.event_date ?? null, event?.disciplines_needed ?? [], event?.weight_classes_needed ?? [], setForm);
@@ -569,9 +572,9 @@ export default function EventParticipantsPage() {
               disabled={!fighterSearch.trim() || existingFighterCandidates.length === 0}
               className="mt-2 min-h-11 w-full border border-zinc-300 bg-white px-3 text-sm disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500"
             >
-              <option value="">{fighterSearch.trim() ? 'Seleccionar de los resultados…' : 'Primero escribe un nombre…'}</option>
+              <option value="">{fighterSearch.trim() ? t('events.engine.participantsPage.selectSearchResult') : t('events.engine.participantsPage.typeNameFirst')}</option>
               {existingFighterCandidates.map((fighter) => (
-                <option key={fighter.id} value={fighter.id}>{existingFighterName(fighter, source)} · {weightClassLabel(fighter.weight_class)}</option>
+                <option key={fighter.id} value={fighter.id}>{existingFighterName(fighter, source, t('events.engine.participantsPage.unnamedProfile'))} · {weightClassLabel(fighter.weight_class)}</option>
               ))}
             </select>
             <ExistingFighterSearchResultCount query={fighterSearch} count={existingFighterCandidates.length} />
@@ -592,15 +595,15 @@ export default function EventParticipantsPage() {
         {!editingId && source === 'event_only' && (
           <label className="mt-4 flex items-start gap-3 border border-zinc-200 p-3 text-sm text-zinc-700">
             <input type="checkbox" checked={publishToRoster} onChange={(input) => setPublishToRoster(input.target.checked)} className="mt-1 h-4 w-4 accent-[#C0001E]" />
-            Guardar también en mi roster reutilizable. Si no se marca, el perfil permanece privado y limitado a este evento.
+            {t('events.engine.participantsPage.saveToRosterHelp')}
           </label>
         )}
         <label className="mt-4 flex items-start gap-3 border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
           <input type="checkbox" checked={form.representative_confirmed} onChange={(input) => setForm({ ...form, representative_confirmed: input.target.checked })} className="mt-1 h-4 w-4 accent-[#C0001E]" />
-          Confirmo que tengo autorización del peleador o de su representante para registrarlo y gestionar su participación en este evento.
+          {t('events.engine.participantsPage.authorizationConfirmation')}
         </label>
         <div className="mt-4 flex justify-end">
-          <button type="button" onClick={save} disabled={acting} className="min-h-11 bg-[#C0001E] px-6 py-3 text-xs font-bold uppercase tracking-wider text-white disabled:bg-zinc-300">{acting ? 'Guardando…' : editingId ? 'Actualizar participante' : 'Agregar al evento'}</button>
+          <button type="button" onClick={save} disabled={acting} className="min-h-11 bg-[#C0001E] px-6 py-3 text-xs font-bold uppercase tracking-wider text-white disabled:bg-zinc-300">{acting ? t('events.engine.participantsPage.saving') : editingId ? t('events.engine.participantsPage.updateParticipant') : t('events.engine.participantsPage.addToEvent')}</button>
         </div>
       </section>
 
@@ -608,8 +611,8 @@ export default function EventParticipantsPage() {
         <section className="border border-amber-200 bg-amber-50 p-4 sm:p-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-xl font-black uppercase text-amber-950">Solicitudes aceptadas sin registro</h2>
-              <p className="mt-1 text-sm text-amber-900">Estas personas fueron aceptadas, pero todavía no aparecen en el roster de participantes.</p>
+              <h2 className="text-xl font-black uppercase text-amber-950">{t('events.engine.participantsPage.acceptedWithoutRegistration')}</h2>
+              <p className="mt-1 text-sm text-amber-900">{t('events.engine.participantsPage.acceptedWithoutRegistrationHelp')}</p>
             </div>
             <span className="text-sm font-bold text-amber-900">{acceptedWithoutRegistration.length}</span>
           </div>
@@ -619,11 +622,11 @@ export default function EventParticipantsPage() {
                 <div>
                   <p className="font-bold text-zinc-900">{application.fighters?.profiles?.full_name ?? '—'}</p>
                   <p className="mt-1 text-xs text-zinc-600">
-                    {application.fighter_discipline ?? 'Disciplina pendiente'} · {application.fighter_weight_class ?? weightClassLabel(application.fighters?.weight_class)}
+                    {application.fighter_discipline ?? t('events.engine.matchmaking.pendingDiscipline')} · {application.fighter_weight_class ?? weightClassLabel(application.fighters?.weight_class)}
                   </p>
                 </div>
                 <button type="button" onClick={() => prepareAcceptedApplication(application)} className="min-h-11 bg-[#C0001E] px-4 py-3 text-xs font-bold uppercase text-white">
-                  Completar registro
+                  {t('events.engine.participantsPage.completeRegistration')}
                 </button>
               </article>
             ))}
@@ -634,32 +637,32 @@ export default function EventParticipantsPage() {
       <section>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-2xl font-black uppercase">Roster del evento</h2>
-            <span className="text-sm text-zinc-500">{registrations.length} participantes</span>
+            <h2 className="text-2xl font-black uppercase">{t('events.engine.participantsPage.eventRoster')}</h2>
+            <span className="text-sm text-zinc-500">{t('events.engine.participantsPage.participantCount', { count: registrations.length })}</span>
           </div>
           <div className="flex w-full flex-col gap-2 sm:w-auto">
             <label>
-              <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">Disciplina</span>
+              <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">{t('events.engine.participantsPage.fields.discipline')}</span>
               <select
                 value={disciplineFilter}
                 onChange={(input) => setDisciplineFilter(input.target.value)}
                 className="min-h-11 w-full border border-zinc-300 bg-white px-3 text-sm text-zinc-900 sm:min-w-64"
               >
-                <option value="all">Todas las disciplinas ({registrations.length})</option>
+                <option value="all">{t('events.engine.participantsPage.allDisciplines', { count: registrations.length })}</option>
                 {disciplineOptions.map((discipline) => (
                   <option key={discipline} value={discipline}>{discipline}</option>
                 ))}
               </select>
             </label>
             <div className="grid grid-cols-3 gap-2">
-              <FilterButton active={participantFilter === 'all'} onClick={() => setParticipantFilter('all')} label="Todos" />
-              <FilterButton active={participantFilter === 'needs_attention'} onClick={() => setParticipantFilter('needs_attention')} label="Necesitan atención" />
-              <FilterButton active={participantFilter === 'ready'} onClick={() => setParticipantFilter('ready')} label="Listos" />
+              <FilterButton active={participantFilter === 'all'} onClick={() => setParticipantFilter('all')} label={t('events.engine.participantsPage.filters.all')} />
+              <FilterButton active={participantFilter === 'needs_attention'} onClick={() => setParticipantFilter('needs_attention')} label={t('events.engine.participantsPage.filters.needsAttention')} />
+              <FilterButton active={participantFilter === 'ready'} onClick={() => setParticipantFilter('ready')} label={t('events.engine.participantsPage.filters.ready')} />
             </div>
           </div>
         </div>
         <div className="mt-4 space-y-4">
-          {visibleRegistrations.length === 0 ? <p className="border border-dashed border-zinc-300 p-10 text-center text-sm text-zinc-500">{registrations.length === 0 ? 'Todavía no hay peleadores registrados.' : 'No hay participantes en este filtro.'}</p> : visibleRegistrations.map((registration) => {
+          {visibleRegistrations.length === 0 ? <p className="border border-dashed border-zinc-300 p-10 text-center text-sm text-zinc-500">{registrations.length === 0 ? t('events.engine.participantsPage.noRegisteredFighters') : t('events.engine.participantsPage.noFilteredParticipants')}</p> : visibleRegistrations.map((registration) => {
             const history = histories[registration.id];
             const scheduledCount = assignmentCounts.get(registration.id) ?? 0;
             const alreadyMatched = scheduledCount > 0;
@@ -672,22 +675,22 @@ export default function EventParticipantsPage() {
                       <PaymentStatusBadge value={registration.payment_status} />
                       <ApprovalStatusBadge value={registration.approval_status} />
                       <span className="border border-zinc-200 px-2 py-1 text-[10px] font-bold uppercase text-zinc-600">{registration.registration_source}</span>
-                      {alreadyMatched && <span className="bg-zinc-900 px-2 py-1 text-[10px] font-bold uppercase text-white">Ya emparejado</span>}
+                      {alreadyMatched && <span className="bg-zinc-900 px-2 py-1 text-[10px] font-bold uppercase text-white">{t('events.engine.participantsPage.alreadyMatched')}</span>}
                     </div>
                     <EligibilityStatus status={registration.eligibility_status} reasons={registration.eligibility_reasons} showReasons />
                     <div className="mt-3 grid grid-cols-1 gap-2 text-xs text-zinc-600 sm:grid-cols-2 lg:grid-cols-3">
-                      <Info label="Peso" value={`${weightClassLabel(registration.registered_weight_class)} · ${formatKg(registration.weigh_in_weight)} real`} />
-                      <Info label="Peso solicitado (informativo) / rango" value={`${formatKg(registration.requested_weight_kg)} · ${formatRange(registration.acceptable_weight_min_kg, registration.acceptable_weight_max_kg)}`} />
-                      <Info label="Edad / división" value={`${registration.age_at_event ?? '—'} años · ${registration.gender_division ?? '—'}`} />
-                      <Info label="Disciplina / reglamento" value={`${registration.registered_discipline ?? '—'} · ${registration.ruleset ?? '—'}`} />
-                      <Info label="Experiencia / nivel" value={`${registration.experience_level ?? '—'} · ${registration.skill_rating ?? '—'}/10`} />
-                      <Info label="Equipo / ubicación" value={`${registration.team_name ?? '—'} · ${[registration.city, registration.state].filter(Boolean).join(', ') || '—'}`} />
-                      <div><span className="font-bold uppercase text-zinc-400">Récord</span><div className="mt-0.5"><InlineCombatRecord wins={registration.record_wins} losses={registration.record_losses} draws={registration.record_draws} winLabel="G" lossLabel="P" drawLabel="E" /></div></div>
-                      <Info label="KO/TKO" value={`${registration.ko_wins + registration.tko_wins} a favor · ${registration.ko_losses + registration.tko_losses} en contra`} />
-                      <Info label="Disponibilidad" value={`${registration.availability_confirmed ? 'Confirmada' : 'Pendiente'} · ${registration.available_from ?? 'ahora'}–${registration.available_to ?? 'abierta'}`} />
-                      <Info label="Peleas programadas" value={`${scheduledCount} · ${alreadyMatched ? 'ya emparejado' : 'disponible'}`} />
+                      <Info label={t('events.engine.participantsPage.info.weight')} value={`${weightClassLabel(registration.registered_weight_class)} · ${formatKg(registration.weigh_in_weight)} ${t('events.engine.participantsPage.actual')}`} />
+                      <Info label={t('events.engine.participantsPage.info.requestedRange')} value={`${formatKg(registration.requested_weight_kg)} · ${formatRange(registration.acceptable_weight_min_kg, registration.acceptable_weight_max_kg)}`} />
+                      <Info label={t('events.engine.participantsPage.info.ageDivision')} value={`${t('events.engine.matchmaking.ageYears', { age: registration.age_at_event ?? '—' })} · ${registration.gender_division ?? '—'}`} />
+                      <Info label={t('events.engine.participantsPage.info.disciplineRuleset')} value={`${registration.registered_discipline ?? '—'} · ${registration.ruleset ?? '—'}`} />
+                      <Info label={t('events.engine.participantsPage.info.experienceLevel')} value={`${registration.experience_level ?? '—'} · ${registration.skill_rating ?? '—'}/10`} />
+                      <Info label={t('events.engine.participantsPage.info.teamLocation')} value={`${registration.team_name ?? '—'} · ${[registration.city, registration.state].filter(Boolean).join(', ') || '—'}`} />
+                      <div><span className="font-bold uppercase text-zinc-400">{t('events.engine.participantsPage.info.record')}</span><div className="mt-0.5"><InlineCombatRecord wins={registration.record_wins} losses={registration.record_losses} draws={registration.record_draws} winLabel="W" lossLabel="L" drawLabel="D" /></div></div>
+                      <Info label="KO/TKO" value={t('events.engine.matchmaking.knockoutRecord', { wins: registration.ko_wins + registration.tko_wins, losses: registration.ko_losses + registration.tko_losses })} />
+                      <Info label={t('events.engine.matchmaking.availability')} value={`${registration.availability_confirmed ? t('events.engine.matchmaking.confirmed') : t('events.engine.matchmaking.pending')} · ${registration.available_from ?? t('events.engine.matchmaking.now')}–${registration.available_to ?? t('events.engine.matchmaking.openEnded')}`} />
+                      <Info label={t('events.engine.participantsPage.info.scheduledBouts')} value={`${scheduledCount} · ${alreadyMatched ? t('events.engine.participantsPage.alreadyMatched') : t('events.engine.participantsPage.available')}`} />
                     </div>
-                    {registration.special_restrictions.length > 0 && <p className="mt-3 border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900"><strong>Restricciones privadas:</strong> {registration.special_restrictions.join(' · ')}</p>}
+                    {registration.special_restrictions.length > 0 && <p className="mt-3 border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900"><strong>{t('events.engine.participantsPage.privateRestrictions')}:</strong> {registration.special_restrictions.join(' · ')}</p>}
                   </div>
                   <div className="flex flex-wrap gap-2 lg:max-w-md lg:justify-end">
                     {registration.approval_status !== 'accepted' && (
@@ -696,12 +699,12 @@ export default function EventParticipantsPage() {
                         onClick={() => quickUpdate(
                           registration,
                           { approval_status: 'accepted' },
-                          `${participantName(registration)} fue aprobado. Matchmaking se actualizó automáticamente.`
+                          t('events.engine.participantsPage.approvedMessage', { name: participantName(registration) })
                         )}
                         disabled={acting}
                         className="min-h-11 border border-emerald-300 bg-emerald-50 px-3 text-xs font-bold uppercase text-emerald-900 disabled:opacity-40"
                       >
-                        Aprobar
+                        {t('events.engine.participantsPage.approve')}
                       </button>
                     )}
                     {!['confirmed', 'waived'].includes(registration.payment_status) && paymentSettings?.payment_method !== 'stripe' && (
@@ -711,17 +714,17 @@ export default function EventParticipantsPage() {
                         disabled={acting}
                         className="min-h-11 bg-emerald-700 px-3 text-xs font-bold uppercase text-white disabled:opacity-40"
                       >
-                        Marcar pagado
+                        {t('events.engine.participantsPage.markPaid')}
                       </button>
                     )}
                     {!['confirmed', 'waived'].includes(registration.payment_status) && paymentSettings?.payment_method === 'stripe' && (
                       <span className="inline-flex min-h-11 items-center border border-blue-200 bg-blue-50 px-3 text-xs font-bold text-blue-900">
-                        Stripe confirma el pago automáticamente
+                        {t('events.engine.participantsPage.stripeAutomatic')}
                       </span>
                     )}
-                    <button type="button" onClick={() => edit(registration)} className="min-h-11 border border-zinc-300 px-3 text-xs font-bold uppercase">{registration.eligibility_status === 'eligible' ? 'Editar' : 'Completar información'}</button>
-                    <button type="button" onClick={() => toggleHistory(registration.id)} className="min-h-11 border border-zinc-300 px-3 text-xs font-bold uppercase">{historyLoading === registration.id ? '…' : history ? 'Cerrar' : 'Historial'}</button>
-                    <button type="button" onClick={() => remove(registration)} disabled={acting || alreadyMatched} title={alreadyMatched ? 'Cancela primero su propuesta o combate activo.' : ''} className="min-h-11 border border-red-200 px-3 text-xs font-bold uppercase text-red-700 disabled:opacity-40">Quitar</button>
+                    <button type="button" onClick={() => edit(registration)} className="min-h-11 border border-zinc-300 px-3 text-xs font-bold uppercase">{registration.eligibility_status === 'eligible' ? t('events.engine.participantsPage.edit') : t('events.engine.participantsPage.completeInformation')}</button>
+                    <button type="button" onClick={() => toggleHistory(registration.id)} className="min-h-11 border border-zinc-300 px-3 text-xs font-bold uppercase">{historyLoading === registration.id ? '…' : history ? t('events.engine.participantsPage.close') : t('events.engine.participantsPage.history')}</button>
+                    <button type="button" onClick={() => remove(registration)} disabled={acting || alreadyMatched} title={alreadyMatched ? t('events.engine.participantsPage.removeBlocked') : ''} className="min-h-11 border border-red-200 px-3 text-xs font-bold uppercase text-red-700 disabled:opacity-40">{t('events.engine.participantsPage.remove')}</button>
                   </div>
                 </div>
                 {history && <HistoryList items={history} />}
@@ -753,6 +756,7 @@ function ParticipantFields({
   photoPreview: string | null;
   onSelectPhoto: (file: File | null) => void;
 }) {
+  const { t } = useTranslation('events');
   const change = <K extends keyof ParticipantForm>(key: K, value: ParticipantForm[K]) => setForm({ ...form, [key]: value });
   const changeAndInferWeightCategory = <K extends 'discipline' | 'date_of_birth' | 'exact_weight'>(key: K, value: ParticipantForm[K]) => {
     const next = { ...form, [key]: value };
@@ -768,30 +772,30 @@ function ParticipantFields({
   };
   return (
     <div className="mt-5 space-y-5">
-      {showIdentity && <FieldGroup title="Identidad y contacto privado">
-        <TextField label="Nombre completo *" value={form.full_name} onChange={(value) => change('full_name', value)} />
-        <TextField label="Apodo" value={form.nickname} onChange={(value) => change('nickname', value)} />
-        <TextField label="Teléfono privado" value={form.phone} onChange={(value) => change('phone', value)} />
-        <TextField label="Email privado" type="email" value={form.email} onChange={(value) => change('email', value)} />
+      {showIdentity && <FieldGroup title={t('events.engine.participantsPage.groups.identity')}>
+        <TextField label={t('events.engine.participantsPage.fields.fullName')} value={form.full_name} onChange={(value) => change('full_name', value)} />
+        <TextField label={t('events.engine.participantsPage.fields.nickname')} value={form.nickname} onChange={(value) => change('nickname', value)} />
+        <TextField label={t('events.engine.participantsPage.fields.privatePhone')} value={form.phone} onChange={(value) => change('phone', value)} />
+        <TextField label={t('events.engine.participantsPage.fields.privateEmail')} type="email" value={form.email} onChange={(value) => change('email', value)} />
         <label>
-          <span className="mb-1 block text-xs font-bold uppercase text-zinc-600">Foto del peleador</span>
+          <span className="mb-1 block text-xs font-bold uppercase text-zinc-600">{t('events.engine.participantsPage.fields.fighterPhoto')}</span>
           <span className="flex items-center gap-3">
             <span className="relative block h-16 w-16 shrink-0 overflow-hidden border border-zinc-300 bg-zinc-100">
               {photoPreview || form.photo_url ? (
                 <Image
                   src={photoPreview ?? form.photo_url}
-                  alt="Foto del peleador"
+                  alt={t('events.engine.participantsPage.fields.fighterPhoto')}
                   fill
                   className="object-cover"
                   unoptimized={Boolean(photoPreview)}
                 />
               ) : (
-                <span className="flex h-full items-center justify-center text-center text-[10px] uppercase text-zinc-400">Sin foto</span>
+                <span className="flex h-full items-center justify-center text-center text-[10px] uppercase text-zinc-400">{t('events.engine.participantsPage.noPhoto')}</span>
               )}
             </span>
             <span>
               <span className="inline-flex min-h-11 cursor-pointer items-center border border-zinc-900 bg-zinc-900 px-3 text-xs font-bold uppercase tracking-wide text-white">
-                {photoFile || form.photo_url ? 'Cambiar foto' : 'Seleccionar foto'}
+                {photoFile || form.photo_url ? t('events.engine.participantsPage.changePhoto') : t('events.engine.participantsPage.selectPhoto')}
                 <input
                   type="file"
                   accept={ACCEPTED_PHOTO_TYPES}
@@ -799,14 +803,14 @@ function ParticipantFields({
                   onChange={(input) => onSelectPhoto(input.target.files?.[0] ?? null)}
                 />
               </span>
-              <span className="mt-1 block text-[11px] text-zinc-500">JPG, PNG, WebP, GIF o AVIF · máximo 10 MB</span>
+              <span className="mt-1 block text-[11px] text-zinc-500">{t('events.engine.participantsPage.photoHelp')}</span>
             </span>
           </span>
         </label>
       </FieldGroup>}
-      <FieldGroup title="Datos de combate">
-        <SelectField label="Disciplina" value={form.discipline} onChange={(value) => changeAndInferWeightCategory('discipline', value)} options={disciplineOptions(form.discipline)} />
-        <TextField label="Fecha de nacimiento" type="date" value={form.date_of_birth} onChange={(value) => changeAndInferWeightCategory('date_of_birth', value)} />
+      <FieldGroup title={t('events.engine.participantsPage.groups.combatData')}>
+        <SelectField label={t('events.engine.participantsPage.fields.discipline')} value={form.discipline} onChange={(value) => changeAndInferWeightCategory('discipline', value)} options={disciplineOptions(form.discipline, t)} />
+        <TextField label={t('events.engine.participantsPage.fields.dateOfBirth')} type="date" value={form.date_of_birth} onChange={(value) => changeAndInferWeightCategory('date_of_birth', value)} />
         <GenderDivisionCheckboxes value={form.gender_division} onChange={(value) => change('gender_division', value)} />
         <WeightCategoryField
           discipline={form.discipline}
@@ -816,51 +820,52 @@ function ParticipantFields({
           exactWeight={form.exact_weight}
           value={form.weight_class}
           onChange={(value) => change('weight_class', value)}
+          t={t}
         />
-        <TextField label="Peso real registrado (kg)" type="number" value={form.exact_weight} onChange={(value) => changeAndInferWeightCategory('exact_weight', value)} />
-        <p className="text-xs text-zinc-500">Al guardar un peso real, también se actualizará el peso del perfil del peleador.</p>
-        <TextField label="Peso solicitado (kg, solo referencia)" type="number" value={form.requested_weight_kg} onChange={(value) => change('requested_weight_kg', value)} />
-        <TextField label="Peso mínimo aceptable (kg)" type="number" value={form.acceptable_weight_min_kg} onChange={(value) => change('acceptable_weight_min_kg', value)} />
-        <TextField label="Peso máximo aceptable (kg)" type="number" value={form.acceptable_weight_max_kg} onChange={(value) => change('acceptable_weight_max_kg', value)} />
-        <TextField label="Reglamento" value={form.ruleset} onChange={(value) => change('ruleset', value)} />
-        <TextField label="Formato del combate" value={form.bout_format} onChange={(value) => change('bout_format', value)} placeholder="3 x 3 min" />
-        <SelectField label="Amateur / profesional" value={form.experience_level} onChange={(value) => change('experience_level', value as 'amateur' | 'pro')} options={[['amateur', 'Amateur'], ['pro', 'Profesional']]} />
-        <TextField label="Evaluación de nivel (1–10)" type="number" value={form.skill_rating} onChange={(value) => change('skill_rating', value)} />
+        <TextField label={t('events.engine.participantsPage.fields.actualWeight')} type="number" value={form.exact_weight} onChange={(value) => changeAndInferWeightCategory('exact_weight', value)} />
+        <p className="text-xs text-zinc-500">{t('events.engine.participantsPage.weightSyncHelp')}</p>
+        <TextField label={t('events.engine.participantsPage.fields.requestedWeight')} type="number" value={form.requested_weight_kg} onChange={(value) => change('requested_weight_kg', value)} />
+        <TextField label={t('events.engine.participantsPage.fields.minimumWeight')} type="number" value={form.acceptable_weight_min_kg} onChange={(value) => change('acceptable_weight_min_kg', value)} />
+        <TextField label={t('events.engine.participantsPage.fields.maximumWeight')} type="number" value={form.acceptable_weight_max_kg} onChange={(value) => change('acceptable_weight_max_kg', value)} />
+        <TextField label={t('events.engine.participantsPage.fields.ruleset')} value={form.ruleset} onChange={(value) => change('ruleset', value)} />
+        <TextField label={t('events.engine.participantsPage.fields.boutFormat')} value={form.bout_format} onChange={(value) => change('bout_format', value)} placeholder="3 x 3 min" />
+        <SelectField label={t('events.engine.participantsPage.fields.competitionClass')} value={form.experience_level} onChange={(value) => change('experience_level', value as 'amateur' | 'pro')} options={[['amateur', t('events.engine.participantsPage.amateur')], ['pro', t('events.engine.participantsPage.professional')]]} />
+        <TextField label={t('events.engine.participantsPage.fields.skillRating')} type="number" value={form.skill_rating} onChange={(value) => change('skill_rating', value)} />
       </FieldGroup>
-      <FieldGroup title="Récord y experiencia">
-        <TextField label="Victorias" type="number" value={form.record_wins} onChange={(value) => change('record_wins', value)} />
-        <TextField label="Derrotas" type="number" value={form.record_losses} onChange={(value) => change('record_losses', value)} />
-        <TextField label="Empates" type="number" value={form.record_draws} onChange={(value) => change('record_draws', value)} />
-        <TextField label="Victorias por KO" type="number" value={form.ko_wins} onChange={(value) => change('ko_wins', value)} />
-        <TextField label="Victorias por TKO" type="number" value={form.tko_wins} onChange={(value) => change('tko_wins', value)} />
-        <TextField label="Derrotas por KO" type="number" value={form.ko_losses} onChange={(value) => change('ko_losses', value)} />
-        <TextField label="Derrotas por TKO" type="number" value={form.tko_losses} onChange={(value) => change('tko_losses', value)} />
-        <TextField label="Última pelea" type="date" value={form.last_fight_at} onChange={(value) => change('last_fight_at', value)} />
-        <TextField label="Última derrota por KO" type="date" value={form.last_ko_loss_at} onChange={(value) => change('last_ko_loss_at', value)} />
+      <FieldGroup title={t('events.engine.participantsPage.groups.recordExperience')}>
+        <TextField label={t('events.engine.participantsPage.fields.wins')} type="number" value={form.record_wins} onChange={(value) => change('record_wins', value)} />
+        <TextField label={t('events.engine.participantsPage.fields.losses')} type="number" value={form.record_losses} onChange={(value) => change('record_losses', value)} />
+        <TextField label={t('events.engine.participantsPage.fields.draws')} type="number" value={form.record_draws} onChange={(value) => change('record_draws', value)} />
+        <TextField label={t('events.engine.participantsPage.fields.koWins')} type="number" value={form.ko_wins} onChange={(value) => change('ko_wins', value)} />
+        <TextField label={t('events.engine.participantsPage.fields.tkoWins')} type="number" value={form.tko_wins} onChange={(value) => change('tko_wins', value)} />
+        <TextField label={t('events.engine.participantsPage.fields.koLosses')} type="number" value={form.ko_losses} onChange={(value) => change('ko_losses', value)} />
+        <TextField label={t('events.engine.participantsPage.fields.tkoLosses')} type="number" value={form.tko_losses} onChange={(value) => change('tko_losses', value)} />
+        <TextField label={t('events.engine.participantsPage.fields.lastFight')} type="date" value={form.last_fight_at} onChange={(value) => change('last_fight_at', value)} />
+        <TextField label={t('events.engine.participantsPage.fields.lastKoLoss')} type="date" value={form.last_ko_loss_at} onChange={(value) => change('last_ko_loss_at', value)} />
       </FieldGroup>
-      <FieldGroup title="Equipo, ubicación y disponibilidad">
-        <TextField label="Gimnasio / equipo" value={form.gym_name} onChange={(value) => change('gym_name', value)} />
-        <TextField label="Ciudad" value={form.city} onChange={(value) => change('city', value)} />
-        <TextField label="Estado" value={form.state} onChange={(value) => change('state', value)} />
-        <TextField label="País" value={form.country} onChange={(value) => change('country', value)} />
-        <TextField label="Disponible desde" type="date" value={form.available_from} onChange={(value) => change('available_from', value)} />
-        <TextField label="Disponible hasta" type="date" value={form.available_to} onChange={(value) => change('available_to', value)} />
-        <TextField label="Vigencia médica (privado)" type="date" value={form.medical_clearance_date} onChange={(value) => change('medical_clearance_date', value)} />
-        <SelectField label="Participación" value={form.approval_status} onChange={(value) => change('approval_status', value as EventRegistration['approval_status'])} options={[['accepted', 'Aceptado'], ['pending', 'Pendiente'], ['declined', 'Rechazado'], ['withdrawn', 'Retirado']]} />
-        <ReadOnlyField label="Pago" value={paymentStatusLabel(form.payment_status)} />
+      <FieldGroup title={t('events.engine.participantsPage.groups.teamLocation')}>
+        <TextField label={t('events.engine.participantsPage.fields.gymTeam')} value={form.gym_name} onChange={(value) => change('gym_name', value)} />
+        <TextField label={t('events.engine.participantsPage.fields.city')} value={form.city} onChange={(value) => change('city', value)} />
+        <TextField label={t('events.engine.participantsPage.fields.state')} value={form.state} onChange={(value) => change('state', value)} />
+        <TextField label={t('events.engine.participantsPage.fields.country')} value={form.country} onChange={(value) => change('country', value)} />
+        <TextField label={t('events.engine.participantsPage.fields.availableFrom')} type="date" value={form.available_from} onChange={(value) => change('available_from', value)} />
+        <TextField label={t('events.engine.participantsPage.fields.availableTo')} type="date" value={form.available_to} onChange={(value) => change('available_to', value)} />
+        <TextField label={t('events.engine.participantsPage.fields.medicalClearance')} type="date" value={form.medical_clearance_date} onChange={(value) => change('medical_clearance_date', value)} />
+        <SelectField label={t('events.engine.participantsPage.fields.participation')} value={form.approval_status} onChange={(value) => change('approval_status', value as EventRegistration['approval_status'])} options={[['accepted', t('events.engine.participantsPage.status.accepted')], ['pending', t('events.engine.participantsPage.status.pending')], ['declined', t('events.engine.participantsPage.status.declined')], ['withdrawn', t('events.engine.participantsPage.status.withdrawn')]]} />
+        <ReadOnlyField label={t('events.engine.participantsPage.fields.payment')} value={paymentStatusLabel(form.payment_status, t)} />
       </FieldGroup>
       <label className="block">
-        <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">Restricciones especiales (privadas, separadas por coma)</span>
+        <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">{t('events.engine.participantsPage.fields.specialRestrictions')}</span>
         <textarea rows={2} value={form.special_restrictions} onChange={(input) => change('special_restrictions', input.target.value)} className="w-full border border-zinc-300 px-3 py-2 text-sm" />
       </label>
       <label className="block">
-        <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">Nota de autorización</span>
+        <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">{t('events.engine.participantsPage.fields.authorizationNote')}</span>
         <input value={form.representative_confirmation_note} onChange={(input) => change('representative_confirmation_note', input.target.value)} className="min-h-11 w-full border border-zinc-300 px-3 text-sm" />
       </label>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-        <CheckField label="Peso confirmado" checked={form.weight_confirmed} onChange={(value) => change('weight_confirmed', value)} />
-        <CheckField label="Disponibilidad confirmada" checked={form.availability_confirmed} onChange={(value) => change('availability_confirmed', value)} />
-        <CheckField label="Consentimiento de menor verificado" checked={form.minor_consent_confirmed} onChange={(value) => change('minor_consent_confirmed', value)} />
+        <CheckField label={t('events.engine.participantsPage.fields.weightConfirmed')} checked={form.weight_confirmed} onChange={(value) => change('weight_confirmed', value)} />
+        <CheckField label={t('events.engine.participantsPage.fields.availabilityConfirmed')} checked={form.availability_confirmed} onChange={(value) => change('availability_confirmed', value)} />
+        <CheckField label={t('events.engine.participantsPage.fields.minorConsent')} checked={form.minor_consent_confirmed} onChange={(value) => change('minor_consent_confirmed', value)} />
       </div>
     </div>
   );
@@ -982,18 +987,19 @@ function selectExistingParticipant(
 }
 
 function participantName(registration: RegistrationWithFighter) { return registration.display_name ?? registration.fighters?.profiles?.full_name ?? registration.manual_fighters?.full_name ?? '—'; }
-function existingFighterName(fighter: PlatformFighter | ManualFighter, source: SourceMode) {
+function existingFighterName(fighter: PlatformFighter | ManualFighter, source: SourceMode, unnamedProfile: string) {
   return source === 'platform'
-    ? (fighter as PlatformFighter).profiles?.full_name ?? 'Perfil sin nombre'
+    ? (fighter as PlatformFighter).profiles?.full_name ?? unnamedProfile
     : (fighter as ManualFighter).full_name;
 }
 function ExistingFighterSearchResultCount({ query, count }: { query: string; count: number }) {
-  if (!query.trim()) return <p className="mt-1 text-xs text-zinc-500">Escribe un nombre para filtrar la lista.</p>;
+  const { t } = useTranslation('events');
+  if (!query.trim()) return <p className="mt-1 text-xs text-zinc-500">{t('events.engine.matchmaking.typeNameToFilter')}</p>;
   return (
     <p className={`mt-1 text-xs ${count > 0 ? 'text-zinc-500' : 'font-medium text-amber-800'}`}>
       {count > 0
-        ? `${count} ${count === 1 ? 'peleador encontrado' : 'peleadores encontrados'}`
-        : 'No se encontraron peleadores con ese nombre.'}
+        ? t('events.engine.matchmaking.searchResultCount', { count })
+        : t('events.engine.matchmaking.noSearchResults')}
     </p>
   );
 }
@@ -1008,29 +1014,29 @@ function weightClassOptions(current: string) {
   if (!current || WEIGHT_CLASS_LABELS[current]) return GENERIC_WEIGHT_CLASS_OPTIONS;
   return [GENERIC_WEIGHT_CLASS_OPTIONS[0], [current, `${current} (valor actual)`], ...GENERIC_WEIGHT_CLASS_OPTIONS.slice(1)];
 }
-function disciplineOptions(current: string) {
-  const options = [['', 'Seleccionar disciplina…'], ...DISCIPLINE_OPTIONS.map((discipline) => [discipline, discipline])];
+function disciplineOptions(current: string, t: TFunction<'events'>) {
+  const options = [['', t('events.engine.participantsPage.selectDiscipline')], ...DISCIPLINE_OPTIONS.map((discipline) => [discipline, discipline])];
   if (!current || DISCIPLINE_OPTIONS.includes(current)) return options;
-  return [options[0], [current, `${current} (valor actual)`], ...options.slice(1)];
+  return [options[0], [current, t('events.engine.participantsPage.currentValue', { value: current })], ...options.slice(1)];
 }
 
 function FieldGroup({ title, children }: { title: string; children: React.ReactNode }) { return <fieldset><legend className="mb-3 text-xs font-black uppercase tracking-widest text-[#C0001E]">{title}</legend><div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">{children}</div></fieldset>; }
 function TextField({ label, value, onChange, type = 'text', placeholder }: { label: string; value: string; onChange: (value: string) => void; type?: string; placeholder?: string }) { return <label><span className="mb-1 block text-xs font-bold uppercase text-zinc-600">{label}</span><input type={type} min={type === 'number' ? 0 : undefined} value={value} placeholder={placeholder} onChange={(input) => onChange(input.target.value)} className="min-h-11 w-full border border-zinc-300 px-3 text-sm" /></label>; }
 function SelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: string[][] }) { return <label><span className="mb-1 block text-xs font-bold uppercase text-zinc-600">{label}</span><select value={value} onChange={(input) => onChange(input.target.value)} className="min-h-11 w-full border border-zinc-300 bg-white px-3 text-sm">{options.map(([key, name]) => <option key={key} value={key}>{name}</option>)}</select></label>; }
 function ReadOnlyField({ label, value }: { label: string; value: string }) { return <div><span className="mb-1 block text-xs font-bold uppercase text-zinc-600">{label}</span><div className="flex min-h-11 items-center border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-600">{value}</div></div>; }
-function WeightCategoryField({ discipline, dateOfBirth, eventDate, eventWeightClasses, exactWeight, value, onChange }: { discipline: string; dateOfBirth: string; eventDate: string | null; eventWeightClasses: string[]; exactWeight: string; value: string; onChange: (value: string) => void }) {
+function WeightCategoryField({ discipline, dateOfBirth, eventDate, eventWeightClasses, exactWeight, value, onChange, t }: { discipline: string; dateOfBirth: string; eventDate: string | null; eventWeightClasses: string[]; exactWeight: string; value: string; onChange: (value: string) => void; t: TFunction<'events'> }) {
   const ageAtEvent = calculateAgeOnDate(dateOfBirth, eventDate);
   const inferredCategory = inferCombatWeightCategory(discipline, ageAtEvent, numberValue(exactWeight), eventWeightClasses);
   const allGroups = getCombatWeightGroups(discipline);
   const configuredWeightClasses = sanitizeWeightClasses(eventWeightClasses);
   if (allGroups.length === 0) {
     const configuredOptions = configuredWeightClasses.length > 0
-      ? [['', 'Seleccionar categoría…'], ...configuredWeightClasses.map((weightClass) => [weightClass, WEIGHT_CLASS_LABELS[weightClass] ?? weightClass])]
+      ? [['', t('events.engine.participantsPage.selectCategory')], ...configuredWeightClasses.map((weightClass) => [weightClass, WEIGHT_CLASS_LABELS[weightClass] ?? weightClass])]
       : weightClassOptions(value);
     const options = value && !configuredOptions.some(([key]) => key === value)
-      ? [configuredOptions[0], [value, `${value} (valor actual)`], ...configuredOptions.slice(1)]
+      ? [configuredOptions[0], [value, t('events.engine.participantsPage.currentValue', { value })], ...configuredOptions.slice(1)]
       : configuredOptions;
-    return <SelectField label="Categoría de peso" value={value} onChange={onChange} options={options} />;
+    return <SelectField label={t('events.engine.participantsPage.fields.weightCategory')} value={value} onChange={onChange} options={options} />;
   }
 
   const ageGroups = getCombatWeightGroupsForAge(discipline, ageAtEvent);
@@ -1040,10 +1046,10 @@ function WeightCategoryField({ discipline, dateOfBirth, eventDate, eventWeightCl
 
   return (
     <label>
-      <span className="mb-1 block text-xs font-bold uppercase text-zinc-600">Categoría por edad y peso</span>
+      <span className="mb-1 block text-xs font-bold uppercase text-zinc-600">{t('events.engine.participantsPage.ageWeightCategory')}</span>
       <select value={value} onChange={(input) => onChange(input.target.value)} className="min-h-11 w-full border border-zinc-300 bg-white px-3 text-sm">
-        <option value="">Seleccionar categoría…</option>
-        {preservesCurrentValue && <option value={value}>{value} (valor actual)</option>}
+        <option value="">{t('events.engine.participantsPage.selectCategory')}</option>
+        {preservesCurrentValue && <option value={value}>{t('events.engine.participantsPage.currentValue', { value })}</option>}
         {visibleGroups.map((group) => (
           <optgroup key={group.group} label={group.group}>
             {group.weights.map((weight) => <option key={`${group.group}:${weight}`} value={weight}>{weight}</option>)}
@@ -1052,10 +1058,10 @@ function WeightCategoryField({ discipline, dateOfBirth, eventDate, eventWeightCl
       </select>
       <span className="mt-1 block text-xs text-zinc-500">
         {inferredCategory
-          ? `Categoría asignada automáticamente por edad y peso: ${inferredCategory}. Puedes corregirla manualmente.`
+          ? t('events.engine.participantsPage.categoryInferred', { category: inferredCategory })
           : ageAtEvent == null
-          ? 'Agrega la fecha de nacimiento para mostrar solamente la división de edad correspondiente.'
-          : `Edad el día del evento: ${ageAtEvent} años · ${visibleGroups.map((group) => group.group).join(', ')}`}
+          ? t('events.engine.participantsPage.addBirthDateHelp')
+          : t('events.engine.participantsPage.eventAgeGroups', { age: ageAtEvent, groups: visibleGroups.map((group) => group.group).join(', ') })}
       </span>
     </label>
   );
@@ -1065,8 +1071,8 @@ function ModeButton({ active, onClick, label }: { active: boolean; onClick: () =
 function FilterButton({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) { return <button type="button" onClick={onClick} className={`min-h-11 border px-3 py-2 text-[11px] font-bold uppercase ${active ? 'border-zinc-900 bg-zinc-900 text-white' : 'border-zinc-300 bg-white text-zinc-700'}`}>{label}</button>; }
 function Metric({ label, value }: { label: string; value: number }) { return <div className="bg-white p-4"><p className="text-2xl font-black text-zinc-900">{value}</p><p className="mt-1 text-[11px] font-bold uppercase leading-tight text-zinc-500">{label}</p></div>; }
 function Info({ label, value }: { label: string; value: string }) { return <p><span className="font-bold uppercase text-zinc-400">{label}</span><br />{value}</p>; }
-function paymentStatusLabel(value: EventRegistration['payment_status']) { return value === 'confirmed' ? 'Confirmado' : value === 'waived' ? 'Exento' : value === 'submitted' ? 'Enviado' : 'Pendiente'; }
-function PaymentStatusBadge({ value }: { value: EventRegistration['payment_status'] }) { const label = value === 'confirmed' ? 'Pago confirmado' : value === 'waived' ? 'Pago exento' : value === 'submitted' ? 'Pago enviado' : 'Pago pendiente'; const colors = ['confirmed', 'waived'].includes(value) ? 'bg-emerald-50 text-emerald-800' : value === 'submitted' ? 'bg-blue-50 text-blue-800' : 'bg-amber-50 text-amber-800'; return <span className={`px-2 py-1 text-[10px] font-bold uppercase ${colors}`}>{label}</span>; }
-function ApprovalStatusBadge({ value }: { value: EventRegistration['approval_status'] }) { const label = value === 'accepted' ? 'Aceptado' : value === 'declined' ? 'Rechazado' : value === 'withdrawn' ? 'Retirado' : 'Aprobación pendiente'; const colors = value === 'accepted' ? 'bg-emerald-50 text-emerald-800' : value === 'pending' ? 'bg-amber-50 text-amber-800' : 'bg-red-50 text-red-800'; return <span className={`px-2 py-1 text-[10px] font-bold uppercase ${colors}`}>{label}</span>; }
-function HistoryList({ items }: { items: EventParticipantHistoryItem[] }) { return <div className="mt-4 border-t border-zinc-200 pt-4"><h4 className="text-xs font-black uppercase tracking-widest">Rivales e historial previo</h4>{items.length === 0 ? <p className="mt-2 text-xs text-zinc-500">Sin combates oficiales previos registrados.</p> : <div className="mt-2 space-y-2">{items.map((item) => <p key={item.bout_id} className="border-l-2 border-zinc-300 pl-3 text-xs text-zinc-600"><strong>{item.opponent_name}</strong> · {item.event_name} · {item.event_date ?? 'fecha pendiente'} · {item.bout_status}{item.result ? ` · ${item.result}` : ''}</p>)}</div>}</div>; }
+function paymentStatusLabel(value: EventRegistration['payment_status'], t: TFunction<'events'>) { return t(`events.engine.participantsPage.paymentStatus.${value}`); }
+function PaymentStatusBadge({ value }: { value: EventRegistration['payment_status'] }) { const { t } = useTranslation('events'); const label = t(`events.engine.participantsPage.paymentBadge.${value}`); const colors = ['confirmed', 'waived'].includes(value) ? 'bg-emerald-50 text-emerald-800' : value === 'submitted' ? 'bg-blue-50 text-blue-800' : 'bg-amber-50 text-amber-800'; return <span className={`px-2 py-1 text-[10px] font-bold uppercase ${colors}`}>{label}</span>; }
+function ApprovalStatusBadge({ value }: { value: EventRegistration['approval_status'] }) { const { t } = useTranslation('events'); const label = t(`events.engine.participantsPage.approvalBadge.${value}`); const colors = value === 'accepted' ? 'bg-emerald-50 text-emerald-800' : value === 'pending' ? 'bg-amber-50 text-amber-800' : 'bg-red-50 text-red-800'; return <span className={`px-2 py-1 text-[10px] font-bold uppercase ${colors}`}>{label}</span>; }
+function HistoryList({ items }: { items: EventParticipantHistoryItem[] }) { const { t } = useTranslation('events'); return <div className="mt-4 border-t border-zinc-200 pt-4"><h4 className="text-xs font-black uppercase tracking-widest">{t('events.engine.participantsPage.previousHistory')}</h4>{items.length === 0 ? <p className="mt-2 text-xs text-zinc-500">{t('events.engine.participantsPage.noPreviousBouts')}</p> : <div className="mt-2 space-y-2">{items.map((item) => <p key={item.bout_id} className="border-l-2 border-zinc-300 pl-3 text-xs text-zinc-600"><strong>{item.opponent_name}</strong> · {item.event_name} · {item.event_date ?? t('events.engine.participantsPage.datePending')} · {item.bout_status}{item.result ? ` · ${item.result}` : ''}</p>)}</div>}</div>; }
 function Frame({ children }: { children: React.ReactNode }) { return <EventManageFrame>{children}</EventManageFrame>; }

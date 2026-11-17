@@ -127,7 +127,7 @@ export function PromotersPageClient({ initialPromoters }: PromotersPageClientPro
                       {promoter.photo_url ? (
                         <Image
                           src={promoter.photo_url}
-                          alt={promoter.full_name ?? 'Promotor'}
+                          alt={promoter.full_name ?? t('promoters.promoter')}
                           width={40}
                           height={40}
                           className="w-full h-full object-cover"
@@ -141,7 +141,7 @@ export function PromotersPageClient({ initialPromoters }: PromotersPageClientPro
                       )}
                     </div>
                     <div>
-                      <h2 className="font-display font-black uppercase leading-none text-xl" style={{ color: '#0A0A0A' }}>{promoter.full_name || 'Promotor'}</h2>
+                      <h2 className="font-display font-black uppercase leading-none text-xl" style={{ color: '#0A0A0A' }}>{promoter.full_name || t('promoters.promoter')}</h2>
                       {promoter.city && <p className="text-xs text-zinc-500 mt-0.5">{promoter.city}</p>}
                       <span className="mt-2 inline-flex items-center border border-zinc-200 px-2 py-0.5 text-xs font-bold uppercase tracking-widest text-zinc-600">
                         {(promoter.promoter_federation_status ?? 'independent') === 'federated' && (
@@ -158,7 +158,7 @@ export function PromotersPageClient({ initialPromoters }: PromotersPageClientPro
                     </div>
                     {promoter.eventCount > 0 && (
                       <span className="ml-auto text-xs font-medium text-zinc-500 bg-zinc-100 px-2 py-0.5">
-                        {promoter.eventCount} evento{promoter.eventCount !== 1 ? 's' : ''}
+                        {t('promoters.eventCount', { count: promoter.eventCount })}
                       </span>
                     )}
                   </div>
@@ -186,7 +186,7 @@ export function PromotersPageClient({ initialPromoters }: PromotersPageClientPro
               </div>
             ))}
           </div>
-          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} labels={{ prev: t('promoters.previous', { defaultValue: 'Anterior' }), next: t('promoters.next', { defaultValue: 'Siguiente' }) }} />
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} labels={{ prev: t('promoters.previous'), next: t('promoters.next') }} />
           </>
         )}
       </main>

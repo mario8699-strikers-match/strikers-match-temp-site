@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { StructuredData } from '@/components/StructuredData';
 import { getCountryName } from '@/lib/countries';
+import { getSocialMediaHref } from '@/lib/socialMedia';
 import { absoluteUrl, joinLocationParts, pageMetadata, truncateDescription } from '@/lib/seo';
 import { getPublicFighterSeo } from '@/lib/seoData';
 
@@ -16,9 +17,10 @@ function fighterDescription(fighter: NonNullable<Awaited<ReturnType<typeof getPu
     fighter.experience_level === 'pro' ? 'profesional' : fighter.experience_level === 'amateur' ? 'amateur' : null,
     fighter.disciplines?.join(', '),
     fighter.weight_class ? `división ${fighter.weight_class}` : null,
+    `${fighter.record_wins}–${fighter.record_losses}–${fighter.record_draws}`,
     joinLocationParts([fighter.profiles?.city, fighter.profiles?.state || fighter.state, country]),
   ].filter(Boolean).join(' · ');
-  return truncateDescription(fighter.bio || `${name}${details ? ` — ${details}` : ''}. Consulta su perfil deportivo en Strikers Match.`);
+  return truncateDescription(`${name}${details ? ` — ${details}` : ''}. Consulta su perfil deportivo en Strikers Match.`);
 }
 
 export async function generateMetadata({ params }: Omit<FighterLayoutProps, 'children'>): Promise<Metadata> {
@@ -53,6 +55,10 @@ export default async function FighterLayout({ children, params }: FighterLayoutP
   const profileUrl = absoluteUrl(`/fighters/${id}`);
   const country = getCountryName(fighter.profiles?.country_code, 'es') || fighter.profiles?.country;
   const locationName = joinLocationParts([fighter.profiles?.city, fighter.profiles?.state || fighter.state, country]);
+  const instagram = fighter.profiles?.instagram
+    ? getSocialMediaHref('instagram', fighter.profiles.instagram)
+    : null;
+  const nationalityCode = fighter.nationalities?.[0];
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'ProfilePage',
@@ -66,6 +72,10 @@ export default async function FighterLayout({ children, params }: FighterLayoutP
       alternateName: fighter.nickname || undefined,
       description: fighterDescription(fighter),
       image: fighter.photo_url || undefined,
+      sameAs: instagram ? [instagram] : undefined,
+      nationality: nationalityCode
+        ? { '@type': 'Country', name: getCountryName(nationalityCode, 'es'), identifier: nationalityCode }
+        : undefined,
       homeLocation: locationName
         ? {
             '@type': 'Place',

@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
+
 interface GenderDivisionCheckboxesProps {
   value: string;
   onChange: (value: string) => void;
@@ -18,13 +20,14 @@ function canonicalValue(value: string): typeof OPTIONS[number] | '' {
 export function GenderDivisionCheckboxes({
   value,
   onChange,
-  label = 'División de género',
+  label,
 }: GenderDivisionCheckboxesProps) {
+  const { t } = useTranslation('common');
   const selected = canonicalValue(value);
 
   return (
     <fieldset>
-      <legend className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">{label}</legend>
+      <legend className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">{label ?? t('genderDivision.label')}</legend>
       <div className="grid min-h-11 grid-cols-2 gap-2">
         {OPTIONS.map((option) => (
           <label
@@ -41,7 +44,7 @@ export function GenderDivisionCheckboxes({
               onChange={(event) => onChange(event.target.checked ? option : '')}
               className="h-4 w-4 accent-[#C0001E]"
             />
-            {option}
+            {t(`genderDivision.${option === 'Masculino' ? 'male' : 'female'}`)}
           </label>
         ))}
       </div>

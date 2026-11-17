@@ -2,28 +2,20 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
-import { RecordValue } from '@/components/CombatRecord';
+import { FighterProfileHero } from '@/components/FighterProfileHero';
 import { manualFighterService } from '@/services/manualFighterService';
 import { eventService } from '@/services/eventService';
 import { requestService } from '@/services/requestService';
 import { authService } from '@/services/authService';
-import { normalizeDisciplineList } from '@/lib/disciplines';
-import { countryFlagEmoji, getCountryName } from '@/lib/countries';
+import { getPrimaryDiscipline, getPublicWeightDisplay } from '@/lib/fighterProfile';
 import { useTranslation } from 'react-i18next';
 import type { ManualFighterWithCreator, Profile, Event } from '@/types';
 
-const WEIGHT_LABELS: Record<string, string> = {
-  minimosca:'Minimosca',mosca:'Mosca',supermosca:'Supermosca',gallo:'Gallo',supergallo:'Supergallo',
-  pluma:'Pluma',superpluma:'Superpluma',ligero:'Ligero',superligero:'Superligero',welter:'Welter',
-  superwelter:'Superwelter',medio:'Medio',supermedio:'Supermedio',semipesado:'Semipesado',crucero:'Crucero',pesado:'Pesado',
-};
-
 export default function ManualFighterDetailPage() {
-  const { t, i18n } = useTranslation('fighters');
+  const { t } = useTranslation('fighters');
   const { id } = useParams<{ id: string }>();
 
   const [fighter, setFighter] = useState<ManualFighterWithCreator | null>(null);
@@ -70,20 +62,20 @@ export default function ManualFighterDetailPage() {
     });
     setSending(false);
     if (error) {
-      setSendError('No se pudo enviar la solicitud.');
+      setSendError(t('fighters.manualProfile.requestFailed'));
     } else {
       setSendSuccess(true);
       setTimeout(() => { setShowModal(false); setSendSuccess(false); setModalMessage(''); setModalEventId(''); }, 1500);
     }
   };
 
-  if (loading) return <div className="min-h-screen bg-white flex items-center justify-center"><p className="text-sm" style={{ color:'#9A9A9A' }}>Cargando...</p></div>;
+  if (loading) return <div className="min-h-screen bg-white flex items-center justify-center"><p className="text-sm" style={{ color:'#9A9A9A' }}>{t('fighters.manualProfile.loading')}</p></div>;
 
   if (!fighter) {
     return (
       <div className="min-h-screen bg-white flex flex-col">
         <Navbar activePage="fighters" />
-        <main className="flex-1 flex items-center justify-center"><p className="text-sm text-zinc-500">Peleador no encontrado.</p></main>
+        <main className="flex-1 flex items-center justify-center"><p className="text-sm text-zinc-500">{t('fighters.manualProfile.notFound')}</p></main>
         <Footer />
       </div>
     );
@@ -92,13 +84,14 @@ export default function ManualFighterDetailPage() {
   const canSendRequest = profile && (profile.role === 'promoter' || profile.role === 'manager' || profile.role === 'admin');
   const creatorName = fighter.profiles?.full_name ?? '';
   const creatorRole = fighter.profiles?.role ?? 'manager';
-  const disciplines = normalizeDisciplineList(fighter.disciplines, fighter.discipline);
   const nationalityCode = fighter.nationalities?.[0];
+  const primaryDiscipline = getPrimaryDiscipline(fighter.disciplines, fighter.discipline);
+  const weight = getPublicWeightDisplay(fighter.weight_class, fighter.exact_weight);
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <Navbar activePage="fighters" />
-      <main className="flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-10 w-full">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6">
         <Link
           href="/fighters"
           className="mb-8 inline-flex min-h-11 items-center border border-zinc-300 px-4 py-3 text-xs font-bold uppercase tracking-widest text-zinc-700 transition-colors hover:border-zinc-950 hover:text-zinc-950"
@@ -106,44 +99,25 @@ export default function ManualFighterDetailPage() {
           ← {t('fighters.manualProfile.backToFighters')}
         </Link>
 
-        {/* Header: photo + name */}
-        <div className="flex items-start gap-6 mb-8">
-          <div className="w-24 h-24 bg-zinc-100 flex-shrink-0 overflow-hidden">
-            {fighter.photo_url ? (
-              <Image src={fighter.photo_url} alt={fighter.full_name} width={96} height={96} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <svg className="w-10 h-10 text-zinc-300" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
-                </svg>
-              </div>
-            )}
-          </div>
-          <div className="flex-1">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#C0001E' }}>Perfil del Peleador</p>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-3xl font-black uppercase" style={{ letterSpacing:'-1px' }}>
-                    {nationalityCode && <span className="mr-2" title={getCountryName(nationalityCode, i18n.resolvedLanguage)}>{countryFlagEmoji(nationalityCode)}</span>}
-                    {fighter.full_name}
-                  </h1>
-                  <span className={`text-xs font-bold px-2 py-1 uppercase tracking-widest ${fighter.experience_level === 'pro' ? 'bg-[#C0001E] text-white' : 'bg-zinc-100 text-zinc-600'}`}>
-                    {fighter.experience_level === 'pro' ? 'Pro' : 'Amateur'}
-                  </span>
-                </div>
-                {fighter.nickname && <p className="text-base font-semibold" style={{ color:'#C0001E' }}>&ldquo;{fighter.nickname}&rdquo;</p>}
-                <p className="text-sm mt-1" style={{ color:'#5A5A5A' }}>{fighter.city ?? 'Sin ciudad'}</p>
-              </div>
-              <span className="inline-flex items-center text-xs font-bold uppercase tracking-widest text-amber-800 bg-amber-50 border border-amber-200 px-2 py-1 flex-shrink-0">
-                Roster
-              </span>
-            </div>
-          </div>
-        </div>
+        <FighterProfileHero
+          fullName={fighter.full_name}
+          photoUrl={fighter.photo_url}
+          nationalityCode={nationalityCode}
+          countryCode={fighter.country_code}
+          country={fighter.country}
+          instagram={fighter.instagram}
+          primaryDiscipline={primaryDiscipline}
+          weight={weight}
+          team={fighter.gym_name}
+          wins={fighter.record_wins}
+          losses={fighter.record_losses}
+          draws={fighter.record_draws}
+          experienceLevel={fighter.experience_level}
+          roster
+        />
 
         {/* Roster notice */}
-        <div className="border border-amber-200 bg-amber-50/50 p-4 mb-6">
+        <div className="mb-6 mt-6 border border-amber-200 bg-amber-50/50 p-4">
           <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#92400E' }}>{t('fighters.manualProfile.accountlessTitle')}</p>
           <p className="text-sm" style={{ color:'#5A5A5A' }}>
             {t('fighters.manualProfile.noticeStart')} {t(`fighters.manualProfile.roles.${creatorRole}`, { defaultValue: t('fighters.manualProfile.roles.manager') })}
@@ -152,90 +126,18 @@ export default function ManualFighterDetailPage() {
           </p>
         </div>
 
-        {/* Record */}
-        <div className="grid grid-cols-3 gap-4 border border-zinc-100 p-6 text-center mb-6">
-          {[
-            { label:'Victorias', value:fighter.record_wins, part:'wins' as const },
-            { label:'Derrotas', value:fighter.record_losses, part:'losses' as const },
-            { label:'Draws', value:fighter.record_draws, part:'draws' as const },
-          ].map(({label,value,part}) => (
-            <div key={label}>
-              <p className="text-3xl font-black" style={{ fontFamily:'var(--font-barlow-condensed)', letterSpacing:'-1px' }}><RecordValue part={part} value={value} /></p>
-              <p className="text-xs font-bold tracking-widest uppercase mt-1" style={{ color:'#5A5A5A' }}>{label}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Discipline pills */}
-        {disciplines.length > 0 && (
-          <div className="border border-zinc-100 p-6 mb-6">
-            <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color:'#9A9A9A' }}>Disciplinas</p>
-            <div className="flex flex-wrap gap-2">
-              {disciplines.map((discipline) => (
-                <span key={discipline} className="bg-[#0A0A0A] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white">{discipline}</span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Details */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border border-zinc-100 p-6 mb-6">
-          {[
-            { label:'División', value: fighter.weight_class ? (WEIGHT_LABELS[fighter.weight_class] ?? fighter.weight_class) : '—' },
-            { label:'Gimnasio', value: fighter.gym_name ?? '—' },
-            { label:'Estado', value: fighter.state ?? '—' },
-            { label:'Nacionalidad', value: nationalityCode ? `${countryFlagEmoji(nationalityCode)} ${getCountryName(nationalityCode, i18n.resolvedLanguage)}` : '—' },
-            { label:'Edad', value: fighter.age != null ? `${fighter.age}` : '—' },
-            { label:'División de género', value: fighter.gender_division ?? '—' },
-            { label:'Nivel técnico', value: fighter.skill_rating ? `${fighter.skill_rating}/10` : '—' },
-            { label:'KO/TKO a favor', value: `${fighter.ko_wins + fighter.tko_wins}` },
-            { label:'KO/TKO en contra', value: `${fighter.ko_losses + fighter.tko_losses}` },
-            { label:'Reglamentos', value: fighter.preferred_rulesets.length ? fighter.preferred_rulesets.join(', ') : '—' },
-            { label:'Peso solicitado', value: fighter.requested_weight_kg ? `${fighter.requested_weight_kg} kg` : '—' },
-            { label:'Rango aceptable', value: fighter.acceptable_weight_min_kg != null || fighter.acceptable_weight_max_kg != null ? `${fighter.acceptable_weight_min_kg ?? '—'}–${fighter.acceptable_weight_max_kg ?? '—'} kg` : '—' },
-            { label:'Última pelea', value: fighter.last_fight_at ?? '—' },
-            { label:'Estatura', value: fighter.height_cm ? `${fighter.height_cm} cm` : '—' },
-            { label:'Alcance', value: fighter.reach_cm ? `${fighter.reach_cm} cm` : '—' },
-          ].map(({label,value}) => (
-            <div key={label}>
-              <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>{label}</p>
-              <p className="text-sm font-semibold text-zinc-900">{value}</p>
-            </div>
-          ))}
-          <div>
-            <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>Nivel</p>
-            <span className={`text-xs font-bold px-2 py-1 uppercase tracking-widest ${fighter.experience_level === 'pro' ? 'bg-[#C0001E] text-white' : 'bg-zinc-100 text-zinc-600'}`}>
-              {fighter.experience_level === 'pro' ? 'Pro' : 'Amateur'}
-            </span>
-          </div>
-          <div>
-            <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>Disponibilidad</p>
-            <span className={`text-xs font-semibold px-2 py-1 ${fighter.is_available ? 'bg-emerald-50 text-emerald-700' : 'bg-zinc-100 text-zinc-500'}`}>
-              {fighter.is_available ? 'Disponible' : 'No disponible'}
-            </span>
-          </div>
-        </div>
-
-        {/* Bio */}
-        {fighter.bio && (
-          <div className="border border-zinc-100 p-6 mb-8">
-            <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color:'#9A9A9A' }}>Bio</p>
-            <p className="text-sm text-zinc-700 leading-relaxed">{fighter.bio}</p>
-          </div>
-        )}
-
         {/* CTA */}
         {canSendRequest && (
-          <div className="flex justify-end">
+          <div className="mt-6 flex justify-end">
             <button onClick={() => setShowModal(true)} className="px-6 py-3 text-sm font-bold tracking-widest uppercase text-white transition-colors"
               style={{ background:'#C0001E' }} onMouseOver={e=>(e.currentTarget.style.background='#9A0018')} onMouseOut={e=>(e.currentTarget.style.background='#C0001E')}>
-              Contactar al representante
+              {t('fighters.manualProfile.contactRepresentative')}
             </button>
           </div>
         )}
         {!profile && (
-          <div className="border border-dashed border-zinc-200 p-6 text-center">
-            <p className="text-sm text-zinc-500"><a href="/login" className="font-semibold" style={{ color:'#C0001E' }}>Inicia sesión</a> como promotor para enviar una solicitud.</p>
+          <div className="mt-6 border border-dashed border-zinc-200 p-6 text-center">
+            <p className="text-sm text-zinc-500"><a href="/login" className="font-semibold" style={{ color:'#C0001E' }}>{t('fighters.manualProfile.signIn')}</a> {t('fighters.manualProfile.signInTail')}</p>
           </div>
         )}
       </main>
@@ -244,37 +146,37 @@ export default function ManualFighterDetailPage() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
           <div className="bg-white w-full max-w-md p-6">
-            <h2 className="text-xl font-black uppercase mb-1" style={{ letterSpacing:'-0.5px' }}>Solicitud de Pelea</h2>
-            <p className="text-sm mb-2" style={{ color:'#5A5A5A' }}>Para: <span className="font-semibold text-zinc-900">{fighter.full_name}</span></p>
+            <h2 className="text-xl font-black uppercase mb-1" style={{ letterSpacing:'-0.5px' }}>{t('fighters.manualProfile.fightRequest')}</h2>
+            <p className="text-sm mb-2" style={{ color:'#5A5A5A' }}>{t('fighters.manualProfile.to')}: <span className="font-semibold text-zinc-900">{fighter.full_name}</span></p>
             <p className="text-xs mb-6" style={{ color:'#92400E' }}>
-              La solicitud se envía al {creatorRole.toLowerCase() || 'representante'} del peleador dentro de la plataforma.
+              {t('fighters.manualProfile.requestRouting', { role: t(`fighters.manualProfile.roles.${creatorRole}`, { defaultValue: t('fighters.manualProfile.roles.manager') }) })}
             </p>
             {sendSuccess ? (
-              <div className="py-8 text-center"><p className="text-sm font-semibold text-emerald-700">¡Solicitud enviada con éxito!</p></div>
+              <div className="py-8 text-center"><p className="text-sm font-semibold text-emerald-700">{t('fighters.manualProfile.requestSent')}</p></div>
             ) : (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Evento *</label>
+                  <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.manualProfile.event')} *</label>
                   {myEvents.length === 0 ? (
-                    <p className="text-sm text-zinc-400">No tienes eventos. <Link href="/events/create" className="underline" style={{ color:'#C0001E' }}>Crea uno</Link>.</p>
+                    <p className="text-sm text-zinc-400">{t('fighters.manualProfile.noEvents')} <Link href="/events/create" className="underline" style={{ color:'#C0001E' }}>{t('fighters.manualProfile.createOne')}</Link>.</p>
                   ) : (
                     <select value={modalEventId} onChange={e => setModalEventId(e.target.value)}
                       className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white">
-                      <option value="">— Selecciona un evento —</option>
+                      <option value="">— {t('fighters.manualProfile.selectEvent')} —</option>
                       {myEvents.map(ev => <option key={ev.id} value={ev.id}>{ev.event_name}{ev.event_date ? ` — ${ev.event_date}` : ''}</option>)}
                     </select>
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Mensaje (opcional)</label>
+                  <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.manualProfile.messageOptional')}</label>
                   <textarea value={modalMessage} onChange={e => setModalMessage(e.target.value)} rows={4}
-                    placeholder="Escribe un mensaje..." className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 resize-none" />
+                    placeholder={t('fighters.manualProfile.messagePlaceholder')} className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 resize-none" />
                 </div>
                 {sendError && <p className="text-xs text-red-600">{sendError}</p>}
                 <div className="flex justify-end gap-3 pt-2">
-                  <button onClick={() => { setShowModal(false); setSendError(null); }} className="px-4 py-2 text-sm font-medium border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition-colors">Cancelar</button>
+                  <button onClick={() => { setShowModal(false); setSendError(null); }} className="px-4 py-2 text-sm font-medium border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition-colors">{t('fighters.manualProfile.cancel')}</button>
                   <button onClick={handleSendRequest} disabled={sending || !modalEventId} className="px-5 py-2 text-sm font-bold tracking-wide uppercase text-white disabled:opacity-50 transition-colors" style={{ background:'#C0001E' }}>
-                    {sending ? 'Enviando...' : 'Enviar solicitud'}
+                    {sending ? t('fighters.manualProfile.sending') : t('fighters.manualProfile.sendRequest')}
                   </button>
                 </div>
               </div>

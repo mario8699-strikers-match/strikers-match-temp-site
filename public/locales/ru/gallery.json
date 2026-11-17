@@ -109,6 +109,20 @@
       "errors": {
         "updateFailed": "Не удалось обновить объявление."
       }
+    },
+    "professionalDetail": {
+      "loading": "Загрузка профиля...",
+      "notFound": "Этот профиль не найден или недоступен.",
+      "viewDirectory": "Посмотреть каталог",
+      "locationUnavailable": "Местоположение не указано",
+      "available": "Доступный",
+      "unavailable": "В настоящее время недоступен",
+      "about": "О",
+      "contact": "Контакт",
+      "signInForContact": "Войдите, чтобы просмотреть контактную информацию",
+      "contactAction": "Контакт",
+      "previous": "Предыдущий",
+      "next": "Следующий"
     }
   }
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { ManualFighterManager } from '@/components/ManualFighterManager';
@@ -33,6 +34,7 @@ const WEIGHT_LABELS: Record<string, string> = {
 };
 
 export default function ManagerDashboardPage() {
+  const { t } = useTranslation('dashboard');
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [roster, setRoster] = useState<FighterWithProfile[]>([]);
@@ -93,7 +95,7 @@ export default function ManagerDashboardPage() {
     const { error } = await managerService.addFighter(profile.id, fighter.id);
     setAdding(null);
     if (error) {
-      setAddError(error.includes('unique') ? 'Este peleador ya está en tu roster.' : 'Error al agregar.');
+      setAddError(error.includes('unique') ? t('dashboard.manager.errors.duplicateFighter') : t('dashboard.manager.errors.addFighter'));
     } else {
       setRoster(prev => [...prev, fighter]);
       setSearchResults(prev => prev.filter(f => f.id !== fighter.id));
@@ -147,21 +149,21 @@ export default function ManagerDashboardPage() {
         {/* Header */}
         <div className="mb-8 flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#C0001E' }}>Panel del Representante</p>
+            <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#C0001E' }}>{t('dashboard.manager.title')}</p>
             <h1 className="text-3xl font-black uppercase" style={{ letterSpacing:'-1px' }}>{profile.full_name}</h1>
             <p className="text-sm mt-1" style={{ color:'#5A5A5A' }}>{profile.city ?? ''}</p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Link href="/events"
               className="px-5 py-2.5 text-xs font-bold tracking-widest uppercase border border-zinc-300 text-zinc-800 transition-colors flex-shrink-0 text-center">
-              Eventos
+              {t('dashboard.manager.events')}
             </Link>
             <Link href="/events/create"
               className="px-5 py-2.5 text-xs font-bold tracking-widest uppercase text-white transition-colors flex-shrink-0 text-center"
               style={{ background:'#C0001E' }}
               onMouseOver={(e) => (e.currentTarget.style.background = '#9A0018')}
               onMouseOut={(e) => (e.currentTarget.style.background = '#C0001E')}>
-              Nuevo evento
+              {t('dashboard.manager.newEvent')}
             </Link>
           </div>
         </div>
@@ -171,7 +173,7 @@ export default function ManagerDashboardPage() {
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
           </svg>
-          <span className="font-semibold">Administra roster, eventos y propuestas desde este panel.</span>
+          <span className="font-semibold">{t('dashboard.manager.description')}</span>
         </div>
 
         <OrganizerPaymentsPanel />
@@ -179,15 +181,15 @@ export default function ManagerDashboardPage() {
         <section className="mb-8 border border-zinc-200 p-6">
           <div className="mb-4 flex items-end justify-between gap-3">
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-[#C0001E]">Mis eventos</p>
-              <p className="mt-1 text-sm text-zinc-500">Abre los peleadores por categoría y arma los combates desde aquí.</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-[#C0001E]">{t('dashboard.manager.myEvents')}</p>
+              <p className="mt-1 text-sm text-zinc-500">{t('dashboard.manager.myEventsHint')}</p>
             </div>
             <span className="text-sm font-bold text-zinc-400">{events.length}</span>
           </div>
           {events.length === 0 ? (
             <div className="border border-dashed border-zinc-200 px-4 py-8 text-center">
-              <p className="text-sm text-zinc-500">Todavía no has creado eventos.</p>
-              <Link href="/events/create" className="mt-4 inline-flex min-h-11 items-center bg-[#C0001E] px-4 py-2 text-xs font-bold uppercase text-white">Crear evento</Link>
+              <p className="text-sm text-zinc-500">{t('dashboard.manager.noEvents')}</p>
+              <Link href="/events/create" className="mt-4 inline-flex min-h-11 items-center bg-[#C0001E] px-4 py-2 text-xs font-bold uppercase text-white">{t('dashboard.manager.createEvent')}</Link>
             </div>
           ) : (
             <div className="space-y-3">
@@ -196,12 +198,12 @@ export default function ManagerDashboardPage() {
                   <div className="min-w-0">
                     <p className="truncate font-bold text-zinc-950">{event.event_name}</p>
                     <p className="mt-1 text-xs text-zinc-500">
-                      {event.event_date ? formatCalendarDate(event.event_date) : 'Sin fecha'} · {event.city ?? 'Sin ciudad'} · {event.status}
+                      {event.event_date ? formatCalendarDate(event.event_date) : t('dashboard.manager.noDate')} · {event.city ?? t('dashboard.manager.noCity')} · {event.status}
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-2 sm:flex">
-                    <Link href={`/events/${event.id}/manage/participants`} className="flex min-h-11 items-center justify-center border border-zinc-300 px-3 py-2 text-center text-xs font-bold uppercase text-zinc-700">Participantes</Link>
-                    <Link href={`/events/${event.id}/manage/matchmaking`} className="flex min-h-11 items-center justify-center bg-[#C0001E] px-3 py-2 text-center text-xs font-bold uppercase text-white">Peleadores / Matchmaking</Link>
+                    <Link href={`/events/${event.id}/manage/participants`} className="flex min-h-11 items-center justify-center border border-zinc-300 px-3 py-2 text-center text-xs font-bold uppercase text-zinc-700">{t('dashboard.manager.participants')}</Link>
+                    <Link href={`/events/${event.id}/manage/matchmaking`} className="flex min-h-11 items-center justify-center bg-[#C0001E] px-3 py-2 text-center text-xs font-bold uppercase text-white">{t('dashboard.manager.fightersMatchmaking')}</Link>
                   </div>
                 </article>
               ))}
@@ -212,14 +214,14 @@ export default function ManagerDashboardPage() {
         <section className="mb-8 border border-zinc-200 p-6">
           <div className="mb-4 flex items-end justify-between gap-3">
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-[#C0001E]">Propuestas por confirmar</p>
-              <p className="mt-1 text-sm text-zinc-500">Responde en nombre de los peleadores que representas.</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-[#C0001E]">{t('dashboard.manager.pendingProposals')}</p>
+              <p className="mt-1 text-sm text-zinc-500">{t('dashboard.manager.pendingProposalsHint')}</p>
             </div>
             <span className="text-sm font-bold text-zinc-400">{pendingProposals.length}</span>
           </div>
           {matchError && <p className="mb-3 border border-red-200 bg-red-50 p-3 text-sm text-red-700">{matchError}</p>}
           {pendingProposals.length === 0 ? (
-            <p className="border border-dashed border-zinc-200 px-4 py-8 text-center text-sm text-zinc-400">No hay propuestas pendientes para tu roster.</p>
+            <p className="border border-dashed border-zinc-200 px-4 py-8 text-center text-sm text-zinc-400">{t('dashboard.manager.noPendingProposals')}</p>
           ) : (
             <div className="space-y-3">
               {pendingProposals.map(({ fighter, match }) => {
@@ -233,13 +235,13 @@ export default function ManagerDashboardPage() {
                       {fighter.profiles?.full_name ?? '—'} vs {opponentRegistration?.display_name ?? opponentFighter?.profiles?.full_name ?? '—'}
                     </p>
                     <p className="mt-1 text-xs text-zinc-500">
-                      {match.events?.event_name ?? 'Evento'}
+                      {match.events?.event_name ?? t('dashboard.manager.event')}
                       {match.events?.event_date ? ` · ${formatCalendarDate(match.events.event_date)}` : ''}
-                      {match.compatibility_score != null ? ` · Compatibilidad ${match.compatibility_score}%` : ''}
+                      {match.compatibility_score != null ? ` · ${t('dashboard.manager.compatibility', { score: match.compatibility_score })}` : ''}
                     </p>
                     <div className="mt-3 grid grid-cols-2 gap-2">
-                      <button type="button" disabled={matchAction === actionKey} onClick={() => void handleMatchResponse(match.id, fighter.id, 'accepted')} className="min-h-11 bg-emerald-700 px-3 py-2 text-xs font-bold uppercase tracking-widest text-white disabled:opacity-50">Aceptar</button>
-                      <button type="button" disabled={matchAction === actionKey} onClick={() => void handleMatchResponse(match.id, fighter.id, 'declined')} className="min-h-11 border border-zinc-300 px-3 py-2 text-xs font-bold uppercase tracking-widest text-zinc-800 disabled:opacity-50">Rechazar</button>
+                      <button type="button" disabled={matchAction === actionKey} onClick={() => void handleMatchResponse(match.id, fighter.id, 'accepted')} className="min-h-11 bg-emerald-700 px-3 py-2 text-xs font-bold uppercase tracking-widest text-white disabled:opacity-50">{t('dashboard.manager.accept')}</button>
+                      <button type="button" disabled={matchAction === actionKey} onClick={() => void handleMatchResponse(match.id, fighter.id, 'declined')} className="min-h-11 border border-zinc-300 px-3 py-2 text-xs font-bold uppercase tracking-widest text-zinc-800 disabled:opacity-50">{t('dashboard.manager.decline')}</button>
                     </div>
                   </article>
                 );
@@ -250,17 +252,17 @@ export default function ManagerDashboardPage() {
 
         {/* Search + Add fighters */}
         <div className="border border-zinc-200 p-6 mb-8">
-          <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color:'#5A5A5A' }}>Agregar Peleador al Roster</p>
+          <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color:'#5A5A5A' }}>{t('dashboard.manager.addFighterToRoster')}</p>
           <form onSubmit={handleSearch} className="flex gap-3 mb-4">
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Buscar por nombre..."
+              placeholder={t('dashboard.manager.searchByName')}
               className="flex-1 border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
             />
             <button type="submit" disabled={searching} className="px-4 py-2 text-sm font-bold tracking-widest uppercase text-white disabled:opacity-50 transition-colors" style={{ background:'#C0001E' }}>
-              {searching ? '...' : 'Buscar'}
+              {searching ? '...' : t('dashboard.manager.search')}
             </button>
           </form>
 
@@ -283,7 +285,7 @@ export default function ManagerDashboardPage() {
                   </div>
                   <button onClick={() => handleAdd(f)} disabled={adding === f.id}
                     className="px-3 py-1 text-xs font-bold text-white disabled:opacity-50 transition-colors" style={{ background:'#C0001E' }}>
-                    {adding === f.id ? '...' : 'Agregar'}
+                    {adding === f.id ? '...' : t('dashboard.manager.add')}
                   </button>
                 </div>
               ))}
@@ -294,13 +296,13 @@ export default function ManagerDashboardPage() {
         {/* Roster */}
         <div>
           <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color:'#C0001E' }}>
-            Mi Roster ({roster.length})
+            {t('dashboard.manager.roster', { count: roster.length })}
           </p>
           {loading ? (
-            <p className="text-sm text-zinc-400">Cargando...</p>
+            <p className="text-sm text-zinc-400">{t('dashboard.manager.loading')}</p>
           ) : roster.length === 0 ? (
             <div className="border border-dashed border-zinc-200 py-12 text-center">
-              <p className="text-sm text-zinc-400">Tu roster está vacío. Busca peleadores arriba para agregarlos.</p>
+              <p className="text-sm text-zinc-400">{t('dashboard.manager.emptyRoster')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -328,7 +330,7 @@ export default function ManagerDashboardPage() {
                   </div>
                   <button onClick={() => handleRemove(f.id)} disabled={removing === f.id}
                     className="text-xs text-zinc-400 hover:text-red-600 disabled:opacity-50 transition-colors flex-shrink-0 pt-1">
-                    {removing === f.id ? '...' : 'Quitar'}
+                    {removing === f.id ? '...' : t('dashboard.manager.remove')}
                   </button>
                 </div>
               ))}
@@ -338,7 +340,7 @@ export default function ManagerDashboardPage() {
 
         {/* ── Add Your Own Fighters ── */}
         <div className="mt-10 border-t border-zinc-100 pt-8">
-          <ManualFighterManager creatorId={profile.id} sectionLabel="Mis Peleadores" />
+          <ManualFighterManager creatorId={profile.id} />
         </div>
       </main>
       <Footer />

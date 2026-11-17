@@ -10,11 +10,7 @@ import type { FighterWithProfile, ManualFighterWithCreator } from '@/types';
 type Confirm = { fighterId: string; action: 'verify' | 'unverify' | 'hide' | 'unhide' } | null;
 type Tab = 'registered' | 'manual';
 
-const REP_LABELS: { key: 'manager' | 'promoter' | 'sponsor'; label: string }[] = [
-  { key: 'manager', label: 'Representante' },
-  { key: 'promoter', label: 'Promotor' },
-  { key: 'sponsor', label: 'Patrocinador' },
-];
+const REP_LABELS = ['manager', 'promoter', 'sponsor'] as const;
 
 export default function AdminFightersPage() {
   const { t } = useTranslation('admin');
@@ -136,15 +132,15 @@ export default function AdminFightersPage() {
                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-emerald-50 text-emerald-700">✓</span>
                   )}
                   {fighter.is_hidden && (
-                    <span className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium bg-red-50 text-red-700">Oculto</span>
+                    <span className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium bg-red-50 text-red-700">{t('admin.fighters.hidden')}</span>
                   )}
                 </div>
               </div>
               <p className="mt-1 text-xs text-zinc-500 truncate">{fighter.profiles.email}</p>
               <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-                <dt className="text-zinc-500">Teléfono:</dt>
+                <dt className="text-zinc-500">{t('admin.fighters.phone')}:</dt>
                 <dd className="text-zinc-700">{fighter.profiles.phone ?? '—'}</dd>
-                <dt className="text-zinc-500">Ciudad:</dt>
+                <dt className="text-zinc-500">{t('admin.fighters.city')}:</dt>
                 <dd className="text-zinc-700">{fighter.profiles.city ?? '—'}</dd>
                 <dt className="text-zinc-500">{t('admin.fighters.weightClass')}:</dt>
                 <dd className="text-zinc-700">{fighter.weight_class ?? '—'}</dd>
@@ -154,9 +150,9 @@ export default function AdminFightersPage() {
                 <dd className="text-zinc-700">{fighter.is_available ? t('admin.fighters.yes') : t('admin.fighters.no')}</dd>
               </dl>
               <div className="mt-3 flex flex-wrap gap-1">
-                {fighter.has_manager && <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-50 text-blue-700">Representante</span>}
-                {fighter.has_promoter && <span className="text-xs font-bold px-1.5 py-0.5 bg-purple-50 text-purple-700">Promotor</span>}
-                {fighter.has_sponsor && <span className="text-xs font-bold px-1.5 py-0.5 bg-amber-50 text-amber-700">Patrocinador</span>}
+                {fighter.has_manager && <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-50 text-blue-700">{t('admin.fighters.roles.manager')}</span>}
+                {fighter.has_promoter && <span className="text-xs font-bold px-1.5 py-0.5 bg-purple-50 text-purple-700">{t('admin.fighters.roles.promoter')}</span>}
+                {fighter.has_sponsor && <span className="text-xs font-bold px-1.5 py-0.5 bg-amber-50 text-amber-700">{t('admin.fighters.roles.sponsor')}</span>}
               </div>
               <div className="mt-3 pt-3 border-t border-zinc-100 flex flex-wrap gap-4">
                 {fighter.verified ? (
@@ -165,9 +161,9 @@ export default function AdminFightersPage() {
                   <button onClick={() => setConfirm({ fighterId: fighter.id, action: 'verify' })} className="text-xs font-medium text-emerald-700 hover:underline">{t('admin.fighters.verify')}</button>
                 )}
                 {fighter.is_hidden ? (
-                  <button onClick={() => setConfirm({ fighterId: fighter.id, action: 'unhide' })} className="text-xs font-medium text-blue-600 hover:underline">Mostrar</button>
+                  <button onClick={() => setConfirm({ fighterId: fighter.id, action: 'unhide' })} className="text-xs font-medium text-blue-600 hover:underline">{t('admin.fighters.show')}</button>
                 ) : (
-                  <button onClick={() => setConfirm({ fighterId: fighter.id, action: 'hide' })} className="text-xs font-medium text-red-500 hover:underline">Ocultar</button>
+                  <button onClick={() => setConfirm({ fighterId: fighter.id, action: 'hide' })} className="text-xs font-medium text-red-500 hover:underline">{t('admin.fighters.hide')}</button>
                 )}
               </div>
             </div>
@@ -184,7 +180,7 @@ export default function AdminFightersPage() {
                     key={col}
                     className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wide"
                   >
-                    {col === 'rep' ? 'Representacion' : col === 'phone' ? 'Telefono' : col === 'visible' ? 'Visible' : t(`admin.fighters.${col}`)}
+                    {col === 'rep' ? t('admin.fighters.representation') : col === 'phone' ? t('admin.fighters.phone') : col === 'visible' ? t('admin.fighters.visible') : t(`admin.fighters.${col}`)}
                   </th>
                 ))}
               </tr>
@@ -308,22 +304,22 @@ export default function AdminFightersPage() {
                   <tr className="bg-zinc-50">
                     <td colSpan={12} className="px-4 py-4">
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-                        {REP_LABELS.map(({ key, label }) => {
+                        {REP_LABELS.map((key) => {
                           const has = fighter[`has_${key}` as keyof typeof fighter] as boolean;
                           const name = fighter[`${key}_name` as keyof typeof fighter] as string | null;
                           const email = fighter[`${key}_email` as keyof typeof fighter] as string | null;
                           const phone = fighter[`${key}_phone` as keyof typeof fighter] as string | null;
                           return (
                             <div key={key} className="border border-zinc-200 p-3">
-                              <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: has ? '#C0001E' : '#9A9A9A' }}>{label}</p>
+                              <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: has ? '#C0001E' : '#9A9A9A' }}>{t(`admin.fighters.roles.${key}`)}</p>
                               {has ? (
                                 <div className="space-y-1 text-xs text-zinc-700">
-                                  <p><span className="font-medium text-zinc-500">Nombre:</span> {name || '---'}</p>
-                                  <p><span className="font-medium text-zinc-500">Correo:</span> {email || '---'}</p>
+                                  <p><span className="font-medium text-zinc-500">{t('admin.fighters.name')}:</span> {name || '---'}</p>
+                                  <p><span className="font-medium text-zinc-500">{t('admin.fighters.email')}:</span> {email || '---'}</p>
                                   <p><span className="font-medium text-zinc-500">Tel:</span> {phone || '---'}</p>
                                 </div>
                               ) : (
-                                <p className="text-xs text-zinc-400">No registrado</p>
+                                <p className="text-xs text-zinc-400">{t('admin.fighters.notRegistered')}</p>
                               )}
                             </div>
                           );
@@ -342,7 +338,7 @@ export default function AdminFightersPage() {
       ) : (
         manualFighters.length === 0 ? (
           <div className="py-16 text-center border border-dashed border-zinc-200 text-zinc-500 text-sm">
-            No hay peleadores agregados manualmente por representantes o promotores.
+            {t('admin.fighters.noManualFighters')}
           </div>
         ) : (
           <>
@@ -355,26 +351,26 @@ export default function AdminFightersPage() {
                     {mf.full_name}
                   </Link>
                   {mf.profiles?.role === 'manager' && (
-                    <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-50 text-blue-700 flex-shrink-0">Representante</span>
+                    <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-50 text-blue-700 flex-shrink-0">{t('admin.fighters.roles.manager')}</span>
                   )}
                   {mf.profiles?.role === 'promoter' && (
-                    <span className="text-xs font-bold px-1.5 py-0.5 bg-purple-50 text-purple-700 flex-shrink-0">Promotor</span>
+                    <span className="text-xs font-bold px-1.5 py-0.5 bg-purple-50 text-purple-700 flex-shrink-0">{t('admin.fighters.roles.promoter')}</span>
                   )}
                 </div>
                 {mf.nickname && <p className="mt-1 text-xs text-zinc-400">“{mf.nickname}”</p>}
                 <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-                  <dt className="text-zinc-500">Agregado por:</dt>
+                  <dt className="text-zinc-500">{t('admin.fighters.addedBy')}:</dt>
                   <dd className="text-zinc-700">{mf.profiles?.full_name ?? '—'}</dd>
-                  <dt className="text-zinc-500">Peso:</dt>
+                  <dt className="text-zinc-500">{t('admin.fighters.weightClass')}:</dt>
                   <dd className="text-zinc-700">{mf.weight_class ?? '—'}</dd>
                   <dt className="text-zinc-500">Record:</dt>
                   <dd className="text-zinc-700"><InlineCombatRecord wins={mf.record_wins} losses={mf.record_losses} draws={mf.record_draws} winLabel="W" lossLabel="L" drawLabel="D" /></dd>
-                  <dt className="text-zinc-500">Ciudad:</dt>
+                  <dt className="text-zinc-500">{t('admin.fighters.city')}:</dt>
                   <dd className="text-zinc-700">{mf.city ?? '—'}</dd>
                 </dl>
                 <div className="mt-3 pt-3 border-t border-zinc-100">
                   <Link href={`/fighters/manual/${mf.id}`} className="text-xs font-medium text-zinc-700 hover:text-[#C0001E] hover:underline">
-                    Ver perfil →
+                    {t('admin.fighters.viewProfile')} →
                   </Link>
                 </div>
               </div>
@@ -386,12 +382,12 @@ export default function AdminFightersPage() {
             <table className="min-w-full divide-y divide-zinc-100 text-sm">
               <thead className="bg-zinc-50">
                 <tr>
-                  {['Nombre', 'Agregado por', 'Rol', 'Correo del creador', 'Peso', 'Record', 'Ciudad', 'Disponible', 'Acciones'].map((col) => (
+                  {['name', 'addedBy', 'role', 'creatorEmail', 'weightClass', 'record', 'city', 'available', 'actions'].map((col) => (
                     <th
                       key={col}
                       className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wide"
                     >
-                      {col}
+                      {t(`admin.fighters.${col}`)}
                     </th>
                   ))}
                 </tr>
@@ -412,10 +408,10 @@ export default function AdminFightersPage() {
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       {mf.profiles?.role === 'manager' && (
-                        <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-50 text-blue-700">Representante</span>
+                        <span className="text-xs font-bold px-1.5 py-0.5 bg-blue-50 text-blue-700">{t('admin.fighters.roles.manager')}</span>
                       )}
                       {mf.profiles?.role === 'promoter' && (
-                        <span className="text-xs font-bold px-1.5 py-0.5 bg-purple-50 text-purple-700">Promotor</span>
+                        <span className="text-xs font-bold px-1.5 py-0.5 bg-purple-50 text-purple-700">{t('admin.fighters.roles.promoter')}</span>
                       )}
                       {!mf.profiles?.role && <span className="text-xs text-zinc-400">—</span>}
                     </td>
@@ -443,7 +439,7 @@ export default function AdminFightersPage() {
                         href={`/fighters/manual/${mf.id}`}
                         className="text-xs font-medium text-zinc-700 hover:text-[#C0001E] hover:underline"
                       >
-                        Ver perfil
+                        {t('admin.fighters.viewProfile')}
                       </Link>
                     </td>
                   </tr>
@@ -465,8 +461,8 @@ export default function AdminFightersPage() {
                 : confirm.action === 'unverify'
                 ? t('admin.fighters.confirmUnverify')
                 : confirm.action === 'hide'
-                ? 'Este peleador sera ocultado de otros perfiles de peleadores. Solo administradores, promotores, representantes y patrocinadores podran verlo.'
-                : 'Este peleador sera visible para todos los usuarios nuevamente.'}
+                ? t('admin.fighters.confirmHide')
+                : t('admin.fighters.confirmShow')}
             </p>
             <div className="flex justify-end gap-3">
               <button

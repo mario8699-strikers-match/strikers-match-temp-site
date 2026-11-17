@@ -54,7 +54,7 @@ export default function LoginPage() {
         const { data } = await withTimeout(
           authService.getSession(),
           SESSION_TIMEOUT_MS,
-          'No se pudo verificar la sesión. Intenta iniciar sesión de nuevo.'
+          t('auth.errors.sessionVerificationFailed')
         );
         if (cancelled) return;
         if (data?.profile) {
@@ -63,12 +63,12 @@ export default function LoginPage() {
         }
       } catch (error) {
         if (cancelled) return;
-        setServerError(error instanceof Error ? error.message : 'No se pudo verificar la sesión.');
+        setServerError(error instanceof Error ? error.message : t('auth.errors.sessionVerificationFailed'));
       }
       setCheckingSession(false);
     })();
     return () => { cancelled = true; };
-  }, [nextPath]);
+  }, [nextPath, t]);
 
   const validate = (): boolean => {
     const newErrors: Partial<LoginFormData> = {};
@@ -88,7 +88,7 @@ export default function LoginPage() {
       const { data, error } = await withTimeout(
         authService.login(formData),
         LOGIN_TIMEOUT_MS,
-        'El inicio de sesión tardó demasiado. Intenta de nuevo.'
+        t('auth.errors.loginTimeout')
       );
       if (error) {
         setServerError(resolveLoginError(error, t));

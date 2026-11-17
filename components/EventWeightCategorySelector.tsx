@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
+
 import {
   GENERIC_WEIGHT_CLASS_OPTIONS,
   getCombatWeightGroups,
@@ -19,6 +21,7 @@ export function EventWeightCategorySelector({
   onChange,
   defaultAllSelected = false,
 }: EventWeightCategorySelectorProps) {
+  const { t } = useTranslation('events');
   const selectedCategories = sanitizeWeightClasses(selected);
   const disciplineSections = disciplines.map((discipline) => ({
     discipline,
@@ -43,15 +46,15 @@ export function EventWeightCategorySelector({
   };
 
   if (disciplines.length === 0) {
-    return <p className="text-xs italic text-zinc-400">Selecciona una disciplina para ver las categorías por edad y peso.</p>;
+    return <p className="text-xs italic text-zinc-400">{t('events.weightSelector.selectDiscipline')}</p>;
   }
 
   return (
     <div className="space-y-5">
       <p className="text-xs text-zinc-500">
         {defaultAllSelected
-          ? 'Todas las categorías de edad se abren automáticamente. Haz clic en una categoría para abrir o cerrar todos sus pesos.'
-          : 'Selecciona las categorías de edad que tendrá el evento. Cada categoría abre todos sus pesos.'}
+          ? t('events.weightSelector.defaultAll')
+          : t('events.weightSelector.instructions')}
       </p>
       {disciplineSections.filter(({ groups }) => groups.length > 0).map(({ discipline, groups }) => (
         <section key={discipline} className="border border-zinc-200 p-4">
@@ -72,10 +75,10 @@ export function EventWeightCategorySelector({
       ))}
       {genericDisciplines.length > 0 && (
         <section className="border border-zinc-200 p-4">
-          <p className="mb-1 text-xs font-black uppercase tracking-widest text-zinc-800">Otras disciplinas</p>
+          <p className="mb-1 text-xs font-black uppercase tracking-widest text-zinc-800">{t('events.weightSelector.otherDisciplines')}</p>
           <p className="mb-3 text-xs text-zinc-500">{genericDisciplines.join(', ')}</p>
           <WeightGroupSelector
-            label="Todas las categorías de peso"
+            label={t('events.weightSelector.allWeightClasses')}
             weightClasses={GENERIC_WEIGHT_CLASS_OPTIONS.slice(1).map(([value]) => value)}
             weightLabels={Object.fromEntries(GENERIC_WEIGHT_CLASS_OPTIONS.slice(1))}
             selectedCategories={selectedCategories}
@@ -85,7 +88,7 @@ export function EventWeightCategorySelector({
         </section>
       )}
       {selectedCategories.length > 0 && (
-        <p className="text-xs font-semibold text-zinc-700">{selectedCategories.length} categorías seleccionadas</p>
+        <p className="text-xs font-semibold text-zinc-700">{t('events.weightSelector.selectedCount', { count: selectedCategories.length })}</p>
       )}
     </div>
   );
@@ -106,6 +109,7 @@ function WeightGroupSelector({
   onToggleGroup: () => void;
   onToggleWeight: (weightClass: string) => void;
 }) {
+  const { t } = useTranslation('events');
   const normalizedWeightClasses = sanitizeWeightClasses(weightClasses);
   const selectedCount = normalizedWeightClasses.filter((weightClass) => selectedCategories.includes(weightClass)).length;
   const allSelected = selectedCount === normalizedWeightClasses.length;
@@ -129,7 +133,7 @@ function WeightGroupSelector({
         <span className={`shrink-0 text-[11px] font-bold uppercase tracking-wide ${
           allSelected ? 'text-white/80' : partiallySelected ? 'text-[#9F0019]' : 'text-zinc-400'
         }`}>
-          {allSelected ? 'Todos los pesos abiertos' : partiallySelected ? `${selectedCount} de ${normalizedWeightClasses.length}` : 'Cerrada'}
+          {allSelected ? t('events.weightSelector.allOpen') : partiallySelected ? t('events.weightSelector.partial', { selected: selectedCount, total: normalizedWeightClasses.length }) : t('events.weightSelector.closed')}
         </span>
       </button>
 
@@ -137,7 +141,7 @@ function WeightGroupSelector({
         <summary className="min-h-11 cursor-pointer list-none py-3 text-xs font-bold uppercase tracking-wider text-zinc-500 hover:text-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C0001E]">
           <span className="inline-flex items-center gap-2">
             <span className="transition-transform group-open:rotate-90" aria-hidden="true">›</span>
-            Personalizar pesos ({selectedCount}/{normalizedWeightClasses.length})
+            {t('events.weightSelector.customize', { selected: selectedCount, total: normalizedWeightClasses.length })}
           </span>
         </summary>
         <div className="flex flex-wrap gap-2 border-t border-zinc-200 pt-3">

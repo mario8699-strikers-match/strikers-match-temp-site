@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { EventsPageClient } from '@/components/EventsPageClient';
 import { StructuredData } from '@/components/StructuredData';
 import { absoluteUrl } from '@/lib/seo';
@@ -23,7 +24,9 @@ export default async function EventsPage() {
   return (
     <>
       <StructuredData data={itemList} />
-      <EventsPageClient initialEvents={events} />
+      <Suspense fallback={<div className="min-h-screen bg-white" />}>
+        <EventsPageClient initialEvents={events} />
+      </Suspense>
     </>
   );
 }

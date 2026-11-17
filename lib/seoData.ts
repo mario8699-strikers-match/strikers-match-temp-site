@@ -21,11 +21,16 @@ export interface PublicFighterSeo {
   nickname: string | null;
   bio: string | null;
   weight_class: string | null;
+  exact_weight: number | null;
   disciplines: string[] | null;
+  nationalities: string[] | null;
   gym_name: string | null;
   state: string | null;
   experience_level: string | null;
   photo_url: string | null;
+  record_wins: number;
+  record_losses: number;
+  record_draws: number;
   is_hidden: boolean | null;
   created_at: string;
   profiles: {
@@ -34,6 +39,7 @@ export interface PublicFighterSeo {
     state: string | null;
     country: string | null;
     country_code?: string | null;
+    instagram?: string | null;
     is_banned: boolean | null;
   } | null;
 }
@@ -46,12 +52,19 @@ export interface PublicManualFighterSeo {
   weight_class: string | null;
   disciplines: string[] | null;
   discipline: string | null;
+  nationalities: string[] | null;
   city: string | null;
   state: string | null;
   country: string | null;
+  country_code: string | null;
   gym_name: string | null;
+  instagram: string | null;
   experience_level: string | null;
   photo_url: string | null;
+  exact_weight: number | null;
+  record_wins: number;
+  record_losses: number;
+  record_draws: number;
   created_at: string;
 }
 
@@ -110,7 +123,7 @@ export const getPublicFighterSeo = cache(async (id: string): Promise<PublicFight
   try {
     const { data, error } = await client
       .from('public_fighters')
-      .select('id,nickname,bio,weight_class,disciplines,gym_name,state,experience_level,photo_url,is_hidden,created_at,profiles')
+      .select('id,nickname,bio,weight_class,exact_weight,disciplines,nationalities,gym_name,state,experience_level,photo_url,record_wins,record_losses,record_draws,is_hidden,created_at,profiles')
       .eq('id', id)
       .maybeSingle();
     if (error || !data) return null;
@@ -126,7 +139,7 @@ export const getPublicManualFighterSeo = cache(async (id: string): Promise<Publi
   try {
     const { data, error } = await client
       .from('public_manual_fighters')
-      .select('id,full_name,nickname,bio,weight_class,discipline,disciplines,city,state,country,gym_name,experience_level,photo_url,created_at')
+      .select('id,full_name,nickname,bio,weight_class,exact_weight,discipline,disciplines,nationalities,city,state,country,country_code,gym_name,instagram,experience_level,photo_url,record_wins,record_losses,record_draws,created_at')
       .eq('id', id)
       .maybeSingle();
     if (error || !data) return null;

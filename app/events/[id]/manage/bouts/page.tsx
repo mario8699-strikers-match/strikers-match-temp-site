@@ -122,7 +122,7 @@ export default function BoutManagementPage() {
           <Link href={`/events/${eventId}/manage/participants`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">Participantes</Link>
           <Link href={`/events/${eventId}/manage/settings`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">{t('events.engine.nav.settings')}</Link>
           <Link href={`/events/${eventId}/manage/matchmaking`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">{t('events.engine.nav.matchmaking')}</Link>
-          <Link href={`/events/${eventId}/manage/graphics`} className="flex min-h-11 items-center justify-center whitespace-nowrap bg-[#C0001E] px-4 py-3 text-center text-xs font-bold uppercase text-white">Gráficos</Link>
+          <Link href={`/events/${eventId}/manage/graphics`} className="flex min-h-11 items-center justify-center whitespace-nowrap bg-[#C0001E] px-4 py-3 text-center text-xs font-bold uppercase text-white">{t('events.engine.nav.graphics')}</Link>
           <button type="button" onClick={orderBouts} disabled={acting === 'order' || bouts.length === 0}
             className="min-h-11 bg-zinc-900 px-4 py-3 text-xs font-bold uppercase text-white disabled:bg-zinc-300">
             {acting === 'order' ? t('events.engine.bouts.ordering') : t('events.engine.bouts.generateOrder')}
@@ -336,15 +336,13 @@ function FighterInfoCard({
   fighter: Bout['fighter_a'];
   weightClass: string | null;
 }) {
-  const { t, i18n } = useTranslation('events');
+  const { t } = useTranslation('events');
   const displayName = fighter?.profiles?.full_name ?? name;
   const initials = getInitials(displayName);
   const wins = fighter?.record_wins ?? 0;
   const losses = fighter?.record_losses ?? 0;
   const draws = fighter?.record_draws ?? 0;
-  const labels = i18n.language?.startsWith('es')
-    ? { record: 'Récord', weight: 'Peso', team: 'Gimnasio' }
-    : { record: 'Record', weight: 'Weight', team: 'Gym' };
+  const labels = { record: 'Record', weight: 'Weight', team: 'Gym' };
   const recordLabel = safeTranslation(t, 'events.engine.bouts.record', labels.record);
   const weightLabel = safeTranslation(t, 'events.engine.bouts.weight', labels.weight);
   const teamLabel = safeTranslation(t, 'events.engine.bouts.team', labels.team);

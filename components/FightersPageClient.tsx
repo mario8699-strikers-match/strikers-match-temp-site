@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo, type FormEvent } from 'react';
+import { Fragment, useEffect, useState, useCallback, useMemo, type FormEvent } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { fighterService } from '@/services/fighterService';
@@ -18,7 +18,7 @@ import {
   sortDisciplines,
 } from '@/lib/disciplines';
 import type { FighterWithProfile, ManualFighterWithCreator } from '@/types';
-import { countryFlagEmoji } from '@/lib/countries';
+import { countryFlagEmoji, getCountryName } from '@/lib/countries';
 
 const PAGE_SIZE = 12;
 
@@ -32,7 +32,7 @@ interface FightersPageClientProps {
 }
 
 export function FightersPageClient({ initialEntries }: FightersPageClientProps) {
-  const { t } = useTranslation('fighters');
+  const { t, i18n } = useTranslation('fighters');
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -48,7 +48,7 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
     () => normalizeDisciplineList(searchParams.getAll('discipline')),
     [searchParams]
   );
-  const selectedDisciplinesKey = selectedDisciplines.join('|');
+  const selectedCountry = searchParams.get('country')?.toUpperCase() ?? '';
 
   const loadAll = useCallback(async () => {
     const registeredPromise = filter === 'available'
@@ -82,10 +82,6 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
   useEffect(() => {
     void loadAll();
   }, [loadAll]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [selectedDisciplinesKey]);
 
   // Supabase Realtime: auto-refresh when availability changes
   useEffect(() => {
@@ -132,6 +128,15 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
     ...entries.flatMap(entryDisciplines),
   ]), [entries]);
 
+  const countryOptions = useMemo(() => [...new Set(entries
+    .map(entryCountryCode)
+    .filter((code): code is string => Boolean(code)))]
+    .sort((a, b) => getCountryName(a, i18n.resolvedLanguage).localeCompare(
+      getCountryName(b, i18n.resolvedLanguage),
+      i18n.resolvedLanguage,
+      { sensitivity: 'base' },
+    )), [entries, i18n.resolvedLanguage]);
+
   const filteredEntries = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     return entries.filter((entry) => {
@@ -140,6 +145,7 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
         && !selectedDisciplines.some((discipline) => disciplineMatches(disciplines, discipline))) {
         return false;
       }
+      if (selectedCountry && entryCountryCode(entry) !== selectedCountry) return false;
       if (!query) return true;
 
       const isManual = entry.kind === 'manual';
@@ -149,8 +155,16 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
       const gym = entry.data.gym_name ?? '';
       return [name, city, weightClass, gym, ...disciplines]
         .some((value) => value.toLowerCase().includes(query));
+    }).sort((entryA, entryB) => {
+      const countryA = getCountryName(entryCountryCode(entryA), i18n.resolvedLanguage)
+        || t('fighters.countryFilter.unspecified');
+      const countryB = getCountryName(entryCountryCode(entryB), i18n.resolvedLanguage)
+        || t('fighters.countryFilter.unspecified');
+      const countryComparison = countryA.localeCompare(countryB, i18n.resolvedLanguage, { sensitivity: 'base' });
+      if (countryComparison !== 0) return countryComparison;
+      return entryName(entryA).localeCompare(entryName(entryB), i18n.resolvedLanguage, { sensitivity: 'base' });
     });
-  }, [entries, searchQuery, selectedDisciplines]);
+  }, [entries, i18n.resolvedLanguage, searchQuery, selectedCountry, selectedDisciplines, t]);
 
   const totalPages = Math.ceil(filteredEntries.length / PAGE_SIZE);
   const pageEntries = useMemo(
@@ -185,11 +199,21 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
   };
 
   const updateDisciplineFilters = (nextDisciplines: string[]) => {
+    setPage(1);
     const params = new URLSearchParams(searchParams.toString());
     params.delete('discipline');
     for (const discipline of normalizeDisciplineList(nextDisciplines)) {
       params.append('discipline', discipline);
     }
+    const queryString = params.toString();
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
+  };
+
+  const updateCountryFilter = (countryCode: string) => {
+    setPage(1);
+    const params = new URLSearchParams(searchParams.toString());
+    if (countryCode) params.set('country', countryCode);
+    else params.delete('country');
     const queryString = params.toString();
     router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
   };
@@ -248,8 +272,22 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
             </div>
           </div>
 
+          <label className="block max-w-sm">
+            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-700">{t('fighters.countryFilter.label')}</span>
+            <select
+              value={selectedCountry}
+              onChange={(event) => updateCountryFilter(event.target.value)}
+              className="min-h-12 w-full border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-900"
+            >
+              <option value="">{t('fighters.countryFilter.all')}</option>
+              {countryOptions.map((code) => (
+                <option key={code} value={code}>{countryFlagEmoji(code)} {getCountryName(code, i18n.resolvedLanguage)}</option>
+              ))}
+            </select>
+          </label>
+
           <fieldset className="border border-zinc-200 bg-zinc-50 p-4">
-            <legend className="px-1 text-xs font-bold uppercase tracking-widest text-zinc-700">Disciplina</legend>
+            <legend className="px-1 text-xs font-bold uppercase tracking-widest text-zinc-700">{t('fighters.disciplineFilter.label')}</legend>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
@@ -259,7 +297,7 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                   ? 'border-zinc-900 bg-zinc-900 text-white'
                   : 'border-zinc-300 bg-white text-zinc-700 hover:border-zinc-500'}`}
               >
-                Todas
+                {t('fighters.disciplineFilter.all')}
               </button>
               {disciplineOptions.map((discipline) => {
                 const selected = selectedDisciplines.some((item) => item.toLocaleLowerCase() === discipline.toLocaleLowerCase());
@@ -280,7 +318,7 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                 );
               })}
             </div>
-            <p className="mt-2 text-xs text-zinc-500">Puedes seleccionar varias disciplinas; se mostrarán atletas que practiquen cualquiera de ellas.</p>
+            <p className="mt-2 text-xs text-zinc-500">{t('fighters.disciplineFilter.help')}</p>
           </fieldset>
         </div>
 
@@ -293,7 +331,7 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
         ) : (
           <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {pageEntries.map((entry) => {
+            {pageEntries.map((entry, index) => {
               const isManual = entry.kind === 'manual';
               const name = isManual
                 ? entry.data.full_name
@@ -323,10 +361,21 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
               const rulesets = entry.data.preferred_rulesets ?? [];
               const initials = getInitials(name);
               const nationalityCode = entry.data.nationalities?.[0];
+              const countryCode = entryCountryCode(entry);
+              const previousCountryCode = index > 0 ? entryCountryCode(pageEntries[index - 1]) : null;
 
               return (
+                <Fragment key={`${entry.kind}-${entry.data.id}`}>
+                {countryCode !== previousCountryCode && (
+                  <div className="border-b-2 border-zinc-900 pb-2 sm:col-span-2 lg:col-span-3">
+                    <h2 className="font-display text-2xl font-black uppercase text-zinc-950">
+                      {countryCode
+                        ? `${countryFlagEmoji(countryCode)} ${getCountryName(countryCode, i18n.resolvedLanguage)}`
+                        : t('fighters.countryFilter.unspecified')}
+                    </h2>
+                  </div>
+                )}
                 <div
-                  key={`${entry.kind}-${entry.data.id}`}
                   className="border border-zinc-200 bg-white hover:border-[#C0001E] transition-colors group cursor-pointer overflow-hidden"
                   onClick={() => goTo(entry)}
                 >
@@ -392,10 +441,10 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                       <span className="text-xs bg-zinc-100 text-zinc-700 px-2 py-1">{weightClass}</span>
                     )}
                     {genderDivision && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">{genderDivision}</span>}
-                    {skillRating != null && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">Nivel {skillRating}/10</span>}
+                    {skillRating != null && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">{t('fighters.skillLevel')} {skillRating}/10</span>}
                     <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">KO/TKO {koTkoWins}</span>
-                    {requestedWeight != null && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">Peso deseado (informativo): {requestedWeight} kg</span>}
-                    {(minimumWeight != null || maximumWeight != null) && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">Rango {minimumWeight ?? '—'}–{maximumWeight ?? '—'} kg</span>}
+                    {requestedWeight != null && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">{t('fighters.requestedWeight')}: {requestedWeight} kg</span>}
+                    {(minimumWeight != null || maximumWeight != null) && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">{t('fighters.weightRange')} {minimumWeight ?? '—'}–{maximumWeight ?? '—'} kg</span>}
                     {rulesets.map((ruleset) => <span key={ruleset} className="text-xs border border-zinc-200 px-2 py-1 text-zinc-700">{ruleset}</span>)}
                     {followers !== null && (
                       <span className="text-xs bg-zinc-100 text-zinc-700 px-2 py-1">
@@ -414,6 +463,7 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                   </div>
                   </div>
                 </div>
+                </Fragment>
               );
             })}
           </div>
@@ -440,4 +490,17 @@ function entryDisciplines(entry: FighterDirectoryEntry): string[] {
   return entry.kind === 'manual'
     ? normalizeDisciplineList(entry.data.disciplines, entry.data.discipline)
     : normalizeDisciplineList(entry.data.disciplines);
+}
+
+function entryName(entry: FighterDirectoryEntry): string {
+  return entry.kind === 'manual'
+    ? entry.data.full_name
+    : entry.data.profiles?.full_name ?? '';
+}
+
+function entryCountryCode(entry: FighterDirectoryEntry): string {
+  const value = entry.kind === 'manual'
+    ? entry.data.country_code
+    : entry.data.profiles?.country_code;
+  return value?.trim().toUpperCase() ?? '';
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { authService } from '@/services/authService';
 
 /**
@@ -20,42 +21,10 @@ function isOnboardingActive() {
   }
 }
 
-const HIGHLIGHTS: { title: string; body: string }[] = [
-  {
-    title: 'Foto de perfil y logo de promotora',
-    body: 'Promotores y representantes ya pueden subir su foto de perfil o logo de la empresa. Aparece en el directorio público y en tus eventos.',
-  },
-  {
-    title: 'Publicar eventos',
-    body: 'Promotores y representantes pueden crear y publicar carteleras ilimitadas desde su panel.',
-  },
-  {
-    title: 'Aceptación de peleas en 2 lados',
-    body: 'Los peleadores ahora aceptan o rechazan cada propuesta antes de quedar agendados. Menos no-shows, más certeza.',
-  },
-  {
-    title: 'Confiabilidad de peleadores',
-    body: 'Cada perfil muestra su nivel de confiabilidad. Los nuevos aparecen como “Atleta Nuevo” hasta acumular historial real (3+ peleas).',
-  },
-  {
-    title: 'Panel de estadísticas',
-    body: 'Mide tasa de aceptación, riesgos de ausencia y peleadores confiables desde tu cuenta de promotor o representante sin pagar por esa sección.',
-  },
-  {
-    title: 'Confirmación de pagos del evento',
-    body: 'Flujo claro para que peleadores confirmen su pago externo (transferencia, efectivo) y queden agendados.',
-  },
-  {
-    title: 'Directorio de profesionales protegido',
-    body: 'Los datos de contacto de cutmen, fotógrafos y médicos solo se muestran a usuarios con sesión iniciada.',
-  },
-  {
-    title: 'Interfaz 100% en español',
-    body: 'Toda la plataforma está localizada para audiencia mexicana, incluyendo etiquetas de confiabilidad y estadísticas.',
-  },
-];
+const HIGHLIGHT_IDS = ['profilePhotos', 'events', 'matchmaking', 'reliability', 'analytics', 'payments', 'directory', 'languages'] as const;
 
 export function WhatsNewModal() {
+  const { t } = useTranslation('common');
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -118,7 +87,7 @@ export function WhatsNewModal() {
           <button
             type="button"
             onClick={dismiss}
-            aria-label="Cerrar"
+            aria-label={t('whatsNew.close')}
             className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center text-[#9A9A9A] hover:text-white transition-colors"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -133,17 +102,17 @@ export function WhatsNewModal() {
             className="font-display font-black uppercase mt-1 leading-none"
             style={{ fontSize: 'clamp(1.75rem,5vw,2.25rem)', letterSpacing: '-0.01em' }}
           >
-            ¿Qué hay de nuevo?
+            {t('whatsNew.title')}
           </h2>
           <p className="mt-2 text-xs sm:text-sm text-[#9A9A9A]">
-            Mejoras recientes en toda la plataforma: peleas, pagos, confiabilidad y estadísticas.
+            {t('whatsNew.subtitle')}
           </p>
         </div>
 
         {/* Body */}
         <ul className="p-5 sm:p-6 space-y-4">
-          {HIGHLIGHTS.map((h, i) => (
-            <li key={h.title} className="flex gap-3 sm:gap-4 items-start">
+          {HIGHLIGHT_IDS.map((id, i) => (
+            <li key={id} className="flex gap-3 sm:gap-4 items-start">
               <span
                 className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 bg-[#C0001E] text-white font-display font-black text-xs sm:text-sm flex items-center justify-center"
                 aria-hidden
@@ -151,8 +120,8 @@ export function WhatsNewModal() {
                 {String(i + 1).padStart(2, '0')}
               </span>
               <div className="flex-1 min-w-0">
-                <h3 className="text-sm sm:text-base font-bold text-zinc-900">{h.title}</h3>
-                <p className="text-xs sm:text-sm text-zinc-600 mt-0.5 leading-relaxed">{h.body}</p>
+                <h3 className="text-sm sm:text-base font-bold text-zinc-900">{t(`whatsNew.items.${id}.title`)}</h3>
+                <p className="text-xs sm:text-sm text-zinc-600 mt-0.5 leading-relaxed">{t(`whatsNew.items.${id}.body`)}</p>
               </div>
             </li>
           ))}
@@ -165,14 +134,14 @@ export function WhatsNewModal() {
             onClick={dismiss}
             className="text-xs sm:text-sm text-center text-zinc-600 hover:text-zinc-900 underline px-2 py-2"
           >
-            Ver herramientas
+            {t('whatsNew.viewTools')}
           </a>
           <button
             type="button"
             onClick={dismiss}
             className="w-full sm:w-auto text-xs font-bold uppercase tracking-widest bg-[#0A0A0A] text-white px-6 py-3 hover:bg-[#C0001E] transition-colors"
           >
-            Entendido
+            {t('whatsNew.understood')}
           </button>
         </div>
       </div>

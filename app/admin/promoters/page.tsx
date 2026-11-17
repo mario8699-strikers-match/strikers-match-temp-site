@@ -41,7 +41,7 @@ export default function AdminPromotersPage() {
     <div>
       <div className="mb-8">
         <h1 className="text-xl font-bold text-zinc-900">{t('admin.nav.promoters')}</h1>
-        <p className="mt-1 text-sm text-zinc-500">Todos los promotores registrados en la plataforma.</p>
+        <p className="mt-1 text-sm text-zinc-500">{t('admin.directory.promotersSubtitle')}</p>
       </div>
 
       {error && (
@@ -54,7 +54,7 @@ export default function AdminPromotersPage() {
         <div className="py-16 text-center text-zinc-400 text-sm">—</div>
       ) : profiles.length === 0 ? (
         <div className="py-16 text-center border border-dashed border-zinc-200 text-zinc-500 text-sm">
-          No hay promotores registrados.
+          {t('admin.directory.noPromoters')}
         </div>
       ) : (
         <>
@@ -69,16 +69,16 @@ export default function AdminPromotersPage() {
                 <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium flex-shrink-0 ${
                   p.is_banned ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'
                 }`}>
-                  {p.is_banned ? 'Baneado' : 'Activo'}
+                  {p.is_banned ? t('admin.users.banned') : t('admin.users.active')}
                 </span>
               </div>
               <p className="mt-1 text-xs text-zinc-500 truncate">{p.email}</p>
               <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-                <dt className="text-zinc-500">Ciudad:</dt>
+                <dt className="text-zinc-500">{t('admin.users.city')}:</dt>
                 <dd className="text-zinc-700">{p.city ?? '—'}</dd>
-                <dt className="text-zinc-500">Teléfono:</dt>
+                <dt className="text-zinc-500">{t('admin.directory.phone')}:</dt>
                 <dd className="text-zinc-700">{p.phone ?? '—'}</dd>
-                <dt className="text-zinc-500">Clasificación:</dt>
+                <dt className="text-zinc-500">{t('admin.directory.classification')}:</dt>
                 <dd className="text-zinc-700">
                   <FederationStatusButtons
                     status={p.promoter_federation_status ?? 'independent'}
@@ -93,7 +93,7 @@ export default function AdminPromotersPage() {
               </dl>
               <div className="mt-3 pt-3 border-t border-zinc-100">
                 <Link href={`/events?promoter=${p.id}`} className="text-xs font-medium text-zinc-700 hover:text-[#C0001E] hover:underline">
-                  Ver eventos →
+                  {t('admin.directory.viewEvents')} →
                 </Link>
               </div>
             </div>
@@ -105,9 +105,9 @@ export default function AdminPromotersPage() {
           <table className="min-w-full divide-y divide-zinc-100 text-sm">
             <thead className="bg-zinc-50">
               <tr>
-                {['Nombre', 'Correo', 'Ciudad', 'Teléfono', 'Clasificación', 'Estado', 'Acciones'].map((col) => (
+                {['name', 'email', 'city', 'phone', 'classification', 'status', 'actions'].map((col) => (
                   <th key={col} className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wide">
-                    {col}
+                    {t(`admin.directory.${col}`)}
                   </th>
                 ))}
               </tr>
@@ -138,12 +138,12 @@ export default function AdminPromotersPage() {
                     <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium ${
                       p.is_banned ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'
                     }`}>
-                      {p.is_banned ? 'Baneado' : 'Activo'}
+                      {p.is_banned ? t('admin.users.banned') : t('admin.users.active')}
                     </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <Link href={`/events?promoter=${p.id}`} className="text-xs font-medium text-zinc-500 hover:text-zinc-900 hover:underline">
-                      Ver eventos
+                      {t('admin.directory.viewEvents')}
                     </Link>
                   </td>
                 </tr>

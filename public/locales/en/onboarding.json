@@ -3,6 +3,69 @@
     "close": "Close",
     "doNotShowAgain": "Do not show again"
   },
+  "guided": {
+    "help": "Help",
+    "openHelp": "Open help",
+    "close": "Close guide",
+    "linkCopied": "Link copied",
+    "contextualHelp": "Contextual help",
+    "whatToDo": "What do you want to do?",
+    "quickGuide": "Quick guide",
+    "fullGuide": "View the complete guide",
+    "continueGuide": "Continue the pending guide",
+    "nextStep": "View my next step",
+    "createFirstHint": "First, create your event. When you finish, we will take you to the next step.",
+    "createFirstEvent": "Create my first event",
+    "doLater": "I will do it later",
+    "start": "Start",
+    "wait": "Please wait…",
+    "stepProgress": "Step {{step}} of {{total}}",
+    "completedSteps": "{{completed}} of {{total}} steps completed",
+    "waitingForRegistration": "The guide will continue automatically when the first registration arrives. You can also add a fighter manually.",
+    "welcome": {
+      "title": "Welcome to Strikers Match",
+      "bodyTitle": "Let’s set up your first event.",
+      "body": "We will guide you step by step. No technical knowledge is required."
+    },
+    "share": {
+      "title": "Event registration",
+      "text": "Register to participate in this Strikers Match event."
+    },
+    "errors": {
+      "eventRequired": "Create or select an event first.",
+      "shareFailed": "The link could not be shared. You can copy it manually from the event page."
+    },
+    "actions": {
+      "createEvent": "Create my event",
+      "configureRegistration": "Configure registration",
+      "copyLink": "Copy link",
+      "share": "Share",
+      "viewMatches": "View possible matchups",
+      "waitingRegistrations": "Waiting for registrations",
+      "understood": "Understood, I decide",
+      "continueGraphics": "Continue to graphics",
+      "viewGraphics": "View graphics",
+      "openDisplay": "Open display mode"
+    },
+    "topics": {
+      "createEvent": { "title": "Create an event", "body": "Set the name, date, city, venue, and disciplines for your new fight card.", "action": "Create event" },
+      "registerFighters": { "title": "Register fighters", "body": "Add Strikers Match profiles, fighters from your roster, or quick entries available only for the event.", "action": "Open participants" },
+      "findMatches": { "title": "Find matchups", "body": "Review combinations calculated by weight, age, experience, record, discipline, and availability.", "action": "Open matchmaking" },
+      "reviewBouts": { "title": "Review bouts", "body": "You decide which proposal to accept, reject, modify, or pin before making it official.", "action": "Review proposals" },
+      "generateGraphics": { "title": "Generate graphics", "body": "Official bouts generate drafts that you can approve, publish, and download.", "action": "Open graphics" },
+      "displayBouts": { "title": "Display bouts on screen", "body": "Publish a graphic and open display mode directly inside Strikers Match.", "action": "Configure display" }
+    },
+    "steps": {
+      "1": { "title": "First, let’s create your event.", "body": "Here you will enter the event name, date, location, and type." },
+      "2": { "title": "Now configure fighter registration.", "body": "Select the categories, weights, and disciplines that will be available." },
+      "3": { "title": "Your event now has a registration link.", "body": "Share this link with fighters, managers, and gyms. When someone registers, they will appear automatically in your participant list." },
+      "4": { "title": "This is where matchmaking begins.", "body": "Strikers Match will analyze registered fighters and show possible matchups." },
+      "5": { "title": "You have the final say.", "body": "Review each matchup and decide whether to approve, reject, or modify it. The system never makes a bout official without your decision." },
+      "6": { "title": "Your bout is now official.", "body": "Once approved, Strikers Match automatically generates the corresponding information and graphics." },
+      "7": { "title": "Your graphics are ready.", "body": "You can use them on social media, screens, projectors, and promotional materials." },
+      "8": { "title": "Ready for the event?", "body": "Open display mode to show the matchups automatically during your event." }
+    }
+  },
   "roles": {
     "fighter": {
       "eyebrow": "Fighter account",

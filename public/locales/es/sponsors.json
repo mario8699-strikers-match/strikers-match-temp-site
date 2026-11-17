@@ -6,6 +6,14 @@
     "empty": "No hay patrocinadores registrados",
     "contact": "Contactar",
     "becomeSponsor": "Conviértete en Patrocinador",
-    "becomeSponsorSubtitle": "¿Quieres patrocinar eventos de combate? Crea tu cuenta."
+    "becomeSponsorSubtitle": "¿Quieres patrocinar eventos de combate? Crea tu cuenta.",
+    "dashboard": {
+      "title": "Panel del patrocinador", "myOffers": "Mis ofertas", "availableFighters": "Peleadores disponibles",
+      "loading": "Cargando...", "noFighters": "No hay peleadores disponibles en este momento.", "sendOffer": "Enviar oferta",
+      "sponsorshipOffer": "Oferta de patrocinio", "to": "Para", "offerSent": "¡Oferta enviada con éxito!",
+      "amount": "Monto (MXN)", "messageOptional": "Mensaje (opcional)", "offerDetails": "Detalles de la oferta...",
+      "cancel": "Cancelar", "sending": "Enviando...", "offerFailed": "Error al enviar la oferta. Intenta de nuevo.",
+      "status": { "pending": "Pendiente", "accepted": "Aceptada", "declined": "Rechazada", "cancelled": "Cancelada" }
+    }
   }
 }

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BoutGraphic } from '@/components/BoutGraphic';
 import { supabase } from '@/lib/supabaseClient';
 import { authService } from '@/services/authService';
@@ -12,6 +13,7 @@ import { getManagedEventDisplay, getPublicEventDisplay, INVALID_DISPLAY_TOKEN_ER
 import type { PublicEventDisplay } from '@/types';
 
 export default function EventDisplayPage() {
+  const { t } = useTranslation('events');
   const { id: eventId } = useParams<{ id: string }>();
   const [accessMode, setAccessMode] = useState<'initializing' | 'managed' | 'token' | 'denied'>('initializing');
   const [token, setToken] = useState('');
@@ -42,19 +44,19 @@ export default function EventDisplayPage() {
           || (await canUseEventFeature(eventId, 'production', profile, event));
         if (!active) return;
         if (!allowed) {
-          setError('No tienes permiso para abrir la pantalla de este evento.');
+          setError(t('events.display.permissionDenied'));
           setAccessMode('denied');
           return;
         }
         setAccessMode('managed');
       }).catch(() => {
         if (!active) return;
-        setError('No se pudo verificar el acceso a la pantalla del evento.');
+        setError(t('events.display.accessFailed'));
         setAccessMode('denied');
       });
     }, 0);
     return () => { active = false; window.clearTimeout(initialize); };
-  }, [eventId]);
+  }, [eventId, t]);
 
   useEffect(() => {
     if (!overlay) return;
@@ -124,21 +126,22 @@ export default function EventDisplayPage() {
 
   const returnHref = accessMode === 'managed' ? `/events/${eventId}/manage/graphics` : null;
 
-  if (accessMode === 'initializing') return <Status message="Abriendo la pantalla del evento…" />;
+  if (accessMode === 'initializing') return <Status message={t('events.display.opening')} />;
   if (error) return <Status message={error} returnHref={returnHref} />;
-  if (!display) return <Status message="Conectando con la cartelera…" returnHref={returnHref} />;
-  if (!activeGraphic) return <div className={`relative flex min-h-screen items-center justify-center ${overlay ? 'bg-transparent' : 'bg-black text-white'}`}><ScreenReturn href={returnHref} /><p className="text-sm uppercase tracking-[0.2em] opacity-60">Pantalla en espera</p></div>;
+  if (!display) return <Status message={t('events.display.connecting')} returnHref={returnHref} />;
+  if (!activeGraphic) return <div className={`relative flex min-h-screen items-center justify-center ${overlay ? 'bg-transparent' : 'bg-black text-white'}`}><ScreenReturn href={returnHref} /><p className="text-sm uppercase tracking-[0.2em] opacity-60">{t('events.display.waiting')}</p></div>;
 
   return <main className={`relative flex min-h-screen items-center justify-center overflow-hidden ${overlay ? 'bg-transparent' : 'bg-black'}`}>
     <ScreenReturn href={returnHref} />
     <BoutGraphic payload={activeGraphic.payload} variant={overlay ? 'overlay' : 'screen'} className="w-full" />
-    {connectionLost && <span className="absolute right-2 top-2 rounded bg-amber-500 px-2 py-1 text-[10px] font-bold uppercase text-black">Reconectando</span>}
+    {connectionLost && <span className="absolute right-2 top-2 rounded bg-amber-500 px-2 py-1 text-[10px] font-bold uppercase text-black">{t('events.display.reconnecting')}</span>}
   </main>;
 }
 
 function ScreenReturn({ href }: { href: string | null }) {
+  const { t } = useTranslation('events');
   if (!href) return null;
-  return <Link href={href} className="fixed left-3 top-3 z-20 bg-black/70 px-3 py-2 text-xs font-bold uppercase tracking-wider text-white opacity-50 transition-opacity hover:opacity-100 focus:opacity-100">← Volver a gráficos</Link>;
+  return <Link href={href} className="fixed left-3 top-3 z-20 bg-black/70 px-3 py-2 text-xs font-bold uppercase tracking-wider text-white opacity-50 transition-opacity hover:opacity-100 focus:opacity-100">← {t('events.display.backToGraphics')}</Link>;
 }
 
 function Status({ message, returnHref = null }: { message: string; returnHref?: string | null }) { return <main className="relative flex min-h-screen items-center justify-center bg-black p-6 text-center text-sm font-bold uppercase tracking-widest text-white"><ScreenReturn href={returnHref} />{message}</main>; }

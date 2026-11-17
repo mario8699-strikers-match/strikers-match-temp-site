@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { SignaturePad } from '@/components/SignaturePad';
+import { useTranslation } from 'react-i18next';
 import { authService } from '@/services/authService';
 import { submitConsent, getConsent, WAIVER_TEXT } from '@/services/consentService';
 import type { Profile } from '@/types';
@@ -11,6 +12,7 @@ import type { Profile } from '@/types';
 const RELATIONSHIPS = ['Padre', 'Madre', 'Tutor Legal'] as const;
 
 export default function ConsentPage() {
+  const { t } = useTranslation('fighters');
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [alreadyConsented, setAlreadyConsented] = useState(false);
@@ -67,7 +69,8 @@ export default function ConsentPage() {
         parent_phone: parentPhone.trim(),
         relationship,
       },
-      signatureData!
+      signatureData!,
+      t('fighters.consent.waiverText')
     );
 
     setSubmitting(false);
@@ -82,7 +85,7 @@ export default function ConsentPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
-        <p className="text-sm text-zinc-400">Cargando...</p>
+        <p className="text-sm text-zinc-400">{t('fighters.consent.loading')}</p>
       </div>
     );
   }
@@ -97,13 +100,13 @@ export default function ConsentPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-zinc-900 mb-2">Consentimiento Registrado</h2>
-          <p className="text-zinc-500 text-sm mb-6">El consentimiento parental ya esta registrado en el sistema.</p>
+          <h2 className="text-2xl font-bold text-zinc-900 mb-2">{t('fighters.consent.registeredTitle')}</h2>
+          <p className="text-zinc-500 text-sm mb-6">{t('fighters.consent.registeredBody')}</p>
           <a
             href="/fighter/profile"
             className="inline-block bg-brand-red text-white px-6 py-2.5 text-sm font-semibold hover:bg-brand-red-dark transition-colors"
           >
-            Ir a mi Perfil
+            {t('fighters.consent.goToProfile')}
           </a>
         </main>
         <Footer />
@@ -117,9 +120,9 @@ export default function ConsentPage() {
 
       <main className="flex-1 max-w-2xl mx-auto px-4 py-12">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-zinc-900">Consentimiento Parental</h1>
+          <h1 className="text-3xl font-bold text-zinc-900">{t('fighters.consent.title')}</h1>
           <p className="mt-2 text-zinc-500 text-sm">
-            Como menor de edad, se requiere el consentimiento de un padre, madre o tutor legal para utilizar la plataforma.
+            {t('fighters.consent.subtitle')}
           </p>
         </div>
 
@@ -132,9 +135,9 @@ export default function ConsentPage() {
 
           {/* Waiver text */}
           <div>
-            <h2 className="text-sm font-semibold text-zinc-900 mb-2">Exoneracion de Responsabilidad</h2>
+            <h2 className="text-sm font-semibold text-zinc-900 mb-2">{t('fighters.consent.waiverTitle')}</h2>
             <div className="border border-zinc-200 bg-zinc-50 p-4 max-h-64 overflow-y-auto text-xs text-zinc-700 leading-relaxed whitespace-pre-line">
-              {WAIVER_TEXT}
+              {t('fighters.consent.waiverText', { defaultValue: WAIVER_TEXT })}
             </div>
           </div>
 
@@ -147,24 +150,24 @@ export default function ConsentPage() {
               className="mt-0.5 w-4 h-4 border-zinc-300 text-brand-red focus:ring-brand-red"
             />
             <span className="text-sm text-zinc-700">
-              He leido y acepto los terminos de la exoneracion de responsabilidad
+              {t('fighters.consent.acceptWaiver')}
             </span>
           </label>
 
           {/* Parent info */}
           <div className="border-t border-zinc-200 pt-6">
-            <h2 className="text-sm font-semibold text-zinc-900 mb-4">Datos del Padre / Madre / Tutor Legal</h2>
+            <h2 className="text-sm font-semibold text-zinc-900 mb-4">{t('fighters.consent.guardianDetails')}</h2>
             <div className="space-y-4">
               <div>
                 <label htmlFor="parent_name" className="block text-sm font-medium text-zinc-700 mb-1">
-                  Nombre Completo
+                  {t('fighters.consent.fullName')}
                 </label>
                 <input
                   id="parent_name"
                   type="text"
                   value={parentName}
                   onChange={(e) => setParentName(e.target.value)}
-                  placeholder="Nombre completo del responsable"
+                  placeholder={t('fighters.consent.fullNamePlaceholder')}
                   className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 text-sm"
                 />
               </div>
@@ -172,7 +175,7 @@ export default function ConsentPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="parent_email" className="block text-sm font-medium text-zinc-700 mb-1">
-                    Correo Electronico
+                    {t('fighters.consent.email')}
                   </label>
                   <input
                     id="parent_email"
@@ -185,7 +188,7 @@ export default function ConsentPage() {
                 </div>
                 <div>
                   <label htmlFor="parent_phone" className="block text-sm font-medium text-zinc-700 mb-1">
-                    Telefono
+                    {t('fighters.consent.phone')}
                   </label>
                   <input
                     id="parent_phone"
@@ -200,7 +203,7 @@ export default function ConsentPage() {
 
               <div>
                 <label htmlFor="relationship" className="block text-sm font-medium text-zinc-700 mb-1">
-                  Parentesco
+                  {t('fighters.consent.relationship')}
                 </label>
                 <select
                   id="relationship"
@@ -209,7 +212,7 @@ export default function ConsentPage() {
                   className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 text-sm bg-white"
                 >
                   {RELATIONSHIPS.map((r) => (
-                    <option key={r} value={r}>{r}</option>
+                    <option key={r} value={r}>{t(`fighters.consent.relationships.${r}`)}</option>
                   ))}
                 </select>
               </div>
@@ -218,9 +221,9 @@ export default function ConsentPage() {
 
           {/* Signature */}
           <div className="border-t border-zinc-200 pt-6">
-            <h2 className="text-sm font-semibold text-zinc-900 mb-2">Firma Digital</h2>
+            <h2 className="text-sm font-semibold text-zinc-900 mb-2">{t('fighters.consent.digitalSignature')}</h2>
             <p className="text-xs text-zinc-500 mb-3">
-              Dibuje su firma en el recuadro a continuacion. Esta firma sera almacenada como evidencia del consentimiento.
+              {t('fighters.consent.signatureHelp')}
             </p>
             <SignaturePad onSignatureChange={setSignatureData} height={150} />
           </div>
@@ -230,7 +233,7 @@ export default function ConsentPage() {
             disabled={!canSubmit}
             className="w-full bg-brand-red text-white py-2.5 text-sm font-semibold hover:bg-brand-red-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {submitting ? 'Registrando consentimiento...' : 'Registrar Consentimiento'}
+            {submitting ? t('fighters.consent.submitting') : t('fighters.consent.submit')}
           </button>
         </form>
       </main>

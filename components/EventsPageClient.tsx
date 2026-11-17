@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Pagination } from '@/components/Pagination';
 import { authService } from '@/services/authService';
 import { formatLocalizedCurrency, formatLocalizedDate } from '@/lib/locale';
+import { countryFlagEmoji, getCountryName } from '@/lib/countries';
 import type { Event, Profile } from '@/types';
 
 const PAGE_SIZE = 15;
@@ -25,11 +27,15 @@ interface EventsPageClientProps {
 
 export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
   const { t, i18n } = useTranslation('events');
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const [events] = useState<Event[]>(initialEvents);
   const [loading] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [page, setPage] = useState(1);
+  const selectedCountry = searchParams.get('country')?.toUpperCase() ?? '';
 
   const canCreateEvent = profile?.role === 'promoter' || profile?.role === 'manager' || profile?.role === 'admin';
 
@@ -52,10 +58,43 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
     return formatLocalizedCurrency(amount, currency, i18n.resolvedLanguage);
   };
 
-  const totalPages = Math.ceil(events.length / PAGE_SIZE);
+  const countryOptions = useMemo(() => [...new Set(events
+    .map((event) => event.country_code?.trim().toUpperCase())
+    .filter((code): code is string => Boolean(code)))]
+    .sort((a, b) => getCountryName(a, i18n.resolvedLanguage).localeCompare(
+      getCountryName(b, i18n.resolvedLanguage),
+      i18n.resolvedLanguage,
+      { sensitivity: 'base' },
+    )), [events, i18n.resolvedLanguage]);
+
+  const filteredEvents = useMemo(() => {
+    const visible = selectedCountry
+      ? events.filter((event) => event.country_code?.toUpperCase() === selectedCountry)
+      : events;
+    return [...visible].sort((a, b) => {
+      const countryComparison = getCountryName(a.country_code, i18n.resolvedLanguage).localeCompare(
+        getCountryName(b.country_code, i18n.resolvedLanguage),
+        i18n.resolvedLanguage,
+        { sensitivity: 'base' },
+      );
+      if (countryComparison !== 0) return countryComparison;
+      return (a.event_date ?? '').localeCompare(b.event_date ?? '');
+    });
+  }, [events, i18n.resolvedLanguage, selectedCountry]);
+
+  const updateCountry = (countryCode: string) => {
+    setPage(1);
+    const params = new URLSearchParams(searchParams.toString());
+    if (countryCode) params.set('country', countryCode);
+    else params.delete('country');
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
+
+  const totalPages = Math.ceil(filteredEvents.length / PAGE_SIZE);
   const pageEvents = useMemo(
-    () => events.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [events, page]
+    () => filteredEvents.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filteredEvents, page]
   );
 
   return (
@@ -82,11 +121,29 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
           )}
         </div>
 
+        {events.length > 0 && (
+          <div className="mb-8 max-w-sm">
+            <label className="block">
+              <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-700">{t('events.countryFilter.label')}</span>
+              <select
+                value={selectedCountry}
+                onChange={(event) => updateCountry(event.target.value)}
+                className="min-h-12 w-full border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-900"
+              >
+                <option value="">{t('events.countryFilter.all')}</option>
+                {countryOptions.map((code) => (
+                  <option key={code} value={code}>{countryFlagEmoji(code)} {getCountryName(code, i18n.resolvedLanguage)}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+        )}
+
         {loading ? (
           <div className="py-24 text-center text-zinc-400 text-sm">
             {t('common.loading', { ns: 'common' })}
           </div>
-        ) : events.length === 0 ? (
+        ) : filteredEvents.length === 0 ? (
           <div className="py-24 text-center border border-dashed border-zinc-200">
             <p className="text-zinc-900 font-medium">{t('events.noEvents')}</p>
             <p className="mt-1 text-sm text-zinc-500">{t('events.noEventsSubtitle')}</p>
@@ -109,15 +166,29 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
         ) : (
           <>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {pageEvents.map((event) => {
+            {pageEvents.map((event, index) => {
               const participatePath = `/events/${event.id}?action=participate`;
               const participateHref = profile
                 ? participatePath
                 : `/login?next=${encodeURIComponent(participatePath)}`;
               const canManageListedEvent = Boolean(profile
                 && (profile.role === 'admin' || event.promoter_id === profile.id));
+              const countryCode = event.country_code?.trim().toUpperCase() ?? '';
+              const previousCountryCode = index > 0
+                ? pageEvents[index - 1]?.country_code?.trim().toUpperCase() ?? ''
+                : null;
 
               return (
+                <Fragment key={event.id}>
+                {countryCode !== previousCountryCode && (
+                  <div className="border-b-2 border-zinc-900 pb-2 sm:col-span-2 lg:col-span-3">
+                    <h2 className="font-display text-2xl font-black uppercase text-zinc-950">
+                      {countryCode
+                        ? `${countryFlagEmoji(countryCode)} ${getCountryName(countryCode, i18n.resolvedLanguage)}`
+                        : t('events.countryFilter.unspecified')}
+                    </h2>
+                  </div>
+                )}
                 <article key={event.id} className="flex h-full flex-col overflow-hidden border border-zinc-200 bg-white">
                   <Link href={`/events/${event.id}`} className="block bg-zinc-50">
                     <div className="flex aspect-[2/3] w-full items-center justify-center bg-zinc-50">
@@ -151,6 +222,9 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
                     </div>
 
                     <div className="space-y-1 text-sm text-zinc-600">
+                      {event.country_code && (
+                        <p>{countryFlagEmoji(event.country_code)} {getCountryName(event.country_code, i18n.resolvedLanguage)}</p>
+                      )}
                       {event.event_date && (
                         <p>
                           {formatDate(event.event_date)}
@@ -191,12 +265,13 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
                         style={{ background: '#C0001E' }}
                       >
                         {canManageListedEvent
-                          ? 'Peleadores y matchmaking'
+                          ? t('events.public.manageMatchmaking')
                           : t('events.public.participate')}
                       </Link>
                     </div>
                   </div>
                 </article>
+                </Fragment>
               );
             })}
           </div>

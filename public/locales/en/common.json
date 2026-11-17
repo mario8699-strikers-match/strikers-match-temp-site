@@ -1,4 +1,10 @@
 {
+  "pricingSuccess": {
+    "title": "Tools available",
+    "body": "Review events, the directory, and operation tools from your account.",
+    "events": "View events",
+    "directory": "Go to the directory"
+  },
   "common": {
     "appName": "Strikers Match",
     "loading": "Loading...",
@@ -22,6 +28,108 @@
     "confirm": "Confirm",
     "language": "Language",
     "switchToLanguage": "Switch to {{language}}",
+    "genderDivision": {
+      "label": "Gender division",
+      "male": "Male",
+      "female": "Female"
+    },
+    "publicManagers": {
+      "title": "Managers",
+      "subtitle": "Managers representing fighters registered on the platform",
+      "loading": "Loading...",
+      "empty": "No managers are registered yet.",
+      "emptyHint": "Register as a manager to appear here.",
+      "register": "Register",
+      "manager": "Manager",
+      "fighterCount_one": "{{count}} fighter",
+      "fighterCount_other": "{{count}} fighters",
+      "viewFighters": "View fighters",
+      "signInToView": "Sign in to view"
+    },
+    "accountProfile": {
+      "myAccount": "My account",
+      "profile": "Profile",
+      "photo": "Photo",
+      "updated": "Profile updated successfully.",
+      "fullName": "Full name",
+      "email": "Email",
+      "city": "City",
+      "phone": "Phone",
+      "editProfile": "Edit profile",
+      "fighterProfile": "Fighter profile",
+      "myDashboard": "My dashboard",
+      "myEvents": "My events",
+      "changeLogo": "Change logo",
+      "changePhoto": "Change photo",
+      "changeImage": "Change image",
+      "promoterLogo": "Promoter logo",
+      "profilePhoto": "Profile photo",
+      "photoRequirements": "JPG or PNG, maximum 8 MB.",
+      "promoterPhotoVisibility": "It appears in the promoter directory and on your events.",
+      "publicPhotoVisibility": "It appears on your public profile.",
+      "fullNamePlaceholder": "Your full name",
+      "emailLocked": "The email address cannot be changed.",
+      "cityPlaceholder": "Your city",
+      "classificationManaged": "This classification is managed by Strikers Match.",
+      "saving": "Saving...",
+      "saveChanges": "Save changes",
+      "dangerZone": "Danger zone",
+      "deleteWarning": "Deleting your account is permanent. All your data will be erased and cannot be recovered.",
+      "deleteAccount": "Delete account",
+      "deleteConfirm": "This action cannot be undone. Your profile, data, and all information associated with your account will be deleted. Are you sure?",
+      "deleting": "Deleting...",
+      "yesDelete": "Yes, delete",
+      "roles": {
+        "fighter": "Fighter",
+        "spectator": "Spectator",
+        "promoter": "Promoter",
+        "manager": "Manager",
+        "sponsor": "Sponsor",
+        "admin": "Admin"
+      },
+      "errors": {
+        "nameRequired": "Name is required.",
+        "photoUpload": "The photo could not be uploaded.",
+        "save": "The profile could not be saved. Please try again.",
+        "imageType": "The file must be an image.",
+        "imageSize": "The image cannot exceed 8 MB."
+      }
+    },
+    "managerProfile": {
+      "title": "Manager profile",
+      "noName": "No name",
+      "photoVisibility": "It appears in the manager directory.",
+      "roster": "My roster ({{count}})",
+      "emptyRoster": "Your roster is empty.",
+      "addFighters": "Add fighters",
+      "manualFighters": "My fighters ({{count}})",
+      "manualFightersHint": "Fighters who are not registered on the platform."
+    },
+    "idle": {
+      "title": "Are you still there?",
+      "body": "For your security, you will be signed out automatically due to inactivity in:",
+      "hint": "Select “Stay connected” to continue your session.",
+      "signOut": "Sign out",
+      "stayConnected": "Stay connected"
+    },
+    "vendorProfile": {
+      "title": "My profile", "introStart": "Update your information. Your profile appears in the", "directory": "Directory", "saved": "Profile saved successfully.", "changePhoto": "Change photo", "profilePhoto": "Profile photo", "photoHelp": "JPG or PNG, maximum 8 MB. It appears in the public directory.", "gymName": "Gym / academy name", "fullName": "Full name", "gymNameHelp": "This name will appear in the directory and will be assigned automatically to your gym's fighters.", "email": "Email", "city": "City", "phone": "Phone", "description": "Description", "optional": "optional", "descriptionPlaceholder": "Briefly describe your service and experience", "otherServices": "Other services you offer", "otherServicesHelp": "Select all that apply. For example, a cutman who is also certified as an EMT.", "availableForHire": "Available for hire (shown with a green indicator in the directory)", "saving": "Saving…", "saveChanges": "Save changes", "gymFighters": "My gym's fighters", "gymFightersHelp": "Add and manage the fighters who represent your gym. Their profiles can appear in the public fighter directory with your gym listed as their team.",
+      "errors": { "gymNameRequired": "Gym name is required.", "nameRequired": "Name is required.", "photoUpload": "Error uploading the photo.", "save": "Error saving. Try again.", "imageType": "The file must be an image.", "imageSize": "The image cannot exceed 8 MB." },
+      "roles": { "gyms_academies": "Gym / Academy", "recovery_wellness": "Recovery and wellness", "gear_apparel": "Gear and apparel", "nutrition_supplements": "Nutrition and supplements", "local_business": "Local business", "other_service": "Other service", "ring_card_girl": "Ring Card Girl", "photographer": "Photographer", "videographer": "Videographer", "broadcast_personality": "Host / Commentator", "catering_vendor": "Catering / Food", "venue_rental": "Venue rental", "judge": "Judge / Referee", "ring_rental": "Ring rental", "ring_announcer": "Ring announcer", "cutman": "Cutman", "merchandise_vendor": "Merchandise vendor", "ringside_doctor": "Ringside doctor", "ringside_emt": "Ringside EMT" }
+    },
+    "whatsNew": {
+      "close": "Close", "title": "What's new?", "subtitle": "Recent improvements to profiles, events, matchmaking, payments, and internationalization.", "viewTools": "View tools", "understood": "Got it",
+      "items": {
+        "profilePhotos": { "title": "Profile photos and logos", "body": "Promoters, managers, and gyms can upload photos or logos and manage their fighters' photos." },
+        "events": { "title": "Publish events", "body": "Promoters and managers can create and publish fight cards from their dashboard." },
+        "matchmaking": { "title": "Automatic and manual matchmaking", "body": "The engine recommends matchups, and the organizer can confirm, reject, modify, or manually create a bout." },
+        "reliability": { "title": "Complete fighter profiles", "body": "Profiles combine discipline, weight class, record, team, country, and social media in a compact view." },
+        "analytics": { "title": "Analytics dashboard", "body": "Promoters and managers can review activity, participants, and event operations." },
+        "payments": { "title": "Registration payments", "body": "Events support connected payments and manual confirmation for transfers or cash." },
+        "directory": { "title": "International directory", "body": "Athletes, gyms, and professionals can be found by country and discipline." },
+        "languages": { "title": "Spanish, English, and Russian", "body": "The international interface adapts to each user's selected language." }
+      }
+    },
     "hero": {
       "line1": "Where the combat",
       "line2": "sports community",

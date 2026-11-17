@@ -123,13 +123,13 @@ export default function CreateEventPage() {
     }
     const feeCents = Math.round(Number(formData.signup_fee || 0) * 100);
     if (formData.registration_type === 'paid' && feeCents <= 0) {
-      newErrors.signup_fee = 'Ingresa una cuota de inscripción válida.';
+      newErrors.signup_fee = t('events.paymentSettings.invalidFee');
     }
     if (
       formData.status === 'published' && formData.registration_type === 'paid'
       && formData.payment_method === 'stripe' && !paymentAccount?.onboarding_complete
     ) {
-      newErrors.payment_method = 'Completa la conexión con Stripe antes de publicar.';
+      newErrors.payment_method = t('events.paymentSettings.stripeRequired');
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -164,7 +164,7 @@ export default function CreateEventPage() {
     if (flyerFile) {
       const { data: url, error: uploadError } = await eventService.uploadFlyer(flyerFile);
       if (uploadError) {
-        setServerError('Failed to upload flyer. Please try again.');
+        setServerError(t('events.createForm.flyerUploadFailed'));
         setLoading(false);
         return;
       }
@@ -385,7 +385,7 @@ export default function CreateEventPage() {
           {/* Disciplines needed */}
           <div>
             <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#5A5A5A' }}>
-              Disciplinas requeridas
+              {t('events.createForm.requiredDisciplines')}
             </label>
             <div className="flex flex-wrap gap-2">
               {DISCIPLINE_OPTIONS.map((d) => (
@@ -428,7 +428,7 @@ export default function CreateEventPage() {
           {/* Weight Classes multi-select */}
           <div>
             <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#5A5A5A' }}>
-              Categorías de Peso Requeridas
+              {t('events.createForm.requiredWeightCategories')}
             </label>
             <EventWeightCategorySelector
               disciplines={formData.disciplines_needed}
@@ -446,7 +446,7 @@ export default function CreateEventPage() {
                 type="button"
                 onClick={() => setFormData((prev) => ({ ...prev, purse_enabled: !prev.purse_enabled, purse_amount: '' }))}
                 className={`relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${formData.purse_enabled ? 'bg-[#C0001E]' : 'bg-zinc-300'}`}
-                aria-label="Toggle purse"
+                aria-label={t('events.createForm.togglePurse')}
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${formData.purse_enabled ? 'translate-x-4' : 'translate-x-0'}`} />
               </button>
@@ -460,36 +460,36 @@ export default function CreateEventPage() {
                 placeholder={t('events.fields.purse_amountPlaceholder')}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 text-sm"
               />
-            ) : <p className="text-xs text-zinc-400">Sin bolsa (desactivado)</p>}
+            ) : <p className="text-xs text-zinc-400">{t('events.createForm.purseDisabled')}</p>}
           </div>
 
           {/* Registration and payment */}
           <div className="border border-zinc-200 p-4 sm:p-5">
-            <p className="text-xs font-bold uppercase tracking-widest text-[#C0001E]">Registro y cobro</p>
-            <p className="mt-1 text-sm text-zinc-500">El organizador cobra directamente las inscripciones del evento.</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-[#C0001E]">{t('events.paymentSettings.title')}</p>
+            <p className="mt-1 text-sm text-zinc-500">{t('events.createForm.paymentDescription')}</p>
             <div className="mt-4 grid grid-cols-2 gap-3">
               <button type="button" onClick={() => setFormData((prev) => ({ ...prev, registration_type: 'free', payment_method: 'manual', signup_fee: '' }))}
                 className={`border p-3 text-left ${formData.registration_type === 'free' ? 'border-[#C0001E] bg-red-50' : 'border-zinc-300'}`}>
-                <span className="block text-sm font-black uppercase">Gratuito</span>
-                <span className="mt-1 block text-xs text-zinc-500">Sin pago de inscripción.</span>
+                <span className="block text-sm font-black uppercase">{t('events.paymentSettings.free')}</span>
+                <span className="mt-1 block text-xs text-zinc-500">{t('events.paymentSettings.freeDescription')}</span>
               </button>
               <button type="button" onClick={() => setFormData((prev) => ({ ...prev, registration_type: 'paid' }))}
                 className={`border p-3 text-left ${formData.registration_type === 'paid' ? 'border-[#C0001E] bg-red-50' : 'border-zinc-300'}`}>
-                <span className="block text-sm font-black uppercase">Con cuota</span>
-                <span className="mt-1 block text-xs text-zinc-500">Pago requerido para matchmaking.</span>
+                <span className="block text-sm font-black uppercase">{t('events.paymentSettings.paid')}</span>
+                <span className="mt-1 block text-xs text-zinc-500">{t('events.paymentSettings.paidDescription')}</span>
               </button>
             </div>
             {formData.registration_type === 'paid' && (
               <div className="mt-4 space-y-4">
                 <label className="block">
-                  <span className="mb-1 block text-sm font-medium text-zinc-700">Cuota de inscripción (MXN)</span>
+                  <span className="mb-1 block text-sm font-medium text-zinc-700">{t('events.paymentSettings.feeLabel')}</span>
                   <input type="text" inputMode="decimal" autoComplete="off"
                     value={formData.signup_fee}
                     onChange={(e) => {
                       const value = e.target.value.replace(',', '.');
                       if (/^\d*(?:\.\d{0,2})?$/.test(value)) set('signup_fee', value);
                     }}
-                    placeholder="Ej. 500"
+                    placeholder={t('events.paymentSettings.feePlaceholder')}
                     className={`w-full border px-3 py-2 text-sm text-zinc-900 outline-none focus:ring-1 focus:ring-zinc-900 ${errors.signup_fee ? 'border-red-400' : 'border-zinc-300'}`} />
                   {errors.signup_fee && <span className="mt-1 block text-xs text-red-600">{errors.signup_fee}</span>}
                 </label>
@@ -497,21 +497,21 @@ export default function CreateEventPage() {
                   <button type="button" onClick={() => setFormData((prev) => ({ ...prev, payment_method: 'stripe' }))}
                     className={`border p-3 text-left ${formData.payment_method === 'stripe' ? 'border-[#C0001E] bg-red-50' : 'border-zinc-300'}`}>
                     <span className="block text-sm font-black uppercase">Stripe</span>
-                    <span className="mt-1 block text-xs text-zinc-500">Pago en línea verificado automáticamente.</span>
+                    <span className="mt-1 block text-xs text-zinc-500">{t('events.paymentSettings.stripeDescription')}</span>
                   </button>
                   <button type="button" onClick={() => setFormData((prev) => ({ ...prev, payment_method: 'manual' }))}
                     className={`border p-3 text-left ${formData.payment_method === 'manual' ? 'border-[#C0001E] bg-red-50' : 'border-zinc-300'}`}>
-                    <span className="block text-sm font-black uppercase">Manual</span>
-                    <span className="mt-1 block text-xs text-zinc-500">Efectivo o transferencia confirmada por ti.</span>
+                    <span className="block text-sm font-black uppercase">{t('events.paymentSettings.manual')}</span>
+                    <span className="mt-1 block text-xs text-zinc-500">{t('events.paymentSettings.manualDescription')}</span>
                   </button>
                 </div>
                 {formData.payment_method === 'stripe' && (
                   <div className={`border p-3 ${paymentAccount?.onboarding_complete ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
-                    <p className="text-sm font-bold text-zinc-900">{paymentAccount?.onboarding_complete ? 'Stripe está listo para cobrar.' : 'Conecta Stripe antes de publicar este evento.'}</p>
-                    <p className="mt-1 text-xs text-zinc-600">Actualmente Strikers Match no aplica una comisión de plataforma a estas inscripciones.</p>
+                    <p className="text-sm font-bold text-zinc-900">{paymentAccount?.onboarding_complete ? t('events.paymentSettings.stripeReady') : t('events.paymentSettings.stripeRequired')}</p>
+                    <p className="mt-1 text-xs text-zinc-600">{t('events.paymentSettings.noPlatformFee')}</p>
                     <button type="button" onClick={() => void handleConnectStripe()} disabled={connectingStripe}
                       className="mt-3 min-h-11 border border-zinc-300 bg-white px-4 py-2 text-xs font-bold uppercase text-zinc-800 disabled:opacity-50">
-                      {connectingStripe ? 'Abriendo…' : paymentAccount?.onboarding_complete ? 'Administrar Stripe' : 'Conectar Stripe'}
+                      {connectingStripe ? t('events.paymentSettings.opening') : paymentAccount?.onboarding_complete ? t('events.paymentSettings.manageStripe') : t('events.paymentSettings.connectStripe')}
                     </button>
                     {errors.payment_method && <p className="mt-2 text-xs text-red-700">{errors.payment_method}</p>}
                   </div>
@@ -523,7 +523,7 @@ export default function CreateEventPage() {
           {/* Flyer Upload */}
           <div>
             <label className="block text-sm font-medium text-zinc-700 mb-1">
-              Flyer del evento
+              {t('events.createForm.flyerLabel')}
             </label>
             <div
               className="border-2 border-dashed border-zinc-300 p-6 text-center cursor-pointer hover:border-zinc-400 transition-colors"
@@ -532,16 +532,16 @@ export default function CreateEventPage() {
               {flyerPreview ? (
                 <div className="relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={flyerPreview} alt="Flyer preview" className="max-h-64 mx-auto object-contain" />
-                  <p className="mt-2 text-xs text-zinc-400">Haz clic para cambiar</p>
+                  <img src={flyerPreview} alt={t('events.createForm.flyerPreviewAlt')} className="max-h-64 mx-auto object-contain" />
+                  <p className="mt-2 text-xs text-zinc-400">{t('events.createForm.changeFlyer')}</p>
                 </div>
               ) : (
                 <div>
                   <svg className="mx-auto w-10 h-10 text-zinc-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  <p className="text-sm text-zinc-500">Sube el flyer del evento</p>
-                  <p className="text-xs text-zinc-400 mt-1">PNG, JPG, WEBP · Máx. 5MB</p>
+                  <p className="text-sm text-zinc-500">{t('events.createForm.uploadFlyer')}</p>
+                  <p className="text-xs text-zinc-400 mt-1">{t('events.createForm.flyerRequirements')}</p>
                 </div>
               )}
             </div>

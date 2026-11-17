@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
+import { useTranslation } from 'react-i18next';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Pagination } from '@/components/Pagination';
@@ -15,6 +16,7 @@ interface ManagersPageClientProps {
 }
 
 export function ManagersPageClient({ initialManagers }: ManagersPageClientProps) {
+  const { t } = useTranslation('common');
   const [managers] = useState<PublicManagerCard[]>(initialManagers);
   const [loading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -40,19 +42,19 @@ export function ManagersPageClient({ initialManagers }: ManagersPageClientProps)
         <div className="mb-10">
           <p className="text-xs font-bold tracking-[0.25em] uppercase mb-2" style={{ color: '#C0001E' }}>Strikers Match</p>
           <h1 className="font-display font-black uppercase leading-none" style={{ fontSize: 'clamp(2.5rem,6vw,4.5rem)', letterSpacing: '-0.02em', color: '#0A0A0A' }}>
-            Representantes
+            {t('publicManagers.title')}
           </h1>
-          <p className="mt-2 text-sm" style={{ color: '#5A5A5A' }}>Representantes de peleadores registrados en la plataforma</p>
+          <p className="mt-2 text-sm" style={{ color: '#5A5A5A' }}>{t('publicManagers.subtitle')}</p>
         </div>
 
         {loading ? (
-          <div className="py-24 text-center text-zinc-400 text-sm">Cargando...</div>
+          <div className="py-24 text-center text-zinc-400 text-sm">{t('publicManagers.loading')}</div>
         ) : managers.length === 0 ? (
           <div className="py-24 text-center border border-dashed border-zinc-200">
-            <p className="text-zinc-900 font-medium">No hay representantes registrados aún.</p>
-            <p className="mt-2 text-sm text-zinc-500">Regístrate como representante para aparecer aquí.</p>
+            <p className="text-zinc-900 font-medium">{t('publicManagers.empty')}</p>
+            <p className="mt-2 text-sm text-zinc-500">{t('publicManagers.emptyHint')}</p>
             <a href="/register" className="mt-6 inline-block bg-zinc-900 text-white px-6 py-2.5 text-sm font-medium hover:bg-zinc-800 transition-colors">
-              Registrarse
+              {t('publicManagers.register')}
             </a>
           </div>
         ) : (
@@ -67,7 +69,7 @@ export function ManagersPageClient({ initialManagers }: ManagersPageClientProps)
                     {manager.photo_url ? (
                       <Image
                         src={manager.photo_url}
-                        alt={manager.full_name ?? 'Representante'}
+                        alt={manager.full_name ?? t('publicManagers.manager')}
                         width={48}
                         height={48}
                         className="w-full h-full object-cover"
@@ -81,12 +83,12 @@ export function ManagersPageClient({ initialManagers }: ManagersPageClientProps)
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h2 className="font-display font-black uppercase leading-none text-xl" style={{ color: '#0A0A0A' }}>{manager.full_name || 'Representante'}</h2>
+                    <h2 className="font-display font-black uppercase leading-none text-xl" style={{ color: '#0A0A0A' }}>{manager.full_name || t('publicManagers.manager')}</h2>
                     {manager.city && <p className="text-xs text-zinc-500 mt-0.5">{manager.city}</p>}
                   </div>
                   {manager.rosterCount > 0 && (
                     <span className="text-xs font-medium text-zinc-500 bg-zinc-100 px-2 py-0.5 flex-shrink-0">
-                      {manager.rosterCount} peleador{manager.rosterCount !== 1 ? 'es' : ''}
+                      {t('publicManagers.fighterCount', { count: manager.rosterCount })}
                     </span>
                   )}
                 </div>
@@ -97,7 +99,7 @@ export function ManagersPageClient({ initialManagers }: ManagersPageClientProps)
                     href={`/search?manager=${manager.id}`}
                     className="block w-full text-center text-xs font-bold tracking-widest uppercase text-white bg-[#C0001E] hover:bg-[#9A0018] px-4 py-2.5 transition-colors"
                   >
-                    Ver peleadores
+                    {t('publicManagers.viewFighters')}
                   </a>
                 ) : (
                   <a
@@ -107,7 +109,7 @@ export function ManagersPageClient({ initialManagers }: ManagersPageClientProps)
                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                     </svg>
-                    Inicia sesión para ver
+                    {t('publicManagers.signInToView')}
                   </a>
                 )}
               </div>

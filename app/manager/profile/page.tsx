@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { InlineCombatRecord } from '@/components/CombatRecord';
@@ -19,6 +20,7 @@ const WEIGHT_LABELS: Record<string, string> = {
 };
 
 export default function ManagerProfilePage() {
+  const { t } = useTranslation('common');
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [roster, setRoster] = useState<FighterWithProfile[]>([]);
@@ -62,7 +64,7 @@ export default function ManagerProfilePage() {
 
   const handleSave = async () => {
     if (!profile) return;
-    if (!fullName.trim()) { setSaveError('El nombre es obligatorio.'); return; }
+    if (!fullName.trim()) { setSaveError(t('accountProfile.errors.nameRequired')); return; }
     setSaving(true);
     setSaveError(null);
     setSaveSuccess(false);
@@ -71,7 +73,7 @@ export default function ManagerProfilePage() {
     if (photoFile) {
       const { data: url, error: upErr } = await authService.uploadProfilePhoto(photoFile, 'manager-photos');
       if (upErr || !url) {
-        setSaveError('Error al subir la foto.');
+        setSaveError(t('accountProfile.errors.photoUpload'));
         setSaving(false);
         return;
       }
@@ -87,7 +89,7 @@ export default function ManagerProfilePage() {
 
     setSaving(false);
     if (error) {
-      setSaveError('Error al guardar. Intenta de nuevo.');
+      setSaveError(t('accountProfile.errors.save'));
     } else {
       setProfile({
         ...profile,
@@ -108,11 +110,11 @@ export default function ManagerProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      setSaveError('El archivo debe ser una imagen.');
+      setSaveError(t('accountProfile.errors.imageType'));
       return;
     }
     if (file.size > 8 * 1024 * 1024) {
-      setSaveError('La imagen no debe superar 8 MB.');
+      setSaveError(t('accountProfile.errors.imageSize'));
       return;
     }
     setSaveError(null);
@@ -146,7 +148,7 @@ export default function ManagerProfilePage() {
           <div className="flex items-center gap-4 min-w-0">
             {profile!.photo_url ? (
               <div className="w-16 h-16 sm:w-20 sm:h-20 overflow-hidden bg-zinc-100 flex-shrink-0">
-                <Image src={profile!.photo_url} alt={profile!.full_name ?? 'Foto'} width={80} height={80} className="w-full h-full object-cover" />
+                <Image src={profile!.photo_url} alt={profile!.full_name ?? t('accountProfile.photo')} width={80} height={80} className="w-full h-full object-cover" />
               </div>
             ) : (
               <div className="w-16 h-16 sm:w-20 sm:h-20 bg-zinc-200 flex items-center justify-center flex-shrink-0">
@@ -156,8 +158,8 @@ export default function ManagerProfilePage() {
               </div>
             )}
             <div className="min-w-0">
-              <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#C0001E' }}>Perfil del Representante</p>
-              <h1 className="text-2xl sm:text-3xl font-black uppercase truncate" style={{ letterSpacing: '-1px' }}>{profile!.full_name || 'Sin nombre'}</h1>
+              <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#C0001E' }}>{t('managerProfile.title')}</p>
+              <h1 className="text-2xl sm:text-3xl font-black uppercase truncate" style={{ letterSpacing: '-1px' }}>{profile!.full_name || t('managerProfile.noName')}</h1>
               {profile!.city && <p className="text-sm mt-1" style={{ color: '#5A5A5A' }}>{profile!.city}</p>}
             </div>
           </div>
@@ -166,13 +168,13 @@ export default function ManagerProfilePage() {
             className="text-xs font-bold tracking-widest uppercase text-white px-4 py-2 transition-colors flex-shrink-0"
             style={{ background: '#C0001E' }}
           >
-            Mi Panel →
+            {t('accountProfile.myDashboard')} →
           </a>
         </div>
 
         {saveSuccess && (
           <div className="mb-6 border border-emerald-200 bg-emerald-50 text-emerald-700 px-4 py-3 text-sm font-medium">
-            Perfil actualizado correctamente.
+            {t('accountProfile.updated')}
           </div>
         )}
 
@@ -181,10 +183,10 @@ export default function ManagerProfilePage() {
           <div className="space-y-6">
             <div className="border border-zinc-100 p-6 space-y-4">
               {[
-                { label: 'Nombre completo', value: profile!.full_name || '—' },
-                { label: 'Email', value: profile!.email },
-                { label: 'Ciudad', value: profile!.city || '—' },
-                { label: 'Teléfono', value: profile!.phone || '—' },
+                { label: t('accountProfile.fullName'), value: profile!.full_name || '—' },
+                { label: t('accountProfile.email'), value: profile!.email },
+                { label: t('accountProfile.city'), value: profile!.city || '—' },
+                { label: t('accountProfile.phone'), value: profile!.phone || '—' },
               ].map(({ label, value }) => (
                 <div key={label}>
                   <p className="text-xs font-bold tracking-widest uppercase mb-0.5" style={{ color: '#9A9A9A' }}>{label}</p>
@@ -197,7 +199,7 @@ export default function ManagerProfilePage() {
                 onClick={() => setEditing(true)}
                 className="px-4 py-2 text-sm font-semibold border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition-colors"
               >
-                Editar perfil
+                {t('accountProfile.editProfile')}
               </button>
             </div>
           </div>
@@ -214,12 +216,12 @@ export default function ManagerProfilePage() {
                 <div
                   className="w-20 h-20 bg-zinc-100 overflow-hidden cursor-pointer"
                   onClick={() => photoInputRef.current?.click()}
-                  title="Cambiar foto"
+                  title={t('accountProfile.changePhoto')}
                 >
                   {photoPreview ? (
-                    <Image src={photoPreview} alt="Foto" width={80} height={80} className="w-full h-full object-cover" unoptimized />
+                    <Image src={photoPreview} alt={t('accountProfile.photo')} width={80} height={80} className="w-full h-full object-cover" unoptimized />
                   ) : profile!.photo_url ? (
-                    <Image src={profile!.photo_url} alt="Foto" width={80} height={80} className="w-full h-full object-cover" />
+                    <Image src={profile!.photo_url} alt={t('accountProfile.photo')} width={80} height={80} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <svg className="w-8 h-8 text-zinc-300" fill="currentColor" viewBox="0 0 24 24">
@@ -232,7 +234,7 @@ export default function ManagerProfilePage() {
                   type="button"
                   onClick={() => photoInputRef.current?.click()}
                   className="absolute -bottom-1 -right-1 w-6 h-6 bg-zinc-900 text-white flex items-center justify-center"
-                  aria-label="Cambiar foto"
+                  aria-label={t('accountProfile.changePhoto')}
                 >
                   <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -247,32 +249,32 @@ export default function ManagerProfilePage() {
                 />
               </div>
               <div>
-                <p className="text-sm font-medium text-zinc-700">Foto de perfil</p>
-                <p className="text-xs text-zinc-500 mt-0.5">JPG o PNG, máximo 8 MB. Aparece en el directorio de representantes.</p>
+                <p className="text-sm font-medium text-zinc-700">{t('accountProfile.profilePhoto')}</p>
+                <p className="text-xs text-zinc-500 mt-0.5">{t('accountProfile.photoRequirements')} {t('managerProfile.photoVisibility')}</p>
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Nombre completo *</label>
-              <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Tu nombre completo"
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('accountProfile.fullName')} *</label>
+              <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} placeholder={t('accountProfile.fullNamePlaceholder')}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
             </div>
 
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Email</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('accountProfile.email')}</label>
               <input type="email" value={profile!.email} disabled
                 className="w-full border border-zinc-200 px-3 py-2 text-zinc-400 text-sm bg-zinc-50 cursor-not-allowed" />
-              <p className="text-xs text-zinc-400 mt-1">El email no se puede cambiar.</p>
+              <p className="text-xs text-zinc-400 mt-1">{t('accountProfile.emailLocked')}</p>
             </div>
 
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Ciudad</label>
-              <input type="text" value={city} onChange={e => setCity(e.target.value)} placeholder="Tu ciudad"
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('accountProfile.city')}</label>
+              <input type="text" value={city} onChange={e => setCity(e.target.value)} placeholder={t('accountProfile.cityPlaceholder')}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
             </div>
 
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Teléfono</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('accountProfile.phone')}</label>
               <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+52 664 000 0000"
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
             </div>
@@ -280,12 +282,12 @@ export default function ManagerProfilePage() {
             <div className="flex justify-end gap-3 pt-2">
               <button onClick={() => { setEditing(false); setSaveError(null); setFullName(profile!.full_name ?? ''); setCity(profile!.city ?? ''); setPhone(profile!.phone ?? ''); setPhotoFile(null); setPhotoPreview(null); }}
                 className="px-4 py-2 text-sm font-medium border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition-colors">
-                Cancelar
+                {t('cancel')}
               </button>
               <button onClick={handleSave} disabled={saving}
                 className="px-6 py-2 text-sm font-bold tracking-wide uppercase text-white disabled:opacity-50"
                 style={{ background: saving ? '#9A9A9A' : '#C0001E' }}>
-                {saving ? 'Guardando...' : 'Guardar cambios'}
+                {saving ? t('accountProfile.saving') : t('accountProfile.saveChanges')}
               </button>
             </div>
           </div>
@@ -294,15 +296,15 @@ export default function ManagerProfilePage() {
         {/* ── Roster ── */}
         <div className="mt-10 border-t border-zinc-100 pt-8">
           <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color: '#C0001E' }}>
-            Mi Roster ({roster.length})
+            {t('managerProfile.roster', { count: roster.length })}
           </p>
           {rosterLoading ? (
-            <p className="text-sm text-zinc-400">Cargando...</p>
+            <p className="text-sm text-zinc-400">{t('loading')}</p>
           ) : roster.length === 0 ? (
             <div className="border border-dashed border-zinc-200 py-10 text-center">
-              <p className="text-sm text-zinc-400 mb-3">Tu roster está vacío.</p>
+              <p className="text-sm text-zinc-400 mb-3">{t('managerProfile.emptyRoster')}</p>
               <a href="/manager/dashboard" className="text-xs font-bold tracking-widest uppercase text-white px-4 py-2 transition-colors" style={{ background: '#C0001E' }}>
-                Agregar peleadores
+                {t('managerProfile.addFighters')}
               </a>
             </div>
           ) : (
@@ -344,9 +346,9 @@ export default function ManagerProfilePage() {
         {manualFighters.length > 0 && (
           <div className="mt-10 border-t border-zinc-100 pt-8">
             <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#C0001E' }}>
-              Mis Peleadores ({manualFighters.length})
+              {t('managerProfile.manualFighters', { count: manualFighters.length })}
             </p>
-            <p className="text-xs text-zinc-400 mb-4">Peleadores no registrados en la plataforma.</p>
+            <p className="text-xs text-zinc-400 mb-4">{t('managerProfile.manualFightersHint')}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {manualFighters.map(f => (
                 <div key={f.id} className="border border-zinc-200 p-4">
@@ -375,13 +377,13 @@ export default function ManagerProfilePage() {
 
         {/* ── Delete Account ── */}
         <div className="mt-12 border-t border-zinc-100 pt-8">
-          <p className="text-xs font-bold tracking-widest uppercase mb-2 text-red-600">Zona de peligro</p>
-          <p className="text-sm text-zinc-500 mb-4">Eliminar tu cuenta es permanente. Se borrarán todos tus datos y no podrás recuperarlos.</p>
+          <p className="text-xs font-bold tracking-widest uppercase mb-2 text-red-600">{t('accountProfile.dangerZone')}</p>
+          <p className="text-sm text-zinc-500 mb-4">{t('accountProfile.deleteWarning')}</p>
           <button
             onClick={() => setShowDeleteConfirm(true)}
             className="px-4 py-2 text-sm font-semibold border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
           >
-            Eliminar cuenta
+            {t('accountProfile.deleteAccount')}
           </button>
         </div>
 
@@ -389,9 +391,9 @@ export default function ManagerProfilePage() {
         {showDeleteConfirm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
             <div className="bg-white max-w-sm w-full p-6 shadow-lg">
-              <h3 className="text-lg font-black uppercase mb-2">Eliminar cuenta</h3>
+              <h3 className="text-lg font-black uppercase mb-2">{t('accountProfile.deleteAccount')}</h3>
               <p className="text-sm text-zinc-600 mb-6">
-                Esta acción es irreversible. Se eliminarán tu perfil, datos y toda la información asociada a tu cuenta. ¿Estás seguro?
+                {t('accountProfile.deleteConfirm')}
               </p>
               <div className="flex justify-end gap-3">
                 <button
@@ -399,14 +401,14 @@ export default function ManagerProfilePage() {
                   disabled={deleting}
                   className="px-4 py-2 text-sm font-medium border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-50"
                 >
-                  Cancelar
+                  {t('cancel')}
                 </button>
                 <button
                   onClick={handleDeleteAccount}
                   disabled={deleting}
                   className="px-4 py-2 text-sm font-bold uppercase tracking-wide text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50"
                 >
-                  {deleting ? 'Eliminando...' : 'Sí, eliminar'}
+                  {deleting ? t('accountProfile.deleting') : t('accountProfile.yesDelete')}
                 </button>
               </div>
             </div>

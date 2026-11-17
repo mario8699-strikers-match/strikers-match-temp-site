@@ -35,11 +35,11 @@ const WEIGHT_LABELS: Record<string, string> = {
   pluma:'Pluma',superpluma:'Superpluma',ligero:'Ligero',superligero:'Superligero',welter:'Welter',
   superwelter:'Superwelter',medio:'Medio',supermedio:'Supermedio',semipesado:'Semipesado',crucero:'Crucero',pesado:'Pesado',
 };
-const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
-  pending:  { label:'Pendiente',  cls:'bg-amber-50 text-amber-700' },
-  accepted: { label:'Aceptada',   cls:'bg-emerald-50 text-emerald-700' },
-  declined: { label:'Rechazada',  cls:'bg-red-50 text-red-700' },
-  cancelled:{ label:'Cancelada',  cls:'bg-zinc-100 text-zinc-500' },
+const STATUS_CLASSES: Record<string, string> = {
+  pending: 'bg-amber-50 text-amber-700',
+  accepted: 'bg-emerald-50 text-emerald-700',
+  declined: 'bg-red-50 text-red-700',
+  cancelled: 'bg-zinc-100 text-zinc-500',
 };
 
 type RequestWithDetails = MatchRequest & {
@@ -48,7 +48,7 @@ type RequestWithDetails = MatchRequest & {
 };
 
 export default function FighterProfilePage() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation('fighters');
   const countryOptions = useMemo(
     () => getCountryOptions(i18n.resolvedLanguage || i18n.language),
     [i18n.resolvedLanguage, i18n.language],
@@ -303,7 +303,7 @@ export default function FighterProfilePage() {
     const minimumWeight = acceptableWeightMin ? Number(acceptableWeightMin) : null;
     const maximumWeight = acceptableWeightMax ? Number(acceptableWeightMax) : null;
     if (minimumWeight != null && maximumWeight != null && minimumWeight > maximumWeight) {
-      setError('El peso mínimo aceptable no puede ser mayor que el peso máximo.');
+      setError(t('fighters.accountProfile.errors.weightRange'));
       return;
     }
 
@@ -311,7 +311,7 @@ export default function FighterProfilePage() {
       ({ key }) => !isValidSocialMediaIdentifier(key, socialMedia[key])
     );
     if (invalidPlatform) {
-      setError(`Revisa tu usuario o enlace de ${invalidPlatform.label}.`);
+      setError(t('fighters.accountProfile.errors.socialMedia', { platform: invalidPlatform.label }));
       return;
     }
 
@@ -328,7 +328,7 @@ export default function FighterProfilePage() {
     let photoUrl: string | undefined;
     if (photoFile) {
       const { data: url, error: upErr } = await fighterService.uploadPhoto(photoFile);
-      if (upErr) { setError('Error al subir la foto.'); setSaving(false); return; }
+      if (upErr) { setError(t('fighters.accountProfile.errors.photoUpload')); setSaving(false); return; }
       photoUrl = url ?? undefined;
     }
 
@@ -384,7 +384,7 @@ export default function FighterProfilePage() {
 
     if (result.error) {
       setSaving(false);
-      setError('Error al guardar. Intenta de nuevo.');
+      setError(t('fighters.accountProfile.errors.save'));
       return;
     }
 
@@ -401,7 +401,7 @@ export default function FighterProfilePage() {
     setSaving(false);
     setFighter(result.data);
     if (profileResult.error) {
-      setError('El perfil deportivo se guardó, pero no se pudieron guardar los datos personales. Intenta de nuevo.');
+      setError(t('fighters.accountProfile.errors.personalDataSave'));
       return;
     }
 
@@ -469,13 +469,13 @@ export default function FighterProfilePage() {
       <main className="flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-10 w-full">
 
         <div className="mb-6">
-          <p className="text-xs font-bold tracking-widest uppercase" style={{ color: '#C0001E' }}>Perfil del Peleador</p>
+          <p className="text-xs font-bold tracking-widest uppercase" style={{ color: '#C0001E' }}>{t('fighters.accountProfile.title')}</p>
         </div>
         <div className="flex items-start gap-6 mb-8">
           <div className="relative flex-shrink-0">
-            <div className="w-20 h-20 bg-zinc-100 overflow-hidden cursor-pointer" onClick={() => photoInputRef.current?.click()} title="Cambiar foto">
+            <div className="w-20 h-20 bg-zinc-100 overflow-hidden cursor-pointer" onClick={() => photoInputRef.current?.click()} title={t('fighters.accountProfile.changePhoto')}>
               {displayPhoto ? (
-                <Image src={displayPhoto} alt="Foto de perfil" width={80} height={80} className="w-full h-full object-cover" />
+                <Image src={displayPhoto} alt={t('fighters.accountProfile.profilePhoto')} width={80} height={80} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <svg className="w-8 h-8 text-zinc-300" fill="currentColor" viewBox="0 0 24 24">
@@ -493,27 +493,27 @@ export default function FighterProfilePage() {
           <div className="flex-1">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#C0001E' }}>Perfil del Peleador</p>
+                <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#C0001E' }}>{t('fighters.accountProfile.title')}</p>
                 <h1 className="text-3xl font-black uppercase" style={{ letterSpacing:'-1px' }}>{profile!.full_name}</h1>
                 {fighter?.nickname && <p className="text-base font-semibold" style={{ color:'#C0001E' }}>&ldquo;{fighter.nickname}&rdquo;</p>}
-                <p className="text-sm mt-1" style={{ color:'#5A5A5A' }}>{profile!.city ?? 'Sin ciudad registrada'}</p>
+                <p className="text-sm mt-1" style={{ color:'#5A5A5A' }}>{profile!.city ?? t('fighters.accountProfile.noCity')}</p>
               </div>
               {fighter?.verified && (
                 <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 bg-emerald-50 text-emerald-700 flex-shrink-0">
                   <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                  Verificado
+                  {t('fighters.accountProfile.verified')}
                 </span>
               )}
             </div>
-            {photoFile && <p className="text-xs mt-2 text-amber-600">Foto seleccionada — guarda para aplicar.</p>}
+            {photoFile && <p className="text-xs mt-2 text-amber-600">{t('fighters.accountProfile.photoSelected')}</p>}
           </div>
         </div>
 
         {isSetup && !editing && (
           <div className="border-l-4 border-[#C0001E] bg-zinc-50 px-4 py-4 mb-6">
-            <p className="text-sm font-semibold text-zinc-900">Completa tu perfil de peleador</p>
-            <p className="text-xs text-zinc-500 mt-1">Agrega tu división, disciplina y récord para aparecer en el directorio.</p>
-            <button onClick={startEditing} className="mt-3 px-4 py-2 text-xs font-bold tracking-widest uppercase text-white" style={{ background:'#C0001E' }}>Configurar perfil</button>
+            <p className="text-sm font-semibold text-zinc-900">{t('fighters.accountProfile.completeProfile')}</p>
+            <p className="text-xs text-zinc-500 mt-1">{t('fighters.accountProfile.completeProfileHelp')}</p>
+            <button onClick={startEditing} className="mt-3 px-4 py-2 text-xs font-bold tracking-widest uppercase text-white" style={{ background:'#C0001E' }}>{t('fighters.accountProfile.configureProfile')}</button>
           </div>
         )}
 
@@ -523,17 +523,17 @@ export default function FighterProfilePage() {
         {!editing && fighter && (
           <div className="space-y-6">
             <div className="border border-zinc-100 p-6">
-              <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color:'#9A9A9A' }}>Información personal</p>
+              <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color:'#9A9A9A' }}>{t('fighters.accountProfile.personalInformation')}</p>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {[
-                  { label:'Nombre completo', value: profile.full_name },
-                  { label:'Teléfono', value: profile.phone ?? '—' },
-                  { label:'Fecha de nacimiento', value: profile.date_of_birth ?? '—' },
-                  { label:'Ciudad', value: profile.city ?? '—' },
-                  { label:'Estado', value: profile.state ?? '—' },
-                  { label:'País', value: profile.country || '—' },
-                  { label:'Nacionalidad', value: nationalityLabel },
-                  { label:'Correo de la cuenta', value: profile.email },
+                  { label:t('fighters.accountProfile.fullName'), value: profile.full_name },
+                  { label:t('fighters.accountProfile.fields.phone'), value: profile.phone ?? '—' },
+                  { label:t('fighters.accountProfile.dateOfBirth'), value: profile.date_of_birth ?? '—' },
+                  { label:t('fighters.accountProfile.city'), value: profile.city ?? '—' },
+                  { label:t('fighters.accountProfile.state'), value: profile.state ?? '—' },
+                  { label:t('fighters.accountProfile.fields.country'), value: profile.country || '—' },
+                  { label:t('fighters.accountProfile.nationality'), value: nationalityLabel },
+                  { label:t('fighters.accountProfile.accountEmail'), value: profile.email },
                 ].map(({ label, value }) => (
                   <div key={label}>
                     <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>{label}</p>
@@ -546,9 +546,9 @@ export default function FighterProfilePage() {
             {/* Record */}
             <div className="grid grid-cols-3 gap-4 border border-zinc-100 p-6 text-center">
               {[
-                { label:'Victorias', value:fighter.record_wins, part:'wins' as const },
-                { label:'Derrotas', value:fighter.record_losses, part:'losses' as const },
-                { label:'Draws', value:fighter.record_draws, part:'draws' as const },
+                { label:t('fighters.accountProfile.wins'), value:fighter.record_wins, part:'wins' as const },
+                { label:t('fighters.accountProfile.losses'), value:fighter.record_losses, part:'losses' as const },
+                { label:t('fighters.accountProfile.draws'), value:fighter.record_draws, part:'draws' as const },
               ].map(({label,value,part}) => (
                 <div key={label}>
                   <p className="text-3xl font-black" style={{ fontFamily:'var(--font-barlow-condensed)', letterSpacing:'-1px' }}><RecordValue part={part} value={value} /></p>
@@ -560,7 +560,7 @@ export default function FighterProfilePage() {
             {/* Disciplines pills */}
             {fighter.disciplines && fighter.disciplines.length > 0 && (
               <div className="border border-zinc-100 p-6 mb-4">
-                <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color:'#9A9A9A' }}>Disciplinas</p>
+                <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color:'#9A9A9A' }}>{t('fighters.accountProfile.disciplines')}</p>
                 <div className="flex flex-wrap gap-2">
                   {fighter.disciplines.map(d => (
                     <span key={d} className="text-xs font-bold px-3 py-1.5 uppercase tracking-wide bg-[#0A0A0A] text-white">{d}</span>
@@ -572,19 +572,19 @@ export default function FighterProfilePage() {
             {/* Details grid */}
             <div className="grid grid-cols-2 gap-4 border border-zinc-100 p-6">
               {[
-                { label:'División', value: fighter.weight_class ? (WEIGHT_LABELS[fighter.weight_class] ?? fighter.weight_class) : '—' },
-                { label:'Gimnasio', value: fighter.gym_name ?? '—' },
-                { label:'Peso exacto', value: fighter.exact_weight ? `${fighter.exact_weight} kg` : '—' },
-                { label:'División de género', value: fighter.gender_division ?? '—' },
-                { label:'Nivel técnico', value: fighter.skill_rating ? `${fighter.skill_rating}/10` : '—' },
-                { label:'KO/TKO a favor', value: `${fighter.ko_wins + fighter.tko_wins}` },
-                { label:'KO/TKO en contra', value: `${fighter.ko_losses + fighter.tko_losses}` },
-                { label:'Reglamentos', value: fighter.preferred_rulesets.length ? fighter.preferred_rulesets.join(', ') : '—' },
-                { label:'Peso deseado (informativo)', value: fighter.requested_weight_kg ? `${fighter.requested_weight_kg} kg` : '—' },
-                { label:'Rango aceptable', value: fighter.acceptable_weight_min_kg != null || fighter.acceptable_weight_max_kg != null ? `${fighter.acceptable_weight_min_kg ?? '—'}–${fighter.acceptable_weight_max_kg ?? '—'} kg` : '—' },
-                { label:'Última pelea', value: fighter.last_fight_at ?? '—' },
-                { label:'Estatura', value: fighter.height_cm ? `${fighter.height_cm} cm` : '—' },
-                { label:'Alcance', value: fighter.reach_cm ? `${fighter.reach_cm} cm` : '—' },
+                { label:t('fighters.accountProfile.fields.division'), value: fighter.weight_class ? (WEIGHT_LABELS[fighter.weight_class] ?? fighter.weight_class) : '—' },
+                { label:t('fighters.accountProfile.gym'), value: fighter.gym_name ?? '—' },
+                { label:t('fighters.accountProfile.exactWeight'), value: fighter.exact_weight ? `${fighter.exact_weight} kg` : '—' },
+                { label:t('fighters.accountProfile.fields.genderDivision'), value: fighter.gender_division ?? '—' },
+                { label:t('fighters.accountProfile.fields.skillLevel'), value: fighter.skill_rating ? `${fighter.skill_rating}/10` : '—' },
+                { label:t('fighters.accountProfile.koTkoFor'), value: `${fighter.ko_wins + fighter.tko_wins}` },
+                { label:t('fighters.accountProfile.koTkoAgainst'), value: `${fighter.ko_losses + fighter.tko_losses}` },
+                { label:t('fighters.accountProfile.rulesets'), value: fighter.preferred_rulesets.length ? fighter.preferred_rulesets.join(', ') : '—' },
+                { label:t('fighters.accountProfile.requestedWeight'), value: fighter.requested_weight_kg ? `${fighter.requested_weight_kg} kg` : '—' },
+                { label:t('fighters.accountProfile.acceptableRange'), value: fighter.acceptable_weight_min_kg != null || fighter.acceptable_weight_max_kg != null ? `${fighter.acceptable_weight_min_kg ?? '—'}–${fighter.acceptable_weight_max_kg ?? '—'} kg` : '—' },
+                { label:t('fighters.accountProfile.fields.lastFight'), value: fighter.last_fight_at ?? '—' },
+                { label:t('fighters.accountProfile.height'), value: fighter.height_cm ? `${fighter.height_cm} cm` : '—' },
+                { label:t('fighters.accountProfile.reach'), value: fighter.reach_cm ? `${fighter.reach_cm} cm` : '—' },
               ].map(({label,value}) => (
                 <div key={label}>
                   <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>{label}</p>
@@ -592,38 +592,38 @@ export default function FighterProfilePage() {
                 </div>
               ))}
               <div>
-                <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>Nivel</p>
+                <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>{t('fighters.accountProfile.level')}</p>
                 <span className={`text-xs font-bold px-2 py-1 uppercase tracking-widest ${fighter.experience_level === 'pro' ? 'bg-[#C0001E] text-white' : 'bg-zinc-100 text-zinc-600'}`}>
                   {fighter.experience_level === 'pro' ? 'Pro' : 'Amateur'}
                 </span>
               </div>
               <div>
-                <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>Disponibilidad</p>
+                <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>{t('fighters.accountProfile.availability')}</p>
                 <span className={`text-xs font-semibold px-2 py-1 ${fighter.is_available ? 'bg-emerald-50 text-emerald-700' : 'bg-zinc-100 text-zinc-500'}`}>
-                  {fighter.is_available ? 'Disponible' : 'No disponible'}
+                  {fighter.is_available ? t('fighters.accountProfile.available') : t('fighters.accountProfile.unavailable')}
                 </span>
               </div>
               <div>
-                <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>Aviso corto</p>
+                <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>{t('fighters.accountProfile.shortNotice')}</p>
                 <span className={`text-xs font-semibold px-2 py-1 ${fighter.short_notice_ready ? 'bg-amber-50 text-amber-700' : 'bg-zinc-100 text-zinc-500'}`}>
-                  {fighter.short_notice_ready ? 'Listo' : 'No'}
+                  {fighter.short_notice_ready ? t('fighters.accountProfile.ready') : t('fighters.accountProfile.no')}
                 </span>
               </div>
               {fighter.available_from && (
                 <div>
-                  <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>Disponible desde</p>
+                  <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>{t('fighters.accountProfile.availableFrom')}</p>
                   <p className="text-sm text-zinc-900">{fighter.available_from}</p>
                 </div>
               )}
               {fighter.available_to && (
                 <div>
-                  <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>Disponible hasta</p>
+                  <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>{t('fighters.accountProfile.availableTo')}</p>
                   <p className="text-sm text-zinc-900">{fighter.available_to}</p>
                 </div>
               )}
               {fighter.special_restrictions.length > 0 && (
                 <div className="col-span-2 border border-amber-200 bg-amber-50 p-3">
-                  <p className="text-xs font-bold tracking-widest uppercase text-amber-800">Restricciones privadas</p>
+                  <p className="text-xs font-bold tracking-widest uppercase text-amber-800">{t('fighters.accountProfile.privateRestrictions')}</p>
                   <p className="mt-1 text-sm text-amber-950">{fighter.special_restrictions.join(' · ')}</p>
                 </div>
               )}
@@ -639,7 +639,7 @@ export default function FighterProfilePage() {
 
             {visibleSocialMedia.length > 0 && (
               <div className="border border-zinc-100 p-6">
-                <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color:'#9A9A9A' }}>Redes sociales</p>
+                <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color:'#9A9A9A' }}>{t('fighters.accountProfile.socialMedia')}</p>
                 <div className="flex flex-wrap gap-2">
                   {visibleSocialMedia.map(({ key, label, value, href }) => (
                     <a
@@ -658,7 +658,7 @@ export default function FighterProfilePage() {
             )}
 
             <div className="flex justify-end">
-              <button onClick={startEditing} className="px-4 py-2 text-sm font-semibold border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition-colors">Editar perfil</button>
+              <button onClick={startEditing} className="px-4 py-2 text-sm font-semibold border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition-colors">{t('fighters.accountProfile.editProfile')}</button>
             </div>
           </div>
         )}
@@ -667,47 +667,47 @@ export default function FighterProfilePage() {
         {editing && (
           <div className="space-y-5">
             <div className="border border-zinc-200 p-4 sm:p-5">
-              <p className="text-xs font-bold tracking-widest uppercase" style={{ color:'#5A5A5A' }}>Información personal</p>
-              <p className="mt-1 text-xs text-zinc-500">Puedes actualizar estos datos. El correo de acceso no se puede modificar aquí.</p>
+              <p className="text-xs font-bold tracking-widest uppercase" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.personalInformation')}</p>
+              <p className="mt-1 text-xs text-zinc-500">{t('fighters.accountProfile.emailLockedHelp')}</p>
               <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <label className="sm:col-span-2">
-                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">Nombre completo</span>
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.fullName')}</span>
                   <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} required maxLength={120}
                     className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                 </label>
                 <label>
-                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">Teléfono</span>
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.fields.phone')}</span>
                   <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+52 000 000 0000" maxLength={30}
                     className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                 </label>
                 <label>
-                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">Fecha de nacimiento</span>
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.dateOfBirth')}</span>
                   <input type="date" value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)}
                     className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                 </label>
                 <label>
-                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">Ciudad</span>
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.city')}</span>
                   <input type="text" value={city} onChange={e => setCity(e.target.value)} maxLength={100}
                     className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                 </label>
                 <label>
-                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">Estado</span>
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.state')}</span>
                   <input type="text" value={state} onChange={e => setState(e.target.value)} maxLength={100}
                     className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                 </label>
                 <label>
-                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">País</span>
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.fields.country')}</span>
                   <input type="text" value={country} onChange={e => setCountry(e.target.value)} maxLength={100}
                     className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                 </label>
                 <label>
-                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">Nacionalidad / Bandera</span>
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.nationalityFlag')}</span>
                   <select
                     value={nationality}
                     onChange={(event) => setNationality(event.target.value)}
                     className="w-full border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
                   >
-                    <option value="">Selecciona un país</option>
+                    <option value="">{t('fighters.accountProfile.selectCountry')}</option>
                     {countryOptions.map((option) => (
                       <option key={option.code} value={option.code}>
                         {countryFlagEmoji(option.code)} {option.label}
@@ -716,7 +716,7 @@ export default function FighterProfilePage() {
                   </select>
                 </label>
                 <label>
-                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">Correo de la cuenta</span>
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.accountEmail')}</span>
                   <input type="email" value={profile.email} readOnly aria-readonly="true"
                     className="w-full cursor-not-allowed border border-zinc-200 bg-zinc-100 px-3 py-2 text-sm text-zinc-500" />
                 </label>
@@ -725,24 +725,24 @@ export default function FighterProfilePage() {
 
             {/* Nickname */}
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Apodo (opcional)</label>
-              <input type="text" value={nickname} onChange={e => setNickname(e.target.value)} placeholder='Ej. "El Tigre"'
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.nickname')}</label>
+              <input type="text" value={nickname} onChange={e => setNickname(e.target.value)} placeholder={t('fighters.accountProfile.nicknamePlaceholder')}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
             </div>
 
             {/* Weight class */}
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>División / Peso</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.divisionWeight')}</label>
               <select value={weightClass} onChange={e => setWeightClass(e.target.value)}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white">
-                <option value="">— Selecciona una división —</option>
+                <option value="">— {t('fighters.accountProfile.selectDivision')} —</option>
                 {WEIGHT_CLASSES.map(wc => <option key={wc} value={wc}>{WEIGHT_LABELS[wc]}</option>)}
               </select>
             </div>
 
             {/* Disciplines — multi-select checkboxes */}
             <div className="col-span-2">
-              <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color:'#5A5A5A' }}>Disciplinas</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.disciplines')}</label>
               <div className="flex flex-wrap gap-2">
                 {DISCIPLINE_OPTIONS.map(d => (
                   <button
@@ -765,19 +765,19 @@ export default function FighterProfilePage() {
 
             {/* Gym */}
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Gimnasio</label>
-              <input type="text" value={gymName} onChange={e => setGymName(e.target.value)} placeholder="Nombre del gimnasio"
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.gym')}</label>
+              <input type="text" value={gymName} onChange={e => setGymName(e.target.value)} placeholder={t('fighters.accountProfile.gymPlaceholder')}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
             </div>
 
             {/* Physical stats */}
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Estadísticas físicas</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.physicalStats')}</label>
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { label:'Peso (kg)', val:exactWeight, set:setExactWeight, step:'0.1' },
-                  { label:'Estatura (cm)', val:heightCm, set:setHeightCm, step:'1' },
-                  { label:'Alcance (cm)', val:reachCm, set:setReachCm, step:'1' },
+                  { label:t('fighters.accountProfile.weightKg'), val:exactWeight, set:setExactWeight, step:'0.1' },
+                  { label:t('fighters.accountProfile.heightCm'), val:heightCm, set:setHeightCm, step:'1' },
+                  { label:t('fighters.accountProfile.reachCm'), val:reachCm, set:setReachCm, step:'1' },
                 ].map(({ label, val, set: setter, step }) => (
                   <div key={label}>
                     <p className="text-xs text-zinc-400 mb-1">{label}</p>
@@ -790,9 +790,9 @@ export default function FighterProfilePage() {
 
             {/* Record */}
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Récord (V – D – E)</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.recordLabel')}</label>
               <div className="grid grid-cols-3 gap-3">
-                {[{label:'Victorias',val:wins,set:setWins},{label:'Derrotas',val:losses,set:setLosses},{label:'Draws',val:draws,set:setDraws}].map(({ label, val, set: setter }) => (
+                {[{label:t('fighters.accountProfile.wins'),val:wins,set:setWins},{label:t('fighters.accountProfile.losses'),val:losses,set:setLosses},{label:t('fighters.accountProfile.draws'),val:draws,set:setDraws}].map(({ label, val, set: setter }) => (
                   <div key={label}>
                     <p className="text-xs text-zinc-400 mb-1">{label}</p>
                     <input type="number" min="0" value={val} onChange={e => setter(e.target.value)}
@@ -803,52 +803,52 @@ export default function FighterProfilePage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>División y nivel técnico</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.divisionAndLevel')}</label>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <GenderDivisionCheckboxes value={genderDivision} onChange={setGenderDivision} />
-                <input type="number" min="1" max="10" step="0.1" value={skillRating} onChange={e => setSkillRating(e.target.value)} placeholder="Nivel 1–10" className="w-full border border-zinc-300 px-3 py-2 text-sm" />
+                <input type="number" min="1" max="10" step="0.1" value={skillRating} onChange={e => setSkillRating(e.target.value)} placeholder={t('fighters.accountProfile.skillPlaceholder')} className="w-full border border-zinc-300 px-3 py-2 text-sm" />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Récord KO / TKO</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.knockoutRecord')}</label>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {[{label:'KO a favor',val:koWins,set:setKoWins},{label:'TKO a favor',val:tkoWins,set:setTkoWins},{label:'KO en contra',val:koLosses,set:setKoLosses},{label:'TKO en contra',val:tkoLosses,set:setTkoLosses}].map(({ label, val, set: setter }) => <label key={label}><span className="mb-1 block text-xs text-zinc-400">{label}</span><input type="number" min="0" value={val} onChange={e => setter(e.target.value)} className="w-full border border-zinc-300 px-3 py-2 text-center text-sm" /></label>)}
+                {[{label:t('fighters.accountProfile.koFor'),val:koWins,set:setKoWins},{label:t('fighters.accountProfile.tkoFor'),val:tkoWins,set:setTkoWins},{label:t('fighters.accountProfile.koAgainst'),val:koLosses,set:setKoLosses},{label:t('fighters.accountProfile.tkoAgainst'),val:tkoLosses,set:setTkoLosses}].map(({ label, val, set: setter }) => <label key={label}><span className="mb-1 block text-xs text-zinc-400">{label}</span><input type="number" min="0" value={val} onChange={e => setter(e.target.value)} className="w-full border border-zinc-300 px-3 py-2 text-center text-sm" /></label>)}
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Reglamentos y preferencias</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.rulesAndPreferences')}</label>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <input value={preferredRulesets} onChange={e => setPreferredRulesets(e.target.value)} placeholder="Reglamentos, separados por coma" className="w-full border border-zinc-300 px-3 py-2 text-sm sm:col-span-2" />
-                <input type="number" min="0" step="0.1" value={requestedWeight} onChange={e => setRequestedWeight(e.target.value)} placeholder="Peso deseado (solo referencia) kg" className="w-full border border-zinc-300 px-3 py-2 text-sm" />
+                <input value={preferredRulesets} onChange={e => setPreferredRulesets(e.target.value)} placeholder={t('fighters.accountProfile.rulesetsPlaceholder')} className="w-full border border-zinc-300 px-3 py-2 text-sm sm:col-span-2" />
+                <input type="number" min="0" step="0.1" value={requestedWeight} onChange={e => setRequestedWeight(e.target.value)} placeholder={t('fighters.accountProfile.requestedWeightPlaceholder')} className="w-full border border-zinc-300 px-3 py-2 text-sm" />
                 <div className="grid grid-cols-2 gap-3">
-                  <input type="number" min="0" step="0.1" value={acceptableWeightMin} onChange={e => setAcceptableWeightMin(e.target.value)} placeholder="Mín. kg" className="w-full border border-zinc-300 px-3 py-2 text-sm" />
-                  <input type="number" min="0" step="0.1" value={acceptableWeightMax} onChange={e => setAcceptableWeightMax(e.target.value)} placeholder="Máx. kg" className="w-full border border-zinc-300 px-3 py-2 text-sm" />
+                  <input type="number" min="0" step="0.1" value={acceptableWeightMin} onChange={e => setAcceptableWeightMin(e.target.value)} placeholder={t('fighters.accountProfile.minimumKg')} className="w-full border border-zinc-300 px-3 py-2 text-sm" />
+                  <input type="number" min="0" step="0.1" value={acceptableWeightMax} onChange={e => setAcceptableWeightMax(e.target.value)} placeholder={t('fighters.accountProfile.maximumKg')} className="w-full border border-zinc-300 px-3 py-2 text-sm" />
                 </div>
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Historial reciente y restricciones privadas</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.recentHistoryRestrictions')}</label>
               <div className="grid grid-cols-2 gap-3">
-                <label><span className="mb-1 block text-xs text-zinc-400">Última pelea</span><input type="date" value={lastFightAt} onChange={e => setLastFightAt(e.target.value)} className="w-full border border-zinc-300 px-3 py-2 text-sm" /></label>
-                <label><span className="mb-1 block text-xs text-zinc-400">Última derrota por KO</span><input type="date" value={lastKoLossAt} onChange={e => setLastKoLossAt(e.target.value)} className="w-full border border-zinc-300 px-3 py-2 text-sm" /></label>
+                <label><span className="mb-1 block text-xs text-zinc-400">{t('fighters.accountProfile.fields.lastFight')}</span><input type="date" value={lastFightAt} onChange={e => setLastFightAt(e.target.value)} className="w-full border border-zinc-300 px-3 py-2 text-sm" /></label>
+                <label><span className="mb-1 block text-xs text-zinc-400">{t('fighters.accountProfile.fields.lastKoLoss')}</span><input type="date" value={lastKoLossAt} onChange={e => setLastKoLossAt(e.target.value)} className="w-full border border-zinc-300 px-3 py-2 text-sm" /></label>
               </div>
-              <textarea value={specialRestrictions} onChange={e => setSpecialRestrictions(e.target.value)} rows={2} placeholder="Restricciones separadas por coma. Solo visibles para ti y el equipo del evento." className="mt-3 w-full border border-zinc-300 px-3 py-2 text-sm" />
+              <textarea value={specialRestrictions} onChange={e => setSpecialRestrictions(e.target.value)} rows={2} placeholder={t('fighters.accountProfile.restrictionsPlaceholder')} className="mt-3 w-full border border-zinc-300 px-3 py-2 text-sm" />
             </div>
 
             {/* Availability window */}
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Ventana de disponibilidad</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.availabilityWindow')}</label>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-xs text-zinc-400 mb-1">Desde</p>
+                  <p className="text-xs text-zinc-400 mb-1">{t('fighters.accountProfile.from')}</p>
                   <input type="date" value={availableFrom} onChange={e => setAvailableFrom(e.target.value)}
                     className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                 </div>
                 <div>
-                  <p className="text-xs text-zinc-400 mb-1">Hasta</p>
+                  <p className="text-xs text-zinc-400 mb-1">{t('fighters.accountProfile.to')}</p>
                   <input type="date" value={availableTo} onChange={e => setAvailableTo(e.target.value)}
                     className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                 </div>
@@ -857,9 +857,9 @@ export default function FighterProfilePage() {
 
             {/* Availability toggle */}
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color:'#5A5A5A' }}>Disponibilidad</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.availability')}</label>
               <div className="flex gap-3">
-                {[{label:'Disponible',value:true},{label:'No disponible',value:false}].map(({label,value}) => (
+                {[{label:t('fighters.accountProfile.available'),value:true},{label:t('fighters.accountProfile.unavailable'),value:false}].map(({label,value}) => (
                   <button key={String(value)} type="button" onClick={() => setIsAvailable(value)}
                     className={`flex-1 py-2 text-sm font-semibold border transition-colors ${isAvailable===value ? 'border-[#C0001E] text-white bg-[#C0001E]' : 'border-zinc-300 text-zinc-600 hover:bg-zinc-50'}`}>
                     {label}
@@ -870,9 +870,9 @@ export default function FighterProfilePage() {
 
             {/* Short notice toggle */}
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color:'#5A5A5A' }}>Aviso Corto</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.shortNotice')}</label>
               <div className="flex gap-3">
-                {[{label:'Listo',value:true},{label:'No',value:false}].map(({label,value}) => (
+                {[{label:t('fighters.accountProfile.ready'),value:true},{label:t('fighters.accountProfile.no'),value:false}].map(({label,value}) => (
                   <button key={String(value)} type="button" onClick={() => setShortNotice(value)}
                     className={`flex-1 py-2 text-sm font-semibold border transition-colors ${shortNotice===value ? 'border-[#C0001E] text-white bg-[#C0001E]' : 'border-zinc-300 text-zinc-600 hover:bg-zinc-50'}`}>
                     {label}
@@ -883,7 +883,7 @@ export default function FighterProfilePage() {
 
             {/* Experience level */}
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color:'#5A5A5A' }}>Nivel</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.level')}</label>
               <div className="flex gap-3">
                 {([{label:'Amateur',value:'amateur'},{label:'Pro',value:'pro'}] as const).map(({label,value}) => (
                   <button key={value} type="button" onClick={() => setExperienceLevel(value)}
@@ -897,14 +897,14 @@ export default function FighterProfilePage() {
             {/* Bio */}
             <div>
               <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Bio</label>
-              <textarea value={bio} onChange={e => setBio(e.target.value)} rows={4} placeholder="Cuéntanos sobre ti..."
+              <textarea value={bio} onChange={e => setBio(e.target.value)} rows={4} placeholder={t('fighters.accountProfile.bioPlaceholder')}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900 resize-none" />
             </div>
 
             {/* Social media */}
             <div className="border border-zinc-200 p-4">
-              <label className="block text-xs font-bold tracking-widest uppercase" style={{ color:'#5A5A5A' }}>Redes sociales</label>
-              <p className="mt-1 text-xs text-zinc-500">Agrega tu usuario o pega el enlace completo de tu perfil.</p>
+              <label className="block text-xs font-bold tracking-widest uppercase" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.socialMedia')}</label>
+              <p className="mt-1 text-xs text-zinc-500">{t('fighters.accountProfile.socialMediaHelp')}</p>
               <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {SOCIAL_MEDIA_PLATFORMS.map(({ key, label, placeholder }) => (
                   <label key={key}>
@@ -927,29 +927,29 @@ export default function FighterProfilePage() {
 
             {/* Representation */}
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-3" style={{ color:'#5A5A5A' }}>Representacion actual</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-3" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.currentRepresentation')}</label>
               <div className="space-y-4">
                 {/* Manager */}
                 <div className="border border-zinc-200 p-4">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={hasManager} onChange={e => setHasManager(e.target.checked)}
                       className="w-4 h-4 border-zinc-300 text-[#C0001E] focus:ring-[#C0001E]" />
-                    <span className="text-sm font-semibold text-zinc-900">Tengo representante</span>
+                    <span className="text-sm font-semibold text-zinc-900">{t('fighters.accountProfile.hasManager')}</span>
                   </label>
                   {hasManager && (
                     <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
-                        <p className="text-xs text-zinc-400 mb-1">Nombre</p>
-                        <input type="text" value={managerName} onChange={e => setManagerName(e.target.value)} placeholder="Nombre completo"
+                        <p className="text-xs text-zinc-400 mb-1">{t('fighters.accountProfile.name')}</p>
+                        <input type="text" value={managerName} onChange={e => setManagerName(e.target.value)} placeholder={t('fighters.accountProfile.fullName')}
                           className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                       </div>
                       <div>
-                        <p className="text-xs text-zinc-400 mb-1">Correo</p>
+                        <p className="text-xs text-zinc-400 mb-1">{t('fighters.accountProfile.email')}</p>
                         <input type="email" value={managerEmail} onChange={e => setManagerEmail(e.target.value)} placeholder="correo@ejemplo.com"
                           className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                       </div>
                       <div>
-                        <p className="text-xs text-zinc-400 mb-1">Telefono</p>
+                        <p className="text-xs text-zinc-400 mb-1">{t('fighters.accountProfile.fields.phone')}</p>
                         <input type="tel" value={managerPhone} onChange={e => setManagerPhone(e.target.value)} placeholder="+52 000 000 0000"
                           className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                       </div>
@@ -962,22 +962,22 @@ export default function FighterProfilePage() {
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={hasPromoter} onChange={e => setHasPromoter(e.target.checked)}
                       className="w-4 h-4 border-zinc-300 text-[#C0001E] focus:ring-[#C0001E]" />
-                    <span className="text-sm font-semibold text-zinc-900">Tengo Promotor</span>
+                    <span className="text-sm font-semibold text-zinc-900">{t('fighters.accountProfile.hasPromoter')}</span>
                   </label>
                   {hasPromoter && (
                     <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
-                        <p className="text-xs text-zinc-400 mb-1">Nombre</p>
-                        <input type="text" value={promoterName} onChange={e => setPromoterName(e.target.value)} placeholder="Nombre completo"
+                        <p className="text-xs text-zinc-400 mb-1">{t('fighters.accountProfile.name')}</p>
+                        <input type="text" value={promoterName} onChange={e => setPromoterName(e.target.value)} placeholder={t('fighters.accountProfile.fullName')}
                           className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                       </div>
                       <div>
-                        <p className="text-xs text-zinc-400 mb-1">Correo</p>
+                        <p className="text-xs text-zinc-400 mb-1">{t('fighters.accountProfile.email')}</p>
                         <input type="email" value={promoterEmail} onChange={e => setPromoterEmail(e.target.value)} placeholder="correo@ejemplo.com"
                           className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                       </div>
                       <div>
-                        <p className="text-xs text-zinc-400 mb-1">Telefono</p>
+                        <p className="text-xs text-zinc-400 mb-1">{t('fighters.accountProfile.fields.phone')}</p>
                         <input type="tel" value={promoterPhone} onChange={e => setPromoterPhone(e.target.value)} placeholder="+52 000 000 0000"
                           className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                       </div>
@@ -990,22 +990,22 @@ export default function FighterProfilePage() {
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={hasSponsor} onChange={e => setHasSponsor(e.target.checked)}
                       className="w-4 h-4 border-zinc-300 text-[#C0001E] focus:ring-[#C0001E]" />
-                    <span className="text-sm font-semibold text-zinc-900">Tengo patrocinador</span>
+                    <span className="text-sm font-semibold text-zinc-900">{t('fighters.accountProfile.hasSponsor')}</span>
                   </label>
                   {hasSponsor && (
                     <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
-                        <p className="text-xs text-zinc-400 mb-1">Nombre</p>
-                        <input type="text" value={sponsorName} onChange={e => setSponsorName(e.target.value)} placeholder="Nombre completo"
+                        <p className="text-xs text-zinc-400 mb-1">{t('fighters.accountProfile.name')}</p>
+                        <input type="text" value={sponsorName} onChange={e => setSponsorName(e.target.value)} placeholder={t('fighters.accountProfile.fullName')}
                           className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                       </div>
                       <div>
-                        <p className="text-xs text-zinc-400 mb-1">Correo</p>
+                        <p className="text-xs text-zinc-400 mb-1">{t('fighters.accountProfile.email')}</p>
                         <input type="email" value={sponsorEmail} onChange={e => setSponsorEmail(e.target.value)} placeholder="correo@ejemplo.com"
                           className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                       </div>
                       <div>
-                        <p className="text-xs text-zinc-400 mb-1">Telefono</p>
+                        <p className="text-xs text-zinc-400 mb-1">{t('fighters.accountProfile.fields.phone')}</p>
                         <input type="tel" value={sponsorPhone} onChange={e => setSponsorPhone(e.target.value)} placeholder="+52 000 000 0000"
                           className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                       </div>
@@ -1017,11 +1017,11 @@ export default function FighterProfilePage() {
 
             <div className="flex justify-end gap-3 pt-2">
               {fighter && (
-                <button onClick={cancelEditing} className="px-4 py-2 text-sm font-medium border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition-colors">Cancelar</button>
+                <button onClick={cancelEditing} className="px-4 py-2 text-sm font-medium border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition-colors">{t('fighters.accountProfile.cancel')}</button>
               )}
               <button onClick={handleSave} disabled={saving} className="px-6 py-2 text-sm font-bold tracking-wide uppercase text-white disabled:opacity-50 transition-colors"
                 style={{ background: saving ? '#9A9A9A' : '#C0001E' }}>
-                {saving ? 'Guardando...' : isSetup ? 'Crear perfil' : 'Guardar cambios'}
+                {saving ? t('fighters.accountProfile.saving') : isSetup ? t('fighters.accountProfile.createProfile') : t('fighters.accountProfile.saveChanges')}
               </button>
             </div>
           </div>
@@ -1031,24 +1031,24 @@ export default function FighterProfilePage() {
         {fighter && (
           <div className="mt-10">
             <div className="border-t border-zinc-100 pt-8">
-              <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color:'#C0001E' }}>Solicitudes de Pelea</p>
+              <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color:'#C0001E' }}>{t('fighters.accountProfile.fightRequests')}</p>
               {requestsLoading ? (
-                <p className="text-sm text-zinc-400">Cargando...</p>
+                <p className="text-sm text-zinc-400">{t('fighters.accountProfile.loading')}</p>
               ) : requests.length === 0 ? (
                 <div className="border border-dashed border-zinc-200 py-8 text-center">
-                  <p className="text-sm text-zinc-400">No tienes solicitudes de pelea aún.</p>
+                  <p className="text-sm text-zinc-400">{t('fighters.accountProfile.noFightRequests')}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {requests.map((req) => {
-                    const s = STATUS_LABELS[req.status] ?? { label: req.status, cls: 'bg-zinc-100 text-zinc-500' };
+                    const s = { label: t(`fighters.accountProfile.requestStatus.${req.status}`, { defaultValue: req.status }), cls: STATUS_CLASSES[req.status] ?? 'bg-zinc-100 text-zinc-500' };
                     return (
                       <div key={req.id} className="border border-zinc-200 p-4">
                         <div className="flex items-start justify-between gap-3 mb-2">
                           <div>
-                            <p className="text-sm font-semibold text-zinc-900">{req.events?.event_name ?? 'Evento desconocido'}</p>
+                            <p className="text-sm font-semibold text-zinc-900">{req.events?.event_name ?? t('fighters.accountProfile.unknownEvent')}</p>
                             <p className="text-xs mt-0.5" style={{ color:'#5A5A5A' }}>
-                              Promotor: {req.profiles?.full_name ?? '—'}
+                              {t('fighters.accountProfile.promoter')}: {req.profiles?.full_name ?? '—'}
                               {req.events?.event_date ? ` · ${req.events.event_date}` : ''}
                               {req.events?.city ? ` · ${req.events.city}` : ''}
                             </p>
@@ -1060,11 +1060,11 @@ export default function FighterProfilePage() {
                           <div className="flex gap-2 justify-end">
                             <button onClick={() => handleRequestStatus(req.id,'declined')} disabled={updatingId===req.id}
                               className="px-3 py-1.5 text-xs font-semibold border border-zinc-300 text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 transition-colors">
-                              Rechazar
+                              {t('fighters.accountProfile.decline')}
                             </button>
                             <button onClick={() => handleRequestStatus(req.id,'accepted')} disabled={updatingId===req.id}
                               className="px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50 transition-colors" style={{ background:'#C0001E' }}>
-                              {updatingId===req.id ? '...' : 'Aceptar'}
+                              {updatingId===req.id ? '...' : t('fighters.accountProfile.accept')}
                             </button>
                           </div>
                         )}
@@ -1081,24 +1081,24 @@ export default function FighterProfilePage() {
         {fighter && (
           <div className="mt-10">
             <div className="border-t border-zinc-100 pt-8">
-              <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color:'#C0001E' }}>Mis Aplicaciones a Eventos</p>
+              <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color:'#C0001E' }}>{t('fighters.accountProfile.myEventApplications')}</p>
               {appsLoading ? (
-                <p className="text-sm text-zinc-400">Cargando...</p>
+                <p className="text-sm text-zinc-400">{t('fighters.accountProfile.loading')}</p>
               ) : myApplications.length === 0 ? (
                 <div className="border border-dashed border-zinc-200 py-8 text-center">
-                  <p className="text-sm text-zinc-400">No has aplicado a ningún evento aún.</p>
+                  <p className="text-sm text-zinc-400">{t('fighters.accountProfile.noApplications')}</p>
                   <Link href="/events" className="mt-3 inline-block text-xs font-bold tracking-widest uppercase text-white px-4 py-2 transition-colors" style={{ background:'#C0001E' }}>
-                    Ver eventos
+                    {t('fighters.accountProfile.viewEvents')}
                   </Link>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {myApplications.map((app) => {
                     const appStatuses: Record<string, { label: string; cls: string }> = {
-                      pending:   { label: 'Pendiente',  cls: 'bg-amber-50 text-amber-700' },
-                      accepted:  { label: 'Aceptado',   cls: 'bg-emerald-50 text-emerald-700' },
-                      declined:  { label: 'Rechazado',  cls: 'bg-red-50 text-red-700' },
-                      withdrawn: { label: 'Retirado',   cls: 'bg-zinc-100 text-zinc-500' },
+                      pending:   { label: t('fighters.accountProfile.applicationStatus.pending'), cls: 'bg-amber-50 text-amber-700' },
+                      accepted:  { label: t('fighters.accountProfile.applicationStatus.accepted'), cls: 'bg-emerald-50 text-emerald-700' },
+                      declined:  { label: t('fighters.accountProfile.applicationStatus.declined'), cls: 'bg-red-50 text-red-700' },
+                      withdrawn: { label: t('fighters.accountProfile.applicationStatus.withdrawn'), cls: 'bg-zinc-100 text-zinc-500' },
                     };
                     const s = appStatuses[app.status] ?? { label: app.status, cls: 'bg-zinc-100 text-zinc-500' };
                     return (
@@ -1117,7 +1117,7 @@ export default function FighterProfilePage() {
                                 onClick={() => handleWithdrawApplication(app.id)}
                                 disabled={withdrawingId === app.id}
                                 className="text-xs text-zinc-400 hover:text-red-600 disabled:opacity-50 transition-colors">
-                                {withdrawingId === app.id ? '...' : 'Retirar'}
+                                {withdrawingId === app.id ? '...' : t('fighters.accountProfile.withdraw')}
                               </button>
                             )}
                           </div>
@@ -1133,13 +1133,13 @@ export default function FighterProfilePage() {
 
         {/* ── Delete Account ── */}
         <div className="mt-12 border-t border-zinc-100 pt-8">
-          <p className="text-xs font-bold tracking-widest uppercase mb-2 text-red-600">Zona de peligro</p>
-          <p className="text-sm text-zinc-500 mb-4">Eliminar tu cuenta es permanente. Se borrarán todos tus datos y no podrás recuperarlos.</p>
+          <p className="text-xs font-bold tracking-widest uppercase mb-2 text-red-600">{t('fighters.accountProfile.dangerZone')}</p>
+          <p className="text-sm text-zinc-500 mb-4">{t('fighters.accountProfile.deleteWarning')}</p>
           <button
             onClick={() => setShowDeleteConfirm(true)}
             className="px-4 py-2 text-sm font-semibold border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
           >
-            Eliminar cuenta
+            {t('fighters.accountProfile.deleteAccount')}
           </button>
         </div>
 
@@ -1147,9 +1147,9 @@ export default function FighterProfilePage() {
         {showDeleteConfirm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
             <div className="bg-white max-w-sm w-full p-6 shadow-lg">
-              <h3 className="text-lg font-black uppercase mb-2">Eliminar cuenta</h3>
+              <h3 className="text-lg font-black uppercase mb-2">{t('fighters.accountProfile.deleteAccount')}</h3>
               <p className="text-sm text-zinc-600 mb-6">
-                Esta acción es irreversible. Se eliminarán tu perfil, datos y toda la información asociada a tu cuenta. ¿Estás seguro?
+                {t('fighters.accountProfile.deleteConfirmation')}
               </p>
               <div className="flex justify-end gap-3">
                 <button
@@ -1157,14 +1157,14 @@ export default function FighterProfilePage() {
                   disabled={deleting}
                   className="px-4 py-2 text-sm font-medium border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-50"
                 >
-                  Cancelar
+                  {t('fighters.accountProfile.cancel')}
                 </button>
                 <button
                   onClick={handleDeleteAccount}
                   disabled={deleting}
                   className="px-4 py-2 text-sm font-bold uppercase tracking-wide text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50"
                 >
-                  {deleting ? 'Eliminando...' : 'Sí, eliminar'}
+                  {deleting ? t('fighters.accountProfile.deleting') : t('fighters.accountProfile.yesDelete')}
                 </button>
               </div>
             </div>

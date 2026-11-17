@@ -24,6 +24,51 @@
         "federated": "Федеративные промоутеры не найдены.",
         "independent": "Независимые промоутеры не найдены."
       }
-    }
+    },
+    "dashboard": {
+      "title": "Панель промоутера",
+      "newEvent": "Новое событие",
+      "description": "Публикуйте свои мероприятия и управляйте ими с этой панели.",
+      "publishedEvents": "Опубликованные события",
+      "drafts": "Черновики",
+      "pendingApplications": "Ожидающие заявки",
+      "myEvents": "Мои события ({{count}})",
+      "loading": "Загрузка...",
+      "noEvents": "Вы еще не создали ни одного мероприятия.",
+      "noEventsHint": "Создайте свое первое мероприятие, чтобы начать организовывать свою боевую карту.",
+      "createFirstEvent": "Создать первое событие",
+      "noDate": "Без даты",
+      "pendingCount_one": "{{count}}на рассмотрении",
+      "pendingCount_other": "{{count}}на рассмотрении",
+      "fightersMatchmaking": "Бойцы / Матчмейкинг",
+      "edit": "Редактировать",
+      "applications": "Приложения",
+      "registrationPayments": "Регистрация и платежи",
+      "eventApplications": "Заявки на это мероприятие",
+      "noApplications": "На данное мероприятие пока нет заявок.",
+      "accept": "Принимать",
+      "decline": "Отклонить",
+      "noRegistrations": "На это мероприятие еще не зарегистрировался ни один боец.",
+      "pendingPayments": "Ожидается ({{count}})",
+      "pending": "В ожидании",
+      "awaitingConfirmation": "Ожидание подтверждения ({{count}})",
+      "submitted": "Поданный",
+      "confirmPayment": "Подтвердить платеж",
+      "confirmedPayments": "Платеж подтвержден ({{count}})",
+      "confirmed": "Подтвержденный",
+      "waived": "Отказано",
+      "paid": "Оплаченный",
+      "applicationStatus": {
+        "pending": "В ожидании",
+        "accepted": "Принял",
+        "declined": "Отклоненный",
+        "withdrawn": "снято"
+      }
+    },
+    "promoter": "Промоутер",
+    "eventCount_one": "Событие{{count}}",
+    "eventCount_other": "{{count}}событий",
+    "previous": "Предыдущий",
+    "next": "Следующий"
   }
 }

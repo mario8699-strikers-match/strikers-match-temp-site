@@ -6,6 +6,14 @@
     "empty": "No sponsors registered yet",
     "contact": "Contact",
     "becomeSponsor": "Become a Sponsor",
-    "becomeSponsorSubtitle": "Want to sponsor combat sports events? Create your account."
+    "becomeSponsorSubtitle": "Want to sponsor combat sports events? Create your account.",
+    "dashboard": {
+      "title": "Sponsor dashboard", "myOffers": "My offers", "availableFighters": "Available fighters",
+      "loading": "Loading...", "noFighters": "There are no available fighters right now.", "sendOffer": "Send offer",
+      "sponsorshipOffer": "Sponsorship offer", "to": "To", "offerSent": "Offer sent successfully!",
+      "amount": "Amount (MXN)", "messageOptional": "Message (optional)", "offerDetails": "Offer details...",
+      "cancel": "Cancel", "sending": "Sending...", "offerFailed": "The offer could not be sent. Please try again.",
+      "status": { "pending": "Pending", "accepted": "Accepted", "declined": "Declined", "cancelled": "Cancelled" }
+    }
   }
 }

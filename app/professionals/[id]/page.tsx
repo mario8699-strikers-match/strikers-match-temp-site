@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
@@ -11,34 +12,13 @@ import { authService } from '@/services/authService';
 import { VENDOR_ROLES } from '@/types';
 import type { Profile } from '@/types';
 
-const ROLE_LABELS: Record<string, string> = {
-  gyms_academies: 'Gimnasio / Academia',
-  recovery_wellness: 'Recuperación y bienestar',
-  gear_apparel: 'Ropa y equipo',
-  nutrition_supplements: 'Nutrición y suplementos',
-  local_business: 'Negocio local',
-  other_service: 'Otro servicio',
-  ring_card_girl: 'Ring Card Girl',
-  photographer: 'Fotógrafo',
-  videographer: 'Videógrafo',
-  broadcast_personality: 'Presentador / Comentarista',
-  catering_vendor: 'Catering / Alimentos',
-  venue_rental: 'Renta de Venue',
-  judge: 'Juez / Réferi',
-  ring_rental: 'Renta de Ring',
-  ring_announcer: 'Anunciador de Ring',
-  cutman: 'Cutman',
-  merchandise_vendor: 'Vendedor de Mercancía',
-  ringside_doctor: 'Médico de Ringside',
-  ringside_emt: 'Técnico Médico de Ringside',
-};
-
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).slice(0, 2);
   return parts.map((p) => p[0]?.toUpperCase() ?? '').join('') || '—';
 }
 
 export default function ProfessionalDetailPage() {
+  const { t } = useTranslation('gallery');
   const { id } = useParams<{ id: string }>();
   const [vendor, setVendor] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -112,15 +92,15 @@ export default function ProfessionalDetailPage() {
           return;
         }
         const prev = idx > 0
-          ? { id: list[idx - 1].id, name: list[idx - 1].full_name ?? 'Anterior' }
+          ? { id: list[idx - 1].id, name: list[idx - 1].full_name ?? t('gallery.professionalDetail.previous') }
           : null;
         const next = idx < list.length - 1
-          ? { id: list[idx + 1].id, name: list[idx + 1].full_name ?? 'Siguiente' }
+          ? { id: list[idx + 1].id, name: list[idx + 1].full_name ?? t('gallery.professionalDetail.next') }
           : null;
         setNeighbors({ prev, next });
       });
     return () => { cancelled = true; };
-  }, [id]);
+  }, [id, t]);
 
   // Union of primary role + any additional vendor roles (deduped, primary first).
   const allRoles = vendor
@@ -135,15 +115,15 @@ export default function ProfessionalDetailPage() {
 
       <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
         {loading ? (
-          <div className="py-24 text-center text-zinc-400 text-sm">Cargando...</div>
+          <div className="py-24 text-center text-zinc-400 text-sm">{t('gallery.professionalDetail.loading')}</div>
         ) : notFound || !vendor ? (
           <div className="py-24 text-center border border-dashed border-zinc-200">
-            <p className="text-zinc-500 text-sm">Perfil no encontrado o no disponible.</p>
+            <p className="text-zinc-500 text-sm">{t('gallery.professionalDetail.notFound')}</p>
             <Link
               href="/directorio"
               className="inline-block mt-4 text-xs font-bold uppercase tracking-widest text-[#C0001E] hover:underline"
             >
-              ← Ver Directorio
+              ← {t('gallery.professionalDetail.viewDirectory')}
             </Link>
           </div>
         ) : (
@@ -153,7 +133,7 @@ export default function ProfessionalDetailPage() {
               href="/directorio"
               className="inline-block mb-6 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-[#C0001E]"
             >
-              ← Directorio
+              ← {t('gallery.title')}
             </Link>
 
             {/* Header */}
@@ -184,7 +164,7 @@ export default function ProfessionalDetailPage() {
                 >
                   {vendor.full_name}
                 </h1>
-                <p className="mt-2 text-sm text-zinc-500">{vendor.city ?? 'Ubicación no especificada'}</p>
+                <p className="mt-2 text-sm text-zinc-500">{vendor.city ?? t('gallery.professionalDetail.locationUnavailable')}</p>
 
                 {/* Role badges */}
                 <div className="mt-4 flex flex-wrap gap-1.5">
@@ -196,7 +176,7 @@ export default function ProfessionalDetailPage() {
                       }`}
                     >
                       {i === 0 ? '' : '+ '}
-                      {ROLE_LABELS[r] ?? r}
+                      {t(`gallery.serviceRoles.${r}`, { defaultValue: r })}
                     </span>
                   ))}
                 </div>
@@ -206,12 +186,12 @@ export default function ProfessionalDetailPage() {
                   {vendor.is_available ? (
                     <span className="inline-flex items-center gap-2 text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1">
                       <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                      Disponible
+                      {t('gallery.professionalDetail.available')}
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-2 text-xs font-medium text-zinc-500 bg-zinc-50 px-2.5 py-1">
                       <span className="w-2 h-2 rounded-full bg-zinc-300" />
-                      No disponible actualmente
+                      {t('gallery.professionalDetail.unavailable')}
                     </span>
                   )}
                 </div>
@@ -222,7 +202,7 @@ export default function ProfessionalDetailPage() {
             {vendor.bio && (
               <section className="mb-8">
                 <h2 className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: '#C0001E' }}>
-                  Acerca de
+                  {t('gallery.professionalDetail.about')}
                 </h2>
                 <p className="text-sm text-zinc-700 whitespace-pre-line leading-relaxed">{vendor.bio}</p>
               </section>
@@ -231,13 +211,13 @@ export default function ProfessionalDetailPage() {
             {/* Contact — gated by login (admins always see) */}
             <section className="border-t border-zinc-200 pt-8">
               <h2 className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color: '#C0001E' }}>
-                Contacto
+                {t('gallery.professionalDetail.contact')}
               </h2>
 
               {isLoggedIn ? (
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-sm">
                   <div>
-                    <dt className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Correo</dt>
+                    <dt className="text-xs font-medium text-zinc-500 uppercase tracking-wide">{t('gallery.contact.email')}</dt>
                     <dd className="mt-1">
                       <a
                         href={`mailto:${vendor.email}`}
@@ -249,7 +229,7 @@ export default function ProfessionalDetailPage() {
                   </div>
                   {vendor.phone && (
                     <div>
-                      <dt className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Teléfono</dt>
+                      <dt className="text-xs font-medium text-zinc-500 uppercase tracking-wide">{t('gallery.contact.phone')}</dt>
                       <dd className="mt-1">
                         <a
                           href={`tel:${vendor.phone}`}
@@ -288,7 +268,7 @@ export default function ProfessionalDetailPage() {
                       clipRule="evenodd"
                     />
                   </svg>
-                  Inicia sesión para ver la información de contacto
+                  {t('gallery.professionalDetail.signInForContact')}
                 </Link>
               )}
 
@@ -299,7 +279,7 @@ export default function ProfessionalDetailPage() {
                     href={`mailto:${vendor.email}`}
                     className="inline-block text-xs font-bold uppercase tracking-widest bg-[#0A0A0A] text-white px-6 py-3 hover:bg-[#C0001E] transition-colors"
                   >
-                    Contactar
+                    {t('gallery.professionalDetail.contactAction')}
                   </a>
                 </div>
               )}
@@ -313,7 +293,7 @@ export default function ProfessionalDetailPage() {
                     href={`/professionals/${neighbors.prev.id}`}
                     className="group flex flex-col items-start gap-1 p-4 border border-zinc-200 hover:border-[#C0001E] transition-colors"
                   >
-                    <span className="text-xs font-bold uppercase tracking-widest text-zinc-400 group-hover:text-[#C0001E]">← Anterior</span>
+                    <span className="text-xs font-bold uppercase tracking-widest text-zinc-400 group-hover:text-[#C0001E]">← {t('gallery.professionalDetail.previous')}</span>
                     <span className="text-sm font-semibold text-zinc-900 truncate w-full">{neighbors.prev.name}</span>
                   </Link>
                 ) : <span />}
@@ -322,7 +302,7 @@ export default function ProfessionalDetailPage() {
                     href={`/professionals/${neighbors.next.id}`}
                     className="group flex flex-col items-end gap-1 p-4 border border-zinc-200 hover:border-[#C0001E] transition-colors text-right"
                   >
-                    <span className="text-xs font-bold uppercase tracking-widest text-zinc-400 group-hover:text-[#C0001E]">Siguiente →</span>
+                    <span className="text-xs font-bold uppercase tracking-widest text-zinc-400 group-hover:text-[#C0001E]">{t('gallery.professionalDetail.next')} →</span>
                     <span className="text-sm font-semibold text-zinc-900 truncate w-full">{neighbors.next.name}</span>
                   </Link>
                 ) : <span />}

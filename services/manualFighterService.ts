@@ -14,12 +14,25 @@ function isMissingDisciplinesColumn(error: { code?: string; message?: string } |
     && (error.message ?? '').includes("'manual_fighters'");
 }
 
+function isMissingInstagramColumn(error: { code?: string; message?: string } | null) {
+  if (!error) return false;
+  return error.code === 'PGRST204'
+    && (error.message ?? '').includes("'instagram'")
+    && (error.message ?? '').includes("'manual_fighters'");
+}
+
 function withoutDisciplines<T extends { discipline?: string | null; disciplines?: string[] }>(payload: T) {
   const { disciplines, ...legacyPayload } = payload;
   return {
     ...legacyPayload,
     discipline: legacyPayload.discipline ?? disciplines?.[0] ?? null,
   };
+}
+
+function withoutInstagram<T extends { instagram?: string | null }>(payload: T) {
+  const { instagram, ...legacyPayload } = payload;
+  void instagram;
+  return legacyPayload;
 }
 
 export const manualFighterService = {
@@ -89,6 +102,14 @@ export const manualFighterService = {
         ({ data, error } = await supabase
           .from('manual_fighters')
           .insert(withoutDisciplines(payload))
+          .select()
+          .single());
+      }
+
+      if (isMissingInstagramColumn(error)) {
+        ({ data, error } = await supabase
+          .from('manual_fighters')
+          .insert(withoutInstagram(payload))
           .select()
           .single());
       }

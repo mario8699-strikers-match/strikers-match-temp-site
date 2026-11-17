@@ -9,17 +9,8 @@ import { Footer } from '@/components/Footer';
 import { authService } from '@/services/authService';
 import type { Profile } from '@/types';
 
-const ROLE_LABELS: Record<string, string> = {
-  fighter: 'Peleador',
-  spectator: 'Espectador',
-  promoter: 'Promotor',
-  manager: 'Representante',
-  sponsor: 'Patrocinador',
-  admin: 'Admin',
-};
-
 export default function ProfilePage() {
-  const { t } = useTranslation('promoters');
+  const { t } = useTranslation(['common', 'promoters']);
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -49,7 +40,7 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     if (!profile) return;
-    if (!fullName.trim()) { setError('El nombre es obligatorio.'); return; }
+    if (!fullName.trim()) { setError(t('common:accountProfile.errors.nameRequired')); return; }
     setSaving(true);
     setError(null);
     setSuccess(false);
@@ -63,7 +54,7 @@ export default function ProfilePage() {
         'profile-photos';
       const { data: url, error: upErr } = await authService.uploadProfilePhoto(photoFile, folder);
       if (upErr || !url) {
-        setError('Error al subir la foto.');
+        setError(t('common:accountProfile.errors.photoUpload'));
         setSaving(false);
         return;
       }
@@ -79,7 +70,7 @@ export default function ProfilePage() {
 
     setSaving(false);
     if (err) {
-      setError('Error al guardar. Intenta de nuevo.');
+      setError(t('common:accountProfile.errors.save'));
     } else {
       setProfile({
         ...profile,
@@ -100,11 +91,11 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      setError('El archivo debe ser una imagen.');
+      setError(t('common:accountProfile.errors.imageType'));
       return;
     }
     if (file.size > 8 * 1024 * 1024) {
-      setError('La imagen no debe superar 8 MB.');
+      setError(t('common:accountProfile.errors.imageSize'));
       return;
     }
     setError(null);
@@ -137,7 +128,7 @@ export default function ProfilePage() {
         <div className="mb-8 flex items-center gap-4">
           {profile!.photo_url ? (
             <div className="w-16 h-16 sm:w-20 sm:h-20 overflow-hidden bg-zinc-100 flex-shrink-0">
-              <Image src={profile!.photo_url} alt={profile!.full_name ?? 'Foto'} width={80} height={80} className="w-full h-full object-cover" />
+              <Image src={profile!.photo_url} alt={profile!.full_name ?? t('common:accountProfile.photo')} width={80} height={80} className="w-full h-full object-cover" />
             </div>
           ) : (
             <div className="w-16 h-16 sm:w-20 sm:h-20 bg-zinc-200 flex items-center justify-center flex-shrink-0">
@@ -147,17 +138,17 @@ export default function ProfilePage() {
             </div>
           )}
           <div>
-            <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#C0001E' }}>Mi Cuenta</p>
-            <h1 className="text-3xl font-black uppercase" style={{ letterSpacing: '-1px' }}>Perfil</h1>
+            <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#C0001E' }}>{t('common:accountProfile.myAccount')}</p>
+            <h1 className="text-3xl font-black uppercase" style={{ letterSpacing: '-1px' }}>{t('common:accountProfile.profile')}</h1>
             <span className="inline-block mt-2 text-xs font-bold px-2 py-1 uppercase tracking-widest bg-zinc-100 text-zinc-600">
-              {ROLE_LABELS[profile!.role] ?? profile!.role}
+              {t(`common:accountProfile.roles.${profile!.role}`, { defaultValue: profile!.role })}
             </span>
           </div>
         </div>
 
         {success && (
           <div className="mb-6 border border-emerald-200 bg-emerald-50 text-emerald-700 px-4 py-3 text-sm font-medium">
-            Perfil actualizado correctamente.
+            {t('common:accountProfile.updated')}
           </div>
         )}
         {error && (
@@ -169,12 +160,12 @@ export default function ProfilePage() {
           <div className="space-y-6">
             <div className="border border-zinc-100 p-6 space-y-4">
               {[
-                { label: 'Nombre completo', value: profile!.full_name || '—' },
-                { label: 'Email', value: profile!.email },
-                { label: 'Ciudad', value: profile!.city || '—' },
-                { label: 'Teléfono', value: profile!.phone || '—' },
+                { label: t('common:accountProfile.fullName'), value: profile!.full_name || '—' },
+                { label: t('common:accountProfile.email'), value: profile!.email },
+                { label: t('common:accountProfile.city'), value: profile!.city || '—' },
+                { label: t('common:accountProfile.phone'), value: profile!.phone || '—' },
                 ...(profile!.role === 'promoter'
-                  ? [{ label: t('promoters.federation.profileLabel'), value: t(`promoters.federation.${profile!.promoter_federation_status ?? 'independent'}`) }]
+                  ? [{ label: t('promoters:promoters.federation.profileLabel'), value: t(`promoters:promoters.federation.${profile!.promoter_federation_status ?? 'independent'}`) }]
                   : []),
               ].map(({ label, value }) => (
                 <div key={label}>
@@ -188,7 +179,7 @@ export default function ProfilePage() {
                 onClick={() => setEditing(true)}
                 className="px-4 py-2 text-sm font-semibold border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition-colors"
               >
-                Editar perfil
+                {t('common:accountProfile.editProfile')}
               </button>
               {profile!.role === 'fighter' && (
                 <Link
@@ -196,7 +187,7 @@ export default function ProfilePage() {
                   className="px-4 py-2 text-sm font-bold uppercase tracking-widest text-white transition-colors"
                   style={{ background: '#C0001E' }}
                 >
-                  Perfil de Peleador
+                  {t('common:accountProfile.fighterProfile')}
                 </Link>
               )}
               {profile!.role === 'spectator' && (
@@ -205,7 +196,7 @@ export default function ProfilePage() {
                   className="px-4 py-2 text-sm font-bold uppercase tracking-widest text-white transition-colors"
                   style={{ background: '#C0001E' }}
                 >
-                  Mi Panel
+                  {t('common:accountProfile.myDashboard')}
                 </Link>
               )}
               {profile!.role === 'promoter' && (
@@ -214,7 +205,7 @@ export default function ProfilePage() {
                   className="px-4 py-2 text-sm font-bold uppercase tracking-widest text-white transition-colors"
                   style={{ background: '#C0001E' }}
                 >
-                  Mis Eventos
+                  {t('common:accountProfile.myEvents')}
                 </Link>
               )}
               {profile!.role === 'manager' && (
@@ -223,7 +214,7 @@ export default function ProfilePage() {
                   className="px-4 py-2 text-sm font-bold uppercase tracking-widest text-white transition-colors"
                   style={{ background: '#C0001E' }}
                 >
-                  Mi Panel
+                  {t('common:accountProfile.myDashboard')}
                 </Link>
               )}
               {profile!.role === 'sponsor' && (
@@ -232,7 +223,7 @@ export default function ProfilePage() {
                   className="px-4 py-2 text-sm font-bold uppercase tracking-widest text-white transition-colors"
                   style={{ background: '#C0001E' }}
                 >
-                  Mi Panel
+                  {t('common:accountProfile.myDashboard')}
                 </Link>
               )}
             </div>
@@ -248,12 +239,12 @@ export default function ProfilePage() {
                 <div
                   className="w-20 h-20 bg-zinc-100 overflow-hidden cursor-pointer"
                   onClick={() => photoInputRef.current?.click()}
-                  title={profile!.role === 'promoter' ? 'Cambiar logo' : 'Cambiar foto'}
+                  title={profile!.role === 'promoter' ? t('common:accountProfile.changeLogo') : t('common:accountProfile.changePhoto')}
                 >
                   {photoPreview ? (
-                    <Image src={photoPreview} alt="Foto" width={80} height={80} className="w-full h-full object-cover" unoptimized />
+                    <Image src={photoPreview} alt={t('common:accountProfile.photo')} width={80} height={80} className="w-full h-full object-cover" unoptimized />
                   ) : profile!.photo_url ? (
-                    <Image src={profile!.photo_url} alt="Foto" width={80} height={80} className="w-full h-full object-cover" />
+                    <Image src={profile!.photo_url} alt={t('common:accountProfile.photo')} width={80} height={80} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <svg className="w-8 h-8 text-zinc-300" fill="currentColor" viewBox="0 0 24 24">
@@ -266,7 +257,7 @@ export default function ProfilePage() {
                   type="button"
                   onClick={() => photoInputRef.current?.click()}
                   className="absolute -bottom-1 -right-1 w-6 h-6 bg-zinc-900 text-white flex items-center justify-center"
-                  aria-label="Cambiar imagen"
+                  aria-label={t('common:accountProfile.changeImage')}
                 >
                   <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -282,30 +273,30 @@ export default function ProfilePage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-zinc-700">
-                  {profile!.role === 'promoter' ? 'Logo de la promotora' : 'Foto de perfil'}
+                  {profile!.role === 'promoter' ? t('common:accountProfile.promoterLogo') : t('common:accountProfile.profilePhoto')}
                 </p>
                 <p className="text-xs text-zinc-500 mt-0.5">
-                  JPG o PNG, máximo 8 MB. {profile!.role === 'promoter' ? 'Aparece en el directorio de Promotores y en tus eventos.' : 'Aparece en tu perfil público.'}
+                  {t('common:accountProfile.photoRequirements')} {profile!.role === 'promoter' ? t('common:accountProfile.promoterPhotoVisibility') : t('common:accountProfile.publicPhotoVisibility')}
                 </p>
               </div>
             </div>
 
             <div>
               <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>
-                Nombre completo *
+                {t('common:accountProfile.fullName')} *
               </label>
               <input
                 type="text"
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
-                placeholder="Tu nombre completo"
+                placeholder={t('common:accountProfile.fullNamePlaceholder')}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900"
               />
             </div>
 
             <div>
               <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>
-                Email
+                {t('common:accountProfile.email')}
               </label>
               <input
                 type="email"
@@ -313,25 +304,25 @@ export default function ProfilePage() {
                 disabled
                 className="w-full border border-zinc-200 px-3 py-2 text-zinc-400 text-sm bg-zinc-50 cursor-not-allowed"
               />
-              <p className="text-xs text-zinc-400 mt-1">El email no se puede cambiar.</p>
+              <p className="text-xs text-zinc-400 mt-1">{t('common:accountProfile.emailLocked')}</p>
             </div>
 
             <div>
               <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>
-                Ciudad
+                {t('common:accountProfile.city')}
               </label>
               <input
                 type="text"
                 value={city}
                 onChange={e => setCity(e.target.value)}
-                placeholder="Tu ciudad"
+                placeholder={t('common:accountProfile.cityPlaceholder')}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900"
               />
             </div>
 
             <div>
               <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>
-                Teléfono
+                {t('common:accountProfile.phone')}
               </label>
               <input
                 type="tel"
@@ -345,12 +336,12 @@ export default function ProfilePage() {
             {profile!.role === 'promoter' && (
               <div>
                 <p className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#5A5A5A' }}>
-                  {t('promoters.federation.profileLabel')}
+                  {t('promoters:promoters.federation.profileLabel')}
                 </p>
                 <div className="min-h-11 border border-zinc-200 bg-zinc-50 px-4 py-3 text-xs font-bold uppercase tracking-widest text-zinc-700">
-                  {t(`promoters.federation.${profile!.promoter_federation_status ?? 'independent'}`)}
+                  {t(`promoters:promoters.federation.${profile!.promoter_federation_status ?? 'independent'}`)}
                 </div>
-                <p className="mt-2 text-xs text-zinc-500">Esta clasificación la administra Strikers Match.</p>
+                <p className="mt-2 text-xs text-zinc-500">{t('common:accountProfile.classificationManaged')}</p>
               </div>
             )}
 
@@ -359,7 +350,7 @@ export default function ProfilePage() {
                 onClick={() => { setEditing(false); setError(null); setFullName(profile!.full_name ?? ''); setCity(profile!.city ?? ''); setPhone(profile!.phone ?? ''); setPhotoFile(null); setPhotoPreview(null); }}
                 className="px-4 py-2 text-sm font-medium border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition-colors"
               >
-                Cancelar
+                {t('common:cancel')}
               </button>
               <button
                 onClick={handleSave}
@@ -367,7 +358,7 @@ export default function ProfilePage() {
                 className="px-6 py-2 text-sm font-bold tracking-wide uppercase text-white disabled:opacity-50"
                 style={{ background: saving ? '#9A9A9A' : '#C0001E' }}
               >
-                {saving ? 'Guardando...' : 'Guardar cambios'}
+                {saving ? t('common:accountProfile.saving') : t('common:accountProfile.saveChanges')}
               </button>
             </div>
           </div>
@@ -375,13 +366,13 @@ export default function ProfilePage() {
 
         {/* ── Delete Account ── */}
         <div className="mt-12 border-t border-zinc-100 pt-8">
-          <p className="text-xs font-bold tracking-widest uppercase mb-2 text-red-600">Zona de peligro</p>
-          <p className="text-sm text-zinc-500 mb-4">Eliminar tu cuenta es permanente. Se borrarán todos tus datos y no podrás recuperarlos.</p>
+          <p className="text-xs font-bold tracking-widest uppercase mb-2 text-red-600">{t('common:accountProfile.dangerZone')}</p>
+          <p className="text-sm text-zinc-500 mb-4">{t('common:accountProfile.deleteWarning')}</p>
           <button
             onClick={() => setShowDeleteConfirm(true)}
             className="px-4 py-2 text-sm font-semibold border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
           >
-            Eliminar cuenta
+            {t('common:accountProfile.deleteAccount')}
           </button>
         </div>
 
@@ -389,9 +380,9 @@ export default function ProfilePage() {
         {showDeleteConfirm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
             <div className="bg-white max-w-sm w-full p-6 shadow-lg">
-              <h3 className="text-lg font-black uppercase mb-2">Eliminar cuenta</h3>
+              <h3 className="text-lg font-black uppercase mb-2">{t('common:accountProfile.deleteAccount')}</h3>
               <p className="text-sm text-zinc-600 mb-6">
-                Esta acción es irreversible. Se eliminarán tu perfil, datos y toda la información asociada a tu cuenta. ¿Estás seguro?
+                {t('common:accountProfile.deleteConfirm')}
               </p>
               <div className="flex justify-end gap-3">
                 <button
@@ -399,14 +390,14 @@ export default function ProfilePage() {
                   disabled={deleting}
                   className="px-4 py-2 text-sm font-medium border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-50"
                 >
-                  Cancelar
+                  {t('common:cancel')}
                 </button>
                 <button
                   onClick={handleDeleteAccount}
                   disabled={deleting}
                   className="px-4 py-2 text-sm font-bold uppercase tracking-wide text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50"
                 >
-                  {deleting ? 'Eliminando...' : 'Sí, eliminar'}
+                  {deleting ? t('common:accountProfile.deleting') : t('common:accountProfile.yesDelete')}
                 </button>
               </div>
             </div>

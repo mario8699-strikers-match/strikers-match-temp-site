@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { authService } from '@/services/authService';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -28,6 +29,7 @@ const ACTIVITY_EVENTS: (keyof WindowEventMap)[] = [
 ];
 
 export function IdleTimeout() {
+  const { t } = useTranslation('common');
   const [authed, setAuthed] = useState(false);
   const [warning, setWarning] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(Math.floor(WARN_MS / 1000));
@@ -154,18 +156,18 @@ export function IdleTimeout() {
       <div className="w-full max-w-md bg-white border border-zinc-200 shadow-xl">
         <div className="px-5 py-4 border-b border-zinc-200">
           <h2 id="idle-timeout-title" className="text-lg font-bold text-zinc-900">
-            ¿Sigues ahí?
+            {t('common.idle.title')}
           </h2>
         </div>
         <div className="px-5 py-4 space-y-3">
           <p className="text-sm text-zinc-700">
-            Por seguridad, cerraremos tu sesión automáticamente por inactividad en:
+            {t('common.idle.body')}
           </p>
           <p className="text-3xl font-bold text-[#C0001E] tabular-nums">
             {secondsLeft}s
           </p>
           <p className="text-xs text-zinc-500">
-            Haz clic en “Seguir conectado” para continuar tu sesión.
+            {t('common.idle.hint')}
           </p>
         </div>
         <div className="px-5 py-3 border-t border-zinc-200 flex items-center justify-end gap-2">
@@ -173,13 +175,13 @@ export function IdleTimeout() {
             onClick={doLogout}
             className="px-4 py-2 text-xs font-bold tracking-widest uppercase text-zinc-700 border border-zinc-300 hover:bg-zinc-50"
           >
-            Cerrar sesión
+            {t('common.idle.signOut')}
           </button>
           <button
             onClick={stayLoggedIn}
             className="px-4 py-2 text-xs font-bold tracking-widest uppercase text-white bg-[#C0001E] hover:bg-[#A00019]"
           >
-            Seguir conectado
+            {t('common.idle.stayConnected')}
           </button>
         </div>
       </div>

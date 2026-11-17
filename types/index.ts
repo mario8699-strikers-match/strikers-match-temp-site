@@ -162,6 +162,10 @@ export interface FighterWithProfile extends Fighter {
     full_name: string;
     email: string;
     city: string | null;
+    state?: string | null;
+    country?: string | null;
+    country_code?: string | null;
+    instagram?: string | null;
     date_of_birth?: string | null;
     phone: string | null;
     is_banned?: boolean;
@@ -350,6 +354,7 @@ export interface ManualFighter {
   email: string | null;
   city: string | null;
   gym_name: string | null;
+  instagram: string | null;
   experience_level: 'amateur' | 'pro';
   notes: string | null;
   // Display columns (added for public visibility)

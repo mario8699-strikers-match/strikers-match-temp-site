@@ -3,6 +3,69 @@
     "close": "Cerrar",
     "doNotShowAgain": "No mostrar de nuevo"
   },
+  "guided": {
+    "help": "Ayuda",
+    "openHelp": "Abrir ayuda",
+    "close": "Cerrar guía",
+    "linkCopied": "Enlace copiado",
+    "contextualHelp": "Ayuda contextual",
+    "whatToDo": "¿Qué quieres hacer?",
+    "quickGuide": "Guía rápida",
+    "fullGuide": "Recorrer guía completa",
+    "continueGuide": "Continuar guía pendiente",
+    "nextStep": "Ver mi siguiente paso",
+    "createFirstHint": "Primero necesitas crear tu evento. Al terminar, te llevaremos al siguiente paso.",
+    "createFirstEvent": "Crear mi primer evento",
+    "doLater": "Lo haré después",
+    "start": "Comenzar",
+    "wait": "Espera…",
+    "stepProgress": "Paso {{step}} de {{total}}",
+    "completedSteps": "{{completed}} de {{total}} pasos completados",
+    "waitingForRegistration": "La guía continuará automáticamente cuando llegue el primer registro. También puedes agregar un peleador manualmente.",
+    "welcome": {
+      "title": "Bienvenido a Strikers Match",
+      "bodyTitle": "Vamos a configurar tu primer evento.",
+      "body": "Te guiaremos paso a paso. No necesitas conocimientos técnicos."
+    },
+    "share": {
+      "title": "Registro del evento",
+      "text": "Regístrate para participar en este evento de Strikers Match."
+    },
+    "errors": {
+      "eventRequired": "Primero crea o selecciona un evento.",
+      "shareFailed": "No se pudo compartir el enlace. Puedes copiarlo manualmente desde la página del evento."
+    },
+    "actions": {
+      "createEvent": "Crear mi evento",
+      "configureRegistration": "Configurar registro",
+      "copyLink": "Copiar enlace",
+      "share": "Compartir",
+      "viewMatches": "Ver posibles enfrentamientos",
+      "waitingRegistrations": "Esperando registros",
+      "understood": "Entendido, yo decido",
+      "continueGraphics": "Continuar a gráficos",
+      "viewGraphics": "Ver gráficos",
+      "openDisplay": "Abrir modo pantalla"
+    },
+    "topics": {
+      "createEvent": { "title": "Crear un evento", "body": "Crea el nombre, fecha, ciudad, recinto y disciplinas de tu nueva cartelera.", "action": "Crear evento" },
+      "registerFighters": { "title": "Registrar peleadores", "body": "Agrega perfiles de Strikers Match, peleadores de tu roster o altas rápidas exclusivas del evento.", "action": "Abrir participantes" },
+      "findMatches": { "title": "Encontrar enfrentamientos", "body": "Revisa las combinaciones calculadas por peso, edad, experiencia, récord, disciplina y disponibilidad.", "action": "Abrir matchmaking" },
+      "reviewBouts": { "title": "Revisar peleas", "body": "Tú decides qué propuesta aceptar, rechazar, modificar o fijar antes de hacerla oficial.", "action": "Revisar propuestas" },
+      "generateGraphics": { "title": "Generar gráficos", "body": "Los combates oficiales generan borradores que puedes aprobar, publicar y descargar.", "action": "Abrir gráficos" },
+      "displayBouts": { "title": "Mostrar peleas en pantalla", "body": "Publica un gráfico y abre el modo pantalla directamente dentro de Strikers Match.", "action": "Configurar pantalla" }
+    },
+    "steps": {
+      "1": { "title": "Primero vamos a crear tu evento.", "body": "Aquí ingresarás el nombre, fecha, lugar y tipo de evento." },
+      "2": { "title": "Ahora configura el registro de peleadores.", "body": "Selecciona las categorías, pesos y disciplinas que estarán disponibles." },
+      "3": { "title": "Tu evento ya tiene un enlace de registro.", "body": "Comparte este enlace con tus peleadores, representantes y gimnasios. Cuando alguien se registre, aparecerá automáticamente en tu lista de participantes." },
+      "4": { "title": "Aquí comienza el matchmaking.", "body": "Strikers Match analizará los peleadores registrados y te mostrará posibles enfrentamientos." },
+      "5": { "title": "Tú tienes la última palabra.", "body": "Revisa cada enfrentamiento y decide si quieres aprobarlo, rechazarlo o modificarlo. El sistema nunca hace oficial una pelea sin tu decisión." },
+      "6": { "title": "Tu pelea ya es oficial.", "body": "Una vez aprobada, Strikers Match genera automáticamente la información y los gráficos correspondientes." },
+      "7": { "title": "Tus gráficos están listos.", "body": "Puedes utilizarlos en redes sociales, pantallas, proyectores y material promocional." },
+      "8": { "title": "¿Listo para el evento?", "body": "Abre el modo pantalla para mostrar automáticamente los enfrentamientos durante tu evento." }
+    }
+  },
   "roles": {
     "fighter": {
       "eyebrow": "Cuenta de peleador",

@@ -24,6 +24,39 @@
       "noEvents": "No events scheduled",
       "noActivity": "No recent activity",
       "noFighters": "No fighters registered"
+    },
+    "manager": {
+      "title": "Manager dashboard",
+      "events": "Events",
+      "newEvent": "New event",
+      "description": "Manage your roster, events, and proposals from this dashboard.",
+      "myEvents": "My events",
+      "myEventsHint": "Open fighters by category and build the fight card here.",
+      "noEvents": "You have not created any events yet.",
+      "createEvent": "Create event",
+      "noDate": "No date",
+      "noCity": "No city",
+      "participants": "Participants",
+      "fightersMatchmaking": "Fighters / Matchmaking",
+      "pendingProposals": "Proposals to confirm",
+      "pendingProposalsHint": "Respond on behalf of the fighters you represent.",
+      "noPendingProposals": "There are no pending proposals for your roster.",
+      "event": "Event",
+      "compatibility": "Compatibility {{score}}%",
+      "accept": "Accept",
+      "decline": "Decline",
+      "addFighterToRoster": "Add fighter to roster",
+      "searchByName": "Search by name...",
+      "search": "Search",
+      "add": "Add",
+      "roster": "My roster ({{count}})",
+      "loading": "Loading...",
+      "emptyRoster": "Your roster is empty. Search for fighters above to add them.",
+      "remove": "Remove",
+      "errors": {
+        "duplicateFighter": "This fighter is already on your roster.",
+        "addFighter": "The fighter could not be added."
+      }
     }
   }
 }

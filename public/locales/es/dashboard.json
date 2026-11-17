@@ -24,6 +24,39 @@
       "noEvents": "No hay eventos programados",
       "noActivity": "No hay actividad reciente",
       "noFighters": "No hay atletas registrados"
+    },
+    "manager": {
+      "title": "Panel del representante",
+      "events": "Eventos",
+      "newEvent": "Nuevo evento",
+      "description": "Administra roster, eventos y propuestas desde este panel.",
+      "myEvents": "Mis eventos",
+      "myEventsHint": "Abre los peleadores por categoría y arma los combates desde aquí.",
+      "noEvents": "Todavía no has creado eventos.",
+      "createEvent": "Crear evento",
+      "noDate": "Sin fecha",
+      "noCity": "Sin ciudad",
+      "participants": "Participantes",
+      "fightersMatchmaking": "Peleadores / Matchmaking",
+      "pendingProposals": "Propuestas por confirmar",
+      "pendingProposalsHint": "Responde en nombre de los peleadores que representas.",
+      "noPendingProposals": "No hay propuestas pendientes para tu roster.",
+      "event": "Evento",
+      "compatibility": "Compatibilidad {{score}}%",
+      "accept": "Aceptar",
+      "decline": "Rechazar",
+      "addFighterToRoster": "Agregar peleador al roster",
+      "searchByName": "Buscar por nombre...",
+      "search": "Buscar",
+      "add": "Agregar",
+      "roster": "Mi roster ({{count}})",
+      "loading": "Cargando...",
+      "emptyRoster": "Tu roster está vacío. Busca peleadores arriba para agregarlos.",
+      "remove": "Quitar",
+      "errors": {
+        "duplicateFighter": "Este peleador ya está en tu roster.",
+        "addFighter": "No se pudo agregar al peleador."
+      }
     }
   }
 }

@@ -24,6 +24,20 @@
       "instagram": "Instagram",
       "viewProfile": "View profile"
     },
+    "professionalDetail": {
+      "loading": "Loading profile...",
+      "notFound": "This profile was not found or is unavailable.",
+      "viewDirectory": "View directory",
+      "locationUnavailable": "Location not provided",
+      "available": "Available",
+      "unavailable": "Currently unavailable",
+      "about": "About",
+      "contact": "Contact",
+      "signInForContact": "Sign in to view contact information",
+      "contactAction": "Contact",
+      "previous": "Previous",
+      "next": "Next"
+    },
     "form": {
       "open": "Post listing",
       "close": "Close form",

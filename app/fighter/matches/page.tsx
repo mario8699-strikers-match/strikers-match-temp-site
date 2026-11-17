@@ -78,7 +78,7 @@ export default function FighterMatchesPage() {
       <div className="min-h-screen bg-white flex flex-col">
         <Navbar />
         <main className="flex-1 flex items-center justify-center">
-          <p className="text-sm text-zinc-500">{t('events.matches.loading', 'Cargando...')}</p>
+          <p className="text-sm text-zinc-500">{t('events.matches.loading')}</p>
         </main>
         <Footer />
       </div>
@@ -91,11 +91,11 @@ export default function FighterMatchesPage() {
         <Navbar />
         <main className="flex-1 max-w-3xl mx-auto px-4 py-16">
           <h1 className="text-2xl font-bold text-zinc-900 mb-2">
-            {t('events.matches.title', 'Mis Peleas')}
+            {t('events.matches.title')}
           </h1>
           <p className="text-sm text-zinc-500">
-            <a href="/login" className="underline">{t('events.matches.signInPrompt', 'Inicia sesión')}</a>{' '}
-            {t('events.matches.signInTail', 'para ver tus propuestas de pelea.')}
+            <a href="/login" className="underline">{t('events.matches.signInPrompt')}</a>{' '}
+            {t('events.matches.signInTail')}
           </p>
         </main>
         <Footer />
@@ -109,10 +109,10 @@ export default function FighterMatchesPage() {
         <Navbar />
         <main className="flex-1 max-w-3xl mx-auto px-4 py-16">
           <h1 className="text-2xl font-bold text-zinc-900 mb-2">
-            {t('events.matches.title', 'Mis Peleas')}
+            {t('events.matches.title')}
           </h1>
           <p className="text-sm text-zinc-500">
-            {t('events.matches.fighterOnly', 'Esta sección es solo para perfiles de peleadores.')}
+            {t('events.matches.fighterOnly')}
           </p>
         </main>
         <Footer />
@@ -136,13 +136,10 @@ export default function FighterMatchesPage() {
       <main className="flex-1 max-w-4xl mx-auto px-4 py-10 w-full">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-zinc-900">
-            {t('events.matches.title', 'Mis Peleas')}
+            {t('events.matches.title')}
           </h1>
           <p className="text-sm text-zinc-500 mt-1">
-            {t(
-              'events.matches.subtitle',
-              'Acepta o rechaza propuestas de pelea. Una pelea se confirma cuando ambos atletas aceptan.'
-            )}
+            {t('events.matches.subtitle')}
           </p>
           {(() => {
             const tier = reliabilityTier(profile.reliability_score, profile.total_matches);
@@ -156,11 +153,18 @@ export default function FighterMatchesPage() {
               <div className="mt-3 flex items-center gap-2">
                 <span className={`inline-block text-xs font-bold px-2 py-1 border ${tone}`}>
                   {isNew
-                    ? 'Atleta Nuevo · sin historial'
-                    : `Confiabilidad ${profile.reliability_score} · ${tier.label}`}
+                    ? t('events.reliability.newAthleteNoHistory')
+                    : t('events.reliability.score', {
+                        score: profile.reliability_score,
+                        tier: t(`events.reliability.tier.${tier.key}`),
+                      })}
                 </span>
                 <span className="text-xs text-zinc-400">
-                  {profile.total_matches ?? 0} peleas · {profile.cancellations ?? 0} cancelaciones · {profile.no_shows ?? 0} no-show
+                  {t('events.reliability.historyCounts', {
+                    matches: profile.total_matches ?? 0,
+                    cancellations: profile.cancellations ?? 0,
+                    noShows: profile.no_shows ?? 0,
+                  })}
                 </span>
               </div>
             );
@@ -175,9 +179,9 @@ export default function FighterMatchesPage() {
 
         {/* Pending */}
         <Section
-          title={t('events.matches.pending', 'Propuestas Pendientes')}
+          title={t('events.matches.pending')}
           count={pending.length}
-          empty={t('events.matches.noPending', 'No tienes propuestas pendientes.')}
+          empty={t('events.matches.noPending')}
         >
           {pending.map((m) => (
             <PendingCard
@@ -194,9 +198,9 @@ export default function FighterMatchesPage() {
 
         {/* Confirmed */}
         <Section
-          title={t('events.matches.confirmed', 'Peleas Confirmadas')}
+          title={t('events.matches.confirmed')}
           count={confirmed.length}
-          empty={t('events.matches.noConfirmed', 'Todavía no tienes peleas confirmadas.')}
+          empty={t('events.matches.noConfirmed')}
         >
           {confirmed.map((m) => (
             <StatusCard
@@ -204,7 +208,7 @@ export default function FighterMatchesPage() {
               match={m}
               fighterId={fighter.id}
               tone="emerald"
-              label={t('events.matches.statusConfirmed', 'Confirmada')}
+              label={t('events.matches.statusConfirmed')}
               t={t}
             />
           ))}
@@ -213,7 +217,7 @@ export default function FighterMatchesPage() {
         {/* History */}
         {history.length > 0 && (
           <Section
-            title={t('events.matches.history', 'Historial')}
+            title={t('events.matches.history')}
             count={history.length}
             empty=""
           >
@@ -224,10 +228,10 @@ export default function FighterMatchesPage() {
                 myStatus === 'accepted' ? 'amber' : 'zinc';
               const label =
                 m.match_status === 'cancelled'
-                  ? t('events.matches.statusCancelled', 'Cancelada')
+                  ? t('events.matches.statusCancelled')
                   : myStatus === 'accepted'
-                  ? t('events.matches.waitingOpponent', 'Esperando al rival')
-                  : t('events.matches.statusDeclined', 'Rechazada');
+                  ? t('events.matches.waitingOpponent')
+                  : t('events.matches.statusDeclined');
               return (
                 <StatusCard
                   key={m.id}
@@ -327,14 +331,14 @@ function PendingCard({
           disabled={busy}
           className="flex-1 py-2 text-xs font-bold tracking-widest uppercase text-white bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 transition-colors"
         >
-          {busy ? '…' : t('events.matches.accept', 'Aceptar')}
+          {busy ? '…' : t('events.matches.accept')}
         </button>
         <button
           onClick={onDecline}
           disabled={busy}
           className="flex-1 py-2 text-xs font-bold tracking-widest uppercase text-zinc-900 border border-zinc-300 hover:bg-zinc-100 disabled:opacity-50 transition-colors"
         >
-          {busy ? '…' : t('events.matches.decline', 'Rechazar')}
+          {busy ? '…' : t('events.matches.decline')}
         </button>
       </div>
     </div>

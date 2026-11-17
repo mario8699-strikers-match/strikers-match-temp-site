@@ -2,6 +2,7 @@
   "admin": {
     "title": "Administration",
     "backToSite": "← Back to site",
+    "eventReturn": "Back to event",
     "logout": "Log out",
     "closeMenu": "Close menu",
     "toggleMenu": "Toggle menu",
@@ -26,6 +27,16 @@
       "totalFighters": "Total Fighters",
       "totalEvents": "Total Events",
       "pendingVerifications": "Pending Verifications"
+    },
+    "directory": {
+      "name": "Name", "email": "Email", "role": "Role", "city": "City", "phone": "Phone", "status": "Status", "actions": "Actions",
+      "all": "All", "hide": "Hide", "viewDetail": "View details", "account": "Account", "location": "Location", "classification": "Classification",
+      "viewFighters": "View fighters", "viewEvents": "View events",
+      "managersSubtitle": "All managers registered on the platform.", "noManagers": "No managers are registered.",
+      "promotersSubtitle": "All promoters registered on the platform.", "noPromoters": "No promoters are registered.",
+      "sponsorsSubtitle": "All sponsors registered on the platform.", "noSponsors": "No sponsors are registered.",
+      "vendorsSubtitle": "All vendors and services registered on the platform.", "noVendors": "No vendors are registered.",
+      "noVendorsRole": "No vendors are registered with the {{role}} role."
     },
     "users": {
       "title": "User Management",
@@ -89,7 +100,13 @@
       "unverify": "Remove Verification",
       "confirmVerify": "Verify this fighter? They will appear as verified in the directory.",
       "confirmUnverify": "Remove verification from this fighter?",
-      "noFighters": "No fighters registered yet."
+      "noFighters": "No fighters registered yet.",
+      "phone": "Phone", "visible": "Visible", "representation": "Representation", "hidden": "Hidden",
+      "show": "Show", "hide": "Hide", "notRegistered": "Not registered", "noManualFighters": "No fighters have been added manually by managers or promoters.",
+      "addedBy": "Added by", "role": "Role", "creatorEmail": "Creator email", "viewProfile": "View profile",
+      "confirmHide": "This fighter will be hidden from other fighter profiles. Only admins, promoters, managers, and sponsors will be able to see them.",
+      "confirmShow": "This fighter will be visible to all users again.",
+      "roles": { "manager": "Manager", "promoter": "Promoter", "sponsor": "Sponsor" }
     },
     "events": {
       "title": "All Events",

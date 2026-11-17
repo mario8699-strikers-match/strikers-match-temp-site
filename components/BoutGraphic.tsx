@@ -4,8 +4,10 @@
 
 import type { BoutGraphicPayload } from '@/types';
 import { formatBoutScheduledTime } from '@/lib/boutSchedule';
+import { useTranslation } from 'react-i18next';
 
 export function BoutGraphic({ payload, variant = 'screen', className = '' }: { payload: BoutGraphicPayload; variant?: 'screen' | 'social' | 'overlay'; className?: string }) {
+  const { t } = useTranslation('events');
   const { event, bout, theme } = payload;
   const overlay = variant === 'overlay';
   const square = variant === 'social';
@@ -31,13 +33,13 @@ export function BoutGraphic({ payload, variant = 'screen', className = '' }: { p
               <h2 className="mt-1 max-w-[70vw] text-[clamp(16px,2.6vw,48px)] font-black uppercase leading-none">{event.name}</h2>
               <p className="mt-2 text-[clamp(8px,1.1vw,18px)] uppercase tracking-wider opacity-75">{[event.venue, event.city, event.date].filter(Boolean).join(' · ')}</p>
             </div>
-            {event.logoUrl && <img src={event.logoUrl} alt="Logo del evento" referrerPolicy="no-referrer" className="max-h-[10vh] max-w-[18vw] object-contain" />}
+            {event.logoUrl && <img src={event.logoUrl} alt={t('events.display.eventLogo')} referrerPolicy="no-referrer" className="max-h-[10vh] max-w-[18vw] object-contain" />}
           </header>
         )}
 
         <div className={`${overlay ? 'border-l-[clamp(4px,0.7vw,12px)] bg-black/90 p-[2.5%] shadow-2xl backdrop-blur-sm' : ''}`} style={overlay ? { borderColor: theme.accent } : undefined}>
           <div className="mb-[2%] flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center text-[clamp(8px,1.25vw,20px)] font-black uppercase tracking-[0.18em]">
-            <span style={{ color: theme.accent }}>Próximo combate{bout.number ? ` · ${bout.number}` : ''}</span>
+            <span style={{ color: theme.accent }}>{t('events.display.nextBout')}{bout.number ? ` · ${bout.number}` : ''}</span>
             <span className="opacity-40">/</span>
             <span>{[bout.discipline, bout.weightClass, bout.ruleset].filter(Boolean).join(' · ')}</span>
             {scheduledTime && <><span className="opacity-40">/</span><span className="border px-[1.2%] py-[0.5%]" style={{ borderColor: theme.accent, color: theme.accent }}>Hora programada · {scheduledTime}</span></>}

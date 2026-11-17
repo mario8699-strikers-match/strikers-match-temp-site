@@ -190,13 +190,13 @@ export default function SearchPage() {
         {/* Title */}
         <div className="mb-8">
           <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#C0001E' }}>
-            Directorio
+            {t('fighters.search.directory')}
           </p>
           <h1 className="text-3xl font-black uppercase" style={{ letterSpacing: '-1px' }}>
-            Buscar Peleadores
+            {t('fighters.search.title')}
           </h1>
           <p className="text-sm mt-1" style={{ color: '#5A5A5A' }}>
-            Filtra por division, ciudad, disponibilidad o aviso corto.
+            {t('fighters.search.subtitle')}
           </p>
         </div>
 
@@ -205,7 +205,7 @@ export default function SearchPage() {
           {/* Weight class */}
           <div>
             <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>
-              Division
+              {t('fighters.search.division')}
             </label>
             <select
               value={weightClass}
@@ -215,7 +215,7 @@ export default function SearchPage() {
               }}
               className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900"
             >
-              <option value="">Todas las divisiones</option>
+              <option value="">{t('fighters.search.allDivisions')}</option>
               {WEIGHT_CLASSES.map((wc) => (
                 <option key={wc} value={wc}>{WEIGHT_LABELS[wc]}</option>
               ))}
@@ -225,13 +225,13 @@ export default function SearchPage() {
           {/* City */}
           <div>
             <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>
-              Ciudad
+              {t('fighters.search.city')}
             </label>
             <input
               type="text"
               value={city}
               onChange={(e) => handleCityChange(e.target.value)}
-              placeholder="Ej. Monterrey"
+              placeholder={t('fighters.search.cityPlaceholder')}
               className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
             />
           </div>
@@ -248,7 +248,7 @@ export default function SearchPage() {
                 }}
                 className="w-4 h-4 accent-[#C0001E]"
               />
-              <span className="text-sm font-medium text-zinc-700">Solo disponibles</span>
+              <span className="text-sm font-medium text-zinc-700">{t('fighters.search.availableOnly')}</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -260,7 +260,7 @@ export default function SearchPage() {
                 }}
                 className="w-4 h-4 accent-[#C0001E]"
               />
-              <span className="text-sm font-medium text-zinc-700">Aviso corto</span>
+              <span className="text-sm font-medium text-zinc-700">{t('fighters.search.shortNotice')}</span>
             </label>
           </div>
 
@@ -273,7 +273,7 @@ export default function SearchPage() {
               onMouseOver={e => (e.currentTarget.style.background = '#9A0018')}
               onMouseOut={e => (e.currentTarget.style.background = '#C0001E')}
             >
-              Buscar
+              {t('fighters.search.button')}
             </button>
           </div>
         </form>
@@ -282,20 +282,20 @@ export default function SearchPage() {
         {!isLoading && (
           <div className="flex items-center gap-2 mb-4">
             <p className="text-xs font-bold tracking-widest uppercase" style={{ color: '#9A9A9A' }}>
-              {resultTotal} peleador{resultTotal !== 1 ? 'es' : ''} encontrado{resultTotal !== 1 ? 's' : ''}
+              {t('fighters.search.results', { count: resultTotal })}
             </p>
             {isFetching && (
-              <span className="text-xs text-zinc-400 animate-pulse">Actualizando...</span>
+              <span className="text-xs text-zinc-400 animate-pulse">{t('fighters.search.updating')}</span>
             )}
           </div>
         )}
 
         {/* Cards */}
         {isLoading ? (
-          <div className="py-24 text-center text-zinc-400 text-sm">Buscando...</div>
+          <div className="py-24 text-center text-zinc-400 text-sm">{t('fighters.search.searching')}</div>
         ) : fighters.length === 0 && manualFighters.length === 0 ? (
           <div className="py-24 text-center border border-dashed border-zinc-200">
-            <p className="text-zinc-500 text-sm">No se encontraron peleadores con esos filtros.</p>
+            <p className="text-zinc-500 text-sm">{t('fighters.search.empty')}</p>
           </div>
         ) : fighters.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -367,10 +367,10 @@ export default function SearchPage() {
                       {followerCounts[fighter.id] ?? 0} {(followerCounts[fighter.id] ?? 0) === 1 ? t('fighters.follower') : t('fighters.followers')}
                     </span>
                     {fighter.is_available && (
-                      <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5">Disponible</span>
+                      <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5">{t('fighters.search.available')}</span>
                     )}
                     {fighter.short_notice_ready && (
-                      <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5">Aviso corto</span>
+                      <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5">{t('fighters.search.shortNotice')}</span>
                     )}
                   </div>
                 </div>
@@ -389,9 +389,9 @@ export default function SearchPage() {
           <section className="mt-16">
             <div className="flex items-center gap-3 mb-4">
               <h2 className="text-lg font-black uppercase tracking-widest" style={{ color: '#0A0A0A' }}>Roster</h2>
-              <span className="text-xs font-bold uppercase tracking-widest text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5">Sin cuenta</span>
+              <span className="text-xs font-bold uppercase tracking-widest text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5">{t('fighters.search.noAccount')}</span>
               <p className="text-xs" style={{ color: '#9A9A9A' }}>
-                {manualFighters.length} peleador{manualFighters.length !== 1 ? 'es' : ''} gestionado{manualFighters.length !== 1 ? 's' : ''} por representante/promotor
+                {t('fighters.search.rosterCount', { count: manualFighters.length })}
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -445,7 +445,7 @@ export default function SearchPage() {
                         </span>
                       )}
                       {mf.is_available && (
-                        <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5">Disponible</span>
+                        <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5">{t('fighters.search.available')}</span>
                       )}
                     </div>
                   </div>

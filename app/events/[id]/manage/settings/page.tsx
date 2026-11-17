@@ -226,10 +226,10 @@ export default function EventSettingsPage() {
           <p className="mt-2 text-sm text-zinc-600">{event?.event_name}</p>
         </div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <Link href={`/events/${eventId}/manage/participants`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">Participantes</Link>
+          <Link href={`/events/${eventId}/manage/participants`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">{t('events.engine.nav.participants')}</Link>
           <Link href={`/events/${eventId}/manage/matchmaking`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">{t('events.engine.nav.matchmaking')}</Link>
           <Link href={`/events/${eventId}/manage/bouts`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">{t('events.engine.nav.bouts')}</Link>
-          <Link href={`/events/${eventId}/manage/graphics`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">Gráficos</Link>
+          <Link href={`/events/${eventId}/manage/graphics`} className="flex min-h-11 items-center justify-center whitespace-nowrap border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase text-zinc-800">{t('events.engine.nav.graphics')}</Link>
         </div>
       </header>
 
@@ -348,10 +348,10 @@ export default function EventSettingsPage() {
             <input type="checkbox" checked={settings.prefer_local_fighters}
               onChange={(eventValue) => setSettings({ ...settings, prefer_local_fighters: eventValue.target.checked })}
               className="h-4 w-4 accent-[#C0001E]" />
-            Preferir peleadores locales
+            {t('events.engine.settings.preferLocalFighters')}
           </label>
           <label className="block sm:col-span-2 lg:col-span-3">
-            <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">Preferencias del promotor</span>
+            <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-600">{t('events.engine.settings.promoterPreferences')}</span>
             <textarea
               rows={3}
               value={String(settings.promoter_preferences.notes ?? '')}
@@ -359,10 +359,10 @@ export default function EventSettingsPage() {
                 ...settings,
                 promoter_preferences: { ...settings.promoter_preferences, notes: eventValue.target.value },
               })}
-              placeholder="Ej. priorizar peleadores locales, evitar revancha, abrir cartelera con amateur..."
+              placeholder={t('events.engine.settings.promoterPreferencesPlaceholder')}
               className="w-full border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900"
             />
-            <span className="mt-1 block text-xs text-zinc-500">Estas preferencias orientan la revisión; nunca anulan restricciones obligatorias.</span>
+            <span className="mt-1 block text-xs text-zinc-500">{t('events.engine.settings.promoterPreferencesHelp')}</span>
           </label>
         </div>
       </section>

@@ -2,6 +2,7 @@
   "admin": {
     "title": "Administración",
     "backToSite": "← Volver al sitio",
+    "eventReturn": "Volver al evento",
     "logout": "Cerrar sesión",
     "closeMenu": "Cerrar menú",
     "toggleMenu": "Abrir o cerrar menú",
@@ -26,6 +27,16 @@
       "totalFighters": "Atletas Totales",
       "totalEvents": "Eventos Totales",
       "pendingVerifications": "Verificaciones Pendientes"
+    },
+    "directory": {
+      "name": "Nombre", "email": "Correo", "role": "Rol", "city": "Ciudad", "phone": "Teléfono", "status": "Estado", "actions": "Acciones",
+      "all": "Todos", "hide": "Ocultar", "viewDetail": "Ver detalle", "account": "Cuenta", "location": "Ubicación", "classification": "Clasificación",
+      "viewFighters": "Ver peleadores", "viewEvents": "Ver eventos",
+      "managersSubtitle": "Todos los representantes registrados en la plataforma.", "noManagers": "No hay representantes registrados.",
+      "promotersSubtitle": "Todos los promotores registrados en la plataforma.", "noPromoters": "No hay promotores registrados.",
+      "sponsorsSubtitle": "Todos los patrocinadores registrados en la plataforma.", "noSponsors": "No hay patrocinadores registrados.",
+      "vendorsSubtitle": "Todos los vendors y servicios registrados en la plataforma.", "noVendors": "No hay vendors registrados.",
+      "noVendorsRole": "No hay vendors registrados con el rol {{role}}."
     },
     "users": {
       "title": "Gestión de Usuarios",
@@ -89,7 +100,13 @@
       "unverify": "Quitar Verificación",
       "confirmVerify": "¿Verificar a este atleta? Aparecerá como verificado en el directorio.",
       "confirmUnverify": "¿Quitar verificación a este atleta?",
-      "noFighters": "No hay atletas registrados."
+      "noFighters": "No hay atletas registrados.",
+      "phone": "Teléfono", "visible": "Visible", "representation": "Representación", "hidden": "Oculto",
+      "show": "Mostrar", "hide": "Ocultar", "notRegistered": "No registrado", "noManualFighters": "No hay peleadores agregados manualmente por representantes o promotores.",
+      "addedBy": "Agregado por", "role": "Rol", "creatorEmail": "Correo del creador", "viewProfile": "Ver perfil",
+      "confirmHide": "Este peleador será ocultado de otros perfiles de peleadores. Solo administradores, promotores, representantes y patrocinadores podrán verlo.",
+      "confirmShow": "Este peleador será visible para todos los usuarios nuevamente.",
+      "roles": { "manager": "Representante", "promoter": "Promotor", "sponsor": "Patrocinador" }
     },
     "events": {
       "title": "Todos los Eventos",

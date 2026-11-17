@@ -10,6 +10,12 @@ import { GenderDivisionCheckboxes } from '@/components/GenderDivisionCheckboxes'
 import { DISCIPLINE_OPTIONS, normalizeDisciplineList } from '@/lib/disciplines';
 import { countryFlagEmoji, getCountryOptions } from '@/lib/countries';
 import { deleteFile, uploadFile } from '@/lib/storageClient';
+import {
+  getSocialMediaDisplayValue,
+  getSocialMediaHref,
+  isValidSocialMediaIdentifier,
+  normalizeSocialMediaIdentifier,
+} from '@/lib/socialMedia';
 
 const ACCEPTED_PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/gif,image/avif';
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
@@ -38,12 +44,14 @@ interface Props {
 
 export function ManualFighterManager({
   creatorId,
-  sectionLabel = 'Mis Peleadores',
-  description = 'Peleadores que no están registrados en la plataforma. Aparecerán públicamente con la etiqueta "Roster"; el contacto para peleas llegará a ti dentro de la app.',
+  sectionLabel,
+  description,
   defaultGymName = '',
   initiallyOpen = false,
 }: Props) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation('fighters');
+  const resolvedSectionLabel = sectionLabel ?? t('fighters.rosterManager.sectionLabel');
+  const resolvedDescription = description ?? t('fighters.rosterManager.description');
   const countryOptions = useMemo(
     () => getCountryOptions(i18n.resolvedLanguage || i18n.language),
     [i18n.resolvedLanguage, i18n.language],
@@ -55,6 +63,8 @@ export function ManualFighterManager({
   const [error, setError] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
   const [uploadingPhotoId, setUploadingPhotoId] = useState<string | null>(null);
+  const [savingInstagramId, setSavingInstagramId] = useState<string | null>(null);
+  const [instagramDrafts, setInstagramDrafts] = useState<Record<string, string>>({});
 
   const [name, setName] = useState('');
   const [nickname, setNickname] = useState('');
@@ -69,6 +79,7 @@ export function ManualFighterManager({
   const [state, setStateField] = useState('');
   const [nationality, setNationality] = useState('');
   const [gym, setGym] = useState(defaultGymName);
+  const [instagram, setInstagram] = useState('');
   const [level, setLevel] = useState<'amateur' | 'pro'>('amateur');
   const [notes, setNotes] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -96,7 +107,11 @@ export function ManualFighterManager({
 
   useEffect(() => {
     manualFighterService.getByCreator(creatorId).then(({ data }) => {
-      setManualFighters(data ?? []);
+      const fighters = data ?? [];
+      setManualFighters(fighters);
+      setInstagramDrafts(Object.fromEntries(
+        fighters.map((fighter) => [fighter.id, fighter.instagram ?? '']),
+      ));
       setLoading(false);
     });
   }, [creatorId]);
@@ -108,7 +123,7 @@ export function ManualFighterManager({
   const resetForm = () => {
     setName(''); setNickname(''); setWeight(''); setDisciplines([]);
     setWins('0'); setLosses('0'); setDraws('0');
-    setPhone(''); setEmail(''); setCity(''); setStateField(''); setNationality(''); setGym(defaultGymName);
+    setPhone(''); setEmail(''); setCity(''); setStateField(''); setNationality(''); setGym(defaultGymName); setInstagram('');
     setLevel('amateur'); setNotes(''); setPhotoFile(null); setPhotoPreview(null); setBio('');
     setIsAvailable(true); setIsPublic(true); setDateOfBirth(''); setGenderDivision(''); setExactWeight('');
     setRequestedWeight(''); setMinimumWeight(''); setMaximumWeight(''); setSkillRating(''); setRulesets('');
@@ -117,7 +132,11 @@ export function ManualFighterManager({
   };
 
   const handleAdd = async () => {
-    if (!name.trim()) { setError('El nombre es obligatorio.'); return; }
+    if (!name.trim()) { setError(t('fighters.rosterManager.errors.nameRequired')); return; }
+    if (!isValidSocialMediaIdentifier('instagram', instagram)) {
+      setError(t('fighters.rosterManager.errors.invalidInstagram'));
+      return;
+    }
     setSaving(true);
     setError(null);
 
@@ -126,7 +145,7 @@ export function ManualFighterManager({
       const uploadResult = await uploadFile(photoFile, 'fighter-photos');
       if (uploadResult.error || !uploadResult.data) {
         setSaving(false);
-        setError(`No se pudo subir la foto. ${uploadResult.error ?? 'Intenta de nuevo.'}`);
+        setError(t('fighters.rosterManager.errors.uploadPhoto', { error: uploadResult.error ?? t('fighters.rosterManager.errors.tryAgain') }));
         return;
       }
       uploadedPhoto = uploadResult.data;
@@ -145,6 +164,7 @@ export function ManualFighterManager({
       email: email.trim() || null,
       city: city.trim() || null,
       gym_name: gym.trim() || null,
+      instagram: normalizeSocialMediaIdentifier(instagram),
       experience_level: level,
       notes: notes.trim() || null,
       photo_url: uploadedPhoto?.url ?? null,
@@ -178,9 +198,10 @@ export function ManualFighterManager({
     if (err) {
       if (uploadedPhoto) await deleteFile(uploadedPhoto.key);
       console.error('Manual fighter insert failed:', err);
-      setError(`No se pudo agregar el peleador. ${err}`);
+      setError(t('fighters.rosterManager.errors.addFighter', { error: err }));
     } else if (data) {
       setManualFighters((prev) => [data, ...prev]);
+      setInstagramDrafts((current) => ({ ...current, [data.id]: data.instagram ?? '' }));
       resetForm();
       setShowForm(false);
     }
@@ -189,11 +210,11 @@ export function ManualFighterManager({
   const selectPhoto = (file: File | null) => {
     if (!file) return;
     if (!ACCEPTED_PHOTO_TYPES.split(',').includes(file.type)) {
-      setError('La foto debe ser JPG, PNG, WebP, GIF o AVIF.');
+      setError(t('fighters.rosterManager.errors.photoType'));
       return;
     }
     if (file.size > MAX_PHOTO_BYTES) {
-      setError('La foto no puede superar 10 MB.');
+      setError(t('fighters.rosterManager.errors.photoSize'));
       return;
     }
     if (photoPreview) URL.revokeObjectURL(photoPreview);
@@ -206,8 +227,8 @@ export function ManualFighterManager({
     if (!file) return;
     if (!ACCEPTED_PHOTO_TYPES.split(',').includes(file.type) || file.size > MAX_PHOTO_BYTES) {
       setError(file.size > MAX_PHOTO_BYTES
-        ? 'La foto no puede superar 10 MB.'
-        : 'La foto debe ser JPG, PNG, WebP, GIF o AVIF.');
+        ? t('fighters.rosterManager.errors.photoSize')
+        : t('fighters.rosterManager.errors.photoType'));
       return;
     }
 
@@ -216,7 +237,7 @@ export function ManualFighterManager({
     const uploadResult = await uploadFile(file, 'fighter-photos');
     if (uploadResult.error || !uploadResult.data) {
       setUploadingPhotoId(null);
-      setError(`No se pudo subir la foto. ${uploadResult.error ?? 'Intenta de nuevo.'}`);
+      setError(t('fighters.rosterManager.errors.uploadPhoto', { error: uploadResult.error ?? t('fighters.rosterManager.errors.tryAgain') }));
       return;
     }
 
@@ -226,7 +247,7 @@ export function ManualFighterManager({
     if (updateResult.error || !updateResult.data) {
       await deleteFile(uploadResult.data.key);
       setUploadingPhotoId(null);
-      setError(`La foto se subió, pero no pudo guardarse en el perfil. ${updateResult.error ?? ''}`.trim());
+      setError(t('fighters.rosterManager.errors.photoProfileSave', { error: updateResult.error ?? '' }).trim());
       return;
     }
 
@@ -234,6 +255,34 @@ export function ManualFighterManager({
       fighter.id === fighterId ? updateResult.data! : fighter
     )));
     setUploadingPhotoId(null);
+  };
+
+  const saveFighterInstagram = async (fighterId: string) => {
+    const value = instagramDrafts[fighterId] ?? '';
+    if (!isValidSocialMediaIdentifier('instagram', value)) {
+      setError(t('fighters.rosterManager.errors.invalidInstagram'));
+      return;
+    }
+
+    setSavingInstagramId(fighterId);
+    setError(null);
+    const result = await manualFighterService.update(fighterId, {
+      instagram: normalizeSocialMediaIdentifier(value),
+    });
+    setSavingInstagramId(null);
+
+    if (result.error || !result.data) {
+      setError(t('fighters.rosterManager.errors.instagramSave', { error: result.error ?? t('fighters.rosterManager.errors.tryAgain') }));
+      return;
+    }
+
+    setManualFighters((current) => current.map((fighter) => (
+      fighter.id === fighterId ? result.data! : fighter
+    )));
+    setInstagramDrafts((current) => ({
+      ...current,
+      [fighterId]: result.data!.instagram ?? '',
+    }));
   };
 
   const handleRemove = async (id: string) => {
@@ -247,49 +296,49 @@ export function ManualFighterManager({
     <div>
       <div className="flex items-center justify-between mb-2">
         <p className="text-xs font-bold tracking-widest uppercase" style={{ color: '#C0001E' }}>
-          {sectionLabel} ({manualFighters.length})
+          {resolvedSectionLabel} ({manualFighters.length})
         </p>
         <button
           onClick={() => { setShowForm(!showForm); resetForm(); }}
           className="px-4 py-2 text-xs font-bold tracking-widest uppercase text-white transition-colors"
           style={{ background: showForm ? '#5A5A5A' : '#C0001E' }}
         >
-          {showForm ? 'Cancelar' : 'Agregar peleador'}
+          {showForm ? t('fighters.rosterManager.cancel') : t('fighters.rosterManager.addFighter')}
         </button>
       </div>
-      <p className="text-xs text-zinc-400 mb-4">{description}</p>
+      <p className="text-xs text-zinc-400 mb-4">{resolvedDescription}</p>
 
       {showForm && (
         <div className="border border-zinc-200 p-6 mb-6 space-y-4">
-          <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#5A5A5A' }}>Nuevo Peleador</p>
+          <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#5A5A5A' }}>{t('fighters.rosterManager.newFighter')}</p>
           {error && <p className="text-xs text-red-600">{error}</p>}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Nombre completo *</label>
-              <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre del peleador"
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.rosterManager.fields.fullName')}</label>
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('fighters.rosterManager.placeholders.fighterName')}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
             </div>
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Apodo</label>
-              <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="Apodo (opcional)"
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.rosterManager.fields.nickname')}</label>
+              <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder={t('fighters.rosterManager.placeholders.nickname')}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>División</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.rosterManager.fields.division')}</label>
               <select value={weight} onChange={(e) => setWeight(e.target.value)}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white">
-                <option value="">Seleccionar...</option>
+                <option value="">{t('fighters.rosterManager.select')}</option>
                 {WEIGHT_CLASSES.map((w) => <option key={w} value={w}>{WEIGHT_LABELS[w]}</option>)}
               </select>
             </div>
           </div>
 
           <fieldset>
-            <legend className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-600">Disciplinas</legend>
+            <legend className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-600">{t('fighters.rosterManager.fields.disciplines')}</legend>
             <div className="flex flex-wrap gap-2">
               {DISCIPLINE_OPTIONS.map((discipline) => {
                 const selected = disciplines.includes(discipline);
@@ -310,94 +359,94 @@ export function ManualFighterManager({
                 );
               })}
             </div>
-            <p className="mt-2 text-xs text-zinc-500">Selecciona todas las disciplinas que practica este peleador.</p>
+            <p className="mt-2 text-xs text-zinc-500">{t('fighters.rosterManager.disciplinesHelp')}</p>
           </fieldset>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Victorias</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.wins')}</label>
               <input type="number" min="0" value={wins} onChange={(e) => setWins(e.target.value)}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
             </div>
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Derrotas</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.losses')}</label>
               <input type="number" min="0" value={losses} onChange={(e) => setLosses(e.target.value)}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
             </div>
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Draws</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.draws')}</label>
               <input type="number" min="0" value={draws} onChange={(e) => setDraws(e.target.value)}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <RosterInput label="Fecha de nacimiento" type="date" value={dateOfBirth} onChange={setDateOfBirth} />
+            <RosterInput label={t('fighters.rosterManager.fields.dateOfBirth')} type="date" value={dateOfBirth} onChange={setDateOfBirth} />
             <GenderDivisionCheckboxes value={genderDivision} onChange={setGenderDivision} />
-            <RosterInput label="Nivel técnico 1–10" type="number" value={skillRating} onChange={setSkillRating} />
+            <RosterInput label={t('fighters.rosterManager.fields.skillRating')} type="number" value={skillRating} onChange={setSkillRating} />
           </div>
 
           <div>
-            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-zinc-600">Pesos para matchmaking</p>
+            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-zinc-600">{t('fighters.rosterManager.matchmakingWeights')}</p>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <RosterInput label="Peso real kg" type="number" value={exactWeight} onChange={setExactWeight} />
-              <RosterInput label="Peso deseado (informativo) kg" type="number" value={requestedWeight} onChange={setRequestedWeight} />
-              <RosterInput label="Mínimo kg" type="number" value={minimumWeight} onChange={setMinimumWeight} />
-              <RosterInput label="Máximo kg" type="number" value={maximumWeight} onChange={setMaximumWeight} />
+              <RosterInput label={t('fighters.rosterManager.fields.actualWeight')} type="number" value={exactWeight} onChange={setExactWeight} />
+              <RosterInput label={t('fighters.rosterManager.fields.requestedWeight')} type="number" value={requestedWeight} onChange={setRequestedWeight} />
+              <RosterInput label={t('fighters.rosterManager.fields.minimumWeight')} type="number" value={minimumWeight} onChange={setMinimumWeight} />
+              <RosterInput label={t('fighters.rosterManager.fields.maximumWeight')} type="number" value={maximumWeight} onChange={setMaximumWeight} />
             </div>
           </div>
 
           <div>
-            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-zinc-600">Récord KO / TKO</p>
+            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-zinc-600">{t('fighters.rosterManager.knockoutRecord')}</p>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <RosterInput label="KO a favor" type="number" value={koWins} onChange={setKoWins} />
-              <RosterInput label="TKO a favor" type="number" value={tkoWins} onChange={setTkoWins} />
-              <RosterInput label="KO en contra" type="number" value={koLosses} onChange={setKoLosses} />
-              <RosterInput label="TKO en contra" type="number" value={tkoLosses} onChange={setTkoLosses} />
+              <RosterInput label={t('fighters.rosterManager.fields.koWins')} type="number" value={koWins} onChange={setKoWins} />
+              <RosterInput label={t('fighters.rosterManager.fields.tkoWins')} type="number" value={tkoWins} onChange={setTkoWins} />
+              <RosterInput label={t('fighters.rosterManager.fields.koLosses')} type="number" value={koLosses} onChange={setKoLosses} />
+              <RosterInput label={t('fighters.rosterManager.fields.tkoLosses')} type="number" value={tkoLosses} onChange={setTkoLosses} />
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <RosterInput label="Reglamentos (separados por coma)" value={rulesets} onChange={setRulesets} />
-            <RosterInput label="Restricciones privadas (separadas por coma)" value={restrictions} onChange={setRestrictions} />
-            <RosterInput label="Disponible desde" type="date" value={availableFrom} onChange={setAvailableFrom} />
-            <RosterInput label="Disponible hasta" type="date" value={availableTo} onChange={setAvailableTo} />
-            <RosterInput label="Última pelea" type="date" value={lastFightAt} onChange={setLastFightAt} />
-            <RosterInput label="Última derrota por KO" type="date" value={lastKoLossAt} onChange={setLastKoLossAt} />
+            <RosterInput label={t('fighters.rosterManager.fields.rulesets')} value={rulesets} onChange={setRulesets} />
+            <RosterInput label={t('fighters.rosterManager.fields.privateRestrictions')} value={restrictions} onChange={setRestrictions} />
+            <RosterInput label={t('fighters.rosterManager.fields.availableFrom')} type="date" value={availableFrom} onChange={setAvailableFrom} />
+            <RosterInput label={t('fighters.rosterManager.fields.availableTo')} type="date" value={availableTo} onChange={setAvailableTo} />
+            <RosterInput label={t('fighters.rosterManager.fields.lastFight')} type="date" value={lastFightAt} onChange={setLastFightAt} />
+            <RosterInput label={t('fighters.rosterManager.fields.lastKoLoss')} type="date" value={lastKoLossAt} onChange={setLastKoLossAt} />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Teléfono (solo tú lo verás)</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.rosterManager.fields.privatePhone')}</label>
               <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+52 000 000 0000"
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
             </div>
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Correo (solo tú lo verás)</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="correo@ejemplo.com"
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.rosterManager.fields.privateEmail')}</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com"
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Ciudad</label>
-              <input type="text" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Ciudad"
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.rosterManager.fields.city')}</label>
+              <input type="text" value={city} onChange={(e) => setCity(e.target.value)} placeholder={t('fighters.rosterManager.fields.city')}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
             </div>
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Estado</label>
-              <input type="text" value={state} onChange={(e) => setStateField(e.target.value)} placeholder="Estado"
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.rosterManager.fields.state')}</label>
+              <input type="text" value={state} onChange={(e) => setStateField(e.target.value)} placeholder={t('fighters.rosterManager.fields.state')}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
             </div>
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Nacionalidad / Bandera</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.rosterManager.fields.nationality')}</label>
               <select
                 value={nationality}
                 onChange={(event) => setNationality(event.target.value)}
                 className="w-full border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
               >
-                <option value="">Seleccionar...</option>
+                <option value="">{t('fighters.rosterManager.select')}</option>
                 {countryOptions.map((option) => (
                   <option key={option.code} value={option.code}>
                     {countryFlagEmoji(option.code)} {option.label}
@@ -406,15 +455,25 @@ export function ManualFighterManager({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Gimnasio</label>
-              <input type="text" value={gym} onChange={(e) => setGym(e.target.value)} placeholder="Gimnasio"
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.rosterManager.fields.gym')}</label>
+              <input type="text" value={gym} onChange={(e) => setGym(e.target.value)} placeholder={t('fighters.rosterManager.fields.gym')}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-bold uppercase tracking-widest text-zinc-600">{t('fighters.rosterManager.fields.publicInstagram')}</label>
+              <input
+                type="text"
+                value={instagram}
+                onChange={(event) => setInstagram(event.target.value)}
+                placeholder="@usuario o instagram.com/usuario"
+                className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Nivel</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.rosterManager.fields.level')}</label>
               <select value={level} onChange={(e) => setLevel(e.target.value as 'amateur' | 'pro')}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white">
                 <option value="amateur">Amateur</option>
@@ -422,31 +481,31 @@ export function ManualFighterManager({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Disponibilidad</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.rosterManager.fields.availability')}</label>
               <label className="flex items-center gap-2 cursor-pointer mt-1">
                 <input type="checkbox" checked={isAvailable} onChange={(e) => setIsAvailable(e.target.checked)} className="w-4 h-4 accent-[#C0001E]" />
-                <span className="text-sm text-zinc-700">Disponible para peleas</span>
+                <span className="text-sm text-zinc-700">{t('fighters.rosterManager.availableForFights')}</span>
               </label>
               <label className="mt-2 flex cursor-pointer items-center gap-2">
                 <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="w-4 h-4 accent-[#C0001E]" />
-                <span className="text-sm text-zinc-700">Mostrar en el directorio público</span>
+                <span className="text-sm text-zinc-700">{t('fighters.rosterManager.showPublic')}</span>
               </label>
             </div>
           </div>
 
           <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-600">Foto del peleador</label>
+            <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-600">{t('fighters.rosterManager.fields.photo')}</label>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <div className="relative h-24 w-24 shrink-0 overflow-hidden border border-zinc-300 bg-zinc-100">
                 {photoPreview ? (
-                  <Image src={photoPreview} alt="Vista previa de la foto" fill className="object-cover" unoptimized />
+                  <Image src={photoPreview} alt={t('fighters.rosterManager.photoPreview')} fill className="object-cover" unoptimized />
                 ) : (
-                  <span className="flex h-full items-center justify-center text-center text-xs text-zinc-400">Sin foto</span>
+                  <span className="flex h-full items-center justify-center text-center text-xs text-zinc-400">{t('fighters.profile.noPhoto')}</span>
                 )}
               </div>
               <div>
                 <label className="inline-flex cursor-pointer items-center border border-zinc-900 bg-zinc-900 px-4 py-2 text-xs font-bold uppercase tracking-widest text-white hover:bg-zinc-700">
-                  {photoFile ? 'Cambiar foto' : 'Seleccionar foto'}
+                  {photoFile ? t('fighters.rosterManager.changePhoto') : t('fighters.rosterManager.selectPhoto')}
                   <input
                     type="file"
                     accept={ACCEPTED_PHOTO_TYPES}
@@ -454,21 +513,21 @@ export function ManualFighterManager({
                     onChange={(event) => selectPhoto(event.target.files?.[0] ?? null)}
                   />
                 </label>
-                <p className="mt-2 text-xs text-zinc-500">JPG, PNG, WebP, GIF o AVIF. Máximo 10 MB.</p>
+                <p className="mt-2 text-xs text-zinc-500">{t('fighters.rosterManager.photoHelp')}</p>
                 {photoFile && <p className="mt-1 text-xs font-medium text-zinc-700">{photoFile.name}</p>}
               </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Bio pública</label>
-            <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} placeholder="Breve bio del peleador"
+            <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.rosterManager.fields.publicBio')}</label>
+            <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} placeholder={t('fighters.rosterManager.placeholders.bio')}
               className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
           </div>
 
           <div>
-            <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>Notas privadas</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Notas adicionales (solo tú las verás)"
+            <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.rosterManager.fields.privateNotes')}</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder={t('fighters.rosterManager.placeholders.notes')}
               className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
           </div>
 
@@ -476,17 +535,17 @@ export function ManualFighterManager({
             <button onClick={handleAdd} disabled={saving}
               className="px-6 py-2 text-sm font-bold tracking-wide uppercase text-white disabled:opacity-50"
               style={{ background: saving ? '#9A9A9A' : '#C0001E' }}>
-              {saving ? 'Guardando...' : 'Guardar peleador'}
+              {saving ? t('fighters.rosterManager.saving') : t('fighters.rosterManager.saveFighter')}
             </button>
           </div>
         </div>
       )}
 
       {loading ? (
-        <p className="text-sm text-zinc-400">Cargando...</p>
+        <p className="text-sm text-zinc-400">{t('fighters.rosterManager.loading')}</p>
       ) : manualFighters.length === 0 && !showForm ? (
         <div className="border border-dashed border-zinc-200 py-10 text-center">
-          <p className="text-sm text-zinc-400 mb-3">No tienes peleadores agregados manualmente.</p>
+          <p className="text-sm text-zinc-400 mb-3">{t('fighters.rosterManager.empty')}</p>
         </div>
       ) : manualFighters.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -496,13 +555,13 @@ export function ManualFighterManager({
                 <div className="shrink-0">
                   <div className="relative h-16 w-16 overflow-hidden border border-zinc-200 bg-zinc-100">
                     {f.photo_url ? (
-                      <Image src={f.photo_url} alt={`Foto de ${f.full_name}`} fill className="object-cover" />
+                      <Image src={f.photo_url} alt={t('fighters.rosterManager.photoOf', { name: f.full_name })} fill className="object-cover" />
                     ) : (
-                      <span className="flex h-full items-center justify-center text-[10px] uppercase text-zinc-400">Sin foto</span>
+                      <span className="flex h-full items-center justify-center text-[10px] uppercase text-zinc-400">{t('fighters.profile.noPhoto')}</span>
                     )}
                   </div>
                   <label className="mt-1 block cursor-pointer text-center text-[10px] font-bold uppercase tracking-wide text-[#C0001E] hover:underline">
-                    {uploadingPhotoId === f.id ? 'Subiendo…' : f.photo_url ? 'Cambiar' : 'Agregar foto'}
+                    {uploadingPhotoId === f.id ? t('fighters.rosterManager.uploading') : f.photo_url ? t('fighters.rosterManager.change') : t('fighters.rosterManager.addPhoto')}
                     <input
                       type="file"
                       accept={ACCEPTED_PHOTO_TYPES}
@@ -528,8 +587,39 @@ export function ManualFighterManager({
                     {f.weight_class ? WEIGHT_LABELS[f.weight_class] ?? f.weight_class : '—'} · {f.city ?? '—'}
                   </p>
                   <InlineCombatRecord wins={f.record_wins} losses={f.record_losses} draws={f.record_draws} className="mt-1 text-xs" />
-                  <p className="mt-1 text-xs text-zinc-500">KO/TKO {f.ko_wins + f.tko_wins} · nivel {f.skill_rating ?? '—'}/10 · {f.gender_division ?? 'división pendiente'}</p>
-                  <p className="mt-1 text-xs text-zinc-500">Peso deseado (informativo): {f.requested_weight_kg ?? '—'} kg · rango {f.acceptable_weight_min_kg ?? '—'}–{f.acceptable_weight_max_kg ?? '—'} kg</p>
+                  {f.instagram && getSocialMediaHref('instagram', f.instagram) && (
+                    <a
+                      href={getSocialMediaHref('instagram', f.instagram) ?? undefined}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 inline-block text-xs font-semibold text-[#C0001E] hover:underline"
+                    >
+                      Instagram {getSocialMediaDisplayValue(f.instagram)}
+                    </a>
+                  )}
+                  <div className="mt-2 flex max-w-sm gap-2">
+                    <input
+                      type="text"
+                      value={instagramDrafts[f.id] ?? ''}
+                      onChange={(event) => setInstagramDrafts((current) => ({
+                        ...current,
+                        [f.id]: event.target.value,
+                      }))}
+                      placeholder="Instagram"
+                      aria-label={t('fighters.rosterManager.instagramOf', { name: f.full_name })}
+                      className="min-w-0 flex-1 border border-zinc-300 px-2 py-1.5 text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void saveFighterInstagram(f.id)}
+                      disabled={savingInstagramId === f.id}
+                      className="border border-zinc-900 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wide text-zinc-900 disabled:opacity-50"
+                    >
+                      {savingInstagramId === f.id ? t('fighters.rosterManager.saving') : t('fighters.rosterManager.save')}
+                    </button>
+                  </div>
+                  <p className="mt-1 text-xs text-zinc-500">{t('fighters.rosterManager.cardStats', { knockouts: f.ko_wins + f.tko_wins, level: f.skill_rating ?? '—', gender: f.gender_division ?? t('fighters.rosterManager.pendingDivision') })}</p>
+                  <p className="mt-1 text-xs text-zinc-500">{t('fighters.rosterManager.cardWeight', { requested: f.requested_weight_kg ?? '—', minimum: f.acceptable_weight_min_kg ?? '—', maximum: f.acceptable_weight_max_kg ?? '—' })}</p>
                   <div className="flex gap-2 mt-1.5 flex-wrap">
                     <span className={`text-xs font-bold px-1.5 py-0.5 uppercase tracking-widest ${f.experience_level === 'pro' ? 'bg-[#C0001E] text-white' : 'bg-zinc-100 text-zinc-600'}`}>
                       {f.experience_level === 'pro' ? 'Pro' : 'Amateur'}
@@ -538,7 +628,7 @@ export function ManualFighterManager({
                       <span key={discipline} className="bg-zinc-900 px-1.5 py-0.5 text-xs font-bold uppercase tracking-wide text-white">{discipline}</span>
                     ))}
                     <span className={`text-xs font-semibold px-1.5 py-0.5 ${f.is_available ? 'bg-emerald-50 text-emerald-700' : 'bg-zinc-100 text-zinc-500'}`}>
-                      {f.is_available ? 'Disponible' : 'No disponible'}
+                      {f.is_available ? t('fighters.available') : t('fighters.unavailable')}
                     </span>
                   </div>
                   {f.notes && <p className="text-xs text-zinc-400 mt-1 italic">{f.notes}</p>}
@@ -546,7 +636,7 @@ export function ManualFighterManager({
               </div>
               <button onClick={() => handleRemove(f.id)} disabled={removing === f.id}
                 className="text-xs text-zinc-400 hover:text-red-600 disabled:opacity-50 transition-colors flex-shrink-0 pt-1">
-                {removing === f.id ? '...' : 'Quitar'}
+                {removing === f.id ? '...' : t('fighters.rosterManager.remove')}
               </button>
             </div>
           ))}

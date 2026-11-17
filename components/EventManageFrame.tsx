@@ -39,7 +39,7 @@ export function EventManageFrame({ children }: { children: ReactNode }) {
       className="print:hidden inline-flex w-fit min-h-11 items-center gap-2 border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:border-zinc-900 hover:text-zinc-900"
     >
       <span aria-hidden="true">←</span>
-      Volver al evento
+      {t('admin.eventReturn')}
     </Link>
   ) : null;
 

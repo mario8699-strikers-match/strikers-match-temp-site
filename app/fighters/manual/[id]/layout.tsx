@@ -3,6 +3,8 @@ import { StructuredData } from '@/components/StructuredData';
 import { absoluteUrl, joinLocationParts, pageMetadata, truncateDescription } from '@/lib/seo';
 import { getPublicManualFighterSeo } from '@/lib/seoData';
 import { normalizeDisciplineList } from '@/lib/disciplines';
+import { getSocialMediaHref } from '@/lib/socialMedia';
+import { getCountryName } from '@/lib/countries';
 
 interface ManualFighterLayoutProps {
   children: React.ReactNode;
@@ -12,8 +14,13 @@ interface ManualFighterLayoutProps {
 function description(fighter: NonNullable<Awaited<ReturnType<typeof getPublicManualFighterSeo>>>) {
   const disciplines = normalizeDisciplineList(fighter.disciplines, fighter.discipline).join(', ');
   const country = fighter.country;
-  const details = [disciplines, fighter.weight_class, joinLocationParts([fighter.city, fighter.state, country])].filter(Boolean).join(' · ');
-  return truncateDescription(fighter.bio || `${fighter.full_name}${details ? ` — ${details}` : ''}. Peleador de roster en Strikers Match.`);
+  const details = [
+    disciplines,
+    fighter.weight_class,
+    `${fighter.record_wins}–${fighter.record_losses}–${fighter.record_draws}`,
+    joinLocationParts([fighter.city, fighter.state, country]),
+  ].filter(Boolean).join(' · ');
+  return truncateDescription(`${fighter.full_name}${details ? ` — ${details}` : ''}. Peleador de roster en Strikers Match.`);
 }
 
 export async function generateMetadata({ params }: Omit<ManualFighterLayoutProps, 'children'>): Promise<Metadata> {
@@ -45,6 +52,8 @@ export default async function ManualFighterLayout({ children, params }: ManualFi
   const profileUrl = absoluteUrl(`/fighters/manual/${id}`);
   const country = fighter.country;
   const locationName = joinLocationParts([fighter.city, fighter.state, country]);
+  const instagram = fighter.instagram ? getSocialMediaHref('instagram', fighter.instagram) : null;
+  const nationalityCode = fighter.nationalities?.[0];
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'ProfilePage',
@@ -57,6 +66,10 @@ export default async function ManualFighterLayout({ children, params }: ManualFi
       alternateName: fighter.nickname || undefined,
       description: description(fighter),
       image: fighter.photo_url || undefined,
+      sameAs: instagram ? [instagram] : undefined,
+      nationality: nationalityCode
+        ? { '@type': 'Country', name: getCountryName(nationalityCode, 'es'), identifier: nationalityCode }
+        : undefined,
       homeLocation: locationName
         ? {
             '@type': 'Place',

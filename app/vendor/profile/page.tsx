@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
@@ -9,29 +10,8 @@ import { authService } from '@/services/authService';
 import { VENDOR_ROLES } from '@/types';
 import type { Profile, UserRole } from '@/types';
 
-const ROLE_LABELS: Record<string, string> = {
-  gyms_academies: 'Gimnasio / Academia',
-  recovery_wellness: 'Recuperación y bienestar',
-  gear_apparel: 'Ropa y equipo',
-  nutrition_supplements: 'Nutrición y suplementos',
-  local_business: 'Negocio local',
-  other_service: 'Otro servicio',
-  ring_card_girl: 'Ring Card Girl',
-  photographer: 'Fotógrafo',
-  videographer: 'Videógrafo',
-  broadcast_personality: 'Presentador / Comentarista',
-  catering_vendor: 'Catering / Alimentos',
-  venue_rental: 'Renta de Venue',
-  judge: 'Juez / Réferi',
-  ring_rental: 'Renta de Ring',
-  ring_announcer: 'Anunciador de Ring',
-  cutman: 'Cutman',
-  merchandise_vendor: 'Vendedor de Mercancía',
-  ringside_doctor: 'Médico de Ringside',
-  ringside_emt: 'Técnico Médico de Ringside',
-};
-
 export default function VendorProfilePage() {
+  const { t } = useTranslation('common');
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -79,7 +59,7 @@ export default function VendorProfilePage() {
     e.preventDefault();
     if (!profile) return;
     if (!fullName.trim()) {
-      setSaveError(profile.role === 'gyms_academies' ? 'El nombre del gimnasio es obligatorio.' : 'El nombre es obligatorio.');
+      setSaveError(profile.role === 'gyms_academies' ? t('vendorProfile.errors.gymNameRequired') : t('vendorProfile.errors.nameRequired'));
       return;
     }
     setSaving(true);
@@ -90,7 +70,7 @@ export default function VendorProfilePage() {
     if (photoFile) {
       const { data: url, error: upErr } = await authService.uploadProfilePhoto(photoFile);
       if (upErr || !url) {
-        setSaveError('Error al subir la foto.');
+        setSaveError(t('vendorProfile.errors.photoUpload'));
         setSaving(false);
         return;
       }
@@ -110,7 +90,7 @@ export default function VendorProfilePage() {
 
     setSaving(false);
     if (error) {
-      setSaveError('Error al guardar. Intenta de nuevo.');
+      setSaveError(t('vendorProfile.errors.save'));
     } else {
       setProfile({
         ...profile,
@@ -143,11 +123,11 @@ export default function VendorProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      setSaveError('El archivo debe ser una imagen.');
+      setSaveError(t('vendorProfile.errors.imageType'));
       return;
     }
     if (file.size > 8 * 1024 * 1024) {
-      setSaveError('La imagen no debe superar 8 MB.');
+      setSaveError(t('vendorProfile.errors.imageSize'));
       return;
     }
     setSaveError(null);
@@ -160,7 +140,7 @@ export default function VendorProfilePage() {
       <div className="min-h-screen bg-white font-sans flex flex-col">
         <Navbar activePage={null} />
         <main className="flex-1 max-w-lg mx-auto px-4 py-16 w-full">
-          <p className="text-sm text-zinc-400">Cargando...</p>
+          <p className="text-sm text-zinc-400">{t('loading')}</p>
         </main>
         <Footer />
       </div>
@@ -178,23 +158,23 @@ export default function VendorProfilePage() {
       <main className={`flex-1 mx-auto px-4 py-16 w-full ${isGymOwner ? 'max-w-5xl' : 'max-w-2xl'}`}>
         <div className="mb-8 max-w-2xl">
           <p className="text-xs font-bold tracking-[0.25em] uppercase mb-2" style={{ color: '#C0001E' }}>Strikers Match</p>
-          <h1 className="text-3xl font-bold text-zinc-900">Mi Perfil</h1>
+          <h1 className="text-3xl font-bold text-zinc-900">{t('vendorProfile.title')}</h1>
           <p className="mt-2 text-sm text-zinc-500">
-            Actualiza tu información. Tu perfil aparece en el{' '}
+            {t('vendorProfile.introStart')}{' '}
             <a href="/directorio" className="font-medium text-zinc-900 underline hover:text-[#C0001E]">
-              Directorio
+              {t('vendorProfile.directory')}
             </a>.
           </p>
           <div className="mt-3">
             <span className="inline-flex items-center text-xs font-bold uppercase tracking-widest px-2 py-1 bg-zinc-100 text-zinc-700">
-              {ROLE_LABELS[profile.role] ?? profile.role}
+              {t(`vendorProfile.roles.${profile.role}`, { defaultValue: profile.role })}
             </span>
           </div>
         </div>
 
         {saveSuccess && (
           <div className="mb-4 max-w-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 text-sm">
-            Perfil guardado correctamente.
+            {t('vendorProfile.saved')}
           </div>
         )}
         {saveError && (
@@ -210,12 +190,12 @@ export default function VendorProfilePage() {
               <div
                 className="w-20 h-20 bg-zinc-100 overflow-hidden cursor-pointer"
                 onClick={() => photoInputRef.current?.click()}
-                title="Cambiar foto"
+                title={t('vendorProfile.changePhoto')}
               >
                 {photoPreview ? (
-                  <Image src={photoPreview} alt="Foto de perfil" width={80} height={80} className="w-full h-full object-cover" unoptimized />
+                  <Image src={photoPreview} alt={t('vendorProfile.profilePhoto')} width={80} height={80} className="w-full h-full object-cover" unoptimized />
                 ) : profile.photo_url ? (
-                  <Image src={profile.photo_url} alt="Foto de perfil" width={80} height={80} className="w-full h-full object-cover" />
+                  <Image src={profile.photo_url} alt={t('vendorProfile.profilePhoto')} width={80} height={80} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <svg className="w-8 h-8 text-zinc-300" fill="currentColor" viewBox="0 0 24 24">
@@ -242,16 +222,16 @@ export default function VendorProfilePage() {
               />
             </div>
             <div>
-              <p className="text-sm font-medium text-zinc-700">Foto de perfil</p>
+              <p className="text-sm font-medium text-zinc-700">{t('vendorProfile.profilePhoto')}</p>
               <p className="text-xs text-zinc-500 mt-0.5">
-                JPG o PNG, máximo 8 MB. Aparece en el directorio público.
+                {t('vendorProfile.photoHelp')}
               </p>
             </div>
           </div>
 
           <div>
             <label htmlFor="full_name" className="block text-sm font-medium text-zinc-700 mb-1">
-              {isGymOwner ? 'Nombre del gimnasio / academia' : 'Nombre Completo'}
+              {isGymOwner ? t('vendorProfile.gymName') : t('vendorProfile.fullName')}
             </label>
             <input
               id="full_name"
@@ -263,14 +243,14 @@ export default function VendorProfilePage() {
             />
             {isGymOwner && (
               <p className="mt-1 text-xs text-zinc-500">
-                Este nombre aparecerá en el directorio y se asignará automáticamente a los peleadores de tu gimnasio.
+                {t('vendorProfile.gymNameHelp')}
               </p>
             )}
           </div>
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-zinc-700 mb-1">
-              Correo Electrónico
+              {t('vendorProfile.email')}
             </label>
             <input
               id="email"
@@ -283,7 +263,7 @@ export default function VendorProfilePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="city" className="block text-sm font-medium text-zinc-700 mb-1">Ciudad</label>
+              <label htmlFor="city" className="block text-sm font-medium text-zinc-700 mb-1">{t('vendorProfile.city')}</label>
               <input
                 id="city"
                 type="text"
@@ -293,7 +273,7 @@ export default function VendorProfilePage() {
               />
             </div>
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-zinc-700 mb-1">Teléfono</label>
+              <label htmlFor="phone" className="block text-sm font-medium text-zinc-700 mb-1">{t('vendorProfile.phone')}</label>
               <input
                 id="phone"
                 type="tel"
@@ -306,21 +286,21 @@ export default function VendorProfilePage() {
 
           <div>
             <label htmlFor="bio" className="block text-sm font-medium text-zinc-700 mb-1">
-              Descripción <span className="text-zinc-400 font-normal">(opcional)</span>
+              {t('vendorProfile.description')} <span className="text-zinc-400 font-normal">({t('vendorProfile.optional')})</span>
             </label>
             <textarea
               id="bio"
               rows={4}
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              placeholder="Breve descripción de tu servicio y experiencia"
+              placeholder={t('vendorProfile.descriptionPlaceholder')}
               className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 text-sm"
             />
           </div>
 
           <div>
             <label htmlFor="instagram" className="block text-sm font-medium text-zinc-700 mb-1">
-              Instagram <span className="text-zinc-400 font-normal">(opcional)</span>
+              Instagram <span className="text-zinc-400 font-normal">({t('vendorProfile.optional')})</span>
             </label>
             <input
               id="instagram"
@@ -334,10 +314,10 @@ export default function VendorProfilePage() {
 
           <div>
             <label className="block text-sm font-medium text-zinc-700 mb-1">
-              Otros servicios que ofreces <span className="text-zinc-400 font-normal">(opcional)</span>
+              {t('vendorProfile.otherServices')} <span className="text-zinc-400 font-normal">({t('vendorProfile.optional')})</span>
             </label>
             <p className="text-xs text-zinc-500 mb-3">
-              Selecciona todos los que apliquen. Por ejemplo, un cutman también certificado como EMT.
+              {t('vendorProfile.otherServicesHelp')}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {VENDOR_ROLES.filter((r) => r !== profile.role).map((role) => {
@@ -357,7 +337,7 @@ export default function VendorProfilePage() {
                       onChange={() => toggleAdditionalRole(role)}
                       className="w-4 h-4 border-zinc-300 text-zinc-900 focus:ring-zinc-900"
                     />
-                    <span className="text-xs text-zinc-700">{ROLE_LABELS[role] ?? role}</span>
+                    <span className="text-xs text-zinc-700">{t(`vendorProfile.roles.${role}`, { defaultValue: role })}</span>
                   </label>
                 );
               })}
@@ -372,7 +352,7 @@ export default function VendorProfilePage() {
               className="w-4 h-4 border-zinc-300 text-zinc-900 focus:ring-zinc-900"
             />
             <span className="text-sm text-zinc-700">
-              Disponible para contratación (aparece con indicador verde en el directorio)
+              {t('vendorProfile.availableForHire')}
             </span>
           </label>
 
@@ -381,7 +361,7 @@ export default function VendorProfilePage() {
             disabled={saving}
             className="w-full bg-brand-red text-white py-2.5 text-sm font-semibold hover:bg-brand-red-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {saving ? 'Guardando...' : 'Guardar Cambios'}
+            {saving ? t('vendorProfile.saving') : t('vendorProfile.saveChanges')}
           </button>
         </form>
 
@@ -390,8 +370,8 @@ export default function VendorProfilePage() {
             <ManualFighterManager
               key={openGymRoster ? 'gym-roster-open' : 'gym-roster-closed'}
               creatorId={profile.id}
-              sectionLabel="Peleadores de mi gimnasio"
-              description="Agrega y administra a los peleadores que representan a tu gimnasio. Sus perfiles podrán aparecer en el directorio público de peleadores con tu gimnasio como equipo."
+              sectionLabel={t('vendorProfile.gymFighters')}
+              description={t('vendorProfile.gymFightersHelp')}
               defaultGymName={profile.full_name}
               initiallyOpen={openGymRoster}
             />

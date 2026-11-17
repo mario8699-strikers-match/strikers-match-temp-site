@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface SignaturePadProps {
   onSignatureChange: (data: string | null) => void;
@@ -8,6 +9,7 @@ interface SignaturePadProps {
 }
 
 export function SignaturePad({ onSignatureChange, height = 150 }: SignaturePadProps) {
+  const { t } = useTranslation('fighters');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasDrawn, setHasDrawn] = useState(false);
@@ -108,7 +110,7 @@ export function SignaturePad({ onSignatureChange, height = 150 }: SignaturePadPr
         />
         {!hasDrawn && (
           <p className="absolute inset-0 flex items-center justify-center text-sm text-zinc-300 pointer-events-none select-none">
-            Firme aqui
+            {t('fighters.consent.signHere')}
           </p>
         )}
       </div>
@@ -118,7 +120,7 @@ export function SignaturePad({ onSignatureChange, height = 150 }: SignaturePadPr
           onClick={clear}
           className="text-xs text-zinc-500 hover:text-zinc-900 transition-colors"
         >
-          Borrar firma
+          {t('fighters.consent.clearSignature')}
         </button>
       </div>
     </div>

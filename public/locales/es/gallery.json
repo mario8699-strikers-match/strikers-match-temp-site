@@ -24,6 +24,20 @@
       "instagram": "Instagram",
       "viewProfile": "Ver perfil"
     },
+    "professionalDetail": {
+      "loading": "Cargando perfil...",
+      "notFound": "Este perfil no se encontró o no está disponible.",
+      "viewDirectory": "Ver directorio",
+      "locationUnavailable": "Ubicación no especificada",
+      "available": "Disponible",
+      "unavailable": "No disponible actualmente",
+      "about": "Acerca de",
+      "contact": "Contacto",
+      "signInForContact": "Inicia sesión para ver la información de contacto",
+      "contactAction": "Contactar",
+      "previous": "Anterior",
+      "next": "Siguiente"
+    },
     "form": {
       "open": "Publicar en Directorio",
       "close": "Cerrar formulario",

@@ -55,10 +55,11 @@ export async function submitConsent(
     parent_phone: string;
     relationship: 'Padre' | 'Madre' | 'Tutor Legal';
   },
-  signatureBase64: string
+  signatureBase64: string,
+  waiverText: string = WAIVER_TEXT
 ): Promise<ServiceResponse<ParentalConsent>> {
   try {
-    const waiverHash = await hashText(WAIVER_TEXT);
+    const waiverHash = await hashText(waiverText);
 
     const { data, error } = await supabase
       .from('parental_consents')

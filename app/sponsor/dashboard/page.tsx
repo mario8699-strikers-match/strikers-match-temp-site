@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { InlineCombatRecord } from '@/components/CombatRecord';
+import { useTranslation } from 'react-i18next';
 import { authService } from '@/services/authService';
 import { sponsorService } from '@/services/sponsorService';
 import type { Profile, Fighter, SponsorshipOffer } from '@/types';
@@ -21,14 +22,13 @@ const WEIGHT_LABELS: Record<string, string> = {
   superwelter:'Superwelter',medio:'Medio',supermedio:'Supermedio',semipesado:'Semipesado',crucero:'Crucero',pesado:'Pesado',
 };
 
-const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
-  pending:  { label:'Pendiente',  cls:'bg-amber-50 text-amber-700' },
-  accepted: { label:'Aceptada',   cls:'bg-emerald-50 text-emerald-700' },
-  declined: { label:'Rechazada',  cls:'bg-red-50 text-red-700' },
-  cancelled:{ label:'Cancelada',  cls:'bg-zinc-100 text-zinc-500' },
+const STATUS_CLASSES: Record<string, string> = {
+  pending: 'bg-amber-50 text-amber-700', accepted: 'bg-emerald-50 text-emerald-700',
+  declined: 'bg-red-50 text-red-700', cancelled: 'bg-zinc-100 text-zinc-500',
 };
 
 export default function SponsorDashboardPage() {
+  const { t } = useTranslation('sponsors');
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [fighters, setFighters] = useState<FighterWithProfile[]>([]);
@@ -73,7 +73,7 @@ export default function SponsorDashboardPage() {
     });
     setSending(false);
     if (error) {
-      setSendError('Error al enviar la oferta. Intenta de nuevo.');
+      setSendError(t('sponsors.dashboard.offerFailed'));
     } else {
       setSendSuccess(true);
       setTimeout(() => {
@@ -96,7 +96,7 @@ export default function SponsorDashboardPage() {
 
         {/* Header */}
         <div className="mb-8">
-          <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#C0001E' }}>Panel del Patrocinador</p>
+          <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#C0001E' }}>{t('sponsors.dashboard.title')}</p>
           <h1 className="text-3xl font-black uppercase" style={{ letterSpacing:'-1px' }}>{profile!.full_name}</h1>
           <p className="text-sm mt-1" style={{ color:'#5A5A5A' }}>{profile!.city ?? ''}</p>
         </div>
@@ -104,10 +104,10 @@ export default function SponsorDashboardPage() {
         {/* My Offers */}
         {offers.length > 0 && (
           <div className="mb-10">
-            <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color:'#C0001E' }}>Mis Ofertas</p>
+            <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color:'#C0001E' }}>{t('sponsors.dashboard.myOffers')}</p>
             <div className="space-y-3">
               {offers.map(offer => {
-                const s = STATUS_LABELS[offer.status] ?? { label: offer.status, cls: 'bg-zinc-100 text-zinc-500' };
+                const statusClass = STATUS_CLASSES[offer.status] ?? 'bg-zinc-100 text-zinc-500';
                 const f = offer.fighters;
                 return (
                   <div key={offer.id} className="border border-zinc-200 p-4 flex items-center justify-between gap-4">
@@ -123,7 +123,7 @@ export default function SponsorDashboardPage() {
                         </p>
                       </div>
                     </div>
-                    <span className={`text-xs font-semibold px-2 py-1 flex-shrink-0 ${s.cls}`}>{s.label}</span>
+                    <span className={`text-xs font-semibold px-2 py-1 flex-shrink-0 ${statusClass}`}>{t(`sponsors.dashboard.status.${offer.status}`, { defaultValue: offer.status })}</span>
                   </div>
                 );
               })}
@@ -133,12 +133,12 @@ export default function SponsorDashboardPage() {
 
         {/* Browse fighters */}
         <div>
-          <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color:'#C0001E' }}>Peleadores Disponibles</p>
+          <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color:'#C0001E' }}>{t('sponsors.dashboard.availableFighters')}</p>
           {loading ? (
-            <p className="text-sm text-zinc-400">Cargando...</p>
+            <p className="text-sm text-zinc-400">{t('sponsors.dashboard.loading')}</p>
           ) : fighters.length === 0 ? (
             <div className="border border-dashed border-zinc-200 py-12 text-center">
-              <p className="text-sm text-zinc-400">No hay peleadores disponibles en este momento.</p>
+              <p className="text-sm text-zinc-400">{t('sponsors.dashboard.noFighters')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -165,7 +165,7 @@ export default function SponsorDashboardPage() {
                     <button onClick={() => setSelectedFighter(f)}
                       className="w-full py-2 text-xs font-bold tracking-widest uppercase text-white transition-colors" style={{ background:'#C0001E' }}
                       onMouseOver={e=>(e.currentTarget.style.background='#9A0018')} onMouseOut={e=>(e.currentTarget.style.background='#C0001E')}>
-                      Enviar oferta
+                      {t('sponsors.dashboard.sendOffer')}
                     </button>
                   </div>
                 </div>
@@ -179,27 +179,27 @@ export default function SponsorDashboardPage() {
       {selectedFighter && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
           <div className="bg-white w-full max-w-md p-6">
-            <h2 className="text-xl font-black uppercase mb-1" style={{ letterSpacing:'-0.5px' }}>Oferta de Patrocinio</h2>
-            <p className="text-sm mb-6" style={{ color:'#5A5A5A' }}>Para: <span className="font-semibold text-zinc-900">{selectedFighter.profiles?.full_name}</span></p>
+            <h2 className="text-xl font-black uppercase mb-1" style={{ letterSpacing:'-0.5px' }}>{t('sponsors.dashboard.sponsorshipOffer')}</h2>
+            <p className="text-sm mb-6" style={{ color:'#5A5A5A' }}>{t('sponsors.dashboard.to')}: <span className="font-semibold text-zinc-900">{selectedFighter.profiles?.full_name}</span></p>
             {sendSuccess ? (
-              <div className="py-8 text-center"><p className="text-sm font-semibold text-emerald-700">¡Oferta enviada con éxito!</p></div>
+              <div className="py-8 text-center"><p className="text-sm font-semibold text-emerald-700">{t('sponsors.dashboard.offerSent')}</p></div>
             ) : (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Monto (MXN)</label>
+                  <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('sponsors.dashboard.amount')}</label>
                   <input type="number" min="0" value={offerAmount} onChange={e => setOfferAmount(e.target.value)} placeholder="Ej. 5000"
                     className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Mensaje (opcional)</label>
-                  <textarea value={offerMessage} onChange={e => setOfferMessage(e.target.value)} rows={4} placeholder="Detalles de la oferta..."
+                  <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('sponsors.dashboard.messageOptional')}</label>
+                  <textarea value={offerMessage} onChange={e => setOfferMessage(e.target.value)} rows={4} placeholder={t('sponsors.dashboard.offerDetails')}
                     className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 resize-none" />
                 </div>
                 {sendError && <p className="text-xs text-red-600">{sendError}</p>}
                 <div className="flex justify-end gap-3 pt-2">
-                  <button onClick={() => { setSelectedFighter(null); setSendError(null); }} className="px-4 py-2 text-sm font-medium border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition-colors">Cancelar</button>
+                  <button onClick={() => { setSelectedFighter(null); setSendError(null); }} className="px-4 py-2 text-sm font-medium border border-zinc-300 text-zinc-700 hover:bg-zinc-50 transition-colors">{t('sponsors.dashboard.cancel')}</button>
                   <button onClick={handleSendOffer} disabled={sending} className="px-5 py-2 text-sm font-bold tracking-wide uppercase text-white disabled:opacity-50 transition-colors" style={{ background:'#C0001E' }}>
-                    {sending ? 'Enviando...' : 'Enviar oferta'}
+                    {sending ? t('sponsors.dashboard.sending') : t('sponsors.dashboard.sendOffer')}
                   </button>
                 </div>
               </div>

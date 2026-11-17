@@ -1,4 +1,10 @@
 {
+  "pricingSuccess": {
+    "title": "Herramientas disponibles",
+    "body": "Revisa eventos, directorio y herramientas de operación desde tu cuenta.",
+    "events": "Ver eventos",
+    "directory": "Ir al directorio"
+  },
   "common": {
     "appName": "Strikers Match",
     "loading": "Cargando...",
@@ -22,6 +28,108 @@
     "confirm": "Confirmar",
     "language": "Idioma",
     "switchToLanguage": "Cambiar a {{language}}",
+    "genderDivision": {
+      "label": "División de género",
+      "male": "Masculino",
+      "female": "Femenino"
+    },
+    "publicManagers": {
+      "title": "Representantes",
+      "subtitle": "Representantes de peleadores registrados en la plataforma",
+      "loading": "Cargando...",
+      "empty": "No hay representantes registrados aún.",
+      "emptyHint": "Regístrate como representante para aparecer aquí.",
+      "register": "Registrarse",
+      "manager": "Representante",
+      "fighterCount_one": "{{count}} peleador",
+      "fighterCount_other": "{{count}} peleadores",
+      "viewFighters": "Ver peleadores",
+      "signInToView": "Inicia sesión para ver"
+    },
+    "accountProfile": {
+      "myAccount": "Mi cuenta",
+      "profile": "Perfil",
+      "photo": "Foto",
+      "updated": "Perfil actualizado correctamente.",
+      "fullName": "Nombre completo",
+      "email": "Email",
+      "city": "Ciudad",
+      "phone": "Teléfono",
+      "editProfile": "Editar perfil",
+      "fighterProfile": "Perfil de peleador",
+      "myDashboard": "Mi panel",
+      "myEvents": "Mis eventos",
+      "changeLogo": "Cambiar logo",
+      "changePhoto": "Cambiar foto",
+      "changeImage": "Cambiar imagen",
+      "promoterLogo": "Logo de la promotora",
+      "profilePhoto": "Foto de perfil",
+      "photoRequirements": "JPG o PNG, máximo 8 MB.",
+      "promoterPhotoVisibility": "Aparece en el directorio de promotores y en tus eventos.",
+      "publicPhotoVisibility": "Aparece en tu perfil público.",
+      "fullNamePlaceholder": "Tu nombre completo",
+      "emailLocked": "El email no se puede cambiar.",
+      "cityPlaceholder": "Tu ciudad",
+      "classificationManaged": "Esta clasificación la administra Strikers Match.",
+      "saving": "Guardando...",
+      "saveChanges": "Guardar cambios",
+      "dangerZone": "Zona de peligro",
+      "deleteWarning": "Eliminar tu cuenta es permanente. Se borrarán todos tus datos y no podrás recuperarlos.",
+      "deleteAccount": "Eliminar cuenta",
+      "deleteConfirm": "Esta acción es irreversible. Se eliminarán tu perfil, datos y toda la información asociada a tu cuenta. ¿Estás seguro?",
+      "deleting": "Eliminando...",
+      "yesDelete": "Sí, eliminar",
+      "roles": {
+        "fighter": "Peleador",
+        "spectator": "Espectador",
+        "promoter": "Promotor",
+        "manager": "Representante",
+        "sponsor": "Patrocinador",
+        "admin": "Admin"
+      },
+      "errors": {
+        "nameRequired": "El nombre es obligatorio.",
+        "photoUpload": "No se pudo subir la foto.",
+        "save": "No se pudo guardar el perfil. Intenta de nuevo.",
+        "imageType": "El archivo debe ser una imagen.",
+        "imageSize": "La imagen no debe superar 8 MB."
+      }
+    },
+    "managerProfile": {
+      "title": "Perfil del representante",
+      "noName": "Sin nombre",
+      "photoVisibility": "Aparece en el directorio de representantes.",
+      "roster": "Mi roster ({{count}})",
+      "emptyRoster": "Tu roster está vacío.",
+      "addFighters": "Agregar peleadores",
+      "manualFighters": "Mis peleadores ({{count}})",
+      "manualFightersHint": "Peleadores no registrados en la plataforma."
+    },
+    "idle": {
+      "title": "¿Sigues ahí?",
+      "body": "Por seguridad, cerraremos tu sesión automáticamente por inactividad en:",
+      "hint": "Haz clic en “Seguir conectado” para continuar tu sesión.",
+      "signOut": "Cerrar sesión",
+      "stayConnected": "Seguir conectado"
+    },
+    "vendorProfile": {
+      "title": "Mi perfil", "introStart": "Actualiza tu información. Tu perfil aparece en el", "directory": "Directorio", "saved": "Perfil guardado correctamente.", "changePhoto": "Cambiar foto", "profilePhoto": "Foto de perfil", "photoHelp": "JPG o PNG, máximo 8 MB. Aparece en el directorio público.", "gymName": "Nombre del gimnasio / academia", "fullName": "Nombre completo", "gymNameHelp": "Este nombre aparecerá en el directorio y se asignará automáticamente a los peleadores de tu gimnasio.", "email": "Correo electrónico", "city": "Ciudad", "phone": "Teléfono", "description": "Descripción", "optional": "opcional", "descriptionPlaceholder": "Breve descripción de tu servicio y experiencia", "otherServices": "Otros servicios que ofreces", "otherServicesHelp": "Selecciona todos los que apliquen. Por ejemplo, un cutman también certificado como EMT.", "availableForHire": "Disponible para contratación (aparece con indicador verde en el directorio)", "saving": "Guardando…", "saveChanges": "Guardar cambios", "gymFighters": "Peleadores de mi gimnasio", "gymFightersHelp": "Agrega y administra a los peleadores que representan a tu gimnasio. Sus perfiles podrán aparecer en el directorio público con tu gimnasio como equipo.",
+      "errors": { "gymNameRequired": "El nombre del gimnasio es obligatorio.", "nameRequired": "El nombre es obligatorio.", "photoUpload": "Error al subir la foto.", "save": "Error al guardar. Intenta de nuevo.", "imageType": "El archivo debe ser una imagen.", "imageSize": "La imagen no debe superar 8 MB." },
+      "roles": { "gyms_academies": "Gimnasio / Academia", "recovery_wellness": "Recuperación y bienestar", "gear_apparel": "Ropa y equipo", "nutrition_supplements": "Nutrición y suplementos", "local_business": "Negocio local", "other_service": "Otro servicio", "ring_card_girl": "Ring Card Girl", "photographer": "Fotógrafo", "videographer": "Videógrafo", "broadcast_personality": "Presentador / Comentarista", "catering_vendor": "Catering / Alimentos", "venue_rental": "Renta de venue", "judge": "Juez / Réferi", "ring_rental": "Renta de ring", "ring_announcer": "Anunciador de ring", "cutman": "Cutman", "merchandise_vendor": "Vendedor de mercancía", "ringside_doctor": "Médico de ringside", "ringside_emt": "Técnico médico de ringside" }
+    },
+    "whatsNew": {
+      "close": "Cerrar", "title": "¿Qué hay de nuevo?", "subtitle": "Mejoras recientes en perfiles, eventos, matchmaking, pagos e internacionalización.", "viewTools": "Ver herramientas", "understood": "Entendido",
+      "items": {
+        "profilePhotos": { "title": "Fotos y logos de perfil", "body": "Promotores, representantes y gimnasios pueden subir fotos o logos, además de administrar las fotos de sus peleadores." },
+        "events": { "title": "Publicar eventos", "body": "Promotores y representantes pueden crear y publicar carteleras desde su panel." },
+        "matchmaking": { "title": "Matchmaking automático y manual", "body": "El motor recomienda enfrentamientos y el organizador puede confirmarlos, rechazarlos, modificarlos o crear un combate manual." },
+        "reliability": { "title": "Perfiles de peleador completos", "body": "Los perfiles reúnen disciplina, categoría, récord, equipo, país y redes sociales en una vista compacta." },
+        "analytics": { "title": "Panel de estadísticas", "body": "Promotores y representantes pueden revisar actividad, participantes y operación de sus eventos." },
+        "payments": { "title": "Pagos de inscripción", "body": "Los eventos admiten pagos conectados y confirmación manual para transferencias o efectivo." },
+        "directory": { "title": "Directorio internacional", "body": "Atletas, gimnasios y profesionales pueden encontrarse por país y disciplina." },
+        "languages": { "title": "Español, inglés y ruso", "body": "La interfaz internacional se adapta al idioma elegido por cada usuario." }
+      }
+    },
     "hero": {
       "line1": "Donde se conecta la",
       "line2": "comunidad de los",
