@@ -331,9 +331,6 @@ export default function SearchPage() {
                       <h2 className="text-sm font-bold text-zinc-900 leading-tight">
                         {fighter.profiles?.full_name ?? '\u2014'}
                       </h2>
-                      <p className="text-xs mt-0.5" style={{ color: '#5A5A5A' }}>
-                        {fighter.profiles?.city ?? '\u2014'}
-                      </p>
                     </div>
                     {fighter.verified && (
                       <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -355,6 +352,28 @@ export default function SearchPage() {
                       </div>
                     ))}
                   </div>
+
+                  <dl className="mb-3 grid grid-cols-3 divide-x divide-zinc-200 border-y border-zinc-200 py-2 text-center">
+                    <div className="min-w-0 px-1">
+                      <dt className="text-[9px] font-bold uppercase tracking-wide text-zinc-400">{t('fighters.card.city')}</dt>
+                      <dd className="mt-0.5 truncate text-[11px] font-semibold text-zinc-800">{fighter.profiles?.city ?? '\u2014'}</dd>
+                    </div>
+                    <div className="min-w-0 px-1">
+                      <dt className="text-[9px] font-bold uppercase tracking-wide text-zinc-400">{t('fighters.card.height')}</dt>
+                      <dd className="mt-0.5 text-[11px] font-semibold text-zinc-800">{fighter.height_cm != null ? `${fighter.height_cm} cm` : '\u2014'}</dd>
+                    </div>
+                    <div className="min-w-0 px-1">
+                      <dt className="text-[9px] font-bold uppercase tracking-wide text-zinc-400">{t('fighters.card.weight')}</dt>
+                      <dd className="mt-0.5 text-[11px] font-semibold text-zinc-800">{fighter.exact_weight != null ? `${fighter.exact_weight} kg` : '\u2014'}</dd>
+                    </div>
+                  </dl>
+
+                  {fighter.available_to_travel_internationally && (
+                    <div className="mb-3 flex items-center gap-1.5 bg-emerald-50 px-2 py-1.5 text-[11px] font-bold text-emerald-700">
+                      <span aria-hidden="true">✓</span>
+                      <span>{t('fighters.card.willingToTravel')}</span>
+                    </div>
+                  )}
 
                   {/* Tags */}
                   <div className="flex flex-wrap gap-1">
@@ -422,7 +441,6 @@ export default function SearchPage() {
                     <div className="flex items-start justify-between mb-2 gap-2">
                       <div>
                         <h3 className="text-sm font-bold text-zinc-900 leading-tight">{mf.full_name}</h3>
-                        <p className="text-xs mt-0.5" style={{ color: '#5A5A5A' }}>{mf.city ?? '\u2014'}</p>
                       </div>
                       <span className="text-xs font-bold uppercase tracking-widest text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 flex-shrink-0">Roster</span>
                     </div>
@@ -438,6 +456,26 @@ export default function SearchPage() {
                         </div>
                       ))}
                     </div>
+                    <dl className="mb-3 grid grid-cols-3 divide-x divide-zinc-200 border-y border-zinc-200 py-2 text-center">
+                      <div className="min-w-0 px-1">
+                        <dt className="text-[9px] font-bold uppercase tracking-wide text-zinc-400">{t('fighters.card.city')}</dt>
+                        <dd className="mt-0.5 truncate text-[11px] font-semibold text-zinc-800">{mf.city ?? '\u2014'}</dd>
+                      </div>
+                      <div className="min-w-0 px-1">
+                        <dt className="text-[9px] font-bold uppercase tracking-wide text-zinc-400">{t('fighters.card.height')}</dt>
+                        <dd className="mt-0.5 text-[11px] font-semibold text-zinc-800">{mf.height_cm != null ? `${mf.height_cm} cm` : '\u2014'}</dd>
+                      </div>
+                      <div className="min-w-0 px-1">
+                        <dt className="text-[9px] font-bold uppercase tracking-wide text-zinc-400">{t('fighters.card.weight')}</dt>
+                        <dd className="mt-0.5 text-[11px] font-semibold text-zinc-800">{mf.exact_weight != null ? `${mf.exact_weight} kg` : '\u2014'}</dd>
+                      </div>
+                    </dl>
+                    {mf.available_to_travel_internationally && (
+                      <div className="mb-3 flex items-center gap-1.5 bg-emerald-50 px-2 py-1.5 text-[11px] font-bold text-emerald-700">
+                        <span aria-hidden="true">✓</span>
+                        <span>{t('fighters.card.willingToTravel')}</span>
+                      </div>
+                    )}
                     <div className="flex flex-wrap gap-1">
                       {mf.weight_class && (
                         <span className="text-xs bg-zinc-100 text-zinc-700 px-2 py-0.5">

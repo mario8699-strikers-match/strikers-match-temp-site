@@ -88,7 +88,7 @@ export const adminService = {
     try {
       const { data, error } = await supabase
         .from('fighters')
-        .select('*, profiles(full_name, email, city, phone, is_banned)')
+        .select('*, profiles(full_name, email, city, phone, is_banned, country, country_code, instagram, preferred_language)')
         .order('created_at', { ascending: false })
         .limit(ADMIN_LIST_LIMIT);
 
@@ -96,6 +96,38 @@ export const adminService = {
       return { data: (data as FighterWithProfile[]) ?? [], error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
+  async sendFighterProfileReminder(
+    fighterId: string,
+  ): Promise<ServiceResponse<{ sent: true; missingFields: string[] }>> {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return { data: null, error: 'Inicia sesión para continuar.' };
+
+      const response = await fetch('/api/admin/fighters/profile-reminder', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ fighterId }),
+      });
+      const payload = await response.json().catch(() => ({})) as {
+        sent?: true;
+        missingFields?: string[];
+        error?: string;
+      };
+      if (!response.ok || !payload.sent) {
+        return { data: null, error: payload.error ?? 'No se pudo enviar el recordatorio.' };
+      }
+      return {
+        data: { sent: true, missingFields: payload.missingFields ?? [] },
+        error: null,
+      };
+    } catch {
+      return { data: null, error: 'No se pudo conectar con el servicio de correo.' };
     }
   },
 

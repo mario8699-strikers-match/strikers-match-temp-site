@@ -24,7 +24,8 @@ export function getMissingFighterRegistrationProfileFields(
     Fighter,
     'photo_url' | 'nationalities' | 'disciplines' | 'weight_class' | 'gym_name'
   >,
-  profile: Pick<Profile, 'full_name' | 'country' | 'country_code' | 'instagram'>,
+  profile: Pick<Profile, 'full_name'> &
+    Partial<Pick<Profile, 'country' | 'country_code' | 'instagram'>>,
 ): FighterRegistrationProfileField[] {
   const missing: FighterRegistrationProfileField[] = [];
 

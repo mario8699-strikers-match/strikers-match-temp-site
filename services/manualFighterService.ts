@@ -77,7 +77,29 @@ export const manualFighterService = {
         .order('created_at', { ascending: false });
 
       if (error) return { data: null, error: error.message };
-      return { data: data ?? [], error: null };
+      const fighters = data ?? [];
+      if (fighters.length === 0) return { data: [], error: null };
+
+      const { data: travelPreferences, error: travelError } = await supabase
+        .from('manual_fighter_travel_preferences')
+        .select('manual_fighter_id, available_to_travel_internationally')
+        .in('manual_fighter_id', fighters.map((fighter) => fighter.id));
+
+      if (travelError) return { data: null, error: travelError.message };
+      const travelByFighterId = new Map(
+        (travelPreferences ?? []).map((preference) => [
+          preference.manual_fighter_id,
+          preference.available_to_travel_internationally,
+        ]),
+      );
+
+      return {
+        data: fighters.map((fighter) => ({
+          ...fighter,
+          available_to_travel_internationally: travelByFighterId.get(fighter.id) ?? false,
+        })),
+        error: null,
+      };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }
@@ -144,6 +166,26 @@ export const manualFighterService = {
 
       if (error) return { data: null, error: error.message };
       return { data, error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
+  async updateTravelPreference(
+    manualFighterId: string,
+    availableToTravelInternationally: boolean,
+  ): Promise<ServiceResponse<null>> {
+    try {
+      const { error } = await supabase
+        .from('manual_fighter_travel_preferences')
+        .upsert({
+          manual_fighter_id: manualFighterId,
+          available_to_travel_internationally: availableToTravelInternationally,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'manual_fighter_id' });
+
+      if (error) return { data: null, error: error.message };
+      return { data: null, error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }

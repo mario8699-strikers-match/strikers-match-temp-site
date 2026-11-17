@@ -357,6 +357,9 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                 : entry.data.is_available;
               const followers = isManual ? null : (followerCounts[entry.data.id] ?? 0);
               const photoUrl = entry.data.photo_url;
+              const exactWeight = entry.data.exact_weight;
+              const heightCm = entry.data.height_cm;
+              const willingToTravel = entry.data.available_to_travel_internationally === true;
               const koTkoWins = (entry.data.ko_wins ?? 0) + (entry.data.tko_wins ?? 0);
               const skillRating = entry.data.skill_rating;
               const weightClassKey = fighterWeightClassI18nKey(weightClass);
@@ -400,7 +403,6 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                         {nationalityCode && <span className="mr-2" aria-hidden="true">{countryFlagEmoji(nationalityCode)}</span>}
                         {name}
                       </h2>
-                      <p className="text-xs mt-1" style={{ color: '#9A9A9A' }}>{city ?? '—'}</p>
                     </div>
                     {isManual ? (
                       <span className="inline-flex items-center text-xs font-bold uppercase tracking-widest text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5">
@@ -431,6 +433,28 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                       <p className="text-xs text-zinc-500">{t('fighters.draws')}</p>
                     </div>
                   </div>
+
+                  <dl className="mb-4 grid grid-cols-3 divide-x divide-zinc-200 border-y border-zinc-200 py-3 text-center">
+                    <div className="min-w-0 px-2">
+                      <dt className="text-[10px] font-bold uppercase tracking-wide text-zinc-400">{t('fighters.card.city')}</dt>
+                      <dd className="mt-1 truncate text-xs font-semibold text-zinc-800" title={city ?? undefined}>{city ?? '—'}</dd>
+                    </div>
+                    <div className="min-w-0 px-2">
+                      <dt className="text-[10px] font-bold uppercase tracking-wide text-zinc-400">{t('fighters.card.height')}</dt>
+                      <dd className="mt-1 text-xs font-semibold text-zinc-800">{heightCm != null ? `${heightCm} cm` : '—'}</dd>
+                    </div>
+                    <div className="min-w-0 px-2">
+                      <dt className="text-[10px] font-bold uppercase tracking-wide text-zinc-400">{t('fighters.card.weight')}</dt>
+                      <dd className="mt-1 text-xs font-semibold text-zinc-800">{exactWeight != null ? `${exactWeight} kg` : '—'}</dd>
+                    </div>
+                  </dl>
+
+                  {willingToTravel && (
+                    <div className="mb-4 flex items-center gap-2 border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">
+                      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-600 text-[10px] text-white" aria-hidden="true">✓</span>
+                      <span>{t('fighters.card.willingToTravel')}</span>
+                    </div>
+                  )}
 
                   {/* Meta */}
                   <div className="flex flex-wrap gap-2">

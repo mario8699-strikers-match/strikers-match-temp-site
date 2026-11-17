@@ -104,6 +104,22 @@
       "phone": "Teléfono", "visible": "Visible", "representation": "Representación", "hidden": "Oculto",
       "show": "Mostrar", "hide": "Ocultar", "notRegistered": "No registrado", "noManualFighters": "No hay peleadores agregados manualmente por representantes o promotores.",
       "addedBy": "Agregado por", "role": "Rol", "creatorEmail": "Correo del creador", "viewProfile": "Ver perfil",
+      "profileStatus": "Estado del perfil",
+      "profileIncomplete": "Perfil incompleto",
+      "profileComplete": "Perfil completo",
+      "sendReminder": "Enviar recordatorio",
+      "sendingReminder": "Enviando...",
+      "reminderSent": "Recordatorio enviado",
+      "missingFields": {
+        "photo": "Foto",
+        "fullName": "Nombre y apellido",
+        "country": "País actual",
+        "nationality": "Nacionalidad",
+        "instagram": "Instagram",
+        "discipline": "Disciplina",
+        "weight": "Categoría de peso",
+        "team": "Club / equipo"
+      },
       "confirmHide": "Este peleador será ocultado de otros perfiles de peleadores. Solo administradores, promotores, representantes y patrocinadores podrán verlo.",
       "confirmShow": "Este peleador será visible para todos los usuarios nuevamente.",
       "roles": { "manager": "Representante", "promoter": "Promotor", "sponsor": "Patrocinador" }

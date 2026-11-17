@@ -103,6 +103,7 @@ export default function FighterProfilePage() {
   const [lastFightAt, setLastFightAt] = useState('');
   const [lastKoLossAt, setLastKoLossAt] = useState('');
   const [isAvailable, setIsAvailable] = useState(true);
+  const [availableToTravelInternationally, setAvailableToTravelInternationally] = useState(false);
   const [shortNotice, setShortNotice] = useState(false);
   const [experienceLevel, setExperienceLevel] = useState<'amateur' | 'pro'>('amateur');
   const [availableFrom, setAvailableFrom] = useState('');
@@ -183,6 +184,7 @@ export default function FighterProfilePage() {
     setLastFightAt(f.last_fight_at ?? '');
     setLastKoLossAt(f.last_ko_loss_at ?? '');
     setIsAvailable(f.is_available);
+    setAvailableToTravelInternationally(f.available_to_travel_internationally ?? false);
     setShortNotice(f.short_notice_ready);
     setExperienceLevel(f.experience_level ?? 'amateur');
     setAvailableFrom(f.available_from ?? '');
@@ -397,6 +399,24 @@ export default function FighterProfilePage() {
       return;
     }
 
+    const savedFighter = result.data
+      ? {
+          ...result.data,
+          available_to_travel_internationally: availableToTravelInternationally,
+        }
+      : null;
+    if (savedFighter) {
+      const travelResult = await fighterService.updateTravelPreference(
+        savedFighter.id,
+        availableToTravelInternationally,
+      );
+      if (travelResult.error) {
+        setSaving(false);
+        setError(t('fighters.accountProfile.travelSaveError'));
+        return;
+      }
+    }
+
     const profileUpdates = {
       full_name: normalizedFullName,
       phone: phone.trim() || null,
@@ -409,7 +429,7 @@ export default function FighterProfilePage() {
     };
     const profileResult = await authService.updateProfile(profile.id, profileUpdates);
     setSaving(false);
-    setFighter(result.data);
+    setFighter(savedFighter);
     if (profileResult.error) {
       setError(t('fighters.accountProfile.errors.personalDataSave'));
       return;
@@ -615,6 +635,15 @@ export default function FighterProfilePage() {
                 <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>{t('fighters.accountProfile.availability')}</p>
                 <span className={`text-xs font-semibold px-2 py-1 ${fighter.is_available ? 'bg-emerald-50 text-emerald-700' : 'bg-zinc-100 text-zinc-500'}`}>
                   {fighter.is_available ? t('fighters.accountProfile.available') : t('fighters.accountProfile.unavailable')}
+                </span>
+              </div>
+              <div>
+                <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>{t('fighters.accountProfile.internationalTravel')}</p>
+                <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 ${fighter.available_to_travel_internationally ? 'bg-emerald-50 text-emerald-700' : 'bg-zinc-100 text-zinc-500'}`}>
+                  {fighter.available_to_travel_internationally && <span aria-hidden="true">✓</span>}
+                  {fighter.available_to_travel_internationally
+                    ? t('fighters.accountProfile.willingToTravel')
+                    : t('fighters.accountProfile.notWillingToTravel')}
                 </span>
               </div>
               <div>
@@ -890,6 +919,20 @@ export default function FighterProfilePage() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* International travel toggle */}
+            <div>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.internationalTravel')}</label>
+              <label className="flex min-h-12 cursor-pointer items-center gap-3 border border-zinc-300 px-4 py-3 text-sm font-semibold text-zinc-700">
+                <input
+                  type="checkbox"
+                  checked={availableToTravelInternationally}
+                  onChange={(event) => setAvailableToTravelInternationally(event.target.checked)}
+                  className="h-5 w-5 accent-[#C0001E]"
+                />
+                <span>{t('fighters.accountProfile.willingToTravel')}</span>
+              </label>
             </div>
 
             {/* Short notice toggle */}

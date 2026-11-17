@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { InlineCombatRecord } from '@/components/CombatRecord';
 import { adminService } from '@/services/adminService';
+import { getMissingFighterRegistrationProfileFields } from '@/lib/fighterRegistrationProfile';
 import type { FighterWithProfile, ManualFighterWithCreator } from '@/types';
 
 type Confirm = { fighterId: string; action: 'verify' | 'unverify' | 'hide' | 'unhide' } | null;
@@ -23,6 +24,15 @@ export default function AdminFightersPage() {
   const [acting, setActing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('registered');
+  const [remindingId, setRemindingId] = useState<string | null>(null);
+  const [reminderSentIds, setReminderSentIds] = useState<Set<string>>(() => new Set());
+
+  const missingFieldsByFighterId = useMemo(() => new Map(
+    fighters.map((fighter) => [
+      fighter.id,
+      getMissingFighterRegistrationProfileFields(fighter, fighter.profiles),
+    ]),
+  ), [fighters]);
 
   useEffect(() => {
     Promise.all([
@@ -71,6 +81,18 @@ export default function AdminFightersPage() {
     }
     setActing(false);
     setConfirm(null);
+  };
+
+  const handleProfileReminder = async (fighterId: string) => {
+    setRemindingId(fighterId);
+    setError(null);
+    const result = await adminService.sendFighterProfileReminder(fighterId);
+    setRemindingId(null);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setReminderSentIds((current) => new Set(current).add(fighterId));
   };
 
   return (
@@ -154,6 +176,32 @@ export default function AdminFightersPage() {
                 {fighter.has_promoter && <span className="text-xs font-bold px-1.5 py-0.5 bg-purple-50 text-purple-700">{t('admin.fighters.roles.promoter')}</span>}
                 {fighter.has_sponsor && <span className="text-xs font-bold px-1.5 py-0.5 bg-amber-50 text-amber-700">{t('admin.fighters.roles.sponsor')}</span>}
               </div>
+              <div className="mt-3 border-t border-zinc-100 pt-3">
+                {(missingFieldsByFighterId.get(fighter.id) ?? []).length > 0 ? (
+                  <>
+                    <p className="text-xs font-semibold text-amber-700">{t('admin.fighters.profileIncomplete')}</p>
+                    <p className="mt-1 text-xs text-zinc-500">
+                      {(missingFieldsByFighterId.get(fighter.id) ?? [])
+                        .map((field) => t(`admin.fighters.missingFields.${field}`))
+                        .join(' · ')}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => void handleProfileReminder(fighter.id)}
+                      disabled={remindingId === fighter.id || reminderSentIds.has(fighter.id)}
+                      className="mt-2 text-xs font-bold text-[#C0001E] hover:underline disabled:text-emerald-700 disabled:no-underline"
+                    >
+                      {remindingId === fighter.id
+                        ? t('admin.fighters.sendingReminder')
+                        : reminderSentIds.has(fighter.id)
+                          ? t('admin.fighters.reminderSent')
+                          : t('admin.fighters.sendReminder')}
+                    </button>
+                  </>
+                ) : (
+                  <p className="text-xs font-semibold text-emerald-700">{t('admin.fighters.profileComplete')}</p>
+                )}
+              </div>
               <div className="mt-3 pt-3 border-t border-zinc-100 flex flex-wrap gap-4">
                 {fighter.verified ? (
                   <button onClick={() => setConfirm({ fighterId: fighter.id, action: 'unverify' })} className="text-xs font-medium text-zinc-500 hover:underline">{t('admin.fighters.unverify')}</button>
@@ -175,7 +223,7 @@ export default function AdminFightersPage() {
           <table className="min-w-full divide-y divide-zinc-100 text-sm">
             <thead className="bg-zinc-50">
               <tr>
-                {['name', 'email', 'phone', 'city', 'weightClass', 'record', 'available', 'verified', 'visible', 'rep', 'actions'].map((col) => (
+                {['name', 'email', 'phone', 'city', 'weightClass', 'record', 'available', 'verified', 'visible', 'profileStatus', 'rep', 'actions'].map((col) => (
                   <th
                     key={col}
                     className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wide"
@@ -247,6 +295,20 @@ export default function AdminFightersPage() {
                       </span>
                     )}
                   </td>
+                  <td className="px-4 py-3 align-top">
+                    {(missingFieldsByFighterId.get(fighter.id) ?? []).length > 0 ? (
+                      <div className="max-w-48">
+                        <p className="text-xs font-semibold text-amber-700">{t('admin.fighters.profileIncomplete')}</p>
+                        <p className="mt-1 text-[11px] leading-4 text-zinc-500">
+                          {(missingFieldsByFighterId.get(fighter.id) ?? [])
+                            .map((field) => t(`admin.fighters.missingFields.${field}`))
+                            .join(' · ')}
+                        </p>
+                      </div>
+                    ) : (
+                      <span className="text-xs font-semibold text-emerald-700">{t('admin.fighters.profileComplete')}</span>
+                    )}
+                  </td>
                   {/* Representation badges */}
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex gap-1">
@@ -266,6 +328,20 @@ export default function AdminFightersPage() {
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex items-center gap-3">
+                      {(missingFieldsByFighterId.get(fighter.id) ?? []).length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => void handleProfileReminder(fighter.id)}
+                          disabled={remindingId === fighter.id || reminderSentIds.has(fighter.id)}
+                          className="text-xs font-medium text-[#C0001E] hover:underline disabled:text-emerald-700 disabled:no-underline"
+                        >
+                          {remindingId === fighter.id
+                            ? t('admin.fighters.sendingReminder')
+                            : reminderSentIds.has(fighter.id)
+                              ? t('admin.fighters.reminderSent')
+                              : t('admin.fighters.sendReminder')}
+                        </button>
+                      )}
                       {fighter.verified ? (
                         <button
                           onClick={() => setConfirm({ fighterId: fighter.id, action: 'unverify' })}

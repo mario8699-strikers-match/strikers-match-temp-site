@@ -104,6 +104,22 @@
       "phone": "Phone", "visible": "Visible", "representation": "Representation", "hidden": "Hidden",
       "show": "Show", "hide": "Hide", "notRegistered": "Not registered", "noManualFighters": "No fighters have been added manually by managers or promoters.",
       "addedBy": "Added by", "role": "Role", "creatorEmail": "Creator email", "viewProfile": "View profile",
+      "profileStatus": "Profile status",
+      "profileIncomplete": "Incomplete profile",
+      "profileComplete": "Complete profile",
+      "sendReminder": "Send update reminder",
+      "sendingReminder": "Sending...",
+      "reminderSent": "Reminder sent",
+      "missingFields": {
+        "photo": "Photo",
+        "fullName": "First and last name",
+        "country": "Current country",
+        "nationality": "Nationality",
+        "instagram": "Instagram",
+        "discipline": "Discipline",
+        "weight": "Weight category",
+        "team": "Club / team"
+      },
       "confirmHide": "This fighter will be hidden from other fighter profiles. Only admins, promoters, managers, and sponsors will be able to see them.",
       "confirmShow": "This fighter will be visible to all users again.",
       "roles": { "manager": "Manager", "promoter": "Promoter", "sponsor": "Sponsor" }

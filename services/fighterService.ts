@@ -47,7 +47,21 @@ export const fighterService = {
         .single();
 
       if (error) return { data: null, error: error.message };
-      return { data, error: null };
+      const { data: travelPreference, error: travelError } = await supabase
+        .from('fighter_travel_preferences')
+        .select('available_to_travel_internationally')
+        .eq('fighter_id', data.id)
+        .maybeSingle();
+
+      if (travelError) return { data: null, error: travelError.message };
+      return {
+        data: {
+          ...data,
+          available_to_travel_internationally:
+            travelPreference?.available_to_travel_internationally ?? false,
+        },
+        error: null,
+      };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }
@@ -154,6 +168,26 @@ export const fighterService = {
 
       if (error) return { data: null, error: error.message };
       return { data, error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
+  async updateTravelPreference(
+    fighterId: string,
+    availableToTravelInternationally: boolean,
+  ): Promise<ServiceResponse<null>> {
+    try {
+      const { error } = await supabase
+        .from('fighter_travel_preferences')
+        .upsert({
+          fighter_id: fighterId,
+          available_to_travel_internationally: availableToTravelInternationally,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'fighter_id' });
+
+      if (error) return { data: null, error: error.message };
+      return { data: null, error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }

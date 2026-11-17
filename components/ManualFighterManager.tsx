@@ -65,6 +65,7 @@ export function ManualFighterManager({
   const [uploadingPhotoId, setUploadingPhotoId] = useState<string | null>(null);
   const [savingInstagramId, setSavingInstagramId] = useState<string | null>(null);
   const [savingCountryId, setSavingCountryId] = useState<string | null>(null);
+  const [savingTravelId, setSavingTravelId] = useState<string | null>(null);
   const [instagramDrafts, setInstagramDrafts] = useState<Record<string, string>>({});
   const [countryDrafts, setCountryDrafts] = useState<Record<string, string>>({});
 
@@ -93,6 +94,8 @@ export function ManualFighterManager({
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [genderDivision, setGenderDivision] = useState('');
   const [exactWeight, setExactWeight] = useState('');
+  const [heightCm, setHeightCm] = useState('');
+  const [availableToTravelInternationally, setAvailableToTravelInternationally] = useState(false);
   const [requestedWeight, setRequestedWeight] = useState('');
   const [minimumWeight, setMinimumWeight] = useState('');
   const [maximumWeight, setMaximumWeight] = useState('');
@@ -131,7 +134,8 @@ export function ManualFighterManager({
     setWins('0'); setLosses('0'); setDraws('0');
     setPhone(''); setEmail(''); setCity(''); setStateField(''); setCurrentCountry(''); setNationality(''); setGym(defaultGymName); setInstagram('');
     setLevel('amateur'); setNotes(''); setPhotoFile(null); setPhotoPreview(null); setBio('');
-    setIsAvailable(true); setIsPublic(true); setDateOfBirth(''); setGenderDivision(''); setExactWeight('');
+    setIsAvailable(true); setIsPublic(true); setDateOfBirth(''); setGenderDivision(''); setExactWeight(''); setHeightCm('');
+    setAvailableToTravelInternationally(false);
     setRequestedWeight(''); setMinimumWeight(''); setMaximumWeight(''); setSkillRating(''); setRulesets('');
     setKoWins('0'); setTkoWins('0'); setKoLosses('0'); setTkoLosses('0'); setAvailableFrom(''); setAvailableTo('');
     setLastFightAt(''); setLastKoLossAt(''); setRestrictions(''); setError(null);
@@ -176,7 +180,7 @@ export function ManualFighterManager({
       notes: notes.trim() || null,
       photo_url: uploadedPhoto?.url ?? null,
       bio: bio.trim() || null,
-      height_cm: null,
+      height_cm: heightCm ? Number(heightCm) : null,
       reach_cm: null,
       state: state.trim() || null,
       country_code: currentCountry,
@@ -203,18 +207,51 @@ export function ManualFighterManager({
       special_restrictions: restrictions.split(',').map((value) => value.trim()).filter(Boolean),
     });
 
-    setSaving(false);
     if (err) {
+      setSaving(false);
       if (uploadedPhoto) await deleteFile(uploadedPhoto.key);
       console.error('Manual fighter insert failed:', err);
       setError(t('fighters.rosterManager.errors.addFighter', { error: err }));
     } else if (data) {
-      setManualFighters((prev) => [data, ...prev]);
+      const travelResult = await manualFighterService.updateTravelPreference(
+        data.id,
+        availableToTravelInternationally,
+      );
+      if (travelResult.error) {
+        await manualFighterService.remove(data.id);
+        if (uploadedPhoto) await deleteFile(uploadedPhoto.key);
+        setSaving(false);
+        setError(t('fighters.rosterManager.travelSaveError'));
+        return;
+      }
+
+      const savedFighter = {
+        ...data,
+        available_to_travel_internationally: availableToTravelInternationally,
+      };
+      setSaving(false);
+      setManualFighters((prev) => [savedFighter, ...prev]);
       setInstagramDrafts((current) => ({ ...current, [data.id]: data.instagram ?? '' }));
       setCountryDrafts((current) => ({ ...current, [data.id]: data.country_code ?? '' }));
       resetForm();
       setShowForm(false);
     }
+  };
+
+  const saveTravelPreference = async (fighterId: string, value: boolean) => {
+    setSavingTravelId(fighterId);
+    setError(null);
+    const result = await manualFighterService.updateTravelPreference(fighterId, value);
+    setSavingTravelId(null);
+    if (result.error) {
+      setError(t('fighters.rosterManager.travelSaveError'));
+      return;
+    }
+    setManualFighters((current) => current.map((fighter) => (
+      fighter.id === fighterId
+        ? { ...fighter, available_to_travel_internationally: value }
+        : fighter
+    )));
   };
 
   const saveFighterCountry = async (fighterId: string) => {
@@ -420,11 +457,22 @@ export function ManualFighterManager({
             <p className="mb-2 text-xs font-bold uppercase tracking-widest text-zinc-600">{t('fighters.rosterManager.matchmakingWeights')}</p>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <RosterInput label={t('fighters.rosterManager.fields.actualWeight')} type="number" value={exactWeight} onChange={setExactWeight} />
+              <RosterInput label={t('fighters.rosterManager.fields.height')} type="number" value={heightCm} onChange={setHeightCm} />
               <RosterInput label={t('fighters.rosterManager.fields.requestedWeight')} type="number" value={requestedWeight} onChange={setRequestedWeight} />
               <RosterInput label={t('fighters.rosterManager.fields.minimumWeight')} type="number" value={minimumWeight} onChange={setMinimumWeight} />
               <RosterInput label={t('fighters.rosterManager.fields.maximumWeight')} type="number" value={maximumWeight} onChange={setMaximumWeight} />
             </div>
           </div>
+
+          <label className="flex min-h-12 cursor-pointer items-center gap-3 border border-zinc-300 px-4 py-3 text-sm font-semibold text-zinc-700">
+            <input
+              type="checkbox"
+              checked={availableToTravelInternationally}
+              onChange={(event) => setAvailableToTravelInternationally(event.target.checked)}
+              className="h-5 w-5 accent-[#C0001E]"
+            />
+            <span>{t('fighters.rosterManager.willingToTravel')}</span>
+          </label>
 
           <div>
             <p className="mb-2 text-xs font-bold uppercase tracking-widest text-zinc-600">{t('fighters.rosterManager.knockoutRecord')}</p>
@@ -687,6 +735,16 @@ export function ManualFighterManager({
                     </button>
                   </div>
                   <p className="mt-1 text-xs text-zinc-500">{t('fighters.rosterManager.cardStats', { knockouts: f.ko_wins + f.tko_wins, level: f.skill_rating ?? '—' })}</p>
+                  <label className="mt-2 flex cursor-pointer items-center gap-2 text-xs font-semibold text-zinc-700">
+                    <input
+                      type="checkbox"
+                      checked={f.available_to_travel_internationally ?? false}
+                      disabled={savingTravelId === f.id}
+                      onChange={(event) => void saveTravelPreference(f.id, event.target.checked)}
+                      className="h-4 w-4 accent-[#C0001E]"
+                    />
+                    <span>{t('fighters.rosterManager.willingToTravel')}</span>
+                  </label>
                   <p className="mt-1 text-xs text-zinc-500">{t('fighters.rosterManager.cardWeight', { requested: f.requested_weight_kg ?? '—', minimum: f.acceptable_weight_min_kg ?? '—', maximum: f.acceptable_weight_max_kg ?? '—' })}</p>
                   <div className="flex gap-2 mt-1.5 flex-wrap">
                     <span className={`text-xs font-bold px-1.5 py-0.5 uppercase tracking-widest ${f.experience_level === 'pro' ? 'bg-[#C0001E] text-white' : 'bg-zinc-100 text-zinc-600'}`}>
