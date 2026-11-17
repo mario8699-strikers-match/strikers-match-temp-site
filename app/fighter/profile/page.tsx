@@ -42,6 +42,15 @@ const STATUS_CLASSES: Record<string, string> = {
   cancelled: 'bg-zinc-100 text-zinc-500',
 };
 
+function countryCodeFromProfile(profile: Profile) {
+  if (profile.country_code) return profile.country_code;
+  const legacyCountry = profile.country?.trim();
+  if (!legacyCountry) return '';
+  return getCountryOptions('en').find(
+    (option) => option.label.localeCompare(legacyCountry, 'en', { sensitivity: 'base' }) === 0,
+  )?.code ?? '';
+}
+
 type RequestWithDetails = MatchRequest & {
   events?: { event_name: string; event_date: string | null; city: string | null };
   profiles?: { full_name: string };
@@ -65,7 +74,7 @@ export default function FighterProfilePage() {
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
-  const [country, setCountry] = useState('');
+  const [currentCountryCode, setCurrentCountryCode] = useState('');
   const [nationality, setNationality] = useState('');
 
   // Fighter profile fields
@@ -144,7 +153,7 @@ export default function FighterProfilePage() {
     setDateOfBirth(p.date_of_birth ?? '');
     setCity(p.city ?? '');
     setState(p.state ?? '');
-    setCountry(p.country ?? '');
+    setCurrentCountryCode(countryCodeFromProfile(p));
   };
 
   const syncFormFromFighter = (f: Fighter) => {
@@ -394,7 +403,8 @@ export default function FighterProfilePage() {
       date_of_birth: dateOfBirth || null,
       city: city.trim() || null,
       state: state.trim() || null,
-      country: country.trim() || null,
+      country_code: currentCountryCode || null,
+      country: getCountryName(currentCountryCode, 'en') || null,
       ...socialUpdates,
     };
     const profileResult = await authService.updateProfile(profile.id, profileUpdates);
@@ -531,7 +541,12 @@ export default function FighterProfilePage() {
                   { label:t('fighters.accountProfile.dateOfBirth'), value: profile.date_of_birth ?? '—' },
                   { label:t('fighters.accountProfile.city'), value: profile.city ?? '—' },
                   { label:t('fighters.accountProfile.state'), value: profile.state ?? '—' },
-                  { label:t('fighters.accountProfile.fields.country'), value: profile.country || '—' },
+                  {
+                    label:t('fighters.accountProfile.fields.country'),
+                    value: profile.country_code
+                      ? `${countryFlagEmoji(profile.country_code)} ${getCountryName(profile.country_code, i18n.resolvedLanguage || i18n.language)}`
+                      : profile.country || '—',
+                  },
                   { label:t('fighters.accountProfile.nationality'), value: nationalityLabel },
                   { label:t('fighters.accountProfile.accountEmail'), value: profile.email },
                 ].map(({ label, value }) => (
@@ -697,8 +712,18 @@ export default function FighterProfilePage() {
                 </label>
                 <label>
                   <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.fields.country')}</span>
-                  <input type="text" value={country} onChange={e => setCountry(e.target.value)} maxLength={100}
-                    className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                  <select
+                    value={currentCountryCode}
+                    onChange={(event) => setCurrentCountryCode(event.target.value)}
+                    className="w-full border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                  >
+                    <option value="">{t('fighters.accountProfile.selectCountry')}</option>
+                    {countryOptions.map((option) => (
+                      <option key={option.code} value={option.code}>
+                        {countryFlagEmoji(option.code)} {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <label>
                   <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.nationalityFlag')}</span>
