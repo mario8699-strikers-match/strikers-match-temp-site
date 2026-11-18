@@ -10,7 +10,13 @@ import { Footer } from '@/components/Footer';
 import { supabase } from '@/lib/supabaseClient';
 import { authService } from '@/services/authService';
 import { VENDOR_ROLES } from '@/types';
-import type { Profile } from '@/types';
+import type { PublicProfileCard } from '@/lib/seoData';
+
+interface ProfessionalContact {
+  email: string | null;
+  phone: string | null;
+  instagram: string | null;
+}
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).slice(0, 2);
@@ -20,7 +26,8 @@ function initials(name: string): string {
 export default function ProfessionalDetailPage() {
   const { t } = useTranslation('gallery');
   const { id } = useParams<{ id: string }>();
-  const [vendor, setVendor] = useState<Profile | null>(null);
+  const [vendor, setVendor] = useState<PublicProfileCard | null>(null);
+  const [contact, setContact] = useState<ProfessionalContact | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -35,12 +42,16 @@ export default function ProfessionalDetailPage() {
     let cancelled = false;
 
     Promise.all([
-      supabase.from('public_profiles').select('*').eq('id', id).single(),
+      supabase
+        .from('public_profiles')
+        .select('id,full_name,role,additional_roles,city,state,country,bio,instagram,photo_url,promoter_federation_status,is_available,is_banned,created_at,updated_at')
+        .eq('id', id)
+        .single(),
       authService.getSession(),
     ]).then(([{ data, error }, { data: session }]) => {
       if (cancelled) return;
 
-      const p = data as Profile | null;
+      const p = data as PublicProfileCard | null;
       const viewer = session?.profile ?? null;
       setIsLoggedIn(!!viewer);
       setViewerRole(viewer?.role ?? null);
@@ -57,6 +68,14 @@ export default function ProfessionalDetailPage() {
         setNotFound(true);
       } else {
         setVendor(p);
+        if (viewer) {
+          void supabase
+            .rpc('get_professional_contact', { target_profile_id: id })
+            .maybeSingle()
+            .then(({ data: contactData }) => {
+              if (!cancelled && contactData) setContact(contactData as ProfessionalContact);
+            });
+        }
       }
       setLoading(false);
     });
@@ -216,41 +235,43 @@ export default function ProfessionalDetailPage() {
 
               {isLoggedIn ? (
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-sm">
-                  <div>
+                  {contact?.email && <div>
                     <dt className="text-xs font-medium text-zinc-500 uppercase tracking-wide">{t('gallery.contact.email')}</dt>
                     <dd className="mt-1">
                       <a
-                        href={`mailto:${vendor.email}`}
+                        href={`mailto:${contact.email}`}
                         className="text-zinc-900 hover:text-[#C0001E] break-all"
                       >
-                        {vendor.email}
+                        {contact.email}
                       </a>
                     </dd>
-                  </div>
-                  {vendor.phone && (
+                  </div>}
+                  {contact?.phone && (
                     <div>
                       <dt className="text-xs font-medium text-zinc-500 uppercase tracking-wide">{t('gallery.contact.phone')}</dt>
                       <dd className="mt-1">
                         <a
-                          href={`tel:${vendor.phone}`}
+                          href={`tel:${contact.phone}`}
                           className="text-zinc-900 hover:text-[#C0001E]"
                         >
-                          {vendor.phone}
+                          {contact.phone}
                         </a>
                       </dd>
                     </div>
                   )}
-                  {vendor.instagram && (
+                  {(contact?.instagram ?? vendor.instagram) && (
                     <div>
                       <dt className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Instagram</dt>
                       <dd className="mt-1">
                         <a
-                          href={`https://instagram.com/${vendor.instagram.replace(/^@/, '')}`}
+                          href={`https://instagram.com/${(contact?.instagram ?? vendor.instagram ?? '').replace(/^@/, '')}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-zinc-900 hover:text-[#C0001E]"
                         >
-                          {vendor.instagram.startsWith('@') ? vendor.instagram : `@${vendor.instagram}`}
+                          {(contact?.instagram ?? vendor.instagram ?? '').startsWith('@')
+                            ? (contact?.instagram ?? vendor.instagram)
+                            : `@${contact?.instagram ?? vendor.instagram}`}
                         </a>
                       </dd>
                     </div>
@@ -273,10 +294,10 @@ export default function ProfessionalDetailPage() {
               )}
 
               {/* Primary CTA for logged-in non-admin viewers */}
-              {isLoggedIn && viewerRole !== 'admin' && (
+              {isLoggedIn && viewerRole !== 'admin' && contact?.email && (
                 <div className="mt-6">
                   <a
-                    href={`mailto:${vendor.email}`}
+                    href={`mailto:${contact.email}`}
                     className="inline-block text-xs font-bold uppercase tracking-widest bg-[#0A0A0A] text-white px-6 py-3 hover:bg-[#C0001E] transition-colors"
                   >
                     {t('gallery.professionalDetail.contactAction')}

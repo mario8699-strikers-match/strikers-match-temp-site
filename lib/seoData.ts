@@ -8,7 +8,6 @@ import {
   type Event,
   type FighterWithProfile,
   type ManualFighterWithCreator,
-  type Profile,
   type UserRole,
 } from '@/types';
 
@@ -82,14 +81,34 @@ export interface PublicProfessionalSeo {
   updated_at: string;
 }
 
+export interface PublicProfileCard {
+  id: string;
+  full_name: string;
+  role: UserRole;
+  additional_roles: UserRole[] | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  bio: string | null;
+  instagram: string | null;
+  photo_url: string | null;
+  promoter_federation_status: 'federated' | 'independent' | null;
+  is_available: boolean;
+  is_banned: boolean | null;
+  created_at: string;
+  updated_at: string;
+}
+
 interface SitemapRecord {
   id: string;
   updated_at?: string | null;
   created_at?: string | null;
 }
 
-export type PublicPromoterCard = Profile & { latestFlyer: string | null; eventCount: number };
-export type PublicManagerCard = Profile & { rosterCount: number };
+export type PublicPromoterCard = PublicProfileCard & { latestFlyer: string | null; eventCount: number };
+export type PublicManagerCard = PublicProfileCard & { rosterCount: number };
+
+const PUBLIC_PROFILE_CARD_COLUMNS = 'id,full_name,role,additional_roles,city,state,country,bio,instagram,photo_url,promoter_federation_status,is_available,is_banned,created_at,updated_at';
 
 function getPublicClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -216,7 +235,7 @@ export const getPublicFightersForPage = cache(async (): Promise<{
 
 export const getPublicDirectoryForPage = cache(async (): Promise<{
   listings: BusinessListing[];
-  profiles: Profile[];
+  profiles: PublicProfileCard[];
 }> => {
   const client = getPublicClient();
   if (!client) return { listings: [], profiles: [] };
@@ -228,12 +247,12 @@ export const getPublicDirectoryForPage = cache(async (): Promise<{
         .eq('status', 'published')
         .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false }),
-      client.from('public_profiles').select('*').in('role', VENDOR_ROLES).order('created_at', { ascending: false }),
-      client.from('public_profiles').select('*').overlaps('additional_roles', VENDOR_ROLES).order('created_at', { ascending: false }),
+      client.from('public_profiles').select(PUBLIC_PROFILE_CARD_COLUMNS).in('role', VENDOR_ROLES).order('created_at', { ascending: false }),
+      client.from('public_profiles').select(PUBLIC_PROFILE_CARD_COLUMNS).overlaps('additional_roles', VENDOR_ROLES).order('created_at', { ascending: false }),
     ]);
 
-    const profiles = new Map<string, Profile>();
-    for (const profile of [...(primaryResult.data ?? []), ...(additionalResult.data ?? [])] as Profile[]) {
+    const profiles = new Map<string, PublicProfileCard>();
+    for (const profile of [...(primaryResult.data ?? []), ...(additionalResult.data ?? [])] as PublicProfileCard[]) {
       profiles.set(profile.id, profile);
     }
 
@@ -251,7 +270,7 @@ export const getPublicPromotersForPage = cache(async (): Promise<PublicPromoterC
   if (!client) return [];
   try {
     const [profileResult, eventResult] = await Promise.all([
-      client.from('public_profiles').select('*').eq('role', 'promoter').order('full_name'),
+      client.from('public_profiles').select(PUBLIC_PROFILE_CARD_COLUMNS).eq('role', 'promoter').order('full_name'),
       client.from('events').select('promoter_id,flyer_url,event_date').eq('status', 'published').order('event_date', { ascending: false }),
     ]);
     if (profileResult.error) return [];
@@ -263,7 +282,7 @@ export const getPublicPromotersForPage = cache(async (): Promise<PublicPromoterC
       if (event.flyer_url && !flyerMap.has(event.promoter_id)) flyerMap.set(event.promoter_id, event.flyer_url);
     }
 
-    return ((profileResult.data ?? []) as Profile[]).map((profile) => ({
+    return ((profileResult.data ?? []) as PublicProfileCard[]).map((profile) => ({
       ...profile,
       latestFlyer: flyerMap.get(profile.id) ?? null,
       eventCount: countMap.get(profile.id) ?? 0,
@@ -278,7 +297,7 @@ export const getPublicManagersForPage = cache(async (): Promise<PublicManagerCar
   if (!client) return [];
   try {
     const [profileResult, rosterResult] = await Promise.all([
-      client.from('public_profiles').select('*').eq('role', 'manager').order('full_name'),
+      client.from('public_profiles').select(PUBLIC_PROFILE_CARD_COLUMNS).eq('role', 'manager').order('full_name'),
       client.from('manager_fighters').select('manager_id'),
     ]);
     if (profileResult.error) return [];
@@ -288,7 +307,7 @@ export const getPublicManagersForPage = cache(async (): Promise<PublicManagerCar
       countMap.set(row.manager_id, (countMap.get(row.manager_id) ?? 0) + 1);
     }
 
-    return ((profileResult.data ?? []) as Profile[]).map((profile) => ({
+    return ((profileResult.data ?? []) as PublicProfileCard[]).map((profile) => ({
       ...profile,
       rosterCount: countMap.get(profile.id) ?? 0,
     }));
@@ -297,17 +316,17 @@ export const getPublicManagersForPage = cache(async (): Promise<PublicManagerCar
   }
 });
 
-export const getPublicSponsorsForPage = cache(async (): Promise<Profile[]> => {
+export const getPublicSponsorsForPage = cache(async (): Promise<PublicProfileCard[]> => {
   const client = getPublicClient();
   if (!client) return [];
   try {
     const { data, error } = await client
       .from('public_profiles')
-      .select('*')
+      .select(PUBLIC_PROFILE_CARD_COLUMNS)
       .eq('role', 'sponsor')
       .order('full_name');
     if (error) return [];
-    return (data ?? []) as Profile[];
+    return (data ?? []) as PublicProfileCard[];
   } catch {
     return [];
   }

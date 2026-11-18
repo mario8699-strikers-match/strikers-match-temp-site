@@ -5,18 +5,18 @@ import { useTranslation } from 'react-i18next';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Pagination } from '@/components/Pagination';
-import type { Profile } from '@/types';
+import type { PublicProfileCard } from '@/lib/seoData';
 
 const PAGE_SIZE = 12;
 
 interface SponsorsPageClientProps {
-  initialSponsors: Profile[];
+  initialSponsors: PublicProfileCard[];
 }
 
 export function SponsorsPageClient({ initialSponsors }: SponsorsPageClientProps) {
   const { t } = useTranslation('sponsors');
 
-  const [sponsors] = useState<Profile[]>(initialSponsors);
+  const [sponsors] = useState<PublicProfileCard[]>(initialSponsors);
   const [loading] = useState(false);
   const [page, setPage] = useState(1);
 
@@ -68,10 +68,6 @@ export function SponsorsPageClient({ initialSponsors }: SponsorsPageClientProps)
                     )}
                   </div>
                 </div>
-
-                {sponsor.phone && (
-                  <p className="text-xs text-zinc-500 mb-4">{sponsor.phone}</p>
-                )}
 
                 <a
                   href={`/register`}

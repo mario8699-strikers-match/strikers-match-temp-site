@@ -11,12 +11,13 @@ import { authService } from '@/services/authService';
 import { BUSINESS_LISTING_CATEGORIES, directoryService } from '@/services/directoryService';
 import { VENDOR_ROLES } from '@/types';
 import type { BusinessListing, BusinessListingCategory, Profile, UserRole } from '@/types';
+import type { PublicProfileCard } from '@/lib/seoData';
 
 const PAGE_SIZE = 12;
 
 type CategoryFilter = BusinessListingCategory | 'all' | 'profiles';
 type DirectoryEntry =
-  | { kind: 'profile'; profile: Profile }
+  | { kind: 'profile'; profile: PublicProfileCard }
   | { kind: 'listing'; listing: BusinessListing };
 
 const CATEGORY_PROFILE_ROLES: Record<BusinessListingCategory, UserRole[]> = {
@@ -56,22 +57,42 @@ function hasServiceRole(profile: Profile | null): boolean {
   );
 }
 
-function mergeProfiles(primary: Profile[], secondary: Profile[]): Profile[] {
-  const byId = new Map<string, Profile>();
+function mergeProfiles(primary: PublicProfileCard[], secondary: PublicProfileCard[]): PublicProfileCard[] {
+  const byId = new Map<string, PublicProfileCard>();
   [...primary, ...secondary].forEach((profile) => byId.set(profile.id, profile));
   return Array.from(byId.values()).sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 
+function toPublicProfileCard(profile: Profile): PublicProfileCard {
+  return {
+    id: profile.id,
+    full_name: profile.full_name,
+    role: profile.role,
+    additional_roles: profile.additional_roles,
+    city: profile.city,
+    state: profile.state,
+    country: profile.country,
+    bio: profile.bio,
+    instagram: profile.instagram,
+    photo_url: profile.photo_url,
+    promoter_federation_status: profile.promoter_federation_status,
+    is_available: profile.is_available,
+    is_banned: profile.is_banned ?? false,
+    created_at: profile.created_at,
+    updated_at: profile.updated_at,
+  };
+}
+
 interface DirectoryPageClientProps {
   initialListings: BusinessListing[];
-  initialProfiles: Profile[];
+  initialProfiles: PublicProfileCard[];
 }
 
 export function DirectoryPageClient({ initialListings, initialProfiles }: DirectoryPageClientProps) {
   const { t, i18n } = useTranslation('gallery');
   const [profile, setProfile] = useState<Profile | null>(null);
   const [listings, setListings] = useState<BusinessListing[]>(initialListings);
-  const [serviceProfiles, setServiceProfiles] = useState<Profile[]>(initialProfiles);
+  const [serviceProfiles, setServiceProfiles] = useState<PublicProfileCard[]>(initialProfiles);
   const [loading, setLoading] = useState(false);
   const [category, setCategory] = useState<CategoryFilter>('all');
   const [page, setPage] = useState(1);
@@ -116,12 +137,12 @@ export function DirectoryPageClient({ initialListings, initialProfiles }: Direct
         directoryService.getPublished(),
         supabase
           .from('public_profiles')
-          .select('*')
+          .select('id,full_name,role,additional_roles,city,state,country,bio,instagram,photo_url,promoter_federation_status,is_available,is_banned,created_at,updated_at')
           .in('role', VENDOR_ROLES)
           .order('created_at', { ascending: false }),
         supabase
           .from('public_profiles')
-          .select('*')
+          .select('id,full_name,role,additional_roles,city,state,country,bio,instagram,photo_url,promoter_federation_status,is_available,is_banned,created_at,updated_at')
           .overlaps('additional_roles', VENDOR_ROLES)
           .order('created_at', { ascending: false }),
       ]);
@@ -130,8 +151,8 @@ export function DirectoryPageClient({ initialListings, initialProfiles }: Direct
       setProfile(currentProfile);
       setListings(data ?? []);
       setServiceProfiles(mergeProfiles(
-        (primaryProfiles.data as Profile[] | null) ?? [],
-        (additionalProfiles.data as Profile[] | null) ?? []
+        (primaryProfiles.data as PublicProfileCard[] | null) ?? [],
+        (additionalProfiles.data as PublicProfileCard[] | null) ?? []
       ));
       setSelectedServiceRoles(
         ((currentProfile?.additional_roles ?? []).filter((role) => VENDOR_ROLES.includes(role)) as UserRole[])
@@ -221,7 +242,7 @@ export function DirectoryPageClient({ initialListings, initialProfiles }: Direct
     };
     setProfile(updatedProfile);
     setServiceRoleSuccess(true);
-    setServiceProfiles((current) => mergeProfiles([updatedProfile], current));
+    setServiceProfiles((current) => mergeProfiles([toPublicProfileCard(updatedProfile)], current));
   };
 
   const resetForm = () => {
