@@ -122,6 +122,7 @@
       "emailSubject": "Asunto",
       "emailPreviewFrameTitle": "Vista previa del contenido del correo",
       "closePreview": "Cerrar vista previa",
+      "showingRange": "Mostrando {{from}}–{{to}} de {{total}}",
       "missingFields": {
         "photo": "Foto",
         "fullName": "Nombre y apellido",

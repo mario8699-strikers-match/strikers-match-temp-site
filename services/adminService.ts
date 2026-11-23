@@ -11,6 +11,11 @@ export interface AdminStats {
   totalBouts: number;
 }
 
+export interface AdminPaginatedResult<T> {
+  items: T[];
+  total: number;
+}
+
 const ADMIN_LIST_LIMIT = 200;
 
 export const adminService = {
@@ -94,6 +99,34 @@ export const adminService = {
 
       if (error) return { data: null, error: error.message };
       return { data: (data as FighterWithProfile[]) ?? [], error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
+  async getFightersPage(
+    page: number,
+    pageSize: number,
+  ): Promise<ServiceResponse<AdminPaginatedResult<FighterWithProfile>>> {
+    try {
+      const safePage = Math.max(1, Math.trunc(page));
+      const safePageSize = Math.max(1, Math.min(100, Math.trunc(pageSize)));
+      const from = (safePage - 1) * safePageSize;
+      const to = from + safePageSize - 1;
+      const { data, error, count } = await supabase
+        .from('fighters')
+        .select('*, profiles(full_name, email, city, phone, is_banned, country, country_code, instagram, preferred_language)', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (error) return { data: null, error: error.message };
+      return {
+        data: {
+          items: (data as FighterWithProfile[]) ?? [],
+          total: count ?? 0,
+        },
+        error: null,
+      };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }
@@ -279,6 +312,34 @@ export const adminService = {
 
       if (error) return { data: null, error: error.message };
       return { data: (data as ManualFighterWithCreator[]) ?? [], error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
+  async getManualFightersPage(
+    page: number,
+    pageSize: number,
+  ): Promise<ServiceResponse<AdminPaginatedResult<ManualFighterWithCreator>>> {
+    try {
+      const safePage = Math.max(1, Math.trunc(page));
+      const safePageSize = Math.max(1, Math.min(100, Math.trunc(pageSize)));
+      const from = (safePage - 1) * safePageSize;
+      const to = from + safePageSize - 1;
+      const { data, error, count } = await supabase
+        .from('manual_fighters')
+        .select('*, profiles:manager_id(full_name, email, role, preferred_language, is_banned)', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (error) return { data: null, error: error.message };
+      return {
+        data: {
+          items: (data as ManualFighterWithCreator[]) ?? [],
+          total: count ?? 0,
+        },
+        error: null,
+      };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }

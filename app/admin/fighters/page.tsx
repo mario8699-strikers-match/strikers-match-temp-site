@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { InlineCombatRecord } from '@/components/CombatRecord';
+import { Pagination } from '@/components/Pagination';
 import { adminService } from '@/services/adminService';
 import {
   getMissingFighterRegistrationProfileFields,
@@ -34,13 +35,19 @@ type ReminderPreview = {
 };
 
 const REP_LABELS = ['manager', 'promoter', 'sponsor'] as const;
+const PAGE_SIZE = 20;
 
 export default function AdminFightersPage() {
   const { t } = useTranslation('admin');
 
   const [fighters, setFighters] = useState<FighterWithProfile[]>([]);
   const [manualFighters, setManualFighters] = useState<ManualFighterWithCreator[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [registeredPage, setRegisteredPage] = useState(1);
+  const [manualPage, setManualPage] = useState(1);
+  const [registeredTotal, setRegisteredTotal] = useState(0);
+  const [manualTotal, setManualTotal] = useState(0);
+  const [registeredLoading, setRegisteredLoading] = useState(true);
+  const [manualLoading, setManualLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [acting, setActing] = useState(false);
@@ -64,15 +71,49 @@ export default function AdminFightersPage() {
   ), [manualFighters]);
 
   useEffect(() => {
-    Promise.all([
-      adminService.getAllFighters(),
-      adminService.getAllManualFighters(),
-    ]).then(([regRes, manRes]) => {
-      setFighters(regRes.data ?? []);
-      setManualFighters(manRes.data ?? []);
-      setLoading(false);
+    let active = true;
+    adminService.getFightersPage(registeredPage, PAGE_SIZE).then((result) => {
+      if (!active) return;
+      if (result.error || !result.data) {
+        setError(result.error ?? t('admin.errors.generic'));
+        setFighters([]);
+      } else {
+        setFighters(result.data.items);
+        setRegisteredTotal(result.data.total);
+      }
+      setRegisteredLoading(false);
     });
-  }, []);
+    return () => { active = false; };
+  }, [registeredPage, t]);
+
+  useEffect(() => {
+    let active = true;
+    adminService.getManualFightersPage(manualPage, PAGE_SIZE).then((result) => {
+      if (!active) return;
+      if (result.error || !result.data) {
+        setError(result.error ?? t('admin.errors.generic'));
+        setManualFighters([]);
+      } else {
+        setManualFighters(result.data.items);
+        setManualTotal(result.data.total);
+      }
+      setManualLoading(false);
+    });
+    return () => { active = false; };
+  }, [manualPage, t]);
+
+  const loading = tab === 'registered' ? registeredLoading : manualLoading;
+  const registeredTotalPages = Math.max(1, Math.ceil(registeredTotal / PAGE_SIZE));
+  const manualTotalPages = Math.max(1, Math.ceil(manualTotal / PAGE_SIZE));
+  const handleRegisteredPageChange = (page: number) => {
+    setRegisteredLoading(true);
+    setExpandedId(null);
+    setRegisteredPage(page);
+  };
+  const handleManualPageChange = (page: number) => {
+    setManualLoading(true);
+    setManualPage(page);
+  };
 
   const handleAction = async () => {
     if (!confirm) return;
@@ -203,7 +244,7 @@ export default function AdminFightersPage() {
               : 'border-transparent text-zinc-500 hover:text-zinc-900'
           }`}
         >
-          {t('admin.fighters.registeredTab')} <span className="ml-1 text-xs text-zinc-400">({fighters.length})</span>
+          {t('admin.fighters.registeredTab')} <span className="ml-1 text-xs text-zinc-400">({registeredTotal})</span>
         </button>
         <button
           onClick={() => setTab('manual')}
@@ -213,7 +254,7 @@ export default function AdminFightersPage() {
               : 'border-transparent text-zinc-500 hover:text-zinc-900'
           }`}
         >
-          {t('admin.fighters.manualRosterTab')} <span className="ml-1 text-xs text-zinc-400">({manualFighters.length})</span>
+          {t('admin.fighters.manualRosterTab')} <span className="ml-1 text-xs text-zinc-400">({manualTotal})</span>
         </button>
       </div>
 
@@ -496,6 +537,22 @@ export default function AdminFightersPage() {
             </tbody>
           </table>
         </div>
+        <div className="mt-6 text-center text-xs text-zinc-500">
+          {t('admin.fighters.showingRange', {
+            from: (registeredPage - 1) * PAGE_SIZE + 1,
+            to: Math.min(registeredPage * PAGE_SIZE, registeredTotal),
+            total: registeredTotal,
+          })}
+        </div>
+        <Pagination
+          page={registeredPage}
+          totalPages={registeredTotalPages}
+          onPageChange={handleRegisteredPageChange}
+          labels={{
+            prev: t('common.previous', { ns: 'common' }),
+            next: t('common.next', { ns: 'common' }),
+          }}
+        />
         </>
       )
       ) : (
@@ -700,6 +757,22 @@ export default function AdminFightersPage() {
               </tbody>
             </table>
           </div>
+          <div className="mt-6 text-center text-xs text-zinc-500">
+            {t('admin.fighters.showingRange', {
+              from: (manualPage - 1) * PAGE_SIZE + 1,
+              to: Math.min(manualPage * PAGE_SIZE, manualTotal),
+              total: manualTotal,
+            })}
+          </div>
+          <Pagination
+            page={manualPage}
+            totalPages={manualTotalPages}
+            onPageChange={handleManualPageChange}
+            labels={{
+              prev: t('common.previous', { ns: 'common' }),
+              next: t('common.next', { ns: 'common' }),
+            }}
+          />
           </>
         )
       )}

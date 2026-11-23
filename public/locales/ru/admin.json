@@ -121,6 +121,7 @@
       "emailSubject": "Тема",
       "emailPreviewFrameTitle": "Предпросмотр содержимого письма",
       "closePreview": "Закрыть предпросмотр",
+      "showingRange": "Показано {{from}}–{{to}} из {{total}}",
       "missingFields": {
         "photo": "Фото",
         "fullName": "Имя и фамилия",
