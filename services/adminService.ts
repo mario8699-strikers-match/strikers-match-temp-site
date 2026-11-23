@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabaseClient';
 import type { Profile, FighterWithProfile, ManualFighterWithCreator, Event, Bout, ServiceResponse, PromoterFederationStatus } from '@/types';
 import type { MatchWithContext } from '@/services/matchService';
+import type { AdminEmailRecipient } from '@/lib/adminEmailRecipients';
 
 export interface AdminStats {
   totalUsers: number;
@@ -19,6 +20,27 @@ export interface AdminPaginatedResult<T> {
 const ADMIN_LIST_LIMIT = 200;
 
 export const adminService = {
+  async getIncompleteFighterEmailRecipients(): Promise<ServiceResponse<AdminEmailRecipient[]>> {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return { data: null, error: 'unauthorized' };
+
+      const response = await fetch('/api/admin/emails/recipients', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const payload = await response.json().catch(() => ({})) as {
+        recipients?: AdminEmailRecipient[];
+        error?: string;
+      };
+      if (!response.ok || !payload.recipients) {
+        return { data: null, error: payload.error ?? 'recipient_load_failed' };
+      }
+      return { data: payload.recipients, error: null };
+    } catch {
+      return { data: null, error: 'recipient_load_failed' };
+    }
+  },
+
   async getStats(): Promise<ServiceResponse<AdminStats>> {
     try {
       const [usersRes, fightersRes, eventsRes, pendingRes, matchesRes, boutsRes] = await Promise.all([

@@ -2,19 +2,15 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Pagination } from '@/components/Pagination';
 import { adminService } from '@/services/adminService';
-import {
-  getMissingFighterRegistrationProfileFields,
-  getMissingManualFighterProfileFields,
-  type FighterRegistrationProfileField,
-} from '@/lib/fighterRegistrationProfile';
 import {
   buildFighterProfileReminderEmail,
   buildManagedFighterProfileReminderEmail,
   normalizeReminderLanguage,
 } from '@/lib/fighterProfileReminderEmail';
+import type { AdminEmailRecipient } from '@/lib/adminEmailRecipients';
 import { manualFighterManagementPath } from '@/lib/manualFighterManagement';
-import type { FighterWithProfile, ManualFighterWithCreator } from '@/types';
 
 function normalizeSearch(value: string) {
   return value
@@ -23,27 +19,15 @@ function normalizeSearch(value: string) {
     .toLocaleLowerCase();
 }
 
-type EmailRecipient = {
-  key: string;
-  kind: 'registered' | 'manual';
-  targetId: string;
-  fighterName: string;
-  recipientName: string;
-  email: string;
-  language?: string | null;
-  isBanned: boolean;
-  location: string;
-  missingFields: FighterRegistrationProfileField[];
-  managerRole?: string;
-};
+const EMAIL_PAGE_SIZE = 10;
 
 export default function AdminEmailsPage() {
   const { t } = useTranslation('admin');
-  const [fighters, setFighters] = useState<FighterWithProfile[]>([]);
-  const [manualFighters, setManualFighters] = useState<ManualFighterWithCreator[]>([]);
+  const [recipients, setRecipients] = useState<AdminEmailRecipient[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [sentIds, setSentIds] = useState<Set<string>>(() => new Set());
@@ -51,49 +35,17 @@ export default function AdminEmailsPage() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([
-      adminService.getAllFighters(),
-      adminService.getAllManualFighters(),
-    ]).then(([fighterResult, manualResult]) => {
+    adminService.getIncompleteFighterEmailRecipients().then((result) => {
       if (!active) return;
-      if (fighterResult.error || manualResult.error) {
-        setLoadError(fighterResult.error ?? manualResult.error);
+      if (result.error) {
+        setLoadError(result.error);
       } else {
-        setFighters(fighterResult.data ?? []);
-        setManualFighters(manualResult.data ?? []);
+        setRecipients(result.data ?? []);
       }
       setLoading(false);
     });
     return () => { active = false; };
   }, []);
-
-  const recipients = useMemo<EmailRecipient[]>(() => [
-    ...fighters.map((fighter): EmailRecipient => ({
-      key: `registered:${fighter.id}`,
-      kind: 'registered',
-      targetId: fighter.id,
-      fighterName: fighter.profiles.full_name,
-      recipientName: fighter.profiles.full_name,
-      email: fighter.profiles.email,
-      language: fighter.profiles.preferred_language,
-      isBanned: Boolean(fighter.profiles.is_banned),
-      location: [fighter.profiles.city, fighter.profiles.country].filter(Boolean).join(' '),
-      missingFields: getMissingFighterRegistrationProfileFields(fighter, fighter.profiles),
-    })),
-    ...manualFighters.flatMap((fighter): EmailRecipient[] => fighter.profiles ? [{
-      key: `manual:${fighter.id}`,
-      kind: 'manual',
-      targetId: fighter.id,
-      fighterName: fighter.full_name,
-      recipientName: fighter.profiles.full_name,
-      email: fighter.profiles.email,
-      language: fighter.profiles.preferred_language,
-      isBanned: Boolean(fighter.profiles.is_banned),
-      location: [fighter.city, fighter.country].filter(Boolean).join(' '),
-      missingFields: getMissingManualFighterProfileFields(fighter),
-      managerRole: fighter.profiles.role,
-    }] : []),
-  ].filter(({ missingFields }) => missingFields.length > 0), [fighters, manualFighters]);
 
   const visibleRecipients = useMemo(() => {
     const query = normalizeSearch(search.trim());
@@ -106,9 +58,14 @@ export default function AdminEmailsPage() {
     ].join(' ')).includes(query));
   }, [recipients, search]);
 
-  const effectiveSelectedId = recipients.some((recipient) => recipient.key === selectedId)
+  const totalPages = Math.max(1, Math.ceil(visibleRecipients.length / EMAIL_PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageStart = (safePage - 1) * EMAIL_PAGE_SIZE;
+  const pageRecipients = visibleRecipients.slice(pageStart, pageStart + EMAIL_PAGE_SIZE);
+
+  const effectiveSelectedId = pageRecipients.some((recipient) => recipient.key === selectedId)
     ? selectedId
-    : (recipients[0]?.key ?? null);
+    : (pageRecipients[0]?.key ?? null);
   const selected = recipients.find((recipient) => recipient.key === effectiveSelectedId) ?? null;
   const preview = useMemo(() => {
     if (!selected || typeof window === 'undefined') return null;
@@ -164,7 +121,7 @@ export default function AdminEmailsPage() {
 
       {loadError && (
         <div className="mb-5 border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {loadError}
+          {t('admin.errors.loadFailed')}
         </div>
       )}
 
@@ -178,7 +135,11 @@ export default function AdminEmailsPage() {
             <input
               type="search"
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPage(1);
+                setSelectedId(null);
+              }}
               placeholder={t('admin.emails.searchPlaceholder')}
               className="mt-3 min-h-11 w-full border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-900"
             />
@@ -191,7 +152,7 @@ export default function AdminEmailsPage() {
               <p className="p-6 text-center text-sm leading-6 text-zinc-500">
                 {search ? t('admin.emails.noSearchResults') : t('admin.emails.noRecipients')}
               </p>
-            ) : visibleRecipients.map((recipient) => {
+            ) : pageRecipients.map((recipient) => {
               const isSelected = effectiveSelectedId === recipient.key;
               const isDisabled = Boolean(recipient.isBanned || !recipient.email.trim());
               return (
@@ -212,6 +173,11 @@ export default function AdminEmailsPage() {
                       {t('admin.fighters.manualRosterTab')} · {t('admin.fighters.addedBy')}: {recipient.recipientName}
                     </span>
                   )}
+                  {recipient.isHidden && (
+                    <span className={`mt-1 inline-flex px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${isSelected ? 'bg-red-500/20 text-red-200' : 'bg-red-50 text-red-700'}`}>
+                      {t('admin.fighters.hidden')}
+                    </span>
+                  )}
                   <span className={`mt-1 block truncate text-xs ${isSelected ? 'text-zinc-300' : 'text-zinc-500'}`}>
                     {recipient.email || t('admin.emails.noEmail')}
                   </span>
@@ -228,6 +194,31 @@ export default function AdminEmailsPage() {
               );
             })}
           </div>
+          {!loading && visibleRecipients.length > 0 && (
+            <div className="border-t border-zinc-200 px-3 py-4">
+              <p className="text-center text-xs text-zinc-500">
+                {t('admin.fighters.showingRange', {
+                  from: pageStart + 1,
+                  to: Math.min(pageStart + EMAIL_PAGE_SIZE, visibleRecipients.length),
+                  total: visibleRecipients.length,
+                })}
+              </p>
+              <Pagination
+                page={safePage}
+                totalPages={totalPages}
+                onPageChange={(nextPage) => {
+                  setPage(nextPage);
+                  setSelectedId(null);
+                }}
+                labels={{
+                  prev: t('common.previous', { ns: 'common' }),
+                  next: t('common.next', { ns: 'common' }),
+                }}
+                className="mt-3"
+                scrollToTop={false}
+              />
+            </div>
+          )}
         </section>
 
         <section className="min-w-0 border border-zinc-200 bg-white">

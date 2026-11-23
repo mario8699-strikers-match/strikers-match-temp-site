@@ -6,6 +6,7 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
   labels?: { prev?: string; next?: string };
   className?: string;
+  scrollToTop?: boolean;
 }
 
 function getPageWindow(page: number, totalPages: number): (number | 'ellipsis')[] {
@@ -28,7 +29,7 @@ function getPageWindow(page: number, totalPages: number): (number | 'ellipsis')[
   return pages;
 }
 
-export function Pagination({ page, totalPages, onPageChange, labels, className }: PaginationProps) {
+export function Pagination({ page, totalPages, onPageChange, labels, className, scrollToTop = true }: PaginationProps) {
   if (totalPages <= 1) return null;
 
   const prevLabel = labels?.prev ?? 'Anterior';
@@ -38,7 +39,7 @@ export function Pagination({ page, totalPages, onPageChange, labels, className }
   const handleClick = (p: number) => {
     if (p < 1 || p > totalPages || p === page) return;
     onPageChange(p);
-    if (typeof window !== 'undefined') {
+    if (scrollToTop && typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
