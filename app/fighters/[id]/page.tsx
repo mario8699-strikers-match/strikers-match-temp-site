@@ -15,6 +15,7 @@ import { fighterFollowService } from '@/services/fighterFollowService';
 import { supabase } from '@/lib/supabaseClient';
 import { getPrimaryDiscipline, getPublicWeightDisplay } from '@/lib/fighterProfile';
 import { fighterPublicPath } from '@/lib/publicUrls';
+import { canCreateEvent } from '@/lib/eventPermissions';
 import type { Fighter, Profile, Event } from '@/types';
 
 type FighterDetail = Fighter & {
@@ -78,7 +79,7 @@ export default function FighterDetailPage() {
         window.history.replaceState(null, '', `${fighterPublicPath(f)}${window.location.search}${window.location.hash}`);
       }
 
-      if (p && (p.role === 'promoter' || p.role === 'manager' || p.role === 'admin')) {
+      if (p && canCreateEvent(p.role)) {
         eventService.getByPromoter(p.id).then(({ data: events }) => setMyEvents(events ?? []));
       }
       if (p?.role === 'spectator' && f?.id) {
@@ -163,7 +164,7 @@ export default function FighterDetailPage() {
     );
   }
 
-  const canSendRequest = profile && (profile.role === 'promoter' || profile.role === 'manager' || profile.role === 'admin');
+  const canSendRequest = profile && canCreateEvent(profile.role);
   const nationalityCode = fighter.nationalities?.[0];
   const primaryDiscipline = getPrimaryDiscipline(fighter.disciplines);
   const weight = getPublicWeightDisplay(fighter.weight_class, fighter.exact_weight);

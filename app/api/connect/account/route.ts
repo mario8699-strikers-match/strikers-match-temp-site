@@ -6,6 +6,7 @@ import {
   createAdminSupabase,
   requestAppUrl,
 } from '@/lib/serverAuth';
+import { canCreateEvent } from '@/lib/eventPermissions';
 
 export const runtime = 'nodejs';
 
@@ -109,7 +110,7 @@ export async function GET(request: NextRequest) {
   try {
     const auth = await authenticateServerRequest(request);
     if (auth instanceof NextResponse) return auth;
-    if (!['promoter', 'manager', 'admin'].includes(auth.role)) {
+    if (!canCreateEvent(auth.role)) {
       return NextResponse.json({ error: 'Tu cuenta no puede conectar pagos.' }, { status: 403 });
     }
 
@@ -134,7 +135,7 @@ export async function POST(request: NextRequest) {
   try {
     const auth = await authenticateServerRequest(request);
     if (auth instanceof NextResponse) return auth;
-    if (!['promoter', 'manager', 'admin'].includes(auth.role)) {
+    if (!canCreateEvent(auth.role)) {
       return NextResponse.json({ error: 'Tu cuenta no puede conectar pagos.' }, { status: 403 });
     }
 
@@ -173,7 +174,9 @@ export async function POST(request: NextRequest) {
     const appUrl = requestAppUrl(request);
     const dashboardPath = auth.role === 'manager'
       ? '/manager/dashboard'
-      : auth.role === 'admin' ? '/admin' : '/promoter/dashboard';
+      : auth.role === 'admin'
+        ? '/admin'
+        : auth.role === 'gyms_academies' ? '/vendor/profile' : '/promoter/dashboard';
     const returnPath = safeReturnPath(body.returnPath, dashboardPath);
     const accountLink = await stripe.accountLinks.create({
       account: account.id,

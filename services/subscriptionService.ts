@@ -5,7 +5,7 @@ import type { PaidAction, PromoterSubscription, ServiceResponse, SubscriptionChe
 /**
  * Compatibility layer after removing promoter/manager payment gates.
  *
- * Promoters, managers, and admins can use their allowed operational actions.
+ * Promoters, managers, coaches/gyms, and admins can use their allowed operational actions.
  * Kept under the old filename so existing imports remain stable.
  */
 export async function canPerformAction(

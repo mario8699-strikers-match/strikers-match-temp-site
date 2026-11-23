@@ -38,10 +38,10 @@ export const VENDOR_ROLES: UserRole[] = [
 
 // Legacy access role list kept for compatibility.
 // Current promoter/manager event tools use role-based access.
-export const MONETIZED_ROLES: UserRole[] = ['promoter', 'manager'];
+export const MONETIZED_ROLES: UserRole[] = ['promoter', 'manager', 'gyms_academies'];
 
 // Legacy free-request role list kept for compatibility.
-export const FREE_REQUEST_ROLES: UserRole[] = ['promoter', 'manager'];
+export const FREE_REQUEST_ROLES: UserRole[] = ['promoter', 'manager', 'gyms_academies'];
 
 export type PromoterFederationStatus = 'federated' | 'independent';
 
@@ -55,6 +55,7 @@ export type PaidAction =
 export const ROLE_ALLOWED_ACTIONS: Record<string, PaidAction[]> = {
   promoter: ['send_fight_request', 'emergency_replacement', 'live_streaming'],
   manager: ['send_fight_request', 'emergency_replacement', 'live_streaming'],
+  gyms_academies: ['send_fight_request', 'emergency_replacement', 'live_streaming'],
   sponsor: [],
 };
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateServerRequest, createAdminSupabase } from '@/lib/serverAuth';
+import { canCreateEvent } from '@/lib/eventPermissions';
 
 export const runtime = 'nodejs';
 
@@ -7,7 +8,7 @@ export async function GET(request: NextRequest) {
   try {
     const auth = await authenticateServerRequest(request);
     if (auth instanceof NextResponse) return auth;
-    if (!['promoter', 'manager', 'admin'].includes(auth.role)) {
+    if (!canCreateEvent(auth.role)) {
       return NextResponse.json({ error: 'Acceso denegado.' }, { status: 403 });
     }
 

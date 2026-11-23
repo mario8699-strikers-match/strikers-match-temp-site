@@ -3,7 +3,7 @@
  *
  * Rules:
  *   - fighter: cannot send requests, can receive requests
- *   - promoter / manager: full access to operational tools
+ *   - promoter / manager / coach-gym: full access to event operational tools
  *   - sponsor / spectator: can browse, cannot send fight requests
  *   - vendors: can create profile, can be contacted, cannot initiate contact
  *   - admin: full access
@@ -13,6 +13,7 @@
 
 import type { UserRole } from '@/types';
 import { VENDOR_ROLES } from '@/types';
+import { canCreateEvent } from '@/lib/eventPermissions';
 
 export type Feature =
   | 'send_fight_request'
@@ -27,15 +28,15 @@ interface UserForAccess {
 
 const FEATURE_RULES: Record<Feature, (role: UserRole) => boolean> = {
   /**
-   * send_fight_request — only promoter and manager can send fight requests.
+   * send_fight_request — only approved event-creator roles can send fight requests.
    * Sponsor cannot. Fighter cannot (they receive, not send). Vendors cannot.
    */
-  send_fight_request: (role) => role === 'promoter' || role === 'manager' || role === 'admin',
+  send_fight_request: (role) => canCreateEvent(role),
 
   /**
-   * emergency_replacement — same as fight requests (promoter/manager action).
+   * emergency_replacement — same as fight requests.
    */
-  emergency_replacement: (role) => role === 'promoter' || role === 'manager' || role === 'admin',
+  emergency_replacement: (role) => canCreateEvent(role),
 
   /**
    * contact_vendor — promoter, manager, sponsor, spectator can contact vendors.
@@ -77,5 +78,5 @@ export function canAccessFeature(user: UserForAccess, feature: Feature): boolean
  */
 export function requiresSubscription(role: UserRole): boolean {
   if (role === 'admin') return false;
-  return role === 'promoter' || role === 'manager';
+  return role === 'promoter' || role === 'manager' || role === 'gyms_academies';
 }

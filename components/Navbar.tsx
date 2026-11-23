@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { authService } from '@/services/authService';
+import { canCreateEvent } from '@/lib/eventPermissions';
 import { VENDOR_ROLES } from '@/types';
 import type { Profile } from '@/types';
 
@@ -286,7 +287,7 @@ export function Navbar({ activePage }: NavbarProps) {
                     {t(labelKey)}
                   </Link>
                 ))}
-                {(profile.role === 'promoter' || profile.role === 'manager' || profile.role === 'admin') && (
+                {canCreateEvent(profile.role) && (
                   <Link
                     href="/events/create"
                     onClick={() => setMobileOpen(false)}

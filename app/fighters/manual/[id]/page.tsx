@@ -12,6 +12,7 @@ import { requestService } from '@/services/requestService';
 import { authService } from '@/services/authService';
 import { getPrimaryDiscipline, getPublicWeightDisplay } from '@/lib/fighterProfile';
 import { manualFighterPublicPath } from '@/lib/publicUrls';
+import { canCreateEvent } from '@/lib/eventPermissions';
 import { useTranslation } from 'react-i18next';
 import type { ManualFighterWithCreator, Profile, Event } from '@/types';
 
@@ -45,7 +46,7 @@ export default function ManualFighterDetailPage() {
         window.history.replaceState(null, '', `${manualFighterPublicPath(fighterData)}${window.location.search}${window.location.hash}`);
       }
 
-      if (p && (p.role === 'promoter' || p.role === 'manager' || p.role === 'admin')) {
+      if (p && canCreateEvent(p.role)) {
         eventService.getByPromoter(p.id).then(({ data: events }) => setMyEvents(events ?? []));
       }
     });
@@ -85,7 +86,7 @@ export default function ManualFighterDetailPage() {
     );
   }
 
-  const canSendRequest = profile && (profile.role === 'promoter' || profile.role === 'manager' || profile.role === 'admin');
+  const canSendRequest = profile && canCreateEvent(profile.role);
   const creatorName = fighter.profiles?.full_name ?? '';
   const creatorRole = fighter.profiles?.role ?? 'manager';
   const nationalityCode = fighter.nationalities?.[0];

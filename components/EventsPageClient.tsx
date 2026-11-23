@@ -11,6 +11,7 @@ import { authService } from '@/services/authService';
 import { formatLocalizedCurrency, formatLocalizedDate } from '@/lib/locale';
 import { countryFlagEmoji, getCountryName } from '@/lib/countries';
 import { eventPublicPath } from '@/lib/publicUrls';
+import { canCreateEvent } from '@/lib/eventPermissions';
 import type { Event, Profile } from '@/types';
 
 const PAGE_SIZE = 15;
@@ -38,7 +39,7 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
   const [page, setPage] = useState(1);
   const selectedCountry = searchParams.get('country')?.toUpperCase() ?? '';
 
-  const canCreateEvent = profile?.role === 'promoter' || profile?.role === 'manager' || profile?.role === 'admin';
+  const canCreate = canCreateEvent(profile?.role);
 
   useEffect(() => {
     authService.getSession().then(({ data }) => {
@@ -112,7 +113,7 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
             </h1>
             <p className="mt-2 text-sm" style={{ color: '#5A5A5A' }}>{t('events.subtitle')}</p>
           </div>
-          {canCreateEvent && (
+          {canCreate && (
             <Link
               href="/events/create"
               className="inline-block bg-brand-red text-white px-3 py-2 text-xs sm:text-sm sm:px-4 font-semibold hover:bg-brand-red-dark transition-colors whitespace-nowrap"
@@ -148,7 +149,7 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
           <div className="py-24 text-center border border-dashed border-zinc-200">
             <p className="text-zinc-900 font-medium">{t('events.noEvents')}</p>
             <p className="mt-1 text-sm text-zinc-500">{t('events.noEventsSubtitle')}</p>
-            {canCreateEvent ? (
+            {canCreate ? (
               <Link
                 href="/events/create"
                 className="mt-6 inline-block bg-zinc-900 text-white px-6 py-2.5 text-sm font-medium hover:bg-zinc-800 transition-colors"

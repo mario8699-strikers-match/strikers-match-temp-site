@@ -12,6 +12,7 @@ import {
 } from '@/lib/combatWeightCategories';
 import { eventService } from '@/services/eventService';
 import { eventPublicPath } from '@/lib/publicUrls';
+import { canCreateEvent } from '@/lib/eventPermissions';
 import { authService } from '@/services/authService';
 import { updateGuidedOnboarding } from '@/services/onboardingService';
 import { getCountryOptions } from '@/lib/countries';
@@ -61,7 +62,7 @@ export default function CreateEventPage() {
   const [connectingStripe, setConnectingStripe] = useState(false);
   const [serverErrorActionUrl, setServerErrorActionUrl] = useState<string | null>(null);
 
-  // Auth guard: must be promoter or manager
+  // Auth guard: only approved event-creator roles may continue.
   useEffect(() => {
     const returnedFromStripe = new URLSearchParams(window.location.search).has('stripe');
     if (returnedFromStripe) {
@@ -80,7 +81,7 @@ export default function CreateEventPage() {
       setProfile(p);
       if (!p) {
         window.location.href = '/login';
-      } else if (p.role !== 'promoter' && p.role !== 'manager' && p.role !== 'admin') {
+      } else if (!canCreateEvent(p.role)) {
         window.location.href = '/events';
       } else {
         setFormData((current) => ({
@@ -197,7 +198,7 @@ export default function CreateEventPage() {
   };
 
   // Block render until auth is confirmed — covers: checking, unauthenticated, wrong role
-  if (!profile || (profile.role !== 'promoter' && profile.role !== 'manager' && profile.role !== 'admin')) {
+  if (!profile || !canCreateEvent(profile.role)) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <p className="text-zinc-400 text-sm">...</p>
