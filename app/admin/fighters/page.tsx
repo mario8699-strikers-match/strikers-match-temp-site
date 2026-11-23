@@ -5,16 +5,28 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { InlineCombatRecord } from '@/components/CombatRecord';
 import { adminService } from '@/services/adminService';
-import { getMissingFighterRegistrationProfileFields } from '@/lib/fighterRegistrationProfile';
-import { buildFighterProfileReminderEmail } from '@/lib/fighterProfileReminderEmail';
+import {
+  getMissingFighterRegistrationProfileFields,
+  getMissingManualFighterProfileFields,
+} from '@/lib/fighterRegistrationProfile';
+import {
+  buildFighterProfileReminderEmail,
+  buildManagedFighterProfileReminderEmail,
+} from '@/lib/fighterProfileReminderEmail';
+import { manualFighterManagementPath } from '@/lib/manualFighterManagement';
 import { fighterPublicPath, manualFighterPublicPath } from '@/lib/publicUrls';
 import type { FighterWithProfile, ManualFighterWithCreator } from '@/types';
 
-type Confirm = { fighterId: string; action: 'verify' | 'unverify' | 'hide' | 'unhide' } | null;
+type Confirm =
+  | { fighterId: string; action: 'verify' | 'unverify' | 'hide' | 'unhide' }
+  | { manualFighterId: string; action: 'hide' | 'unhide' }
+  | null;
 type Tab = 'registered' | 'manual';
 type ReminderPreview = {
-  fighterId: string;
+  targetType: 'registered' | 'manual';
+  targetId: string;
   fighterName: string;
+  recipientName: string;
   recipientEmail: string;
   language: string;
   subject: string;
@@ -44,6 +56,12 @@ export default function AdminFightersPage() {
       getMissingFighterRegistrationProfileFields(fighter, fighter.profiles),
     ]),
   ), [fighters]);
+  const missingFieldsByManualFighterId = useMemo(() => new Map(
+    manualFighters.map((fighter) => [
+      fighter.id,
+      getMissingManualFighterProfileFields(fighter),
+    ]),
+  ), [manualFighters]);
 
   useEffect(() => {
     Promise.all([
@@ -60,6 +78,21 @@ export default function AdminFightersPage() {
     if (!confirm) return;
     setActing(true);
     setError(null);
+
+    if ('manualFighterId' in confirm) {
+      const isPublic = confirm.action === 'unhide';
+      const result = await adminService.setManualFighterVisibility(confirm.manualFighterId, isPublic);
+      if (result.error) {
+        setError(t('admin.errors.generic'));
+      } else {
+        setManualFighters((current) => current.map((fighter) => (
+          fighter.id === confirm.manualFighterId ? { ...fighter, is_public: isPublic } : fighter
+        )));
+      }
+      setActing(false);
+      setConfirm(null);
+      return;
+    }
 
     let result;
     switch (confirm.action) {
@@ -103,8 +136,10 @@ export default function AdminFightersPage() {
       profileUrl: `${window.location.origin}/fighter/profile`,
     });
     setReminderPreview({
-      fighterId: fighter.id,
+      targetType: 'registered',
+      targetId: fighter.id,
       fighterName: fighter.profiles.full_name,
+      recipientName: fighter.profiles.full_name,
       recipientEmail: fighter.profiles.email,
       language: fighter.profiles.preferred_language ?? 'es',
       subject: email.subject,
@@ -112,16 +147,42 @@ export default function AdminFightersPage() {
     });
   };
 
-  const handleProfileReminder = async (fighterId: string) => {
-    setRemindingId(fighterId);
+  const openManualReminderPreview = (fighter: ManualFighterWithCreator) => {
+    if (!fighter.profiles) return;
+    const missingFields = missingFieldsByManualFighterId.get(fighter.id) ?? [];
+    const profilePath = manualFighterManagementPath(fighter.profiles.role, fighter.id);
+    const email = buildManagedFighterProfileReminderEmail({
+      recipientName: fighter.profiles.full_name,
+      fighterName: fighter.full_name,
+      language: fighter.profiles.preferred_language,
+      missingFields,
+      profileUrl: `${window.location.origin}${profilePath}`,
+    });
+    setReminderPreview({
+      targetType: 'manual',
+      targetId: fighter.id,
+      fighterName: fighter.full_name,
+      recipientName: fighter.profiles.full_name,
+      recipientEmail: fighter.profiles.email,
+      language: fighter.profiles.preferred_language ?? 'es',
+      subject: email.subject,
+      html: email.html,
+    });
+  };
+
+  const handleProfileReminder = async (preview: ReminderPreview) => {
+    const reminderKey = `${preview.targetType}:${preview.targetId}`;
+    setRemindingId(reminderKey);
     setError(null);
-    const result = await adminService.sendFighterProfileReminder(fighterId);
+    const result = preview.targetType === 'manual'
+      ? await adminService.sendManualFighterProfileReminder(preview.targetId)
+      : await adminService.sendFighterProfileReminder(preview.targetId);
     setRemindingId(null);
     if (result.error) {
       setError(result.error);
       return false;
     }
-    setReminderSentIds((current) => new Set(current).add(fighterId));
+    setReminderSentIds((current) => new Set(current).add(reminderKey));
     return true;
   };
 
@@ -142,7 +203,7 @@ export default function AdminFightersPage() {
               : 'border-transparent text-zinc-500 hover:text-zinc-900'
           }`}
         >
-          Registrados <span className="ml-1 text-xs text-zinc-400">({fighters.length})</span>
+          {t('admin.fighters.registeredTab')} <span className="ml-1 text-xs text-zinc-400">({fighters.length})</span>
         </button>
         <button
           onClick={() => setTab('manual')}
@@ -152,7 +213,7 @@ export default function AdminFightersPage() {
               : 'border-transparent text-zinc-500 hover:text-zinc-900'
           }`}
         >
-          Roster (sin cuenta) <span className="ml-1 text-xs text-zinc-400">({manualFighters.length})</span>
+          {t('admin.fighters.manualRosterTab')} <span className="ml-1 text-xs text-zinc-400">({manualFighters.length})</span>
         </button>
       </div>
 
@@ -218,10 +279,10 @@ export default function AdminFightersPage() {
                     <button
                       type="button"
                       onClick={() => openReminderPreview(fighter)}
-                      disabled={reminderSentIds.has(fighter.id)}
+                      disabled={reminderSentIds.has(`registered:${fighter.id}`)}
                       className="mt-2 text-xs font-bold text-[#C0001E] hover:underline disabled:text-emerald-700 disabled:no-underline"
                     >
-                      {reminderSentIds.has(fighter.id)
+                      {reminderSentIds.has(`registered:${fighter.id}`)
                         ? t('admin.fighters.reminderSent')
                         : t('admin.fighters.previewReminder')}
                     </button>
@@ -360,10 +421,10 @@ export default function AdminFightersPage() {
                         <button
                           type="button"
                           onClick={() => openReminderPreview(fighter)}
-                          disabled={reminderSentIds.has(fighter.id)}
+                          disabled={reminderSentIds.has(`registered:${fighter.id}`)}
                           className="text-xs font-medium text-[#C0001E] hover:underline disabled:text-emerald-700 disabled:no-underline"
                         >
-                          {reminderSentIds.has(fighter.id)
+                          {reminderSentIds.has(`registered:${fighter.id}`)
                             ? t('admin.fighters.reminderSent')
                             : t('admin.fighters.previewReminder')}
                         </button>
@@ -458,11 +519,19 @@ export default function AdminFightersPage() {
                   {mf.profiles?.role === 'promoter' && (
                     <span className="text-xs font-bold px-1.5 py-0.5 bg-purple-50 text-purple-700 flex-shrink-0">{t('admin.fighters.roles.promoter')}</span>
                   )}
+                  {mf.profiles?.role === 'gyms_academies' && (
+                    <span className="flex-shrink-0 bg-amber-50 px-1.5 py-0.5 text-xs font-bold text-amber-800">{t('admin.fighters.roles.gyms_academies')}</span>
+                  )}
+                  {!mf.is_public && (
+                    <span className="flex-shrink-0 bg-red-50 px-1.5 py-0.5 text-xs font-bold text-red-700">{t('admin.fighters.hidden')}</span>
+                  )}
                 </div>
                 {mf.nickname && <p className="mt-1 text-xs text-zinc-400">“{mf.nickname}”</p>}
                 <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
                   <dt className="text-zinc-500">{t('admin.fighters.addedBy')}:</dt>
                   <dd className="text-zinc-700">{mf.profiles?.full_name ?? '—'}</dd>
+                  <dt className="text-zinc-500">{t('admin.fighters.creatorEmail')}:</dt>
+                  <dd className="break-all text-zinc-700">{mf.profiles?.email ?? '—'}</dd>
                   <dt className="text-zinc-500">{t('admin.fighters.weightClass')}:</dt>
                   <dd className="text-zinc-700">{mf.weight_class ?? '—'}</dd>
                   <dt className="text-zinc-500">Record:</dt>
@@ -470,10 +539,43 @@ export default function AdminFightersPage() {
                   <dt className="text-zinc-500">{t('admin.fighters.city')}:</dt>
                   <dd className="text-zinc-700">{mf.city ?? '—'}</dd>
                 </dl>
-                <div className="mt-3 pt-3 border-t border-zinc-100">
+                <div className="mt-3 border-t border-zinc-100 pt-3">
+                  {(missingFieldsByManualFighterId.get(mf.id) ?? []).length > 0 ? (
+                    <>
+                      <p className="text-xs font-semibold text-amber-700">{t('admin.fighters.profileIncomplete')}</p>
+                      <p className="mt-1 text-xs text-zinc-500">
+                        {(missingFieldsByManualFighterId.get(mf.id) ?? [])
+                          .map((field) => t(`admin.fighters.missingFields.${field}`))
+                          .join(' · ')}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-xs font-semibold text-emerald-700">{t('admin.fighters.profileComplete')}</p>
+                  )}
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-4 border-t border-zinc-100 pt-3">
                   <Link href={manualFighterPublicPath(mf)} className="text-xs font-medium text-zinc-700 hover:text-[#C0001E] hover:underline">
                     {t('admin.fighters.viewProfile')} →
                   </Link>
+                  {(missingFieldsByManualFighterId.get(mf.id) ?? []).length > 0 && mf.profiles?.email && (
+                    <button
+                      type="button"
+                      onClick={() => openManualReminderPreview(mf)}
+                      disabled={reminderSentIds.has(`manual:${mf.id}`) || Boolean(mf.profiles?.is_banned)}
+                      className="text-xs font-bold text-[#C0001E] hover:underline disabled:text-zinc-400 disabled:no-underline"
+                    >
+                      {reminderSentIds.has(`manual:${mf.id}`)
+                        ? t('admin.fighters.reminderSent')
+                        : t('admin.fighters.previewReminder')}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setConfirm({ manualFighterId: mf.id, action: mf.is_public ? 'hide' : 'unhide' })}
+                    className={`text-xs font-medium hover:underline ${mf.is_public ? 'text-red-600' : 'text-blue-700'}`}
+                  >
+                    {mf.is_public ? t('admin.fighters.hide') : t('admin.fighters.show')}
+                  </button>
                 </div>
               </div>
             ))}
@@ -484,7 +586,7 @@ export default function AdminFightersPage() {
             <table className="min-w-full divide-y divide-zinc-100 text-sm">
               <thead className="bg-zinc-50">
                 <tr>
-                  {['name', 'addedBy', 'role', 'creatorEmail', 'weightClass', 'record', 'city', 'available', 'actions'].map((col) => (
+                  {['name', 'addedBy', 'role', 'creatorEmail', 'weightClass', 'record', 'city', 'available', 'visible', 'profileStatus', 'actions'].map((col) => (
                     <th
                       key={col}
                       className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wide"
@@ -515,6 +617,9 @@ export default function AdminFightersPage() {
                       {mf.profiles?.role === 'promoter' && (
                         <span className="text-xs font-bold px-1.5 py-0.5 bg-purple-50 text-purple-700">{t('admin.fighters.roles.promoter')}</span>
                       )}
+                      {mf.profiles?.role === 'gyms_academies' && (
+                        <span className="bg-amber-50 px-1.5 py-0.5 text-xs font-bold text-amber-800">{t('admin.fighters.roles.gyms_academies')}</span>
+                      )}
                       {!mf.profiles?.role && <span className="text-xs text-zinc-400">—</span>}
                     </td>
                     <td className="px-4 py-3 text-zinc-600 whitespace-nowrap">
@@ -537,12 +642,58 @@ export default function AdminFightersPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <Link
-                        href={manualFighterPublicPath(mf)}
-                        className="text-xs font-medium text-zinc-700 hover:text-[#C0001E] hover:underline"
-                      >
-                        {t('admin.fighters.viewProfile')}
-                      </Link>
+                      <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium ${
+                        mf.is_public ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+                      }`}>
+                        {mf.is_public ? t('admin.fighters.visible') : t('admin.fighters.hidden')}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      {(missingFieldsByManualFighterId.get(mf.id) ?? []).length > 0 ? (
+                        <div className="max-w-48">
+                          <p className="text-xs font-semibold text-amber-700">{t('admin.fighters.profileIncomplete')}</p>
+                          <p className="mt-1 text-[11px] leading-4 text-zinc-500">
+                            {(missingFieldsByManualFighterId.get(mf.id) ?? [])
+                              .map((field) => t(`admin.fighters.missingFields.${field}`))
+                              .join(' · ')}
+                          </p>
+                        </div>
+                      ) : (
+                        <span className="text-xs font-semibold text-emerald-700">{t('admin.fighters.profileComplete')}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex min-w-36 flex-col items-start gap-2">
+                        <Link
+                          href={manualFighterPublicPath(mf)}
+                          className="text-xs font-medium text-zinc-700 hover:text-[#C0001E] hover:underline"
+                        >
+                          {t('admin.fighters.viewProfile')}
+                        </Link>
+                        {(missingFieldsByManualFighterId.get(mf.id) ?? []).length > 0 && (
+                          mf.profiles?.email ? (
+                            <button
+                              type="button"
+                              onClick={() => openManualReminderPreview(mf)}
+                              disabled={reminderSentIds.has(`manual:${mf.id}`) || Boolean(mf.profiles?.is_banned)}
+                              className="text-left text-xs font-medium text-[#C0001E] hover:underline disabled:text-zinc-400 disabled:no-underline"
+                            >
+                              {reminderSentIds.has(`manual:${mf.id}`)
+                                ? t('admin.fighters.reminderSent')
+                                : t('admin.fighters.previewReminder')}
+                            </button>
+                          ) : (
+                            <span className="text-xs text-amber-700">{t('admin.fighters.noCreatorEmail')}</span>
+                          )
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setConfirm({ manualFighterId: mf.id, action: mf.is_public ? 'hide' : 'unhide' })}
+                          className={`text-xs font-medium hover:underline ${mf.is_public ? 'text-red-600' : 'text-blue-700'}`}
+                        >
+                          {mf.is_public ? t('admin.fighters.hide') : t('admin.fighters.show')}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -561,7 +712,7 @@ export default function AdminFightersPage() {
               <dl className="mt-3 grid gap-2 text-xs text-zinc-600 sm:grid-cols-2">
                 <div>
                   <dt className="font-bold uppercase tracking-wide text-zinc-400">{t('admin.fighters.emailTo')}</dt>
-                  <dd className="mt-0.5 break-all">{reminderPreview.fighterName} · {reminderPreview.recipientEmail}</dd>
+                  <dd className="mt-0.5 break-all">{reminderPreview.recipientName} · {reminderPreview.recipientEmail}</dd>
                 </div>
                 <div>
                   <dt className="font-bold uppercase tracking-wide text-zinc-400">{t('admin.fighters.emailLanguage')}</dt>
@@ -571,6 +722,12 @@ export default function AdminFightersPage() {
                   <dt className="font-bold uppercase tracking-wide text-zinc-400">{t('admin.fighters.emailSubject')}</dt>
                   <dd className="mt-0.5 font-semibold text-zinc-800">{reminderPreview.subject}</dd>
                 </div>
+                {reminderPreview.targetType === 'manual' && (
+                  <div className="sm:col-span-2">
+                    <dt className="font-bold uppercase tracking-wide text-zinc-400">{t('admin.fighters.rosterFighter')}</dt>
+                    <dd className="mt-0.5 font-semibold text-zinc-800">{reminderPreview.fighterName}</dd>
+                  </div>
+                )}
               </dl>
             </div>
             <iframe
@@ -583,7 +740,7 @@ export default function AdminFightersPage() {
               <button
                 type="button"
                 onClick={() => setReminderPreview(null)}
-                disabled={remindingId === reminderPreview.fighterId}
+                disabled={remindingId === `${reminderPreview.targetType}:${reminderPreview.targetId}`}
                 className="min-h-11 border border-zinc-300 px-5 py-2 text-sm font-semibold text-zinc-700 disabled:opacity-50"
               >
                 {t('admin.fighters.closePreview')}
@@ -591,13 +748,13 @@ export default function AdminFightersPage() {
               <button
                 type="button"
                 onClick={async () => {
-                  const sent = await handleProfileReminder(reminderPreview.fighterId);
+                  const sent = await handleProfileReminder(reminderPreview);
                   if (sent) setReminderPreview(null);
                 }}
-                disabled={remindingId === reminderPreview.fighterId}
+                disabled={remindingId === `${reminderPreview.targetType}:${reminderPreview.targetId}`}
                 className="min-h-11 bg-[#C0001E] px-5 py-2 text-sm font-bold uppercase tracking-wide text-white disabled:opacity-50"
               >
-                {remindingId === reminderPreview.fighterId
+                {remindingId === `${reminderPreview.targetType}:${reminderPreview.targetId}`
                   ? t('admin.fighters.sendingReminder')
                   : t('admin.fighters.sendReminder')}
               </button>

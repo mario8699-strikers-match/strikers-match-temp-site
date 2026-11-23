@@ -43,6 +43,16 @@ interface Props {
   initiallyOpen?: boolean;
 }
 
+type RequiredProfileDraft = {
+  fullName: string;
+  weightClass: string;
+  disciplines: string[];
+  countryCode: string;
+  nationality: string;
+  gymName: string;
+  instagram: string;
+};
+
 export function ManualFighterManager({
   creatorId,
   sectionLabel,
@@ -69,6 +79,9 @@ export function ManualFighterManager({
   const [savingTravelId, setSavingTravelId] = useState<string | null>(null);
   const [instagramDrafts, setInstagramDrafts] = useState<Record<string, string>>({});
   const [countryDrafts, setCountryDrafts] = useState<Record<string, string>>({});
+  const [editingFighterId, setEditingFighterId] = useState<string | null>(null);
+  const [requiredProfileDraft, setRequiredProfileDraft] = useState<RequiredProfileDraft | null>(null);
+  const [savingRequiredProfileId, setSavingRequiredProfileId] = useState<string | null>(null);
 
   const [name, setName] = useState('');
   const [nickname, setNickname] = useState('');
@@ -123,6 +136,28 @@ export function ManualFighterManager({
         fighters.map((fighter) => [fighter.id, fighter.country_code ?? '']),
       ));
       setLoading(false);
+      if (typeof window !== 'undefined') {
+        const requestedFighterId = new URLSearchParams(window.location.search).get('rosterFighter');
+        const requestedFighter = fighters.find((fighter) => fighter.id === requestedFighterId);
+        if (requestedFighter) {
+          setEditingFighterId(requestedFighter.id);
+          setRequiredProfileDraft({
+            fullName: requestedFighter.full_name,
+            weightClass: requestedFighter.weight_class ?? '',
+            disciplines: normalizeDisciplineList(requestedFighter.disciplines, requestedFighter.discipline),
+            countryCode: requestedFighter.country_code ?? '',
+            nationality: requestedFighter.nationalities?.[0] ?? '',
+            gymName: requestedFighter.gym_name ?? '',
+            instagram: requestedFighter.instagram ?? '',
+          });
+          window.setTimeout(() => {
+            document.getElementById(`manual-fighter-${requestedFighter.id}`)?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+            });
+          }, 0);
+        }
+      }
     });
   }, [creatorId]);
 
@@ -351,6 +386,59 @@ export function ManualFighterManager({
       ...current,
       [fighterId]: result.data!.instagram ?? '',
     }));
+  };
+
+  function beginRequiredProfileEdit(fighter: ManualFighter) {
+    setEditingFighterId(fighter.id);
+    setRequiredProfileDraft({
+      fullName: fighter.full_name,
+      weightClass: fighter.weight_class ?? '',
+      disciplines: normalizeDisciplineList(fighter.disciplines, fighter.discipline),
+      countryCode: fighter.country_code ?? '',
+      nationality: fighter.nationalities?.[0] ?? '',
+      gymName: fighter.gym_name ?? '',
+      instagram: fighter.instagram ?? '',
+    });
+    setError(null);
+  }
+
+  const saveRequiredProfile = async (fighterId: string) => {
+    if (!requiredProfileDraft?.fullName.trim()) {
+      setError(t('fighters.rosterManager.errors.nameRequired'));
+      return;
+    }
+    if (requiredProfileDraft.instagram && !isValidSocialMediaIdentifier('instagram', requiredProfileDraft.instagram)) {
+      setError(t('fighters.rosterManager.errors.invalidInstagram'));
+      return;
+    }
+
+    setSavingRequiredProfileId(fighterId);
+    setError(null);
+    const result = await manualFighterService.update(fighterId, {
+      full_name: requiredProfileDraft.fullName.trim(),
+      weight_class: requiredProfileDraft.weightClass || null,
+      disciplines: requiredProfileDraft.disciplines,
+      discipline: requiredProfileDraft.disciplines[0] ?? null,
+      country_code: requiredProfileDraft.countryCode || null,
+      country: requiredProfileDraft.countryCode
+        ? getCountryName(requiredProfileDraft.countryCode, 'en') || requiredProfileDraft.countryCode
+        : null,
+      nationalities: requiredProfileDraft.nationality ? [requiredProfileDraft.nationality] : [],
+      gym_name: requiredProfileDraft.gymName.trim() || null,
+      instagram: normalizeSocialMediaIdentifier(requiredProfileDraft.instagram),
+    });
+    setSavingRequiredProfileId(null);
+
+    if (result.error || !result.data) {
+      setError(t('fighters.rosterManager.errors.profileSave', { error: result.error ?? t('fighters.rosterManager.errors.tryAgain') }));
+      return;
+    }
+
+    setManualFighters((current) => current.map((fighter) => fighter.id === fighterId ? result.data! : fighter));
+    setInstagramDrafts((current) => ({ ...current, [fighterId]: result.data!.instagram ?? '' }));
+    setCountryDrafts((current) => ({ ...current, [fighterId]: result.data!.country_code ?? '' }));
+    setEditingFighterId(null);
+    setRequiredProfileDraft(null);
   };
 
   const handleRemove = async (id: string) => {
@@ -647,7 +735,8 @@ export function ManualFighterManager({
       ) : manualFighters.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {manualFighters.map((f) => (
-            <div key={f.id} className="flex items-start justify-between gap-3 border border-zinc-200 p-4">
+            <div key={f.id} id={`manual-fighter-${f.id}`} className="border border-zinc-200 p-4 scroll-mt-24">
+              <div className="flex items-start justify-between gap-3">
               <div className="flex min-w-0 flex-1 items-start gap-3">
                 <div className="shrink-0">
                   <div className="relative h-16 w-16 overflow-hidden border border-zinc-200 bg-zinc-100">
@@ -764,10 +853,120 @@ export function ManualFighterManager({
                   {f.notes && <p className="text-xs text-zinc-400 mt-1 italic">{f.notes}</p>}
                 </div>
               </div>
-              <button onClick={() => handleRemove(f.id)} disabled={removing === f.id}
-                className="text-xs text-zinc-400 hover:text-red-600 disabled:opacity-50 transition-colors flex-shrink-0 pt-1">
-                {removing === f.id ? '...' : t('fighters.rosterManager.remove')}
-              </button>
+                <div className="flex flex-shrink-0 flex-col items-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => editingFighterId === f.id
+                      ? (setEditingFighterId(null), setRequiredProfileDraft(null))
+                      : beginRequiredProfileEdit(f)}
+                    className="text-xs font-semibold text-[#C0001E] hover:underline"
+                  >
+                    {editingFighterId === f.id
+                      ? t('fighters.rosterManager.cancelEdit')
+                      : t('fighters.rosterManager.editRequiredProfile')}
+                  </button>
+                  <button onClick={() => handleRemove(f.id)} disabled={removing === f.id}
+                    className="text-xs text-zinc-400 hover:text-red-600 disabled:opacity-50 transition-colors">
+                    {removing === f.id ? '...' : t('fighters.rosterManager.remove')}
+                  </button>
+                </div>
+              </div>
+
+              {editingFighterId === f.id && requiredProfileDraft && (
+                <div className="mt-4 space-y-4 border-t border-zinc-200 pt-4">
+                  <p className="text-xs font-bold uppercase tracking-widest text-[#C0001E]">
+                    {t('fighters.rosterManager.requiredProfileFields')}
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <RosterInput
+                      label={t('fighters.rosterManager.fields.fullName')}
+                      value={requiredProfileDraft.fullName}
+                      onChange={(value) => setRequiredProfileDraft((current) => current ? { ...current, fullName: value } : current)}
+                    />
+                    <RosterInput
+                      label={t('fighters.rosterManager.fields.gym')}
+                      value={requiredProfileDraft.gymName}
+                      onChange={(value) => setRequiredProfileDraft((current) => current ? { ...current, gymName: value } : current)}
+                    />
+                    <label>
+                      <span className="mb-1 block text-xs text-zinc-500">{t('fighters.rosterManager.fields.division')}</span>
+                      <select
+                        value={requiredProfileDraft.weightClass}
+                        onChange={(event) => setRequiredProfileDraft((current) => current ? { ...current, weightClass: event.target.value } : current)}
+                        className="w-full border border-zinc-300 bg-white px-3 py-2 text-sm"
+                      >
+                        <option value="">{t('fighters.rosterManager.select')}</option>
+                        {WEIGHT_CLASSES.map((value) => <option key={value} value={value}>{WEIGHT_LABELS[value]}</option>)}
+                      </select>
+                    </label>
+                    <RosterInput
+                      label={t('fighters.rosterManager.fields.publicInstagram')}
+                      value={requiredProfileDraft.instagram}
+                      onChange={(value) => setRequiredProfileDraft((current) => current ? { ...current, instagram: value } : current)}
+                    />
+                    <label>
+                      <span className="mb-1 block text-xs text-zinc-500">{t('fighters.rosterManager.fields.currentCountry')}</span>
+                      <select
+                        value={requiredProfileDraft.countryCode}
+                        onChange={(event) => setRequiredProfileDraft((current) => current ? { ...current, countryCode: event.target.value } : current)}
+                        className="w-full border border-zinc-300 bg-white px-3 py-2 text-sm"
+                      >
+                        <option value="">{t('fighters.rosterManager.select')}</option>
+                        {countryOptions.map((option) => <option key={option.code} value={option.code}>{countryFlagEmoji(option.code)} {option.label}</option>)}
+                      </select>
+                    </label>
+                    <label>
+                      <span className="mb-1 block text-xs text-zinc-500">{t('fighters.rosterManager.fields.nationality')}</span>
+                      <select
+                        value={requiredProfileDraft.nationality}
+                        onChange={(event) => setRequiredProfileDraft((current) => current ? { ...current, nationality: event.target.value } : current)}
+                        className="w-full border border-zinc-300 bg-white px-3 py-2 text-sm"
+                      >
+                        <option value="">{t('fighters.rosterManager.select')}</option>
+                        {countryOptions.map((option) => <option key={option.code} value={option.code}>{countryFlagEmoji(option.code)} {option.label}</option>)}
+                      </select>
+                    </label>
+                  </div>
+                  <fieldset>
+                    <legend className="mb-2 text-xs text-zinc-500">{t('fighters.rosterManager.fields.disciplines')}</legend>
+                    <div className="flex flex-wrap gap-2">
+                      {DISCIPLINE_OPTIONS.map((discipline) => {
+                        const selected = requiredProfileDraft.disciplines.includes(discipline);
+                        return (
+                          <button
+                            key={discipline}
+                            type="button"
+                            aria-pressed={selected}
+                            onClick={() => setRequiredProfileDraft((current) => current ? {
+                              ...current,
+                              disciplines: selected
+                                ? current.disciplines.filter((item) => item !== discipline)
+                                : [...current.disciplines, discipline],
+                            } : current)}
+                            className={`border px-2 py-1.5 text-[10px] font-bold uppercase tracking-wide ${selected
+                              ? 'border-[#C0001E] bg-[#C0001E] text-white'
+                              : 'border-zinc-300 bg-white text-zinc-700'}`}
+                          >
+                            {discipline}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </fieldset>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => void saveRequiredProfile(f.id)}
+                      disabled={savingRequiredProfileId === f.id}
+                      className="min-h-11 bg-zinc-950 px-5 text-xs font-bold uppercase tracking-widest text-white disabled:opacity-50"
+                    >
+                      {savingRequiredProfileId === f.id
+                        ? t('fighters.rosterManager.saving')
+                        : t('fighters.rosterManager.saveProfileChanges')}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

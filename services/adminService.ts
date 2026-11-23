@@ -131,6 +131,38 @@ export const adminService = {
     }
   },
 
+  async sendManualFighterProfileReminder(
+    manualFighterId: string,
+  ): Promise<ServiceResponse<{ sent: true; missingFields: string[] }>> {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return { data: null, error: 'Inicia sesión para continuar.' };
+
+      const response = await fetch('/api/admin/fighters/profile-reminder', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ manualFighterId }),
+      });
+      const payload = await response.json().catch(() => ({})) as {
+        sent?: true;
+        missingFields?: string[];
+        error?: string;
+      };
+      if (!response.ok || !payload.sent) {
+        return { data: null, error: payload.error ?? 'No se pudo enviar el recordatorio.' };
+      }
+      return {
+        data: { sent: true, missingFields: payload.missingFields ?? [] },
+        error: null,
+      };
+    } catch {
+      return { data: null, error: 'No se pudo conectar con el servicio de correo.' };
+    }
+  },
+
   async verifyFighter(fighterId: string): Promise<ServiceResponse<null>> {
     try {
       const { error } = await supabase
@@ -187,6 +219,23 @@ export const adminService = {
     }
   },
 
+  async setManualFighterVisibility(
+    manualFighterId: string,
+    isPublic: boolean,
+  ): Promise<ServiceResponse<null>> {
+    try {
+      const { error } = await supabase
+        .from('manual_fighters')
+        .update({ is_public: isPublic })
+        .eq('id', manualFighterId);
+
+      if (error) return { data: null, error: error.message };
+      return { data: null, error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
   async getProfilesByRole(role: string): Promise<ServiceResponse<Profile[]>> {
     try {
       const { data, error } = await supabase
@@ -224,7 +273,7 @@ export const adminService = {
     try {
       const { data, error } = await supabase
         .from('manual_fighters')
-        .select('*, profiles:manager_id(full_name, email, role)')
+        .select('*, profiles:manager_id(full_name, email, role, preferred_language, is_banned)')
         .order('created_at', { ascending: false })
         .limit(ADMIN_LIST_LIMIT);
 

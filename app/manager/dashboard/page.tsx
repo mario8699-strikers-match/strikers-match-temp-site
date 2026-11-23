@@ -340,7 +340,7 @@ export default function ManagerDashboardPage() {
         </div>
 
         {/* ── Add Your Own Fighters ── */}
-        <div className="mt-10 border-t border-zinc-100 pt-8">
+        <div id="fighter-roster" className="mt-10 scroll-mt-24 border-t border-zinc-100 pt-8">
           <ManualFighterManager creatorId={profile.id} />
         </div>
       </main>

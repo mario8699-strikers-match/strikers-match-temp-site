@@ -1,5 +1,5 @@
 import { isValidSocialMediaIdentifier } from '@/lib/socialMedia';
-import type { Fighter, Profile } from '@/types';
+import type { Fighter, ManualFighter, Profile } from '@/types';
 
 export const FIGHTER_REGISTRATION_PROFILE_FIELDS = [
   'photo',
@@ -37,6 +37,42 @@ export function getMissingFighterRegistrationProfileFields(
     missing.push('instagram');
   }
   if (!fighter.disciplines?.some((discipline) => discipline?.trim())) missing.push('discipline');
+  if (!fighter.weight_class?.trim()) missing.push('weight');
+  if (!fighter.gym_name?.trim()) missing.push('team');
+
+  return missing;
+}
+
+export function getMissingManualFighterProfileFields(
+  fighter: Pick<
+    ManualFighter,
+    | 'photo_url'
+    | 'full_name'
+    | 'country'
+    | 'country_code'
+    | 'nationalities'
+    | 'instagram'
+    | 'disciplines'
+    | 'discipline'
+    | 'weight_class'
+    | 'gym_name'
+  >,
+): FighterRegistrationProfileField[] {
+  const missing: FighterRegistrationProfileField[] = [];
+
+  if (!fighter.photo_url?.trim()) missing.push('photo');
+  if (!hasFirstAndLastName(fighter.full_name)) missing.push('fullName');
+  if (!fighter.country_code?.trim() && !fighter.country?.trim()) missing.push('country');
+  if (!fighter.nationalities?.some((code) => code?.trim())) missing.push('nationality');
+  if (!fighter.instagram?.trim() || !isValidSocialMediaIdentifier('instagram', fighter.instagram)) {
+    missing.push('instagram');
+  }
+  if (
+    !fighter.disciplines?.some((discipline) => discipline?.trim())
+    && !fighter.discipline?.trim()
+  ) {
+    missing.push('discipline');
+  }
   if (!fighter.weight_class?.trim()) missing.push('weight');
   if (!fighter.gym_name?.trim()) missing.push('team');
 

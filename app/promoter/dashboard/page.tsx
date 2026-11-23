@@ -430,7 +430,7 @@ export default function PromoterDashboardPage() {
 
         {/* ── Manual fighters (roster) ── */}
         {profile && (
-          <div className="mt-12 border-t border-zinc-100 pt-8">
+          <div id="fighter-roster" className="mt-12 scroll-mt-24 border-t border-zinc-100 pt-8">
             <ManualFighterManager creatorId={profile.id} />
           </div>
         )}

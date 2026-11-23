@@ -86,6 +86,8 @@
     "fighters": {
       "title": "Gestión de Atletas",
       "subtitle": "Verifica perfiles de atletas para mostrarlos en el directorio.",
+      "registeredTab": "Registrados",
+      "manualRosterTab": "Roster (sin cuenta)",
       "name": "Nombre",
       "email": "Correo",
       "city": "Ciudad",
@@ -105,6 +107,8 @@
       "phone": "Teléfono", "visible": "Visible", "representation": "Representación", "hidden": "Oculto",
       "show": "Mostrar", "hide": "Ocultar", "notRegistered": "No registrado", "noManualFighters": "No hay peleadores agregados manualmente por representantes o promotores.",
       "addedBy": "Agregado por", "role": "Rol", "creatorEmail": "Correo del creador", "viewProfile": "Ver perfil",
+      "rosterFighter": "Atleta del roster",
+      "noCreatorEmail": "El responsable no tiene correo",
       "profileStatus": "Estado del perfil",
       "profileIncomplete": "Perfil incompleto",
       "profileComplete": "Perfil completo",
@@ -130,12 +134,12 @@
       },
       "confirmHide": "Este peleador será ocultado de otros perfiles de peleadores. Solo administradores, promotores, representantes y patrocinadores podrán verlo.",
       "confirmShow": "Este peleador será visible para todos los usuarios nuevamente.",
-      "roles": { "manager": "Representante", "promoter": "Promotor", "sponsor": "Patrocinador" }
+      "roles": { "manager": "Representante", "promoter": "Promotor", "sponsor": "Patrocinador", "gyms_academies": "Gimnasio / entrenador" }
     },
     "emails": {
       "eyebrow": "Comunicación con atletas",
       "title": "Correos",
-      "subtitle": "Revisa exactamente el correo que recibirá cada atleta antes de enviarlo. Esta sección muestra únicamente atletas con información pendiente.",
+      "subtitle": "Revisa exactamente el correo antes de enviarlo al atleta o al responsable de su roster. Esta sección muestra únicamente perfiles con información pendiente.",
       "standardTitle": "Estándar de moderación del perfil",
       "standardBody": "Todos los perfiles requieren una foto reciente y de alta calidad, además de información completa, correcta y actualizada. El correo informa al atleta que Strikers Match puede solicitar correcciones antes de aprobar su perfil como completo.",
       "recipients": "Destinatarios pendientes",

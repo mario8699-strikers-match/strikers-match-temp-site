@@ -13,6 +13,10 @@ const COPY: Record<SupportedLanguage, {
   missingTitle: string;
   action: string;
   note: string;
+  managedSubject: (fighterName: string) => string;
+  managedIntro: (fighterName: string) => string;
+  managedAction: string;
+  managedNote: string;
   fields: Record<FighterRegistrationProfileField, string>;
 }> = {
   es: {
@@ -30,6 +34,10 @@ const COPY: Record<SupportedLanguage, {
     missingTitle: 'Información pendiente:',
     action: 'Actualizar mi perfil',
     note: 'Inicia sesión con el correo donde recibiste este mensaje y completa los campos indicados.',
+    managedSubject: (fighterName) => `Actualiza el perfil de ${fighterName} en Strikers Match`,
+    managedIntro: (fighterName) => `El perfil de ${fighterName}, que administras dentro de tu roster, necesita información adicional para estar completo y visible públicamente.`,
+    managedAction: 'Actualizar perfil del atleta',
+    managedNote: 'Inicia sesión con el correo donde recibiste este mensaje, abre tu roster y completa los campos indicados del atleta.',
     fields: {
       photo: 'Fotografía de perfil',
       fullName: 'Nombre y apellido',
@@ -56,6 +64,10 @@ const COPY: Record<SupportedLanguage, {
     missingTitle: 'Missing information:',
     action: 'Update my profile',
     note: 'Sign in with the email address that received this message and complete the listed fields.',
+    managedSubject: (fighterName) => `Update ${fighterName}'s profile on Strikers Match`,
+    managedIntro: (fighterName) => `${fighterName}'s profile, which you manage in your roster, needs additional information before it is complete and publicly visible.`,
+    managedAction: 'Update fighter profile',
+    managedNote: 'Sign in with the email address that received this message, open your roster, and complete the listed fighter fields.',
     fields: {
       photo: 'Profile photograph',
       fullName: 'First and last name',
@@ -82,6 +94,10 @@ const COPY: Record<SupportedLanguage, {
     missingTitle: 'Необходимо добавить:',
     action: 'Обновить профиль',
     note: 'Войдите с адресом электронной почты, на который пришло это сообщение, и заполните указанные поля.',
+    managedSubject: (fighterName) => `Обновите профиль ${fighterName} в Strikers Match`,
+    managedIntro: (fighterName) => `В профиле ${fighterName}, которым вы управляете в своём составе, не хватает информации для полного и публичного профиля.`,
+    managedAction: 'Обновить профиль спортсмена',
+    managedNote: 'Войдите с адресом электронной почты, на который пришло это сообщение, откройте свой состав и заполните указанные поля спортсмена.',
     fields: {
       photo: 'Фотография профиля',
       fullName: 'Имя и фамилия',
@@ -108,15 +124,19 @@ export function normalizeReminderLanguage(value?: string | null): SupportedLangu
   return value === 'en' || value === 'ru' ? value : 'es';
 }
 
-export function buildFighterProfileReminderEmail(input: {
-  fullName: string;
-  language?: string | null;
+function renderProfileReminderEmail(input: {
+  recipientName: string;
+  language: SupportedLanguage;
   missingFields: FighterRegistrationProfileField[];
   profileUrl: string;
+  subject: string;
+  intro: string;
+  action: string;
+  note: string;
 }) {
-  const language = normalizeReminderLanguage(input.language);
+  const language = input.language;
   const copy = COPY[language];
-  const recipientName = input.fullName.trim() || copy.genericName;
+  const recipientName = input.recipientName.trim() || copy.genericName;
   const safeName = escapeHtml(recipientName);
   const safeUrl = escapeHtml(input.profileUrl);
   const labels = input.missingFields.map((field) => copy.fields[field]);
@@ -126,11 +146,11 @@ export function buildFighterProfileReminderEmail(input: {
     .join('');
 
   return {
-    subject: copy.subject,
+    subject: input.subject,
     text: [
       copy.greeting(recipientName),
       '',
-      copy.intro,
+      input.intro,
       '',
       copy.standardTitle,
       copy.standardIntro,
@@ -139,7 +159,7 @@ export function buildFighterProfileReminderEmail(input: {
       copy.missingTitle,
       ...labels.map((label) => `- ${label}`),
       '',
-      copy.note,
+      input.note,
       input.profileUrl,
     ].join('\n'),
     html: `
@@ -147,7 +167,7 @@ export function buildFighterProfileReminderEmail(input: {
         <div style="max-width:600px;margin:0 auto;background:#ffffff;border-top:5px solid #C0001E;padding:32px">
           <p style="margin:0 0 24px;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#C0001E">Strikers Match</p>
           <h1 style="margin:0 0 18px;font-size:26px;line-height:1.15">${copy.greeting(safeName)}</h1>
-          <p style="margin:0 0 22px;font-size:15px;line-height:1.6;color:#52525b">${escapeHtml(copy.intro)}</p>
+          <p style="margin:0 0 22px;font-size:15px;line-height:1.6;color:#52525b">${escapeHtml(input.intro)}</p>
           <div style="margin:0 0 24px;border:1px solid #e4e4e7;background:#fafafa;padding:18px">
             <p style="margin:0 0 8px;font-size:14px;font-weight:700">${escapeHtml(copy.standardTitle)}</p>
             <p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:#52525b">${escapeHtml(copy.standardIntro)}</p>
@@ -155,10 +175,52 @@ export function buildFighterProfileReminderEmail(input: {
           </div>
           <p style="margin:0 0 10px;font-size:14px;font-weight:700">${escapeHtml(copy.missingTitle)}</p>
           <ul style="margin:0 0 26px;padding-left:22px;font-size:14px;line-height:1.5;color:#3f3f46">${listHtml}</ul>
-          <a href="${safeUrl}" style="display:inline-block;background:#C0001E;color:#ffffff;text-decoration:none;padding:14px 20px;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase">${escapeHtml(copy.action)}</a>
-          <p style="margin:24px 0 0;font-size:12px;line-height:1.5;color:#71717a">${escapeHtml(copy.note)}</p>
+          <a href="${safeUrl}" style="display:inline-block;background:#C0001E;color:#ffffff;text-decoration:none;padding:14px 20px;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase">${escapeHtml(input.action)}</a>
+          <p style="margin:24px 0 0;font-size:12px;line-height:1.5;color:#71717a">${escapeHtml(input.note)}</p>
         </div>
       </div>
     `,
   };
+}
+
+export function buildFighterProfileReminderEmail(input: {
+  fullName: string;
+  language?: string | null;
+  missingFields: FighterRegistrationProfileField[];
+  profileUrl: string;
+}) {
+  const language = normalizeReminderLanguage(input.language);
+  const copy = COPY[language];
+  return renderProfileReminderEmail({
+    recipientName: input.fullName,
+    language,
+    missingFields: input.missingFields,
+    profileUrl: input.profileUrl,
+    subject: copy.subject,
+    intro: copy.intro,
+    action: copy.action,
+    note: copy.note,
+  });
+}
+
+export function buildManagedFighterProfileReminderEmail(input: {
+  recipientName: string;
+  fighterName: string;
+  language?: string | null;
+  missingFields: FighterRegistrationProfileField[];
+  profileUrl: string;
+}) {
+  const language = normalizeReminderLanguage(input.language);
+  const copy = COPY[language];
+  const fighterName = input.fighterName.trim() || copy.genericName;
+  return renderProfileReminderEmail({
+    recipientName: input.recipientName,
+    language,
+    missingFields: input.missingFields,
+    profileUrl: input.profileUrl,
+    subject: copy.managedSubject(fighterName),
+    intro: copy.managedIntro(fighterName),
+    action: copy.managedAction,
+    note: copy.managedNote,
+  });
 }

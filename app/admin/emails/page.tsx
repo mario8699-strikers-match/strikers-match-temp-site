@@ -3,12 +3,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { adminService } from '@/services/adminService';
-import { getMissingFighterRegistrationProfileFields } from '@/lib/fighterRegistrationProfile';
+import {
+  getMissingFighterRegistrationProfileFields,
+  getMissingManualFighterProfileFields,
+  type FighterRegistrationProfileField,
+} from '@/lib/fighterRegistrationProfile';
 import {
   buildFighterProfileReminderEmail,
+  buildManagedFighterProfileReminderEmail,
   normalizeReminderLanguage,
 } from '@/lib/fighterProfileReminderEmail';
-import type { FighterWithProfile } from '@/types';
+import { manualFighterManagementPath } from '@/lib/manualFighterManagement';
+import type { FighterWithProfile, ManualFighterWithCreator } from '@/types';
 
 function normalizeSearch(value: string) {
   return value
@@ -17,9 +23,24 @@ function normalizeSearch(value: string) {
     .toLocaleLowerCase();
 }
 
+type EmailRecipient = {
+  key: string;
+  kind: 'registered' | 'manual';
+  targetId: string;
+  fighterName: string;
+  recipientName: string;
+  email: string;
+  language?: string | null;
+  isBanned: boolean;
+  location: string;
+  missingFields: FighterRegistrationProfileField[];
+  managerRole?: string;
+};
+
 export default function AdminEmailsPage() {
   const { t } = useTranslation('admin');
   const [fighters, setFighters] = useState<FighterWithProfile[]>([]);
+  const [manualFighters, setManualFighters] = useState<ManualFighterWithCreator[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -30,42 +51,79 @@ export default function AdminEmailsPage() {
 
   useEffect(() => {
     let active = true;
-    adminService.getAllFighters().then((result) => {
+    Promise.all([
+      adminService.getAllFighters(),
+      adminService.getAllManualFighters(),
+    ]).then(([fighterResult, manualResult]) => {
       if (!active) return;
-      if (result.error) setLoadError(result.error);
-      else setFighters(result.data ?? []);
+      if (fighterResult.error || manualResult.error) {
+        setLoadError(fighterResult.error ?? manualResult.error);
+      } else {
+        setFighters(fighterResult.data ?? []);
+        setManualFighters(manualResult.data ?? []);
+      }
       setLoading(false);
     });
     return () => { active = false; };
   }, []);
 
-  const recipients = useMemo(() => fighters
-    .map((fighter) => ({
-      fighter,
+  const recipients = useMemo<EmailRecipient[]>(() => [
+    ...fighters.map((fighter): EmailRecipient => ({
+      key: `registered:${fighter.id}`,
+      kind: 'registered',
+      targetId: fighter.id,
+      fighterName: fighter.profiles.full_name,
+      recipientName: fighter.profiles.full_name,
+      email: fighter.profiles.email,
+      language: fighter.profiles.preferred_language,
+      isBanned: Boolean(fighter.profiles.is_banned),
+      location: [fighter.profiles.city, fighter.profiles.country].filter(Boolean).join(' '),
       missingFields: getMissingFighterRegistrationProfileFields(fighter, fighter.profiles),
-    }))
-    .filter(({ missingFields }) => missingFields.length > 0), [fighters]);
+    })),
+    ...manualFighters.flatMap((fighter): EmailRecipient[] => fighter.profiles ? [{
+      key: `manual:${fighter.id}`,
+      kind: 'manual',
+      targetId: fighter.id,
+      fighterName: fighter.full_name,
+      recipientName: fighter.profiles.full_name,
+      email: fighter.profiles.email,
+      language: fighter.profiles.preferred_language,
+      isBanned: Boolean(fighter.profiles.is_banned),
+      location: [fighter.city, fighter.country].filter(Boolean).join(' '),
+      missingFields: getMissingManualFighterProfileFields(fighter),
+      managerRole: fighter.profiles.role,
+    }] : []),
+  ].filter(({ missingFields }) => missingFields.length > 0), [fighters, manualFighters]);
 
   const visibleRecipients = useMemo(() => {
     const query = normalizeSearch(search.trim());
     if (!query) return recipients;
-    return recipients.filter(({ fighter }) => normalizeSearch([
-      fighter.profiles.full_name,
-      fighter.profiles.email,
-      fighter.profiles.city ?? '',
-      fighter.profiles.country ?? '',
+    return recipients.filter((recipient) => normalizeSearch([
+      recipient.fighterName,
+      recipient.recipientName,
+      recipient.email,
+      recipient.location,
     ].join(' ')).includes(query));
   }, [recipients, search]);
 
-  const effectiveSelectedId = recipients.some(({ fighter }) => fighter.id === selectedId)
+  const effectiveSelectedId = recipients.some((recipient) => recipient.key === selectedId)
     ? selectedId
-    : (recipients[0]?.fighter.id ?? null);
-  const selected = recipients.find(({ fighter }) => fighter.id === effectiveSelectedId) ?? null;
+    : (recipients[0]?.key ?? null);
+  const selected = recipients.find((recipient) => recipient.key === effectiveSelectedId) ?? null;
   const preview = useMemo(() => {
     if (!selected || typeof window === 'undefined') return null;
+    if (selected.kind === 'manual') {
+      return buildManagedFighterProfileReminderEmail({
+        recipientName: selected.recipientName,
+        fighterName: selected.fighterName,
+        language: selected.language,
+        missingFields: selected.missingFields,
+        profileUrl: `${window.location.origin}${manualFighterManagementPath(selected.managerRole, selected.targetId)}`,
+      });
+    }
     return buildFighterProfileReminderEmail({
-      fullName: selected.fighter.profiles.full_name,
-      language: selected.fighter.profiles.preferred_language,
+      fullName: selected.fighterName,
+      language: selected.language,
       missingFields: selected.missingFields,
       profileUrl: `${window.location.origin}/fighter/profile`,
     });
@@ -73,15 +131,17 @@ export default function AdminEmailsPage() {
 
   const handleSend = async () => {
     if (!selected) return;
-    setSendingId(selected.fighter.id);
+    setSendingId(selected.key);
     setSendError(null);
-    const result = await adminService.sendFighterProfileReminder(selected.fighter.id);
+    const result = selected.kind === 'manual'
+      ? await adminService.sendManualFighterProfileReminder(selected.targetId)
+      : await adminService.sendFighterProfileReminder(selected.targetId);
     setSendingId(null);
     if (result.error) {
       setSendError(result.error);
       return;
     }
-    setSentIds((current) => new Set(current).add(selected.fighter.id));
+    setSentIds((current) => new Set(current).add(selected.key));
   };
 
   const languageName = (value?: string | null) =>
@@ -131,32 +191,37 @@ export default function AdminEmailsPage() {
               <p className="p-6 text-center text-sm leading-6 text-zinc-500">
                 {search ? t('admin.emails.noSearchResults') : t('admin.emails.noRecipients')}
               </p>
-            ) : visibleRecipients.map(({ fighter, missingFields }) => {
-              const isSelected = effectiveSelectedId === fighter.id;
-              const isDisabled = Boolean(fighter.profiles.is_banned || !fighter.profiles.email?.trim());
+            ) : visibleRecipients.map((recipient) => {
+              const isSelected = effectiveSelectedId === recipient.key;
+              const isDisabled = Boolean(recipient.isBanned || !recipient.email.trim());
               return (
                 <button
-                  key={fighter.id}
+                  key={recipient.key}
                   type="button"
                   onClick={() => {
-                    setSelectedId(fighter.id);
+                    setSelectedId(recipient.key);
                     setSendError(null);
                   }}
                   className={`block w-full border-b border-zinc-100 p-4 text-left transition-colors ${
                     isSelected ? 'bg-zinc-950 text-white' : 'hover:bg-zinc-50'
                   }`}
                 >
-                  <span className="block truncate text-sm font-bold">{fighter.profiles.full_name}</span>
+                  <span className="block truncate text-sm font-bold">{recipient.fighterName}</span>
+                  {recipient.kind === 'manual' && (
+                    <span className={`mt-1 block truncate text-[11px] font-semibold uppercase tracking-wide ${isSelected ? 'text-amber-300' : 'text-amber-700'}`}>
+                      {t('admin.fighters.manualRosterTab')} · {t('admin.fighters.addedBy')}: {recipient.recipientName}
+                    </span>
+                  )}
                   <span className={`mt-1 block truncate text-xs ${isSelected ? 'text-zinc-300' : 'text-zinc-500'}`}>
-                    {fighter.profiles.email || t('admin.emails.noEmail')}
+                    {recipient.email || t('admin.emails.noEmail')}
                   </span>
                   <span className={`mt-2 block text-xs ${isSelected ? 'text-zinc-300' : 'text-zinc-500'}`}>
-                    {t('admin.emails.missingCount', { count: missingFields.length })}
-                    {' · '}{languageName(fighter.profiles.preferred_language)}
+                    {t('admin.emails.missingCount', { count: recipient.missingFields.length })}
+                    {' · '}{languageName(recipient.language)}
                   </span>
                   {isDisabled && (
                     <span className={`mt-2 block text-xs font-semibold ${isSelected ? 'text-amber-300' : 'text-amber-700'}`}>
-                      {fighter.profiles.is_banned ? t('admin.emails.blockedAccount') : t('admin.emails.noEmail')}
+                      {recipient.isBanned ? t('admin.emails.blockedAccount') : t('admin.emails.noEmail')}
                     </span>
                   )}
                 </button>
@@ -176,15 +241,15 @@ export default function AdminEmailsPage() {
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0">
                     <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">{t('admin.emails.preview')}</p>
-                    <h2 className="mt-1 truncate text-lg font-bold text-zinc-950">{selected.fighter.profiles.full_name}</h2>
+                    <h2 className="mt-1 truncate text-lg font-bold text-zinc-950">{selected.fighterName}</h2>
                     <dl className="mt-3 grid gap-2 text-xs text-zinc-600 sm:grid-cols-2">
                       <div>
                         <dt className="font-bold uppercase tracking-wide text-zinc-400">{t('admin.emails.to')}</dt>
-                        <dd className="mt-0.5 break-all">{selected.fighter.profiles.email || '—'}</dd>
+                        <dd className="mt-0.5 break-all">{selected.recipientName} · {selected.email || '—'}</dd>
                       </div>
                       <div>
                         <dt className="font-bold uppercase tracking-wide text-zinc-400">{t('admin.emails.language')}</dt>
-                        <dd className="mt-0.5">{languageName(selected.fighter.profiles.preferred_language)}</dd>
+                        <dd className="mt-0.5">{languageName(selected.language)}</dd>
                       </div>
                       <div className="sm:col-span-2">
                         <dt className="font-bold uppercase tracking-wide text-zinc-400">{t('admin.emails.subject')}</dt>
@@ -196,16 +261,16 @@ export default function AdminEmailsPage() {
                     type="button"
                     onClick={() => void handleSend()}
                     disabled={
-                      sendingId === selected.fighter.id ||
-                      sentIds.has(selected.fighter.id) ||
-                      Boolean(selected.fighter.profiles.is_banned) ||
-                      !selected.fighter.profiles.email?.trim()
+                      sendingId === selected.key ||
+                      sentIds.has(selected.key) ||
+                      selected.isBanned ||
+                      !selected.email.trim()
                     }
                     className="min-h-11 shrink-0 bg-[#C0001E] px-5 py-3 text-xs font-bold uppercase tracking-wider text-white disabled:cursor-not-allowed disabled:bg-zinc-300"
                   >
-                    {sendingId === selected.fighter.id
+                    {sendingId === selected.key
                       ? t('admin.emails.sending')
-                      : sentIds.has(selected.fighter.id)
+                      : sentIds.has(selected.key)
                         ? t('admin.emails.sent')
                         : t('admin.emails.send')}
                   </button>

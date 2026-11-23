@@ -86,6 +86,8 @@
     "fighters": {
       "title": "Fighter Management",
       "subtitle": "Verify fighter profiles to display them in the directory.",
+      "registeredTab": "Registered",
+      "manualRosterTab": "Roster (no account)",
       "name": "Name",
       "email": "Email",
       "city": "City",
@@ -105,6 +107,8 @@
       "phone": "Phone", "visible": "Visible", "representation": "Representation", "hidden": "Hidden",
       "show": "Show", "hide": "Hide", "notRegistered": "Not registered", "noManualFighters": "No fighters have been added manually by managers or promoters.",
       "addedBy": "Added by", "role": "Role", "creatorEmail": "Creator email", "viewProfile": "View profile",
+      "rosterFighter": "Roster fighter",
+      "noCreatorEmail": "The roster owner has no email",
       "profileStatus": "Profile status",
       "profileIncomplete": "Incomplete profile",
       "profileComplete": "Complete profile",
@@ -130,12 +134,12 @@
       },
       "confirmHide": "This fighter will be hidden from other fighter profiles. Only admins, promoters, managers, and sponsors will be able to see them.",
       "confirmShow": "This fighter will be visible to all users again.",
-      "roles": { "manager": "Manager", "promoter": "Promoter", "sponsor": "Sponsor" }
+      "roles": { "manager": "Manager", "promoter": "Promoter", "sponsor": "Sponsor", "gyms_academies": "Gym / coach" }
     },
     "emails": {
       "eyebrow": "Fighter communications",
       "title": "Emails",
-      "subtitle": "Review the exact email each fighter will receive before sending it. This section only lists fighters with missing information.",
+      "subtitle": "Review the exact email before sending it to the fighter or their roster manager. This section only lists profiles with missing information.",
       "standardTitle": "Profile moderation standard",
       "standardBody": "Every profile requires a recent, high-quality photo and complete, accurate, up-to-date information. The email tells the fighter that Strikers Match may request corrections before approving the profile as complete.",
       "recipients": "Pending recipients",

@@ -408,6 +408,8 @@ export interface ManualFighterWithCreator extends ManualFighter {
     full_name: string;
     email: string;
     role: UserRole;
+    preferred_language?: 'es' | 'en' | 'ru';
+    is_banned?: boolean;
   } | null;
 }
 

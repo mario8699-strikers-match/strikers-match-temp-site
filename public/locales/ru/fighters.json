@@ -166,6 +166,10 @@
       "save": "Сохранять",
       "remove": "Удалять",
       "pendingDivision": "ожидается разделение",
+      "editRequiredProfile": "Редактировать профиль",
+      "cancelEdit": "Закрыть редактор",
+      "requiredProfileFields": "Обязательная информация профиля",
+      "saveProfileChanges": "Сохранить изменения",
       "photoOf": "Фотография{{name}}",
       "instagramOf": "Инстаграм{{name}}",
       "currentCountryOf": "Текущая страна проживания: {{name}}",
@@ -225,7 +229,8 @@
         "photoType": "Фотография должна быть в формате JPG, PNG, WebP, GIF или AVIF.",
         "photoSize": "Фотография не может превышать 10 МБ.",
         "photoProfileSave": "Фотография была загружена, но не сохранилась в профиле.{{error}}",
-        "instagramSave": "Инстаграм сохранить не удалось.{{error}}"
+        "instagramSave": "Инстаграм сохранить не удалось.{{error}}",
+        "profileSave": "Не удалось сохранить обязательную информацию профиля. {{error}}"
       }
     },
     "accountProfile": {
