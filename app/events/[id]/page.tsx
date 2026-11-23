@@ -15,6 +15,7 @@ import { canAccessEventTools, canUseEventFeature } from '@/services/eventStaffSe
 import { fighterService } from '@/services/fighterService';
 import { supabase } from '@/lib/supabaseClient';
 import { getMissingFighterRegistrationProfileFields } from '@/lib/fighterRegistrationProfile';
+import { eventPublicPath } from '@/lib/publicUrls';
 import {
   DISCIPLINE_OPTIONS,
   GENERIC_WEIGHT_CLASS_OPTIONS,
@@ -164,30 +165,34 @@ export default function EventDetailPage() {
 
   useEffect(() => {
     if (!id) return;
-    const eventRequest = initialEvent?.id === id
+    const eventRequest = initialEvent
       ? Promise.resolve({ data: initialEvent, error: null })
       : eventService.getById(id);
 
     Promise.all([
       eventRequest,
       authService.getSession(),
-      getEventPaymentSettings(id),
-    ]).then(async ([{ data: ev, error: evErr }, { data: session }, paymentSettingsResult]) => {
+    ]).then(async ([{ data: ev, error: evErr }, { data: session }]) => {
       if (evErr || !ev) { setLoadError(t('events.errors.loadFailed')); setLoading(false); return; }
+      const eventId = ev.id;
+      const paymentSettingsResult = await getEventPaymentSettings(eventId);
       setEvent(ev);
       setPaymentSettings(paymentSettingsResult.data ?? null);
       setLoading(false);
+      if (typeof window !== 'undefined' && ev.slug && id !== ev.slug) {
+        window.history.replaceState(null, '', `${eventPublicPath(ev)}${window.location.search}${window.location.hash}`);
+      }
 
       const p = session?.profile ?? null;
       setProfile(p);
       const [toolsAllowed, settingsAllowed, matchmakingAllowed, boutsAllowed, printAllowed, operationAllowed, productionAllowed] = await Promise.all([
-        canAccessEventTools(id, p, ev),
-        canUseEventFeature(id, 'settings', p, ev),
-        canUseEventFeature(id, 'matchmaking', p, ev),
-        canUseEventFeature(id, 'bouts', p, ev),
-        canUseEventFeature(id, 'print', p, ev),
-        canUseEventFeature(id, 'operation', p, ev),
-        canUseEventFeature(id, 'production', p, ev),
+        canAccessEventTools(eventId, p, ev),
+        canUseEventFeature(eventId, 'settings', p, ev),
+        canUseEventFeature(eventId, 'matchmaking', p, ev),
+        canUseEventFeature(eventId, 'bouts', p, ev),
+        canUseEventFeature(eventId, 'print', p, ev),
+        canUseEventFeature(eventId, 'operation', p, ev),
+        canUseEventFeature(eventId, 'production', p, ev),
       ]);
       setCanOperateThisEvent(toolsAllowed);
       setEventToolAccess({
@@ -206,7 +211,7 @@ export default function EventDetailPage() {
         const { data: f } = await fighterService.getByProfileId(p.id);
         setMyFighter(f ?? null);
         if (f) {
-          const { data: app } = await eventService.getMyApplicationForEvent(id, f.id);
+          const { data: app } = await eventService.getMyApplicationForEvent(eventId, f.id);
           const currentApplication = app ?? null;
           setMyApplication(currentApplication);
 
@@ -232,7 +237,7 @@ export default function EventDetailPage() {
           }
 
           // Check event registration (payment tracking)
-          const { data: reg } = await getFighterRegistration(id, f.id);
+          const { data: reg } = await getFighterRegistration(eventId, f.id);
           setMyRegistration(reg ?? null);
           if (reg) {
             const { data: payment } = await getRegistrationPayment(reg.id);
@@ -244,7 +249,7 @@ export default function EventDetailPage() {
       if (matchmakingAllowed || boutsAllowed) {
         // Load applicants
         setAppsLoading(true);
-        const { data: apps } = await eventService.getApplicationsForEvent(id);
+        const { data: apps } = await eventService.getApplicationsForEvent(eventId);
         setApplications((apps ?? []) as ApplicationWithFighter[]);
         setAppsLoading(false);
 
@@ -255,12 +260,12 @@ export default function EventDetailPage() {
         setRecsLoading(false);
 
         // Load existing match requests for this event
-        const { data: reqs } = await requestService.getByEvent(id);
+        const { data: reqs } = await requestService.getByEvent(eventId);
         setEventRequests((reqs ?? []) as MatchRequest[]);
 
         // Load proposed matches + confirmed-paid registrations for pairing UI
-        await reloadEventMatches(id);
-        await reloadConfirmedRegistrations(id);
+        await reloadEventMatches(eventId);
+        await reloadConfirmedRegistrations(eventId);
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -300,21 +305,22 @@ export default function EventDetailPage() {
 
   // ── Supabase Realtime: fight request status updates ──
   useEffect(() => {
-    if (!id || !canOperateThisEvent) return;
+    const eventId = event?.id;
+    if (!eventId || !canOperateThisEvent) return;
     const channel = supabase
-      .channel(`requests-${id}`)
+      .channel(`requests-${eventId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'match_requests', filter: `event_id=eq.${id}` },
+        { event: '*', schema: 'public', table: 'match_requests', filter: `event_id=eq.${eventId}` },
         async () => {
-          const { data: reqs } = await requestService.getByEvent(id);
+          const { data: reqs } = await requestService.getByEvent(eventId);
           setEventRequests((reqs ?? []) as MatchRequest[]);
         }
       )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [id, canOperateThisEvent]);
+  }, [event?.id, canOperateThisEvent]);
 
   // ── Emergency replacement handler ──
   const handleFindEmergency = useCallback(async () => {
@@ -461,7 +467,7 @@ export default function EventDetailPage() {
   };
 
   const handleSave = async () => {
-    if (!formData || !id) return;
+    if (!formData || !event) return;
     if (!formData.event_name.trim()) { setSaveError(t('events.errors.nameRequired')); return; }
     setSaving(true);
     setSaveError(null);
@@ -484,7 +490,7 @@ export default function EventDetailPage() {
       ...(flyerUrl !== undefined ? { flyer_url: flyerUrl } : {}),
     };
 
-    const { data, error } = await eventService.update(id, payload);
+    const { data, error } = await eventService.update(event.id, payload);
     setSaving(false);
     if (error) {
       setSaveError(error);
@@ -498,23 +504,23 @@ export default function EventDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!id) return;
+    if (!event) return;
     setDeleting(true);
-    const { error } = await eventService.delete(id);
+    const { error } = await eventService.delete(event.id);
     setDeleting(false);
     if (error) { setShowDeleteConfirm(false); setSaveError(t('events.errors.deleteFailed')); }
     else window.location.href = '/events';
   };
 
   const handleApply = async () => {
-    if (!myFighter || !id) return;
+    if (!myFighter || !event) return;
     if (missingRegistrationProfileFields.length > 0) {
       setApplyError(t('events.registration.profileRequiredTitle'));
       return;
     }
     setApplying(true);
     setApplyError(null);
-    const { data, error } = await eventService.applyToEvent(id, myFighter.id, {
+    const { data, error } = await eventService.applyToEvent(event.id, myFighter.id, {
       message: applyMessage,
       fighter_discipline: applyDiscipline || undefined,
       fighter_weight_class: applyWeightClass || inferCombatWeightCategory(
@@ -614,7 +620,7 @@ export default function EventDetailPage() {
   );
   const genericApplicantWeightClasses = GENERIC_WEIGHT_CLASS_OPTIONS.slice(1)
     .filter(([value]) => eventWeightClasses.length === 0 || eventWeightClasses.includes(value));
-  const participatePath = `/events/${event.id}?action=participate`;
+  const participatePath = `${eventPublicPath(event)}?action=participate`;
   const participateLoginHref = `/login?next=${encodeURIComponent(participatePath)}`;
   const participateRegisterHref = `/register?next=${encodeURIComponent(participatePath)}`;
   const usesStripeRegistration = paymentSettings?.registration_type === 'paid'

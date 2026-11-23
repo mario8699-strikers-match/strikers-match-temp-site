@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { InlineCombatRecord } from '@/components/CombatRecord';
 import { manualFighterService } from '@/services/manualFighterService';
 import type { ManualFighter } from '@/types';
+import { manualFighterPublicPath } from '@/lib/publicUrls';
 import { GenderDivisionCheckboxes } from '@/components/GenderDivisionCheckboxes';
 import { DISCIPLINE_OPTIONS, normalizeDisciplineList } from '@/lib/disciplines';
 import { countryFlagEmoji, getCountryName, getCountryOptions } from '@/lib/countries';
@@ -672,7 +673,7 @@ export function ManualFighterManager({
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <a href={`/fighters/manual/${f.id}`} className="text-sm font-bold text-zinc-900 hover:text-[#C0001E] transition-colors">
+                    <a href={manualFighterPublicPath(f)} className="text-sm font-bold text-zinc-900 hover:text-[#C0001E] transition-colors">
                       {countryFlagEmoji(f.nationalities?.[0]) && <span className="mr-1" aria-hidden="true">{countryFlagEmoji(f.nationalities?.[0])}</span>}
                       {f.full_name}
                     </a>

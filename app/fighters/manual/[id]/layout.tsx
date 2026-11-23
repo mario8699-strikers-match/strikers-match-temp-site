@@ -5,6 +5,7 @@ import { getPublicManualFighterSeo } from '@/lib/seoData';
 import { normalizeDisciplineList } from '@/lib/disciplines';
 import { getSocialMediaHref } from '@/lib/socialMedia';
 import { getCountryName } from '@/lib/countries';
+import { manualFighterPublicPath } from '@/lib/publicUrls';
 
 interface ManualFighterLayoutProps {
   children: React.ReactNode;
@@ -38,7 +39,7 @@ export async function generateMetadata({ params }: Omit<ManualFighterLayoutProps
   return pageMetadata({
     title: `${fighter.full_name} — Peleador de roster`,
     description: description(fighter),
-    path: `/fighters/manual/${id}`,
+    path: manualFighterPublicPath(fighter),
     image: fighter.photo_url,
     type: 'profile',
   });
@@ -49,7 +50,7 @@ export default async function ManualFighterLayout({ children, params }: ManualFi
   const fighter = await getPublicManualFighterSeo(id);
   if (!fighter) return children;
 
-  const profileUrl = absoluteUrl(`/fighters/manual/${id}`);
+  const profileUrl = absoluteUrl(manualFighterPublicPath(fighter));
   const country = fighter.country;
   const locationName = joinLocationParts([fighter.city, fighter.state, country]);
   const instagram = fighter.instagram ? getSocialMediaHref('instagram', fighter.instagram) : null;

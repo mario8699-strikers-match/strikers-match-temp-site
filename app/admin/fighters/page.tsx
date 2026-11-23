@@ -7,6 +7,7 @@ import { InlineCombatRecord } from '@/components/CombatRecord';
 import { adminService } from '@/services/adminService';
 import { getMissingFighterRegistrationProfileFields } from '@/lib/fighterRegistrationProfile';
 import { buildFighterProfileReminderEmail } from '@/lib/fighterProfileReminderEmail';
+import { fighterPublicPath, manualFighterPublicPath } from '@/lib/publicUrls';
 import type { FighterWithProfile, ManualFighterWithCreator } from '@/types';
 
 type Confirm = { fighterId: string; action: 'verify' | 'unverify' | 'hide' | 'unhide' } | null;
@@ -175,7 +176,7 @@ export default function AdminFightersPage() {
           {fighters.map((fighter) => (
             <div key={fighter.id} className="bg-white border border-zinc-200 p-4">
               <div className="flex items-start justify-between gap-2">
-                <Link href={`/fighters/${fighter.id}`} className="font-bold text-[#C0001E] hover:underline truncate">
+                <Link href={fighterPublicPath(fighter)} className="font-bold text-[#C0001E] hover:underline truncate">
                   {fighter.profiles.full_name}
                 </Link>
                 <div className="flex flex-wrap gap-1 flex-shrink-0">
@@ -265,7 +266,7 @@ export default function AdminFightersPage() {
                 <React.Fragment key={fighter.id}>
                 <tr className="hover:bg-zinc-50">
                   <td className="px-4 py-3 font-medium text-zinc-900 whitespace-nowrap">
-                    <Link href={`/fighters/${fighter.id}`} className="text-[#C0001E] hover:underline font-bold">
+                    <Link href={fighterPublicPath(fighter)} className="text-[#C0001E] hover:underline font-bold">
                       {fighter.profiles.full_name}
                     </Link>
                   </td>
@@ -448,7 +449,7 @@ export default function AdminFightersPage() {
             {manualFighters.map((mf) => (
               <div key={mf.id} className="bg-white border border-zinc-200 p-4">
                 <div className="flex items-start justify-between gap-2">
-                  <Link href={`/fighters/manual/${mf.id}`} className="font-bold text-[#C0001E] hover:underline truncate">
+                  <Link href={manualFighterPublicPath(mf)} className="font-bold text-[#C0001E] hover:underline truncate">
                     {mf.full_name}
                   </Link>
                   {mf.profiles?.role === 'manager' && (
@@ -470,7 +471,7 @@ export default function AdminFightersPage() {
                   <dd className="text-zinc-700">{mf.city ?? '—'}</dd>
                 </dl>
                 <div className="mt-3 pt-3 border-t border-zinc-100">
-                  <Link href={`/fighters/manual/${mf.id}`} className="text-xs font-medium text-zinc-700 hover:text-[#C0001E] hover:underline">
+                  <Link href={manualFighterPublicPath(mf)} className="text-xs font-medium text-zinc-700 hover:text-[#C0001E] hover:underline">
                     {t('admin.fighters.viewProfile')} →
                   </Link>
                 </div>
@@ -497,7 +498,7 @@ export default function AdminFightersPage() {
                 {manualFighters.map((mf) => (
                   <tr key={mf.id} className="hover:bg-zinc-50">
                     <td className="px-4 py-3 font-medium text-zinc-900 whitespace-nowrap">
-                      <Link href={`/fighters/manual/${mf.id}`} className="text-[#C0001E] hover:underline font-bold">
+                      <Link href={manualFighterPublicPath(mf)} className="text-[#C0001E] hover:underline font-bold">
                         {mf.full_name}
                       </Link>
                       {mf.nickname && (
@@ -537,7 +538,7 @@ export default function AdminFightersPage() {
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <Link
-                        href={`/fighters/manual/${mf.id}`}
+                        href={manualFighterPublicPath(mf)}
                         className="text-xs font-medium text-zinc-700 hover:text-[#C0001E] hover:underline"
                       >
                         {t('admin.fighters.viewProfile')}

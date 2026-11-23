@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabaseClient';
 import { uploadFile } from '@/lib/storageClient';
 import { sanitizeWeightClass, sanitizeWeightClasses } from '@/lib/combatWeightCategories';
+import { isUuidIdentifier } from '@/lib/publicUrls';
 import type { Event, EventFormData, EventApplication, ServiceResponse } from '@/types';
 
 function internationalEventSchemaUnavailable(message: string) {
@@ -42,12 +43,12 @@ export const eventService = {
     }
   },
 
-  async getById(id: string): Promise<ServiceResponse<Event>> {
+  async getById(identifier: string): Promise<ServiceResponse<Event>> {
     try {
       const { data, error } = await supabase
         .from('events')
         .select('*, profiles!events_promoter_id_fkey(full_name)')
-        .eq('id', id)
+        .eq(isUuidIdentifier(identifier) ? 'id' : 'slug', identifier)
         .single();
       if (error) return { data: null, error: error.message };
       return { data, error: null };

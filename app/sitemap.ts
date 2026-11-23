@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { SITE_URL } from '@/lib/seo';
 import { getSitemapRecords } from '@/lib/seoData';
+import { eventPublicPath, fighterPublicPath, manualFighterPublicPath } from '@/lib/publicUrls';
 
 // Public records change independently of deployments, so the sitemap must not
 // be frozen to whichever rows existed during the last build.
@@ -30,19 +31,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...staticPages,
     ...records.events.map((event) => ({
-      url: `${SITE_URL}/events/${event.id}`,
+      url: `${SITE_URL}${eventPublicPath(event)}`,
       lastModified: modified(event),
       changeFrequency: 'weekly' as const,
       priority: 0.8,
     })),
     ...records.fighters.map((fighter) => ({
-      url: `${SITE_URL}/fighters/${fighter.id}`,
+      url: `${SITE_URL}${fighterPublicPath(fighter)}`,
       lastModified: modified(fighter),
       changeFrequency: 'weekly' as const,
       priority: 0.7,
     })),
     ...records.manualFighters.map((fighter) => ({
-      url: `${SITE_URL}/fighters/manual/${fighter.id}`,
+      url: `${SITE_URL}${manualFighterPublicPath(fighter)}`,
       lastModified: modified(fighter),
       changeFrequency: 'weekly' as const,
       priority: 0.6,

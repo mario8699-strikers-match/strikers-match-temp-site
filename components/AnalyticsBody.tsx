@@ -11,6 +11,7 @@ import {
   type EventHealth,
 } from '@/services/analyticsService';
 import type { Profile } from '@/types';
+import { fighterPublicPath } from '@/lib/publicUrls';
 
 type AnalyticsEvent = { id: string; event_name: string; event_date: string | null; status: string };
 type Tone = 'zinc' | 'emerald' | 'amber' | 'red';
@@ -624,7 +625,7 @@ function FighterListModal({
                   </div>
                 </div>
                 <Link
-                  href={`/fighters/${fighter.id}`}
+                  href={fighterPublicPath(fighter)}
                   className="min-h-11 border border-zinc-900 bg-zinc-900 px-4 py-3 text-center text-xs font-black uppercase tracking-widest text-white"
                 >
                   {t('admin.analyticsPage.modals.viewProfile')}

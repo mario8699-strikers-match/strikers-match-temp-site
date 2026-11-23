@@ -1,10 +1,11 @@
 import { supabase } from '@/lib/supabaseClient';
+import { isUuidIdentifier } from '@/lib/publicUrls';
 import type { ManualFighter, ManualFighterWithCreator, ServiceResponse } from '@/types';
 
 // Fields allowed on insert/update
 export type ManualFighterInput = Pick<ManualFighter, 'full_name'> & Partial<Omit<
   ManualFighter,
-  'id' | 'manager_id' | 'created_at' | 'updated_at' | 'full_name'
+  'id' | 'slug' | 'manager_id' | 'created_at' | 'updated_at' | 'full_name'
 >>;
 
 function isMissingDisciplinesColumn(error: { code?: string; message?: string } | null) {
@@ -67,12 +68,12 @@ export const manualFighterService = {
   },
 
   // Single manual fighter with creator info
-  async getById(id: string): Promise<ServiceResponse<ManualFighterWithCreator>> {
+  async getById(identifier: string): Promise<ServiceResponse<ManualFighterWithCreator>> {
     try {
       const { data, error } = await supabase
         .from('public_manual_fighters')
         .select('*')
-        .eq('id', id)
+        .eq(isUuidIdentifier(identifier) ? 'id' : 'slug', identifier)
         .single();
 
       if (error) return { data: null, error: error.message };

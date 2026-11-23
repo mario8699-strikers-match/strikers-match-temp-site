@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 import { uploadFile } from '@/lib/storageClient';
+import { isUuidIdentifier } from '@/lib/publicUrls';
 import type { Fighter, FighterSearchFilters, FighterSearchResult, ServiceResponse } from '@/types';
 
 const PAGE_SIZE = 12;
@@ -23,12 +24,12 @@ export const fighterService = {
     }
   },
 
-  async getById(id: string): Promise<ServiceResponse<Fighter>> {
+  async getById(identifier: string): Promise<ServiceResponse<Fighter>> {
     try {
       const { data, error } = await supabase
         .from('public_fighters')
         .select('*')
-        .eq('id', id)
+        .eq(isUuidIdentifier(identifier) ? 'id' : 'slug', identifier)
         .single();
 
       if (error) return { data: null, error: error.message };

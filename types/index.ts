@@ -101,6 +101,7 @@ export interface Profile {
 // Fighter-specific profile
 export interface Fighter {
   id: string;
+  slug: string;
   profile_id: string;
   nickname: string | null;
   bio: string | null;
@@ -191,6 +192,7 @@ export interface FighterFollowWithFighter extends FighterFollow {
 // Event
 export interface Event {
   id: string;
+  slug: string;
   promoter_id: string;
   event_name: string;
   event_date: string | null;
@@ -341,6 +343,7 @@ export interface ManagerFighter {
 // manager_id semantically means "creator_id" (manager, promoter, gym owner, or admin).
 export interface ManualFighter {
   id: string;
+  slug: string;
   manager_id: string;
   full_name: string;
   nickname: string | null;

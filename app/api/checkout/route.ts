@@ -5,6 +5,7 @@ import {
   createAdminSupabase,
   requestAppUrl,
 } from '@/lib/serverAuth';
+import { eventPublicPath } from '@/lib/publicUrls';
 
 export const runtime = 'nodejs';
 
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
       .select(`
         id, event_id, fighter_id, display_name, payment_status,
         fighters!inner(profile_id),
-        events!inner(event_name, promoter_id, status)
+        events!inner(event_name, promoter_id, status, slug)
       `)
       .eq('id', body.registrationId)
       .maybeSingle();
@@ -45,6 +46,7 @@ export async function POST(request: NextRequest) {
       event_name: string;
       promoter_id: string;
       status: string;
+      slug: string | null;
     };
     if (fighter.profile_id !== auth.userId) {
       return NextResponse.json({ error: 'No autorizado para este registro.' }, { status: 403 });
@@ -135,7 +137,7 @@ export async function POST(request: NextRequest) {
       organizer_id: event.promoter_id,
     };
     const appUrl = requestAppUrl(request);
-    const eventUrl = `${appUrl}/events/${registration.event_id}`;
+    const eventUrl = `${appUrl}${eventPublicPath({ id: registration.event_id, slug: event.slug })}`;
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       locale: 'es',

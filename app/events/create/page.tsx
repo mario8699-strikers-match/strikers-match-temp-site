@@ -11,6 +11,7 @@ import {
   sanitizeWeightClasses,
 } from '@/lib/combatWeightCategories';
 import { eventService } from '@/services/eventService';
+import { eventPublicPath } from '@/lib/publicUrls';
 import { authService } from '@/services/authService';
 import { updateGuidedOnboarding } from '@/services/onboardingService';
 import { getCountryOptions } from '@/lib/countries';
@@ -191,7 +192,7 @@ export default function CreateEventPage() {
           return;
         }
       }
-      window.location.href = `/events/${data.id}`;
+      window.location.href = eventPublicPath(data);
     }
   };
 

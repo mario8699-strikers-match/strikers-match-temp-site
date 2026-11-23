@@ -14,6 +14,7 @@ import { getEventRegistrations, confirmPayment } from '@/services/registrationSe
 import type { Event, EventApplication, Profile } from '@/types';
 import type { RegistrationWithFighter } from '@/types';
 import { formatLocalizedDate } from '@/lib/locale';
+import { eventPublicPath } from '@/lib/publicUrls';
 
 const STATUS_COLORS: Record<Event['status'], string> = {
   draft:     'bg-zinc-100 text-zinc-600',
@@ -248,7 +249,7 @@ export default function PromoterDashboardPage() {
                         className="bg-[#C0001E] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#9A0018]">
                         {t('promoters.dashboard.fightersMatchmaking')}
                       </Link>
-                      <a href={`/events/${ev.id}`}
+                      <a href={eventPublicPath(ev)}
                         className="text-xs font-medium text-zinc-500 border border-zinc-200 px-3 py-1.5 hover:bg-zinc-50 transition-colors">
                         {t('promoters.dashboard.edit')}
                       </a>

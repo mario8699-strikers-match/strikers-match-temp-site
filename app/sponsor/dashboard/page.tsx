@@ -9,6 +9,7 @@ import { InlineCombatRecord } from '@/components/CombatRecord';
 import { useTranslation } from 'react-i18next';
 import { authService } from '@/services/authService';
 import { sponsorService } from '@/services/sponsorService';
+import { fighterPublicPath } from '@/lib/publicUrls';
 import type { Profile, Fighter, SponsorshipOffer } from '@/types';
 
 type FighterWithProfile = Fighter & { profiles: { full_name: string; city: string | null } };
@@ -145,7 +146,7 @@ export default function SponsorDashboardPage() {
               {fighters.map(f => (
                 <div key={f.id} className="border border-zinc-200">
                   {/* Photo */}
-                  <div className="h-36 bg-zinc-100 overflow-hidden cursor-pointer" onClick={() => router.push(`/fighters/${f.id}`)}>
+                  <div className="h-36 bg-zinc-100 overflow-hidden cursor-pointer" onClick={() => router.push(fighterPublicPath(f))}>
                     {f.photo_url ? (
                       <Image src={f.photo_url} alt="" width={300} height={144} className="w-full h-full object-cover" />
                     ) : (

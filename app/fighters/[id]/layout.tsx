@@ -4,6 +4,7 @@ import { getCountryName } from '@/lib/countries';
 import { getSocialMediaHref } from '@/lib/socialMedia';
 import { absoluteUrl, joinLocationParts, pageMetadata, truncateDescription } from '@/lib/seo';
 import { getPublicFighterSeo } from '@/lib/seoData';
+import { fighterPublicPath } from '@/lib/publicUrls';
 
 interface FighterLayoutProps {
   children: React.ReactNode;
@@ -37,10 +38,11 @@ export async function generateMetadata({ params }: Omit<FighterLayoutProps, 'chi
   }
 
   const location = fighter.profiles?.city ? ` — ${fighter.profiles.city}` : '';
+  const publicPath = fighterPublicPath(fighter);
   return pageMetadata({
     title: `${fighter.profiles?.full_name || 'Peleador'}${location}`,
     description: fighterDescription(fighter),
-    path: `/fighters/${id}`,
+    path: publicPath,
     image: fighter.photo_url,
     type: 'profile',
   });
@@ -52,7 +54,7 @@ export default async function FighterLayout({ children, params }: FighterLayoutP
   if (!fighter || fighter.is_hidden || fighter.profiles?.is_banned) return children;
 
   const name = fighter.profiles?.full_name || 'Peleador';
-  const profileUrl = absoluteUrl(`/fighters/${id}`);
+  const profileUrl = absoluteUrl(fighterPublicPath(fighter));
   const country = getCountryName(fighter.profiles?.country_code, 'es') || fighter.profiles?.country;
   const locationName = joinLocationParts([fighter.profiles?.city, fighter.profiles?.state || fighter.state, country]);
   const instagram = fighter.profiles?.instagram

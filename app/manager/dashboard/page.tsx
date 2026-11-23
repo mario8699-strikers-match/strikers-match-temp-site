@@ -11,6 +11,7 @@ import { ManualFighterManager } from '@/components/ManualFighterManager';
 import { InlineCombatRecord } from '@/components/CombatRecord';
 import { OrganizerPaymentsPanel } from '@/components/OrganizerPaymentsPanel';
 import { formatCalendarDate } from '@/lib/calendarDate';
+import { fighterPublicPath } from '@/lib/publicUrls';
 import { authService } from '@/services/authService';
 import { eventService } from '@/services/eventService';
 import { managerService } from '@/services/managerService';
@@ -308,7 +309,7 @@ export default function ManagerDashboardPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {roster.map(f => (
                 <div key={f.id} className="border border-zinc-200 p-4 flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3 cursor-pointer" onClick={() => router.push(`/fighters/${f.id}`)}>
+                  <div className="flex items-start gap-3 cursor-pointer" onClick={() => router.push(fighterPublicPath(f))}>
                     <div className="w-12 h-12 bg-zinc-100 overflow-hidden flex-shrink-0">
                       {f.photo_url ? (
                         <Image src={f.photo_url} alt="" width={48} height={48} className="w-full h-full object-cover" />

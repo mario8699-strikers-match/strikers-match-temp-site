@@ -11,6 +11,7 @@ import { eventService } from '@/services/eventService';
 import { requestService } from '@/services/requestService';
 import { authService } from '@/services/authService';
 import { getPrimaryDiscipline, getPublicWeightDisplay } from '@/lib/fighterProfile';
+import { manualFighterPublicPath } from '@/lib/publicUrls';
 import { useTranslation } from 'react-i18next';
 import type { ManualFighterWithCreator, Profile, Event } from '@/types';
 
@@ -40,6 +41,9 @@ export default function ManualFighterDetailPage() {
       setProfile(p);
       setFighter(fighterData);
       setLoading(false);
+      if (fighterData?.slug && id !== fighterData.slug) {
+        window.history.replaceState(null, '', `${manualFighterPublicPath(fighterData)}${window.location.search}${window.location.hash}`);
+      }
 
       if (p && (p.role === 'promoter' || p.role === 'manager' || p.role === 'admin')) {
         eventService.getByPromoter(p.id).then(({ data: events }) => setMyEvents(events ?? []));

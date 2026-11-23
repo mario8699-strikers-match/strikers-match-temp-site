@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { adminService } from '@/services/adminService';
 import { eventService } from '@/services/eventService';
 import type { Event } from '@/types';
+import { eventPublicPath } from '@/lib/publicUrls';
 import { formatLocalizedCurrency, formatLocalizedDate } from '@/lib/locale';
 
 type EventWithPromoter = Event & { profiles: { full_name: string } };
@@ -73,7 +74,7 @@ export default function AdminEventsPage() {
         <div className="sm:hidden space-y-3">
           {events.map((event) => (
             <div key={event.id} className="bg-white border border-zinc-200 p-4">
-              <a href={`/events/${event.id}`} className="block font-bold text-zinc-900 hover:underline">
+              <a href={eventPublicPath(event)} className="block font-bold text-zinc-900 hover:underline">
                 {event.event_name}
               </a>
               <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -131,7 +132,7 @@ export default function AdminEventsPage() {
                 <tr key={event.id} className="hover:bg-zinc-50">
                   <td className="px-4 py-3 font-medium text-zinc-900 whitespace-nowrap">
                     <a
-                      href={`/events/${event.id}`}
+                      href={eventPublicPath(event)}
                       className="hover:underline"
                     >
                       {event.event_name}

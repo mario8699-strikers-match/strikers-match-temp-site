@@ -57,6 +57,7 @@ export function GuidedOnboardingHelp() {
   const [panel, setPanel] = useState<Panel>(null);
   const [step, setStep] = useState<GuidedOnboardingStep>(1);
   const [eventId, setEventId] = useState<string | null>(null);
+  const [eventSlug, setEventSlug] = useState<string | null>(null);
   const [eventName, setEventName] = useState<string | null>(null);
   const [participantReady, setParticipantReady] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -80,7 +81,7 @@ export function GuidedOnboardingHelp() {
 
       const { data: ownedEvents, error: ownedEventsError } = await supabase
         .from('events')
-        .select('id, event_name')
+        .select('id, event_name, slug')
         .eq('promoter_id', nextProfile.id)
         .order('created_at', { ascending: false })
         .limit(1);
@@ -99,6 +100,7 @@ export function GuidedOnboardingHelp() {
         });
         setStep(1);
         setEventId(null);
+        setEventSlug(null);
         setDismissed(false);
         if (pathname === '/events/create') {
           setPanel(null);
@@ -118,7 +120,7 @@ export function GuidedOnboardingHelp() {
       if (nextProfile.onboarding_event_id && nextProfile.onboarding_event_id !== latestOwnedEvent?.id) {
         const { data: savedEvent } = await supabase
           .from('events')
-          .select('id, event_name')
+          .select('id, event_name, slug')
           .eq('id', nextProfile.onboarding_event_id)
           .eq('promoter_id', nextProfile.id)
           .maybeSingle();
@@ -130,6 +132,7 @@ export function GuidedOnboardingHelp() {
       setProfile(nextProfile);
       setStep(savedStep);
       setEventId(guidedEvent?.id ?? null);
+      setEventSlug(guidedEvent?.slug ?? null);
       setEventName(guidedEvent?.event_name ?? null);
       setDismissed(Boolean(nextProfile.onboarding_dismissed));
 
@@ -184,11 +187,12 @@ export function GuidedOnboardingHelp() {
     if (!eventId) return;
     let active = true;
     Promise.all([
-      supabase.from('events').select('event_name').eq('id', eventId).maybeSingle(),
+      supabase.from('events').select('event_name,slug').eq('id', eventId).maybeSingle(),
       supabase.from('event_registrations').select('id', { count: 'exact', head: true }).eq('event_id', eventId),
     ]).then(([eventResult, registrationResult]) => {
       if (!active) return;
       setEventName(eventResult.data?.event_name ?? null);
+      setEventSlug(eventResult.data?.slug ?? null);
       if ((registrationResult.count ?? 0) > 0) void revealParticipantStep(eventId);
     });
 
@@ -250,7 +254,7 @@ export function GuidedOnboardingHelp() {
 
   const shareRegistration = async (nativeShare: boolean) => {
     if (!eventId) { setError(t('guided.errors.eventRequired')); return; }
-    const url = `${window.location.origin}/events/${eventId}`;
+    const url = `${window.location.origin}/events/${eventSlug ?? eventId}`;
     setBusy(true); setError(null);
     try {
       if (nativeShare && navigator.share) {
@@ -337,7 +341,7 @@ export function GuidedOnboardingHelp() {
                 <div className="p-5 sm:p-6"><p className="text-sm leading-relaxed text-zinc-600">{topic.body}</p>{topic.requiresEvent && !eventId && <p className="mt-4 border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-900">{t('guided.createFirstHint')}</p>}<button type="button" onClick={() => go(topic.path(eventId))} className="mt-5 min-h-11 w-full bg-[#C0001E] px-4 text-xs font-bold uppercase tracking-widest text-white">{topic.requiresEvent && !eventId ? t('guided.createFirstEvent') : topic.action}</button></div>
               </>
             ) : (
-              <WizardStep step={step} eventId={eventId} eventName={eventName} participantReady={participantReady} busy={busy} copied={copied} error={error} onDismiss={dismiss} onGo={go} onShare={shareRegistration} onMatchmaking={openMatchmaking} onGraphics={openGraphics} onDisplay={openDisplay} onClose={closePanel} />
+              <WizardStep step={step} eventId={eventId} eventSlug={eventSlug} eventName={eventName} participantReady={participantReady} busy={busy} copied={copied} error={error} onDismiss={dismiss} onGo={go} onShare={shareRegistration} onMatchmaking={openMatchmaking} onGraphics={openGraphics} onDisplay={openDisplay} onClose={closePanel} />
             )}
           </div>
         </div>
@@ -346,8 +350,8 @@ export function GuidedOnboardingHelp() {
   );
 }
 
-function WizardStep({ step, eventId, eventName, participantReady, busy, copied, error, onDismiss, onGo, onShare, onMatchmaking, onGraphics, onDisplay, onClose }: {
-  step: GuidedOnboardingStep; eventId: string | null; eventName: string | null; participantReady: boolean; busy: boolean; copied: boolean; error: string | null;
+function WizardStep({ step, eventId, eventSlug, eventName, participantReady, busy, copied, error, onDismiss, onGo, onShare, onMatchmaking, onGraphics, onDisplay, onClose }: {
+  step: GuidedOnboardingStep; eventId: string | null; eventSlug: string | null; eventName: string | null; participantReady: boolean; busy: boolean; copied: boolean; error: string | null;
   onDismiss: () => void; onGo: (path: string) => void; onShare: (native: boolean) => void; onMatchmaking: () => void; onGraphics: () => void; onDisplay: () => void; onClose: () => void;
 }) {
   const { t } = useTranslation('onboarding');
@@ -357,7 +361,7 @@ function WizardStep({ step, eventId, eventName, participantReady, busy, copied, 
   };
   return <>
     <PanelHeader eyebrow={t('guided.stepProgress', { step, total: 8 })} title={content.title} onClose={onDismiss} />
-    <div className="p-5 sm:p-6"><Progress completed={step - 1} /><p className="mt-5 text-sm leading-relaxed text-zinc-600">{content.body}</p>{eventName && step > 1 && <p className="mt-3 border-l-2 border-[#C0001E] pl-3 text-sm font-bold text-zinc-900">{eventName}</p>}{step === 3 && eventId && <p className="mt-4 break-all border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-600">{typeof window !== 'undefined' ? `${window.location.origin}/events/${eventId}` : `/events/${eventId}`}</p>}{step === 4 && !participantReady && <p className="mt-4 border border-amber-200 bg-amber-50 p-3 text-xs font-medium text-amber-900">{t('guided.waitingForRegistration')}</p>}{error && <ErrorMessage value={error} />}</div>
+    <div className="p-5 sm:p-6"><Progress completed={step - 1} /><p className="mt-5 text-sm leading-relaxed text-zinc-600">{content.body}</p>{eventName && step > 1 && <p className="mt-3 border-l-2 border-[#C0001E] pl-3 text-sm font-bold text-zinc-900">{eventName}</p>}{step === 3 && eventId && <p className="mt-4 break-all border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-600">{typeof window !== 'undefined' ? `${window.location.origin}/events/${eventSlug ?? eventId}` : `/events/${eventSlug ?? eventId}`}</p>}{step === 4 && !participantReady && <p className="mt-4 border border-amber-200 bg-amber-50 p-3 text-xs font-medium text-amber-900">{t('guided.waitingForRegistration')}</p>}{error && <ErrorMessage value={error} />}</div>
     <div className="border-t border-zinc-100 p-4 sm:p-5">
       {step === 1 && <PrimaryButton label={t('guided.actions.createEvent')} busy={busy} onClick={() => onGo('/events/create?onboarding=1')} />}
       {step === 2 && <PrimaryButton label={t('guided.actions.configureRegistration')} busy={busy || !eventId} onClick={() => eventId && onGo(`/events/${eventId}/manage/settings`)} />}

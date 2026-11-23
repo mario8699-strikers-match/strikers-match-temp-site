@@ -42,6 +42,7 @@ export interface Match {
 export interface MatchWithContext extends Match {
   events?: {
     id: string;
+    slug?: string | null;
     event_name: string;
     event_date: string | null;
     city: string | null;
@@ -72,7 +73,7 @@ export interface MatchWithContext extends Match {
 
 const SELECT_WITH_CONTEXT = `
   *,
-  events:event_id ( id, event_name, event_date, city ),
+  events:event_id ( id, slug, event_name, event_date, city ),
   fighter_a:fighter_a_id ( id, weight_class, profiles ( full_name, city ) ),
   fighter_b:fighter_b_id ( id, weight_class, profiles ( full_name, city ) ),
   fighter_a_registration:fighter_a_registration_id ( id, display_name, registered_weight_class, city ),

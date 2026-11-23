@@ -3,6 +3,7 @@ import { StructuredData } from '@/components/StructuredData';
 import { getCountryName } from '@/lib/countries';
 import { absoluteUrl, formatSeoDate, joinLocationParts, pageMetadata, schemaEventStartDate, truncateDescription } from '@/lib/seo';
 import { getPublicEventSeo } from '@/lib/seoData';
+import { eventPublicPath } from '@/lib/publicUrls';
 import { EventInitialDataProvider } from './EventInitialData';
 
 export const dynamic = 'force-dynamic';
@@ -41,10 +42,11 @@ export async function generateMetadata({ params }: Omit<EventLayoutProps, 'child
 
   const eventName = event.event_name.trim();
   const location = event.city ? ` en ${event.city.trim()}` : '';
+  const publicPath = eventPublicPath(event);
   return pageMetadata({
     title: `${eventName}${location}`,
     description: eventDescription(event),
-    path: `/events/${id}`,
+    path: publicPath,
     image: event.flyer_url,
   });
 }
@@ -54,7 +56,7 @@ export default async function EventLayout({ children, params }: EventLayoutProps
   const event = await getPublicEventSeo(id);
   if (!event || event.status !== 'published') return children;
 
-  const eventUrl = absoluteUrl(`/events/${id}`);
+  const eventUrl = absoluteUrl(eventPublicPath(event));
   const startDate = schemaEventStartDate(event.event_date, event.event_time, event.timezone);
   const countryName = getCountryName(event.country_code, 'es');
   const address = event.city || event.region_code || event.country_code

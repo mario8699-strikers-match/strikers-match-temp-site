@@ -3,6 +3,7 @@ import { FightersPageClient, type FighterDirectoryEntry } from '@/components/Fig
 import { StructuredData } from '@/components/StructuredData';
 import { absoluteUrl } from '@/lib/seo';
 import { getPublicFightersForPage } from '@/lib/seoData';
+import { fighterPublicPath, manualFighterPublicPath } from '@/lib/publicUrls';
 
 export const revalidate = 300;
 
@@ -26,7 +27,9 @@ export default async function FightersPage() {
       '@type': 'ListItem',
       position: index + 1,
       name: entry.kind === 'manual' ? entry.data.full_name : entry.data.profiles?.full_name,
-      url: absoluteUrl(entry.kind === 'manual' ? `/fighters/manual/${entry.data.id}` : `/fighters/${entry.data.id}`),
+      url: absoluteUrl(entry.kind === 'manual'
+        ? manualFighterPublicPath(entry.data)
+        : fighterPublicPath(entry.data)),
     })),
   };
 

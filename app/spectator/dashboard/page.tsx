@@ -10,6 +10,7 @@ import { InlineCombatRecord } from '@/components/CombatRecord';
 import { Pagination } from '@/components/Pagination';
 import { authService } from '@/services/authService';
 import { fighterFollowService } from '@/services/fighterFollowService';
+import { fighterPublicPath } from '@/lib/publicUrls';
 import type { FighterFollowWithFighter, Profile } from '@/types';
 
 const FOLLOWS_PAGE_SIZE = 20;
@@ -302,7 +303,7 @@ function SpectatorFighterCard({
               {t('spectator.unfollow')}
             </button>
             <Link
-              href={`/fighters/${fighter.id}`}
+              href={fighterPublicPath(fighter)}
               className="block min-h-12 w-full border-t border-zinc-200 bg-white px-4 py-3 text-center text-xs font-bold uppercase tracking-widest text-zinc-900 transition-colors hover:text-[#C0001E]"
             >
               {t('spectator.viewProfile')}

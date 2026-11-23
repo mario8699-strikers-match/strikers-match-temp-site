@@ -2,6 +2,7 @@ import 'server-only';
 
 import { cache } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { isUuidIdentifier } from '@/lib/publicUrls';
 import {
   VENDOR_ROLES,
   type BusinessListing,
@@ -17,6 +18,7 @@ export interface PublicEventSeo extends Event {
 
 export interface PublicFighterSeo {
   id: string;
+  slug: string;
   nickname: string | null;
   bio: string | null;
   weight_class: string | null;
@@ -45,6 +47,7 @@ export interface PublicFighterSeo {
 
 export interface PublicManualFighterSeo {
   id: string;
+  slug: string;
   full_name: string;
   nickname: string | null;
   bio: string | null;
@@ -101,6 +104,7 @@ export interface PublicProfileCard {
 
 interface SitemapRecord {
   id: string;
+  slug?: string | null;
   updated_at?: string | null;
   created_at?: string | null;
 }
@@ -120,14 +124,14 @@ function getPublicClient() {
   });
 }
 
-export const getPublicEventSeo = cache(async (id: string): Promise<PublicEventSeo | null> => {
+export const getPublicEventSeo = cache(async (identifier: string): Promise<PublicEventSeo | null> => {
   const client = getPublicClient();
   if (!client) return null;
   try {
     const { data, error } = await client
       .from('events')
-      .select('id,promoter_id,event_name,event_date,event_time,city,venue,country_code,region_code,timezone,currency,weight_class_needed,weight_classes_needed,disciplines_needed,purse_amount,signup_fee,notes,flyer_url,status,created_at,profiles!events_promoter_id_fkey(full_name)')
-      .eq('id', id)
+      .select('id,slug,promoter_id,event_name,event_date,event_time,city,venue,country_code,region_code,timezone,currency,weight_class_needed,weight_classes_needed,disciplines_needed,purse_amount,signup_fee,notes,flyer_url,status,created_at,profiles!events_promoter_id_fkey(full_name)')
+      .eq(isUuidIdentifier(identifier) ? 'id' : 'slug', identifier)
       .maybeSingle();
     if (error || !data) return null;
     return data as unknown as PublicEventSeo;
@@ -136,14 +140,14 @@ export const getPublicEventSeo = cache(async (id: string): Promise<PublicEventSe
   }
 });
 
-export const getPublicFighterSeo = cache(async (id: string): Promise<PublicFighterSeo | null> => {
+export const getPublicFighterSeo = cache(async (identifier: string): Promise<PublicFighterSeo | null> => {
   const client = getPublicClient();
   if (!client) return null;
   try {
     const { data, error } = await client
       .from('public_fighters')
-      .select('id,nickname,bio,weight_class,exact_weight,disciplines,nationalities,gym_name,state,experience_level,photo_url,record_wins,record_losses,record_draws,is_hidden,created_at,profiles')
-      .eq('id', id)
+      .select('id,slug,nickname,bio,weight_class,exact_weight,disciplines,nationalities,gym_name,state,experience_level,photo_url,record_wins,record_losses,record_draws,is_hidden,created_at,profiles')
+      .eq(isUuidIdentifier(identifier) ? 'id' : 'slug', identifier)
       .maybeSingle();
     if (error || !data) return null;
     return data as unknown as PublicFighterSeo;
@@ -152,14 +156,14 @@ export const getPublicFighterSeo = cache(async (id: string): Promise<PublicFight
   }
 });
 
-export const getPublicManualFighterSeo = cache(async (id: string): Promise<PublicManualFighterSeo | null> => {
+export const getPublicManualFighterSeo = cache(async (identifier: string): Promise<PublicManualFighterSeo | null> => {
   const client = getPublicClient();
   if (!client) return null;
   try {
     const { data, error } = await client
       .from('public_manual_fighters')
-      .select('id,full_name,nickname,bio,weight_class,exact_weight,discipline,disciplines,nationalities,city,state,country,country_code,gym_name,instagram,experience_level,photo_url,record_wins,record_losses,record_draws,created_at')
-      .eq('id', id)
+      .select('id,slug,full_name,nickname,bio,weight_class,exact_weight,discipline,disciplines,nationalities,city,state,country,country_code,gym_name,instagram,experience_level,photo_url,record_wins,record_losses,record_draws,created_at')
+      .eq(isUuidIdentifier(identifier) ? 'id' : 'slug', identifier)
       .maybeSingle();
     if (error || !data) return null;
     return data as PublicManualFighterSeo;
@@ -344,11 +348,11 @@ export async function getSitemapRecords(): Promise<{
 
   try {
     const [eventsResult, fightersResult, manualResult, primaryProfilesResult, additionalProfilesResult] = await Promise.all([
-      client.from('events').select('id,created_at').eq('status', 'published'),
+      client.from('events').select('id,slug,created_at').eq('status', 'published'),
       client
         .from('public_fighters')
-        .select('id,created_at'),
-      client.from('public_manual_fighters').select('id,created_at'),
+        .select('id,slug,created_at'),
+      client.from('public_manual_fighters').select('id,slug,created_at'),
       client.from('public_profiles').select('id,updated_at').in('role', VENDOR_ROLES),
       client.from('public_profiles').select('id,updated_at').overlaps('additional_roles', VENDOR_ROLES),
     ]);

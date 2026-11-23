@@ -9,6 +9,7 @@ import { Footer } from '@/components/Footer';
 import { InlineCombatRecord } from '@/components/CombatRecord';
 import { authService } from '@/services/authService';
 import { managerService } from '@/services/managerService';
+import { fighterPublicPath } from '@/lib/publicUrls';
 import type { Profile, Fighter, ManualFighter } from '@/types';
 
 type FighterWithProfile = Fighter & { profiles: { full_name: string; city: string | null } };
@@ -313,7 +314,7 @@ export default function ManagerProfilePage() {
                 <div
                   key={f.id}
                   className="border border-zinc-200 p-4 flex items-start gap-3 cursor-pointer hover:border-zinc-400 transition-colors"
-                  onClick={() => router.push(`/fighters/${f.id}`)}
+                  onClick={() => router.push(fighterPublicPath(f))}
                 >
                   <div className="w-12 h-12 bg-zinc-100 overflow-hidden flex-shrink-0">
                     {f.photo_url ? (

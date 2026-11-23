@@ -13,6 +13,7 @@ import { fighterService } from '@/services/fighterService';
 import { fighterFollowService } from '@/services/fighterFollowService';
 import { manualFighterService } from '@/services/manualFighterService';
 import { supabase } from '@/lib/supabaseClient';
+import { fighterPublicPath, manualFighterPublicPath } from '@/lib/publicUrls';
 import type { FighterWithProfile, ManualFighter } from '@/types';
 
 const WEIGHT_CLASSES = [
@@ -302,7 +303,7 @@ export default function SearchPage() {
             {fighters.map((fighter) => (
               <div
                 key={fighter.id}
-                onClick={() => router.push(`/fighters/${fighter.id}`)}
+                onClick={() => router.push(fighterPublicPath(fighter))}
                 className="border border-zinc-200 bg-white hover:border-zinc-400 transition-colors cursor-pointer"
               >
                 {/* Photo */}
@@ -417,7 +418,7 @@ export default function SearchPage() {
               {pageRoster.map((mf) => (
                 <div
                   key={mf.id}
-                  onClick={() => router.push(`/fighters/manual/${mf.id}`)}
+                  onClick={() => router.push(manualFighterPublicPath(mf))}
                   className="border border-zinc-200 bg-white hover:border-zinc-400 transition-colors cursor-pointer"
                 >
                   <div className="w-full h-40 bg-zinc-100 overflow-hidden">

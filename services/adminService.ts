@@ -257,7 +257,7 @@ export const adminService = {
         .select(`
           id, event_id, fighter_a_id, fighter_b_id, fighter_a_registration_id, fighter_b_registration_id, fighter_a_status, fighter_b_status,
           match_status, compatibility_score, created_at,
-          events:event_id ( id, event_name, event_date, city ),
+          events:event_id ( id, slug, event_name, event_date, city ),
           fighter_a:fighter_a_id ( id, weight_class, profiles ( full_name, city ) ),
           fighter_b:fighter_b_id ( id, weight_class, profiles ( full_name, city ) ),
           fighter_a_registration:fighter_a_registration_id ( id, display_name, registered_weight_class, city ),
@@ -272,7 +272,7 @@ export const adminService = {
     }
   },
 
-  async getAllBouts(): Promise<ServiceResponse<(Bout & { events?: { id: string; event_name: string } | null; event_mats?: { name: string; mat_number: number } | null })[]>> {
+  async getAllBouts(): Promise<ServiceResponse<(Bout & { events?: { id: string; slug?: string | null; event_name: string } | null; event_mats?: { name: string; mat_number: number } | null })[]>> {
     try {
       const { data, error } = await supabase
         .from('bouts')
@@ -282,7 +282,7 @@ export const adminService = {
           bout_format, weight_class, age_class, belt_level, experience_level, mat_id, bout_number,
           mat_order, scheduled_time, status, winner_id, result, method, elapsed_seconds, notes,
           cancellation_reason, replacement_notes, approved_by, approved_at, completed_at, created_at, updated_at,
-          events:event_id(id, event_name),
+          events:event_id(id, slug, event_name),
           event_mats:mat_id(name, mat_number)
         `)
         .order('created_at', { ascending: false })
@@ -290,7 +290,7 @@ export const adminService = {
       if (error) return { data: null, error: error.message };
       return {
         data: (data ?? []) as unknown as (Bout & {
-          events?: { id: string; event_name: string } | null;
+          events?: { id: string; slug?: string | null; event_name: string } | null;
           event_mats?: { name: string; mat_number: number } | null;
         })[],
         error: null,

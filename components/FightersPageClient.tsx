@@ -20,6 +20,7 @@ import {
 } from '@/lib/disciplines';
 import type { FighterWithProfile, ManualFighterWithCreator } from '@/types';
 import { countryFlagEmoji, getCountryName } from '@/lib/countries';
+import { fighterPublicPath, manualFighterPublicPath } from '@/lib/publicUrls';
 import { fighterWeightClassI18nKey } from '@/lib/fighterDisplay';
 
 const PAGE_SIZE = 12;
@@ -120,9 +121,9 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
 
   const goTo = (entry: FighterDirectoryEntry) => {
     if (entry.kind === 'manual') {
-      router.push(`/fighters/manual/${entry.data.id}`);
+      router.push(manualFighterPublicPath(entry.data));
     } else {
-      router.push(`/fighters/${entry.data.id}`);
+      router.push(fighterPublicPath(entry.data));
     }
   };
 

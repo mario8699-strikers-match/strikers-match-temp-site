@@ -10,6 +10,7 @@ import { Pagination } from '@/components/Pagination';
 import { authService } from '@/services/authService';
 import { formatLocalizedCurrency, formatLocalizedDate } from '@/lib/locale';
 import { countryFlagEmoji, getCountryName } from '@/lib/countries';
+import { eventPublicPath } from '@/lib/publicUrls';
 import type { Event, Profile } from '@/types';
 
 const PAGE_SIZE = 15;
@@ -167,7 +168,8 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
           <>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {pageEvents.map((event, index) => {
-              const participatePath = `/events/${event.id}?action=participate`;
+              const publicPath = eventPublicPath(event);
+              const participatePath = `${publicPath}?action=participate`;
               const participateHref = profile
                 ? participatePath
                 : `/login?next=${encodeURIComponent(participatePath)}`;
@@ -190,7 +192,7 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
                   </div>
                 )}
                 <article key={event.id} className="flex h-full flex-col overflow-hidden border border-zinc-200 bg-white">
-                  <Link href={`/events/${event.id}`} className="block bg-zinc-50">
+                  <Link href={publicPath} className="block bg-zinc-50">
                     <div className="flex aspect-[2/3] w-full items-center justify-center bg-zinc-50">
                       {event.flyer_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -211,7 +213,7 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
 
                   <div className="flex flex-1 flex-col p-5">
                     <div className="mb-3 flex items-start justify-between gap-3">
-                      <Link href={`/events/${event.id}`} className="group min-w-0">
+                      <Link href={publicPath} className="group min-w-0">
                         <h2 className="font-display text-2xl font-black uppercase leading-none text-zinc-950 group-hover:text-[#C0001E]">
                           {event.event_name}
                         </h2>
@@ -252,7 +254,7 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
 
                     <div className="mt-auto grid grid-cols-1 gap-2 pt-5 sm:grid-cols-2">
                       <Link
-                        href={`/events/${event.id}`}
+                        href={publicPath}
                         className="min-h-11 border border-zinc-300 px-4 py-3 text-center text-xs font-bold uppercase tracking-widest text-zinc-800 transition-colors hover:bg-zinc-50"
                       >
                         {t('events.public.viewEvent')}

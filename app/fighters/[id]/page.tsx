@@ -14,6 +14,7 @@ import { authService } from '@/services/authService';
 import { fighterFollowService } from '@/services/fighterFollowService';
 import { supabase } from '@/lib/supabaseClient';
 import { getPrimaryDiscipline, getPublicWeightDisplay } from '@/lib/fighterProfile';
+import { fighterPublicPath } from '@/lib/publicUrls';
 import type { Fighter, Profile, Event } from '@/types';
 
 type FighterDetail = Fighter & {
@@ -30,7 +31,7 @@ type FighterDetail = Fighter & {
   };
 };
 
-type Neighbor = { id: string; name: string };
+type Neighbor = { id: string; slug: string; name: string };
 
 export default function FighterDetailPage() {
   const { t } = useTranslation('spectator');
@@ -73,6 +74,9 @@ export default function FighterDetailPage() {
 
       setFighter(f);
       setLoading(false);
+      if (f?.slug && id !== f.slug) {
+        window.history.replaceState(null, '', `${fighterPublicPath(f)}${window.location.search}${window.location.hash}`);
+      }
 
       if (p && (p.role === 'promoter' || p.role === 'manager' || p.role === 'admin')) {
         eventService.getByPromoter(p.id).then(({ data: events }) => setMyEvents(events ?? []));
@@ -89,26 +93,26 @@ export default function FighterDetailPage() {
     let cancelled = false;
     supabase
       .from('public_fighters')
-      .select('id, profiles')
+      .select('id, slug, profiles')
       .order('created_at', { ascending: false })
       .then(({ data }) => {
         if (cancelled || !data) return;
-        const list = data as unknown as Array<{ id: string; profiles: { full_name?: string } | null }>;
-        const idx = list.findIndex((f) => f.id === id);
+        const list = data as unknown as Array<{ id: string; slug: string; profiles: { full_name?: string } | null }>;
+        const idx = list.findIndex((item) => item.id === fighter?.id);
         if (idx < 0) {
           setNeighbors({ prev: null, next: null });
           return;
         }
         const prev = idx > 0
-          ? { id: list[idx - 1].id, name: list[idx - 1].profiles?.full_name ?? tFighters('fighters.manualProfile.previous') }
+          ? { id: list[idx - 1].id, slug: list[idx - 1].slug, name: list[idx - 1].profiles?.full_name ?? tFighters('fighters.manualProfile.previous') }
           : null;
         const next = idx < list.length - 1
-          ? { id: list[idx + 1].id, name: list[idx + 1].profiles?.full_name ?? tFighters('fighters.manualProfile.next') }
+          ? { id: list[idx + 1].id, slug: list[idx + 1].slug, name: list[idx + 1].profiles?.full_name ?? tFighters('fighters.manualProfile.next') }
           : null;
         setNeighbors({ prev, next });
       });
     return () => { cancelled = true; };
-  }, [id, tFighters]);
+  }, [fighter?.id, id, tFighters]);
 
   const handleSendRequest = async () => {
     if (!profile || !fighter || !modalEventId) return;
@@ -238,7 +242,7 @@ export default function FighterDetailPage() {
         {!profile && (
           <div className="mt-6 border border-dashed border-zinc-200 p-6 text-center">
             <p className="text-sm text-zinc-500">
-              <Link href={`/register?account=spectator&next=${encodeURIComponent(`/fighters/${fighter.id}`)}`} className="font-semibold" style={{ color:'#C0001E' }}>
+              <Link href={`/register?account=spectator&next=${encodeURIComponent(fighterPublicPath(fighter))}`} className="font-semibold" style={{ color:'#C0001E' }}>
                 {t('spectator.createAccount')}
               </Link>{' '}
               {t('spectator.createAccountTail')}{' '}
@@ -254,7 +258,7 @@ export default function FighterDetailPage() {
           <nav className="mt-10 pt-6 border-t border-zinc-200 grid grid-cols-2 gap-3">
             {neighbors.prev ? (
               <Link
-                href={`/fighters/${neighbors.prev.id}`}
+                href={fighterPublicPath(neighbors.prev)}
                 className="group flex flex-col items-start gap-1 p-4 border border-zinc-200 hover:border-[#C0001E] transition-colors"
               >
                 <span className="text-xs font-bold uppercase tracking-widest text-zinc-400 group-hover:text-[#C0001E]">← {tFighters('fighters.manualProfile.previous')}</span>
@@ -263,7 +267,7 @@ export default function FighterDetailPage() {
             ) : <span />}
             {neighbors.next ? (
               <Link
-                href={`/fighters/${neighbors.next.id}`}
+                href={fighterPublicPath(neighbors.next)}
                 className="group flex flex-col items-end gap-1 p-4 border border-zinc-200 hover:border-[#C0001E] transition-colors text-right"
               >
                 <span className="text-xs font-bold uppercase tracking-widest text-zinc-400 group-hover:text-[#C0001E]">{tFighters('fighters.manualProfile.next')} →</span>

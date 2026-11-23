@@ -5,12 +5,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BoutMethodText } from '@/components/CombatRecord';
 import { formatCalendarDate } from '@/lib/calendarDate';
+import { eventPublicPath } from '@/lib/publicUrls';
 import { adminService } from '@/services/adminService';
 import type { Bout } from '@/types';
 import type { MatchWithContext } from '@/services/matchService';
 
 type AdminBout = Bout & {
-  events?: { id: string; event_name: string } | null;
+  events?: { id: string; slug?: string | null; event_name: string } | null;
   event_mats?: { name: string; mat_number: number } | null;
 };
 
@@ -156,7 +157,7 @@ function MatchList({ matches }: { matches: MatchWithContext[] }) {
           <tbody className="divide-y divide-zinc-100">
             {matches.map((match) => (
               <tr key={match.id}>
-                <td className="whitespace-nowrap px-4 py-3"><EventLink id={match.events?.id} name={match.events?.event_name} /></td>
+                <td className="whitespace-nowrap px-4 py-3"><EventLink event={match.events} /></td>
                 <td className="px-4 py-3 font-medium text-zinc-900">{fighterNames(match)}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-zinc-600">{t('admin.matchesPage.stateLine', { a: match.fighter_a_status, b: match.fighter_b_status })}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-zinc-600">{match.compatibility_score ?? '—'}</td>
@@ -175,7 +176,7 @@ function MatchCard({ match }: { match: MatchWithContext }) {
   const { t } = useTranslation('admin');
   return (
     <article className="border border-zinc-200 bg-white p-4">
-      <div className="flex items-start justify-between gap-3"><EventLink id={match.events?.id} name={match.events?.event_name} /><Status value={match.match_status} styles={MATCH_STATUS_STYLE} /></div>
+      <div className="flex items-start justify-between gap-3"><EventLink event={match.events} /><Status value={match.match_status} styles={MATCH_STATUS_STYLE} /></div>
       <p className="mt-3 font-bold text-zinc-900">{fighterNames(match)}</p>
       <p className="mt-1 text-xs text-zinc-500">{t('admin.matchesPage.stateLine', { a: match.fighter_a_status, b: match.fighter_b_status })} · {t('admin.matchesPage.compatibility')}: {match.compatibility_score ?? '—'}</p>
       <p className="mt-2 text-xs text-zinc-400">{formatDate(match.created_at)}</p>
@@ -207,7 +208,7 @@ function BoutList({ bouts }: { bouts: AdminBout[] }) {
             {bouts.map((bout) => (
               <tr key={bout.id}>
                 <td className="whitespace-nowrap px-4 py-3 font-bold text-zinc-900">{bout.bout_number ?? '—'}</td>
-                <td className="whitespace-nowrap px-4 py-3"><EventLink id={bout.events?.id} name={bout.events?.event_name} /></td>
+                <td className="whitespace-nowrap px-4 py-3"><EventLink event={bout.events} /></td>
                 <td className="px-4 py-3 font-medium text-zinc-900">{bout.fighter_a_snapshot.name} vs {bout.fighter_b_snapshot.name}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-zinc-600">{bout.event_mats ? `${bout.event_mats.mat_number}. ${bout.event_mats.name}` : '—'}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-zinc-600">{bout.discipline ?? '—'} · {bout.weight_class ?? '—'}</td>
@@ -235,7 +236,7 @@ function BoutCard({ bout }: { bout: AdminBout }) {
           {t('admin.matchesPage.method')}: <BoutMethodText value={bout.method} />
         </p>
       )}
-      <div className="mt-3"><EventLink id={bout.events?.id} name={bout.events?.event_name} /></div>
+      <div className="mt-3"><EventLink event={bout.events} /></div>
     </article>
   );
 }
@@ -245,8 +246,10 @@ function Status({ value, styles }: { value: string; styles: Record<string, strin
   return <span className={`inline-block whitespace-nowrap border px-2 py-1 text-xs font-bold uppercase tracking-wide ${styles[value] ?? 'border-zinc-200 bg-zinc-50 text-zinc-700'}`}>{formatStatus(value, t)}</span>;
 }
 
-function EventLink({ id, name }: { id?: string; name?: string }) {
-  return id ? <Link href={`/events/${id}`} className="font-medium text-zinc-800 underline">{name ?? 'Evento'}</Link> : <span className="text-zinc-500">{name ?? '—'}</span>;
+function EventLink({ event }: { event?: { id: string; slug?: string | null; event_name: string } | null }) {
+  return event
+    ? <Link href={eventPublicPath(event)} className="font-medium text-zinc-800 underline">{event.event_name || 'Evento'}</Link>
+    : <span className="text-zinc-500">—</span>;
 }
 
 function EmptyState({ text }: { text: string }) {
