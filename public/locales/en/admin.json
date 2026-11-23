@@ -313,6 +313,7 @@
     },
     "errors": {
       "generic": "Something went wrong. Please try again.",
+      "rosterVisibilityUpdateFailed": "The roster fighter's visibility could not be updated. Please try again.",
       "loadFailed": "Failed to load data."
     }
   }

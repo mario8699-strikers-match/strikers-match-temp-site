@@ -257,15 +257,31 @@ export const adminService = {
     isPublic: boolean,
   ): Promise<ServiceResponse<null>> {
     try {
-      const { error } = await supabase
-        .from('manual_fighters')
-        .update({ is_public: isPublic })
-        .eq('id', manualFighterId);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return { data: null, error: 'unauthorized' };
 
-      if (error) return { data: null, error: error.message };
+      const response = await fetch('/api/admin/fighters/visibility', {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ manualFighterId, isPublic }),
+      });
+      const payload = await response.json().catch(() => ({})) as {
+        updated?: boolean;
+        error?: string;
+      };
+      if (!response.ok || !payload.updated) {
+        console.error('[adminService.setManualFighterVisibility]', {
+          status: response.status,
+          error: payload.error,
+        });
+        return { data: null, error: payload.error ?? 'visibility_update_failed' };
+      }
       return { data: null, error: null };
     } catch {
-      return { data: null, error: 'An unexpected error occurred.' };
+      return { data: null, error: 'visibility_update_failed' };
     }
   },
 

@@ -313,6 +313,7 @@
     },
     "errors": {
       "generic": "Algo salió mal. Inténtalo de nuevo.",
+      "rosterVisibilityUpdateFailed": "No se pudo actualizar la visibilidad del atleta del roster. Inténtalo de nuevo.",
       "loadFailed": "Error al cargar datos."
     }
   }

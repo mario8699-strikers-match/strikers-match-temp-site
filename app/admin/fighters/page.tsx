@@ -124,7 +124,7 @@ export default function AdminFightersPage() {
       const isPublic = confirm.action === 'unhide';
       const result = await adminService.setManualFighterVisibility(confirm.manualFighterId, isPublic);
       if (result.error) {
-        setError(t('admin.errors.generic'));
+        setError(t('admin.errors.rosterVisibilityUpdateFailed'));
       } else {
         setManualFighters((current) => current.map((fighter) => (
           fighter.id === confirm.manualFighterId ? { ...fighter, is_public: isPublic } : fighter
