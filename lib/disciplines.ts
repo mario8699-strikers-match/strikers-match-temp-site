@@ -4,22 +4,29 @@ export const DISCIPLINE_OPTIONS: readonly string[] = [
   'MMA',
   'Kickboxing',
   'Karate',
-  'Judo',
   'Lucha Libre',
-  'Lima Lama',
-  'Jiu-Jitsu',
-  'Point Fight',
   'Bare Knuckle',
   'K1',
   'Light Contact',
-  'Kick Light',
   'Low Kick',
+];
+
+// Retain legacy values for existing athlete and event records. They are no
+// longer offered as platform categories for new profiles, filters, or events.
+const LEGACY_DISCIPLINE_OPTIONS: readonly string[] = [
+  'Judo',
+  'Lima Lama',
+  'Jiu-Jitsu',
+  'Point Fight',
+  'Kick Light',
   'Full Contact',
   'Otro',
 ];
 
+const ALL_DISCIPLINE_VALUES = [...DISCIPLINE_OPTIONS, ...LEGACY_DISCIPLINE_OPTIONS];
+
 const CANONICAL_DISCIPLINES = new Map(
-  DISCIPLINE_OPTIONS.map((discipline) => [discipline.toLocaleLowerCase(), discipline])
+  ALL_DISCIPLINE_VALUES.map((discipline) => [discipline.toLocaleLowerCase(), discipline])
 );
 
 const DISCIPLINE_I18N_KEYS: Readonly<Record<string, string>> = {
@@ -86,7 +93,7 @@ export function disciplineMatches(
 
 export function sortDisciplines(values: Iterable<string>): string[] {
   const canonicalOrder = new Map(
-    DISCIPLINE_OPTIONS.map((discipline, index) => [discipline.toLocaleLowerCase(), index])
+    ALL_DISCIPLINE_VALUES.map((discipline, index) => [discipline.toLocaleLowerCase(), index])
   );
 
   return normalizeDisciplineList(Array.from(values)).sort((disciplineA, disciplineB) => {

@@ -34,7 +34,6 @@ import {
   disciplineI18nKey,
   disciplineMatches,
   normalizeDisciplineList,
-  sortDisciplines,
 } from '@/lib/disciplines';
 import type { FighterWithProfile, ManualFighterWithCreator } from '@/types';
 import { countryFlagEmoji, getCountryName } from '@/lib/countries';
@@ -66,7 +65,8 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const selectedDisciplines = useMemo(
-    () => normalizeDisciplineList(searchParams.getAll('discipline')),
+    () => normalizeDisciplineList(searchParams.getAll('discipline'))
+      .filter((discipline) => DISCIPLINE_OPTIONS.includes(discipline)),
     [searchParams]
   );
   const selectedCountry = searchParams.get('country')?.toUpperCase() ?? '';
@@ -144,10 +144,7 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
     }
   };
 
-  const disciplineOptions = useMemo(() => sortDisciplines([
-    ...DISCIPLINE_OPTIONS,
-    ...entries.flatMap(entryDisciplines),
-  ]), [entries]);
+  const disciplineOptions = DISCIPLINE_OPTIONS;
 
   const countryOptions = useMemo(() => [...new Set(entries
     .map(entryCountryCode)
