@@ -39,6 +39,7 @@ import type { FighterWithProfile, ManualFighterWithCreator } from '@/types';
 import { countryFlagEmoji, getCountryName } from '@/lib/countries';
 import { fighterPublicPath, manualFighterPublicPath } from '@/lib/publicUrls';
 import { fighterWeightClassI18nKey } from '@/lib/fighterDisplay';
+import { getSocialMediaDisplayValue } from '@/lib/socialMedia';
 
 const PAGE_SIZE = 12;
 
@@ -400,6 +401,8 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
               const countryCode = entryCountryCode(entry);
               const countryName = countryCode ? getCountryName(countryCode, i18n.resolvedLanguage) : '';
               const location = [countryName, city].filter(Boolean).join(', ');
+              const instagram = isManual ? entry.data.instagram : entry.data.profiles?.instagram;
+              const instagramHandle = instagram ? getSocialMediaDisplayValue(instagram) : '';
               const gymName = entry.data.gym_name;
               const localizedWeightClass = weightClassKey
                 ? t(`events:events.weightClasses.${weightClassKey}`, { defaultValue: weightClass ?? '' })
@@ -457,6 +460,12 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                           )}
                         </div>
                         <p className="mt-2 text-sm text-zinc-400">{location || t('fighters.countryFilter.unspecified')}</p>
+                        {instagramHandle && (
+                          <p className="mt-2 inline-flex items-center gap-2 text-sm font-bold text-zinc-200" aria-label={`Instagram ${instagramHandle}`}>
+                            <InstagramMark />
+                            <span>{instagramHandle}</span>
+                          </p>
+                        )}
                       </div>
 
                       <div className="flex shrink-0 flex-col items-center gap-2 self-start sm:self-auto">
@@ -557,6 +566,16 @@ function SearchIcon() {
     <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400">
       <circle cx="11" cy="11" r="6.5" />
       <path d="m16 16 4 4" />
+    </svg>
+  );
+}
+
+function InstagramMark() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4 text-[#F01835]">
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
     </svg>
   );
 }
