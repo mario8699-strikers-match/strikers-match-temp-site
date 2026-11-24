@@ -6,7 +6,6 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import type { IconType } from 'react-icons';
 import {
-  GiBelt,
   GiBlackBelt,
   GiBootKick,
   GiBoxingGlove,
@@ -16,6 +15,7 @@ import {
   GiHighKick,
   GiHighPunch,
   GiKimono,
+  GiKneeling,
   GiLeg,
   GiPunch,
   GiPunchBlast,
@@ -616,7 +616,7 @@ const DISCIPLINE_ICONS: Record<string, IconType> = {
   judo: GiKimono,
   wrestling: GiConfrontation,
   limaLama: GiBlackBelt,
-  jiuJitsu: GiBelt,
+  jiuJitsu: GiKneeling,
   pointFight: GiHighPunch,
   bareKnuckle: GiFist,
   k1: GiPunchBlast,
