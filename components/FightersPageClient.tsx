@@ -493,7 +493,13 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                       </div>
 
                       <div className="border-y border-white/10 py-4 text-center lg:border-x lg:border-y-0 lg:px-5 lg:py-2">
-                        <p className="font-display text-3xl font-black tracking-wide text-amber-400">{wins}–{losses}–{draws}</p>
+                        <p className="flex items-center justify-center gap-1 font-display text-3xl font-black tracking-wide" aria-label={`${wins}-${losses}-${draws}`}>
+                          <span className="text-emerald-400">{wins}</span>
+                          <span className="text-zinc-600" aria-hidden="true">–</span>
+                          <span className="text-red-500">{losses}</span>
+                          <span className="text-zinc-600" aria-hidden="true">–</span>
+                          <span className="text-blue-500">{draws}</span>
+                        </p>
                         <p className="mt-1 text-xs font-bold uppercase tracking-[0.16em] text-zinc-500">{t('fighters.card.record')}</p>
                       </div>
 
