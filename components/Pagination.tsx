@@ -7,6 +7,7 @@ interface PaginationProps {
   labels?: { prev?: string; next?: string };
   className?: string;
   scrollToTop?: boolean;
+  variant?: 'light' | 'dark';
 }
 
 function getPageWindow(page: number, totalPages: number): (number | 'ellipsis')[] {
@@ -29,7 +30,7 @@ function getPageWindow(page: number, totalPages: number): (number | 'ellipsis')[
   return pages;
 }
 
-export function Pagination({ page, totalPages, onPageChange, labels, className, scrollToTop = true }: PaginationProps) {
+export function Pagination({ page, totalPages, onPageChange, labels, className, scrollToTop = true, variant = 'light' }: PaginationProps) {
   if (totalPages <= 1) return null;
 
   const prevLabel = labels?.prev ?? 'Anterior';
@@ -53,7 +54,9 @@ export function Pagination({ page, totalPages, onPageChange, labels, className, 
         type="button"
         onClick={() => handleClick(page - 1)}
         disabled={page === 1}
-        className="px-3 py-2 text-xs sm:text-sm font-medium border border-zinc-300 text-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-zinc-50 transition-colors"
+        className={`border px-3 py-2 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 sm:text-sm ${variant === 'dark'
+          ? 'border-white/15 bg-zinc-900 text-zinc-300 hover:border-[#C0001E] hover:text-white'
+          : 'border-zinc-300 text-zinc-700 hover:bg-zinc-50'}`}
       >
         {prevLabel}
       </button>
@@ -62,7 +65,7 @@ export function Pagination({ page, totalPages, onPageChange, labels, className, 
         p === 'ellipsis' ? (
           <span
             key={`e-${idx}`}
-            className="px-2 py-2 text-xs sm:text-sm text-zinc-400 select-none"
+            className={`select-none px-2 py-2 text-xs sm:text-sm ${variant === 'dark' ? 'text-zinc-600' : 'text-zinc-400'}`}
             aria-hidden="true"
           >
             …
@@ -76,7 +79,9 @@ export function Pagination({ page, totalPages, onPageChange, labels, className, 
             className={`min-w-[2.25rem] px-3 py-2 text-xs sm:text-sm font-medium border transition-colors ${
               p === page
                 ? 'bg-[#C0001E] border-[#C0001E] text-white'
-                : 'bg-white border-zinc-300 text-zinc-700 hover:bg-zinc-50'
+                : variant === 'dark'
+                  ? 'border-white/15 bg-zinc-900 text-zinc-300 hover:border-[#C0001E] hover:text-white'
+                  : 'bg-white border-zinc-300 text-zinc-700 hover:bg-zinc-50'
             }`}
           >
             {p}
@@ -88,7 +93,9 @@ export function Pagination({ page, totalPages, onPageChange, labels, className, 
         type="button"
         onClick={() => handleClick(page + 1)}
         disabled={page === totalPages}
-        className="px-3 py-2 text-xs sm:text-sm font-medium border border-zinc-300 text-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-zinc-50 transition-colors"
+        className={`border px-3 py-2 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 sm:text-sm ${variant === 'dark'
+          ? 'border-white/15 bg-zinc-900 text-zinc-300 hover:border-[#C0001E] hover:text-white'
+          : 'border-zinc-300 text-zinc-700 hover:bg-zinc-50'}`}
       >
         {nextLabel}
       </button>

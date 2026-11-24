@@ -24,13 +24,11 @@ import {
 } from 'react-icons/gi';
 import { MdSportsMartialArts, MdSportsMma } from 'react-icons/md';
 import { fighterService } from '@/services/fighterService';
-import { fighterFollowService } from '@/services/fighterFollowService';
 import { manualFighterService } from '@/services/manualFighterService';
 import { supabase } from '@/lib/supabaseClient';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Pagination } from '@/components/Pagination';
-import { RecordValue } from '@/components/CombatRecord';
 import {
   DISCIPLINE_OPTIONS,
   disciplineI18nKey,
@@ -67,7 +65,6 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
   const [searchDraft, setSearchDraft] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
-  const [followerCounts, setFollowerCounts] = useState<Record<string, number>>({});
   const selectedDisciplines = useMemo(
     () => normalizeDisciplineList(searchParams.getAll('discipline')),
     [searchParams]
@@ -200,27 +197,6 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
     () => filteredEntries.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
     [filteredEntries, page]
   );
-  const pageRegisteredFighterIds = useMemo(
-    () => pageEntries
-      .filter((entry): entry is { kind: 'registered'; data: FighterWithProfile } => entry.kind === 'registered')
-      .map((entry) => entry.data.id),
-    [pageEntries]
-  );
-  const pageRegisteredFighterIdsKey = pageRegisteredFighterIds.join(',');
-
-  useEffect(() => {
-    if (!pageRegisteredFighterIdsKey) return;
-    let cancelled = false;
-
-    fighterFollowService.getFollowerCounts(pageRegisteredFighterIds).then(({ data }) => {
-      if (!cancelled && data) {
-        setFollowerCounts((current) => ({ ...current, ...data }));
-      }
-    });
-
-    return () => { cancelled = true; };
-  }, [pageRegisteredFighterIds, pageRegisteredFighterIdsKey]);
-
   const runSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setPage(1);
@@ -248,7 +224,7 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
   };
 
   return (
-    <div className="min-h-screen bg-white font-sans flex flex-col">
+    <div className="min-h-screen bg-zinc-950 font-sans flex flex-col">
       <Navbar activePage="fighters" />
 
       <main className="flex-1">
@@ -390,17 +366,17 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
           </div>
         </section>
 
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-7xl bg-zinc-950 px-4 py-12 sm:px-6 lg:px-8">
 
         {loading ? (
-          <div className="py-24 text-center text-zinc-400 text-sm">{t('fighters.loading')}</div>
+          <div className="border border-white/10 bg-zinc-900/60 py-24 text-center text-sm text-zinc-400">{t('fighters.loading')}</div>
         ) : filteredEntries.length === 0 ? (
-          <div className="py-24 text-center border border-dashed border-zinc-200">
-            <p className="text-zinc-500 text-sm">{searchQuery ? t('fighters.search.empty') : t('fighters.empty')}</p>
+          <div className="border border-dashed border-white/15 bg-zinc-900/40 py-24 text-center">
+            <p className="text-sm text-zinc-400">{searchQuery ? t('fighters.search.empty') : t('fighters.empty')}</p>
           </div>
         ) : (
           <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-4">
             {pageEntries.map((entry, index) => {
               const isManual = entry.kind === 'manual';
               const name = isManual
@@ -409,7 +385,6 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
               const city = isManual
                 ? entry.data.city
                 : entry.data.profiles?.city;
-              const age = entry.data.age ?? null;
               const verified = !isManual && entry.data.verified;
               const weightClass = entry.data.weight_class;
               const disciplines = entryDisciplines(entry);
@@ -417,156 +392,130 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
               const wins = entry.data.record_wins ?? 0;
               const losses = entry.data.record_losses ?? 0;
               const draws = entry.data.record_draws ?? 0;
-              const isAvailable = isManual
-                ? entry.data.is_available
-                : entry.data.is_available;
-              const followers = isManual ? null : (followerCounts[entry.data.id] ?? 0);
+              const isAvailable = entry.data.is_available;
               const photoUrl = entry.data.photo_url;
               const exactWeight = entry.data.exact_weight;
               const heightCm = entry.data.height_cm;
               const willingToTravel = entry.data.available_to_travel_internationally === true;
-              const koTkoWins = (entry.data.ko_wins ?? 0) + (entry.data.tko_wins ?? 0);
-              const skillRating = entry.data.skill_rating;
               const weightClassKey = fighterWeightClassI18nKey(weightClass);
-              const rulesets = entry.data.preferred_rulesets ?? [];
               const initials = getInitials(name);
               const nationalityCode = entry.data.nationalities?.[0];
               const countryCode = entryCountryCode(entry);
+              const countryName = countryCode ? getCountryName(countryCode, i18n.resolvedLanguage) : '';
+              const location = [countryName, city].filter(Boolean).join(', ');
+              const gymName = entry.data.gym_name;
+              const localizedWeightClass = weightClassKey
+                ? t(`events:events.weightClasses.${weightClassKey}`, { defaultValue: weightClass ?? '' })
+                : weightClass;
               const previousCountryCode = index > 0 ? entryCountryCode(pageEntries[index - 1]) : null;
 
               return (
                 <Fragment key={`${entry.kind}-${entry.data.id}`}>
                 {countryCode !== previousCountryCode && (
-                  <div className="border-b-2 border-zinc-900 pb-2 sm:col-span-2 lg:col-span-3">
-                    <h2 className="font-display text-2xl font-black uppercase text-zinc-950">
+                  <div className="border-b border-white/15 pb-3 pt-4">
+                    <h2 className="font-display text-2xl font-black uppercase tracking-wide text-white">
                       {countryCode
                         ? `${countryFlagEmoji(countryCode)} ${getCountryName(countryCode, i18n.resolvedLanguage)}`
                         : t('fighters.countryFilter.unspecified')}
                     </h2>
                   </div>
                 )}
-                <div
-                  className="border border-zinc-200 bg-white hover:border-[#C0001E] transition-colors group cursor-pointer overflow-hidden"
+                <button
+                  type="button"
+                  className="group grid w-full overflow-hidden border border-white/10 bg-[#101012] text-left text-white shadow-[0_18px_50px_rgba(0,0,0,0.22)] transition-all hover:-translate-y-0.5 hover:border-[#C0001E] hover:shadow-[0_20px_60px_rgba(192,0,30,0.16)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C0001E] sm:grid-cols-[210px_minmax(0,1fr)]"
                   onClick={() => goTo(entry)}
                 >
-                  <div className="aspect-[4/3] w-full bg-zinc-100">
+                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-zinc-900 sm:aspect-auto sm:min-h-[250px]">
                     {photoUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={photoUrl} alt={name} className="h-full w-full object-cover" />
+                      <img src={photoUrl} alt={name} className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]" />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-zinc-100">
-                        <span className="text-4xl font-black uppercase text-zinc-400">{initials}</span>
+                      <div className="flex h-full min-h-[230px] w-full items-center justify-center bg-[radial-gradient(circle_at_top,#2b2b2f_0%,#111113_65%,#080808_100%)]">
+                        <span className="font-display text-5xl font-black uppercase text-white/25">{initials}</span>
+                      </div>
+                    )}
+                    {(nationalityCode || countryCode) && (
+                      <span className="absolute bottom-3 right-3 bg-black/75 px-2.5 py-1.5 text-xl shadow-lg" aria-hidden="true">
+                        {countryFlagEmoji(nationalityCode || countryCode)}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 p-5 sm:p-6">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-display text-2xl font-black uppercase leading-none text-white transition-colors group-hover:text-[#F01835] sm:text-3xl">
+                            {name}
+                          </h3>
+                          {verified && (
+                            <span className="inline-flex items-center gap-1 bg-emerald-500/10 px-2 py-1 text-xs font-bold text-emerald-400">
+                              <span aria-hidden="true">✓</span>{t('fighters.verified')}
+                            </span>
+                          )}
+                          {isManual && (
+                            <span className="border border-amber-400/30 bg-amber-400/10 px-2 py-1 text-xs font-bold uppercase tracking-wide text-amber-300">
+                              {t('fighters.roster_badge')}
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-2 text-sm text-zinc-400">{location || t('fighters.countryFilter.unspecified')}</p>
+                      </div>
+
+                      <span className={`inline-flex w-fit items-center gap-2 text-sm font-bold ${isAvailable ? 'text-emerald-400' : 'text-zinc-500'}`}>
+                        <span className={`h-2.5 w-2.5 rounded-full ${isAvailable ? 'bg-emerald-400 shadow-[0_0_12px_rgba(74,222,128,0.65)]' : 'bg-zinc-600'}`} aria-hidden="true" />
+                        {isAvailable ? t('fighters.available') : t('fighters.unavailable')}
+                      </span>
+                    </div>
+
+                    <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_150px_minmax(150px,0.8fr)] lg:items-center">
+                      <div className="flex min-w-0 flex-wrap gap-2">
+                        {disciplines.map((discipline) => {
+                          const translationKey = disciplineI18nKey(discipline);
+                          return (
+                            <span key={discipline} className="bg-zinc-800 px-3 py-2 text-xs font-black uppercase tracking-wide text-white">
+                              {translationKey ? t(`fighters.disciplines.${translationKey}`, { defaultValue: discipline }) : discipline}
+                            </span>
+                          );
+                        })}
+                        {localizedWeightClass && (
+                          <span className="border border-white/10 bg-zinc-900 px-3 py-2 text-xs font-bold text-zinc-200">{localizedWeightClass}</span>
+                        )}
+                        {exactWeight != null && (
+                          <span className="border border-white/10 bg-zinc-900 px-3 py-2 text-xs font-bold text-zinc-200">{exactWeight} kg</span>
+                        )}
+                        {heightCm != null && (
+                          <span className="border border-white/10 bg-zinc-900 px-3 py-2 text-xs font-bold text-zinc-200">{heightCm} cm</span>
+                        )}
+                        <span className={`px-3 py-2 text-xs font-black uppercase tracking-wide ${experience === 'pro' ? 'bg-[#C0001E] text-white' : 'bg-white/10 text-zinc-300'}`}>
+                          {experience === 'pro' ? t('fighters.profile.pro') : t('fighters.profile.amateur')}
+                        </span>
+                      </div>
+
+                      <div className="border-y border-white/10 py-4 text-center lg:border-x lg:border-y-0 lg:px-5 lg:py-2">
+                        <p className="font-display text-3xl font-black tracking-wide text-amber-400">{wins}–{losses}–{draws}</p>
+                        <p className="mt-1 text-xs font-bold uppercase tracking-[0.16em] text-zinc-500">{t('fighters.card.record')}</p>
+                      </div>
+
+                      <div className="min-w-0 lg:px-4 lg:text-center">
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-zinc-500">{t('fighters.card.club')}</p>
+                        <p className="mt-2 break-words text-sm font-bold text-zinc-200">{gymName || '—'}</p>
+                      </div>
+                    </div>
+
+                    {willingToTravel && (
+                      <div className="mt-5 inline-flex items-center gap-2 border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-xs font-bold text-emerald-300">
+                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[10px] text-zinc-950" aria-hidden="true">✓</span>
+                        <span>{t('fighters.card.willingToTravel')}</span>
                       </div>
                     )}
                   </div>
-
-                  <div className="p-6">
-                  {/* Name + verified/roster badge */}
-                  <div className="flex items-start justify-between mb-3 gap-2">
-                    <div>
-                      <h2 className="font-display font-black uppercase leading-none text-2xl group-hover:text-[#C0001E] transition-colors" style={{ color: '#0A0A0A' }}>
-                        {nationalityCode && <span className="mr-2" aria-hidden="true">{countryFlagEmoji(nationalityCode)}</span>}
-                        {name}
-                      </h2>
-                    </div>
-                    {isManual ? (
-                      <span className="inline-flex items-center text-xs font-bold uppercase tracking-widest text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5">
-                        {t('fighters.roster_badge')}
-                      </span>
-                    ) : verified && (
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5">
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        {t('fighters.verified')}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Stats */}
-                  <div className="grid grid-cols-3 gap-2 mb-4 text-center">
-                    <div className="bg-zinc-50 py-2">
-                      <p className="text-lg font-bold"><RecordValue part="wins" value={wins} /></p>
-                      <p className="text-xs text-zinc-500">{t('fighters.wins')}</p>
-                    </div>
-                    <div className="bg-zinc-50 py-2">
-                      <p className="text-lg font-bold"><RecordValue part="losses" value={losses} /></p>
-                      <p className="text-xs text-zinc-500">{t('fighters.losses')}</p>
-                    </div>
-                    <div className="bg-zinc-50 py-2">
-                      <p className="text-lg font-bold"><RecordValue part="draws" value={draws} /></p>
-                      <p className="text-xs text-zinc-500">{t('fighters.draws')}</p>
-                    </div>
-                  </div>
-
-                  <dl className="mb-4 grid grid-cols-3 divide-x divide-zinc-200 border-y border-zinc-200 py-3 text-center">
-                    <div className="min-w-0 px-2">
-                      <dt className="text-[10px] font-bold uppercase tracking-wide text-zinc-400">{t('fighters.card.city')}</dt>
-                      <dd className="mt-1 truncate text-xs font-semibold text-zinc-800" title={city ?? undefined}>{city ?? '—'}</dd>
-                    </div>
-                    <div className="min-w-0 px-2">
-                      <dt className="text-[10px] font-bold uppercase tracking-wide text-zinc-400">{t('fighters.card.height')}</dt>
-                      <dd className="mt-1 text-xs font-semibold text-zinc-800">{heightCm != null ? `${heightCm} cm` : '—'}</dd>
-                    </div>
-                    <div className="min-w-0 px-2">
-                      <dt className="text-[10px] font-bold uppercase tracking-wide text-zinc-400">{t('fighters.card.weight')}</dt>
-                      <dd className="mt-1 text-xs font-semibold text-zinc-800">{exactWeight != null ? `${exactWeight} kg` : '—'}</dd>
-                    </div>
-                  </dl>
-
-                  {willingToTravel && (
-                    <div className="mb-4 flex items-center gap-2 border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">
-                      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-600 text-[10px] text-white" aria-hidden="true">✓</span>
-                      <span>{t('fighters.card.willingToTravel')}</span>
-                    </div>
-                  )}
-
-                  {/* Meta */}
-                  <div className="flex flex-wrap gap-2">
-                    {age !== null && (
-                      <span className="text-xs bg-zinc-100 text-zinc-700 px-2 py-1">
-                        {t('fighters.age')}: {age}
-                      </span>
-                    )}
-                    {weightClass && (
-                      <span className="text-xs bg-zinc-100 text-zinc-700 px-2 py-1">
-                        {weightClassKey
-                          ? t(`events:events.weightClasses.${weightClassKey}`, { defaultValue: weightClass })
-                          : weightClass}
-                      </span>
-                    )}
-                    {skillRating != null && <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">{t('fighters.skillLevel')} {skillRating}/10</span>}
-                    <span className="text-xs bg-zinc-100 px-2 py-1 text-zinc-700">KO/TKO {koTkoWins}</span>
-                    {rulesets.map((ruleset) => <span key={ruleset} className="text-xs border border-zinc-200 px-2 py-1 text-zinc-700">{ruleset}</span>)}
-                    {followers !== null && (
-                      <span className="text-xs bg-zinc-100 text-zinc-700 px-2 py-1">
-                        {followers} {followers === 1 ? t('fighters.follower') : t('fighters.followers')}
-                      </span>
-                    )}
-                    {disciplines.map((discipline) => {
-                      const translationKey = disciplineI18nKey(discipline);
-                      return (
-                        <span key={discipline} className="text-xs font-bold px-2 py-1 uppercase tracking-wide bg-[#0A0A0A] text-white">
-                          {translationKey
-                            ? t(`fighters.disciplines.${translationKey}`, { defaultValue: discipline })
-                            : discipline}
-                        </span>
-                      );
-                    })}
-                    <span className={`text-xs font-bold px-2 py-1 uppercase tracking-widest ${experience === 'pro' ? 'bg-[#C0001E] text-white' : 'bg-zinc-100 text-zinc-600'}`}>
-                      {experience === 'pro' ? t('fighters.profile.pro') : t('fighters.profile.amateur')}
-                    </span>
-                    <span className={`text-xs px-2 py-1 ${isAvailable ? 'bg-emerald-50 text-emerald-700' : 'bg-zinc-100 text-zinc-500'}`}>
-                      {isAvailable ? t('fighters.available') : t('fighters.unavailable')}
-                    </span>
-                  </div>
-                  </div>
-                </div>
+                </button>
                 </Fragment>
               );
             })}
           </div>
-          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} variant="dark" />
           </>
         )}
         </div>
