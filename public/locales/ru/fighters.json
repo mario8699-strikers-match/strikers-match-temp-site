@@ -23,7 +23,8 @@
       "weight": "Вес",
       "record": "Рекорд",
       "club": "Клуб / команда",
-      "willingToTravel": "Готов к международным поездкам"
+      "willingToTravel": "Готов к международным поездкам",
+      "proBadge": "Профессиональный боец"
     },
     "disciplines": {
       "boxing": "Бокс",

@@ -17,7 +17,7 @@
     "skillLevel": "Level",
     "requestedWeight": "Desired weight (informational)",
     "weightRange": "Range",
-    "card": { "city": "City", "height": "Height", "weight": "Weight", "record": "Record", "club": "Club / team", "willingToTravel": "Willing to travel internationally" },
+    "card": { "city": "City", "height": "Height", "weight": "Weight", "record": "Record", "club": "Club / team", "willingToTravel": "Willing to travel internationally", "proBadge": "Professional fighter" },
     "disciplines": {
       "boxing": "Boxing",
       "muayThai": "Muay Thai",

@@ -431,6 +431,23 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                         <span className="font-display text-5xl font-black uppercase text-white/25">{initials}</span>
                       </div>
                     )}
+                    {experience === 'pro' && (
+                      <span
+                        className="absolute right-3 top-0 z-10 drop-shadow-[0_8px_14px_rgba(0,0,0,0.55)]"
+                        role="img"
+                        aria-label={t('fighters.card.proBadge')}
+                        title={t('fighters.card.proBadge')}
+                      >
+                        <span
+                          className="flex h-[78px] w-[68px] flex-col items-center justify-center border-x border-b border-white/30 bg-[#C0001E] text-center text-white"
+                          style={{ clipPath: 'polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%)' }}
+                        >
+                          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/75">Strikers</span>
+                          <span className="font-display text-2xl font-black uppercase leading-none tracking-wide">PRO</span>
+                          <span className="mt-1 text-[8px] font-bold uppercase tracking-[0.18em] text-white/80">Fighter</span>
+                        </span>
+                      </span>
+                    )}
                     {(nationalityCode || countryCode) && (
                       <span className="absolute bottom-3 right-3 bg-black/75 px-2.5 py-1.5 text-xl shadow-lg" aria-hidden="true">
                         {countryFlagEmoji(nationalityCode || countryCode)}
