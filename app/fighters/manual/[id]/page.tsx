@@ -74,13 +74,13 @@ export default function ManualFighterDetailPage() {
     }
   };
 
-  if (loading) return <div className="min-h-screen bg-[#08090B] flex items-center justify-center"><p className="text-sm text-zinc-400">{t('fighters.manualProfile.loading')}</p></div>;
+  if (loading) return <div className="min-h-screen bg-white flex items-center justify-center"><p className="text-sm" style={{ color:'#9A9A9A' }}>{t('fighters.manualProfile.loading')}</p></div>;
 
   if (!fighter) {
     return (
-      <div className="min-h-screen bg-[#08090B] flex flex-col">
+      <div className="min-h-screen bg-white flex flex-col">
         <Navbar activePage="fighters" />
-        <main className="flex-1 flex items-center justify-center"><p className="text-sm text-zinc-400">{t('fighters.manualProfile.notFound')}</p></main>
+        <main className="flex-1 flex items-center justify-center"><p className="text-sm text-zinc-500">{t('fighters.manualProfile.notFound')}</p></main>
         <Footer />
       </div>
     );
@@ -94,15 +94,12 @@ export default function ManualFighterDetailPage() {
   const weight = getPublicWeightDisplay(fighter.weight_class, fighter.exact_weight);
 
   return (
-    <div
-      className="min-h-screen bg-[#08090B] flex flex-col"
-      style={{ backgroundImage: 'radial-gradient(circle at 50% 0%, rgba(192, 0, 30, 0.16), transparent 34rem)' }}
-    >
+    <div className="min-h-screen bg-white flex flex-col">
       <Navbar activePage="fighters" />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6">
         <Link
           href="/fighters"
-          className="mb-8 inline-flex min-h-11 items-center border border-white/20 bg-white/5 px-4 py-3 text-xs font-bold uppercase tracking-widest text-zinc-200 transition-colors hover:border-white/50 hover:bg-white/10 hover:text-white"
+          className="mb-8 inline-flex min-h-11 items-center border border-zinc-300 px-4 py-3 text-xs font-bold uppercase tracking-widest text-zinc-700 transition-colors hover:border-zinc-950 hover:text-zinc-950"
         >
           ← {t('fighters.manualProfile.backToFighters')}
         </Link>
@@ -126,7 +123,7 @@ export default function ManualFighterDetailPage() {
         />
 
         {/* Roster notice */}
-        <div className="mb-6 mt-6 border border-amber-200 bg-amber-50 p-4">
+        <div className="mb-6 mt-6 border border-amber-200 bg-amber-50/50 p-4">
           <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#92400E' }}>{t('fighters.manualProfile.accountlessTitle')}</p>
           <p className="text-sm" style={{ color:'#5A5A5A' }}>
             {t('fighters.manualProfile.noticeStart')} {t(`fighters.manualProfile.roles.${creatorRole}`, { defaultValue: t('fighters.manualProfile.roles.manager') })}
@@ -145,7 +142,7 @@ export default function ManualFighterDetailPage() {
           </div>
         )}
         {!profile && (
-          <div className="mt-6 border border-dashed border-zinc-200 bg-white p-6 text-center">
+          <div className="mt-6 border border-dashed border-zinc-200 p-6 text-center">
             <p className="text-sm text-zinc-500"><a href="/login" className="font-semibold" style={{ color:'#C0001E' }}>{t('fighters.manualProfile.signIn')}</a> {t('fighters.manualProfile.signInTail')}</p>
           </div>
         )}
