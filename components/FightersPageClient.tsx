@@ -17,12 +17,12 @@ import {
   GiKimono,
   GiKneeling,
   GiLeg,
+  GiNinjaArmor,
   GiPunch,
   GiPunchBlast,
   GiPunchingBag,
 } from 'react-icons/gi';
 import { MdSportsMartialArts, MdSportsMma } from 'react-icons/md';
-import { TbKarate } from 'react-icons/tb';
 import { fighterService } from '@/services/fighterService';
 import { fighterFollowService } from '@/services/fighterFollowService';
 import { manualFighterService } from '@/services/manualFighterService';
@@ -612,7 +612,7 @@ const DISCIPLINE_ICONS: Record<string, IconType> = {
   muayThai: GiPunchingBag,
   mma: MdSportsMma,
   kickboxing: GiHighKick,
-  karate: TbKarate,
+  karate: GiNinjaArmor,
   judo: GiKimono,
   wrestling: GiConfrontation,
   limaLama: GiBlackBelt,
