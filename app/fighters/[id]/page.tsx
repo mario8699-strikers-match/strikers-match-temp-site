@@ -152,13 +152,13 @@ export default function FighterDetailPage() {
     setIsFollowing((value) => !value);
   };
 
-  if (loading) return <div className="min-h-screen bg-white flex items-center justify-center"><p className="text-sm" style={{ color:'#9A9A9A' }}>{tFighters('fighters.manualProfile.loading')}</p></div>;
+  if (loading) return <div className="min-h-screen bg-[#08090B] flex items-center justify-center"><p className="text-sm text-zinc-400">{tFighters('fighters.manualProfile.loading')}</p></div>;
 
   if (!fighter) {
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-[#08090B] flex flex-col">
         <Navbar activePage="fighters" />
-        <main className="flex-1 flex items-center justify-center"><p className="text-sm text-zinc-500">{tFighters('fighters.manualProfile.notFound')}</p></main>
+        <main className="flex-1 flex items-center justify-center"><p className="text-sm text-zinc-400">{tFighters('fighters.manualProfile.notFound')}</p></main>
         <Footer />
       </div>
     );
@@ -170,14 +170,17 @@ export default function FighterDetailPage() {
   const weight = getPublicWeightDisplay(fighter.weight_class, fighter.exact_weight);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div
+      className="min-h-screen bg-[#08090B] flex flex-col"
+      style={{ backgroundImage: 'radial-gradient(circle at 50% 0%, rgba(192, 0, 30, 0.16), transparent 34rem)' }}
+    >
       <Navbar activePage="fighters" />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6">
 
         {/* Back to list */}
         <Link
           href="/fighters"
-          className="inline-flex items-center gap-1.5 mb-6 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-[#C0001E] transition-colors"
+          className="inline-flex items-center gap-1.5 mb-6 text-xs font-bold uppercase tracking-widest text-zinc-300 hover:text-white transition-colors"
         >
           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
           {tFighters('fighters.manualProfile.backToFighters')}
@@ -203,7 +206,7 @@ export default function FighterDetailPage() {
 
         {/* CTA */}
         {profile?.role === 'spectator' && (
-          <div className="mb-6 mt-6 border border-zinc-200 p-5">
+          <div className="mb-6 mt-6 border border-zinc-200 bg-white p-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-[#C0001E]">
@@ -242,7 +245,7 @@ export default function FighterDetailPage() {
           </div>
         )}
         {!profile && (
-          <div className="mt-6 border border-dashed border-zinc-200 p-6 text-center">
+          <div className="mt-6 border border-dashed border-zinc-200 bg-white p-6 text-center">
             <p className="text-sm text-zinc-500">
               <Link href={`/register?account=spectator&next=${encodeURIComponent(fighterPublicPath(fighter))}`} className="font-semibold" style={{ color:'#C0001E' }}>
                 {t('spectator.createAccount')}
@@ -257,11 +260,11 @@ export default function FighterDetailPage() {
 
         {/* Prev / Next navigation */}
         {(neighbors.prev || neighbors.next) && (
-          <nav className="mt-10 pt-6 border-t border-zinc-200 grid grid-cols-2 gap-3">
+          <nav className="mt-10 pt-6 border-t border-white/15 grid grid-cols-2 gap-3">
             {neighbors.prev ? (
               <Link
                 href={fighterPublicPath(neighbors.prev)}
-                className="group flex flex-col items-start gap-1 p-4 border border-zinc-200 hover:border-[#C0001E] transition-colors"
+                className="group flex flex-col items-start gap-1 border border-zinc-200 bg-white p-4 hover:border-[#C0001E] transition-colors"
               >
                 <span className="text-xs font-bold uppercase tracking-widest text-zinc-400 group-hover:text-[#C0001E]">← {tFighters('fighters.manualProfile.previous')}</span>
                 <span className="text-sm font-semibold text-zinc-900 truncate w-full">{neighbors.prev.name}</span>
@@ -270,7 +273,7 @@ export default function FighterDetailPage() {
             {neighbors.next ? (
               <Link
                 href={fighterPublicPath(neighbors.next)}
-                className="group flex flex-col items-end gap-1 p-4 border border-zinc-200 hover:border-[#C0001E] transition-colors text-right"
+                className="group flex flex-col items-end gap-1 border border-zinc-200 bg-white p-4 hover:border-[#C0001E] transition-colors text-right"
               >
                 <span className="text-xs font-bold uppercase tracking-widest text-zinc-400 group-hover:text-[#C0001E]">{tFighters('fighters.manualProfile.next')} →</span>
                 <span className="text-sm font-semibold text-zinc-900 truncate w-full">{neighbors.next.name}</span>
