@@ -459,16 +459,17 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                         <p className="mt-2 text-sm text-zinc-400">{location || t('fighters.countryFilter.unspecified')}</p>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+                      <div className="flex shrink-0 flex-col items-center gap-2 self-start sm:self-auto">
                         {experience === 'pro' && (
                           <span
-                            className="flex h-11 w-16 items-center justify-center border border-white/25 bg-[#C0001E] font-display text-xl font-black uppercase tracking-wide text-white drop-shadow-[0_5px_10px_rgba(0,0,0,0.4)]"
-                            style={{ clipPath: 'polygon(10% 0, 90% 0, 100% 50%, 90% 100%, 10% 100%, 0 50%)' }}
+                            className="flex h-[78px] w-[68px] flex-col items-center justify-center border-x border-b border-white/30 bg-[#C0001E] text-center text-white drop-shadow-[0_8px_14px_rgba(0,0,0,0.55)]"
+                            style={{ clipPath: 'polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%)' }}
                             role="img"
                             aria-label={t('fighters.card.proBadge')}
                             title={t('fighters.card.proBadge')}
                           >
-                            PRO
+                            <span className="font-display text-2xl font-black uppercase leading-none tracking-wide">PRO</span>
+                            <span className="mt-1 text-[8px] font-bold uppercase tracking-[0.18em] text-white/80">Fighter</span>
                           </span>
                         )}
                         <span className={`inline-flex w-fit items-center gap-2 text-sm font-bold ${isAvailable ? 'text-emerald-400' : 'text-zinc-500'}`}>
