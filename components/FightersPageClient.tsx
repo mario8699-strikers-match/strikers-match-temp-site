@@ -1,8 +1,28 @@
 'use client';
 
+import Image from 'next/image';
 import { Fragment, useEffect, useState, useCallback, useMemo, type FormEvent } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import type { IconType } from 'react-icons';
+import {
+  GiBelt,
+  GiBlackBelt,
+  GiBootKick,
+  GiBoxingGlove,
+  GiFist,
+  GiGloves,
+  GiGrapple,
+  GiHighKick,
+  GiHighPunch,
+  GiKimono,
+  GiLeg,
+  GiPunch,
+  GiPunchBlast,
+  GiPunchingBag,
+} from 'react-icons/gi';
+import { MdSportsMartialArts, MdSportsMma } from 'react-icons/md';
+import { TbKarate } from 'react-icons/tb';
 import { fighterService } from '@/services/fighterService';
 import { fighterFollowService } from '@/services/fighterFollowService';
 import { manualFighterService } from '@/services/manualFighterService';
@@ -231,135 +251,146 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
     <div className="min-h-screen bg-white font-sans flex flex-col">
       <Navbar activePage="fighters" />
 
-      {/* Page content */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Title + filters */}
-        <div className="flex flex-col gap-6 mb-10">
-          <div>
-            <p className="text-xs font-bold tracking-[0.25em] uppercase mb-2" style={{ color: '#C0001E' }}>Strikers Match</p>
-            <h1 className="font-display font-black uppercase leading-none" style={{ fontSize: 'clamp(2.5rem,6vw,4.5rem)', letterSpacing: '-0.02em', color: '#0A0A0A' }}>
-              {t('fighters.title')}
-            </h1>
-            <p className="mt-2 text-sm" style={{ color: '#5A5A5A' }}>{t('fighters.subtitle')}</p>
-          </div>
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-            <form onSubmit={runSearch} className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-              <label className="block">
-                <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-700">{t('fighters.search.label')}</span>
+      <main className="flex-1">
+        <section className="relative isolate overflow-hidden bg-zinc-950 text-white">
+          <Image
+            src="/images/fighters-directory-hero.webp"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="-z-20 object-cover object-[72%_center] sm:object-center"
+          />
+          <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(0,0,0,0.98)_0%,rgba(0,0,0,0.86)_45%,rgba(0,0,0,0.26)_78%,rgba(0,0,0,0.18)_100%)]" />
+          <div className="mx-auto flex min-h-[500px] max-w-7xl flex-col justify-end px-4 pb-8 pt-20 sm:px-6 sm:pb-10 lg:min-h-[560px] lg:px-8">
+            <div className="max-w-3xl">
+              <p className="mb-3 text-sm font-black uppercase tracking-[0.28em] text-[#F01835]">Strikers Match</p>
+              <h1 className="font-display text-[clamp(3.5rem,9vw,7.5rem)] font-black uppercase leading-[0.78] tracking-[-0.035em]">
+                {t('fighters.title')}
+              </h1>
+              <p className="mt-6 max-w-xl text-base leading-relaxed text-zinc-300 sm:text-lg">{t('fighters.subtitle')}</p>
+            </div>
+
+            <form onSubmit={runSearch} className="mt-8 flex max-w-4xl flex-col gap-2 sm:flex-row">
+              <label className="relative flex-1">
+                <span className="sr-only">{t('fighters.search.label')}</span>
+                <SearchIcon />
                 <input
                   type="search"
                   value={searchDraft}
                   onChange={(event) => setSearchDraft(event.target.value)}
                   placeholder={t('fighters.search.placeholder')}
-                  className="min-h-12 w-full border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 outline-none focus:border-zinc-900"
+                  className="min-h-14 w-full border border-white/15 bg-zinc-900/90 py-4 pl-12 pr-4 text-base text-white outline-none backdrop-blur placeholder:text-zinc-400 focus:border-[#F01835]"
                 />
               </label>
-              <button type="submit" className="min-h-12 border border-zinc-900 bg-zinc-900 px-6 py-3 text-xs font-black uppercase tracking-widest text-white sm:self-end">
+              <button type="submit" className="min-h-14 bg-[#C0001E] px-8 py-4 text-sm font-black uppercase tracking-[0.16em] text-white transition hover:bg-[#E00025] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
                 {t('fighters.search.button')}
               </button>
             </form>
+          </div>
+        </section>
 
-            <div className="flex gap-0 overflow-hidden border border-zinc-200">
+        <section className="bg-zinc-950 text-white">
+          <div className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-2 border border-white/10 sm:max-w-md">
               {(['all', 'available'] as const).map((f) => (
                 <button
                   key={f}
+                  type="button"
+                  aria-pressed={filter === f}
                   onClick={() => {
                     if (filter === f) return;
                     setPage(1);
                     setLoading(true);
                     setFilter(f);
                   }}
-                  className={`min-h-12 px-4 py-2 text-xs font-bold tracking-widest uppercase transition-colors ${
-                    filter === f
-                      ? 'bg-[#0A0A0A] text-white'
-                      : 'bg-white text-[#5A5A5A] hover:bg-zinc-50'
-                  }`}
+                  className={`min-h-14 px-4 py-3 text-sm font-black uppercase tracking-[0.12em] transition-colors ${filter === f
+                    ? 'bg-[#C0001E] text-white'
+                    : 'bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white'}`}
                 >
                   {t(`fighters.filter.${f}`)}
                 </button>
               ))}
             </div>
-          </div>
 
-          <label className="block max-w-sm">
-            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-700">{t('fighters.countryFilter.label')}</span>
-            <select
-              value={selectedCountry}
-              onChange={(event) => updateCountryFilter(event.target.value)}
-              className="min-h-12 w-full border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-900"
-            >
-              <option value="">{t('fighters.countryFilter.all')}</option>
-              {countryOptions.map((code) => (
-                <option key={code} value={code}>{countryFlagEmoji(code)} {getCountryName(code, i18n.resolvedLanguage)}</option>
-              ))}
-            </select>
-          </label>
-
-          <fieldset>
-            <legend className="mb-2 text-xs font-bold uppercase tracking-widest text-zinc-700">
-              {t('fighters.levelFilter.label')}
-            </legend>
-            <div className="flex flex-wrap gap-0">
-              {(['pro', 'amateur', 'all'] as const).map((level) => (
-                <button
-                  key={level}
-                  type="button"
-                  aria-pressed={competitionLevel === level}
-                  onClick={() => {
-                    setCompetitionLevel(level);
-                    setPage(1);
-                  }}
-                  className={`min-h-11 border px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors ${
-                    competitionLevel === level
-                      ? 'border-[#C0001E] bg-[#C0001E] text-white'
-                      : 'border-zinc-300 bg-white text-zinc-700 hover:border-zinc-500'
-                  }`}
-                >
-                  {t(`fighters.levelFilter.${level}`)}
-                </button>
-              ))}
-            </div>
-            <p className="mt-2 text-xs text-zinc-500">{t('fighters.levelFilter.help')}</p>
-          </fieldset>
-
-          <fieldset className="border border-zinc-200 bg-zinc-50 p-4">
-            <legend className="px-1 text-xs font-bold uppercase tracking-widest text-zinc-700">{t('fighters.disciplineFilter.label')}</legend>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                aria-pressed={selectedDisciplines.length === 0}
-                onClick={() => updateDisciplineFilters([])}
-                className={`min-h-10 border px-3 py-2 text-xs font-bold uppercase tracking-wide transition-colors ${selectedDisciplines.length === 0
-                  ? 'border-zinc-900 bg-zinc-900 text-white'
-                  : 'border-zinc-300 bg-white text-zinc-700 hover:border-zinc-500'}`}
-              >
-                {t('fighters.disciplineFilter.all')}
-              </button>
-              {disciplineOptions.map((discipline) => {
-                const selected = selectedDisciplines.some((item) => item.toLocaleLowerCase() === discipline.toLocaleLowerCase());
-                const translationKey = disciplineI18nKey(discipline);
-                return (
-                  <button
-                    key={discipline}
-                    type="button"
-                    aria-pressed={selected}
-                    onClick={() => updateDisciplineFilters(selected
-                      ? selectedDisciplines.filter((item) => item.toLocaleLowerCase() !== discipline.toLocaleLowerCase())
-                      : [...selectedDisciplines, discipline])}
-                    className={`min-h-10 border px-3 py-2 text-xs font-bold uppercase tracking-wide transition-colors ${selected
-                      ? 'border-[#C0001E] bg-[#C0001E] text-white'
-                      : 'border-zinc-300 bg-white text-zinc-700 hover:border-zinc-500'}`}
+            <div className="mt-8 grid gap-5 lg:grid-cols-[minmax(220px,0.32fr)_minmax(0,0.68fr)]">
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
+                <label className="block">
+                  <span className="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">{t('fighters.countryFilter.label')}</span>
+                  <select
+                    value={selectedCountry}
+                    onChange={(event) => updateCountryFilter(event.target.value)}
+                    className="min-h-12 w-full border border-white/15 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-[#C0001E]"
                   >
-                    {translationKey
-                      ? t(`fighters.disciplines.${translationKey}`, { defaultValue: discipline })
-                      : discipline}
+                    <option value="">{t('fighters.countryFilter.all')}</option>
+                    {countryOptions.map((code) => (
+                      <option key={code} value={code}>{countryFlagEmoji(code)} {getCountryName(code, i18n.resolvedLanguage)}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <fieldset>
+                  <legend className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">{t('fighters.levelFilter.label')}</legend>
+                  <div className="grid grid-cols-3">
+                    {(['pro', 'amateur', 'all'] as const).map((level) => (
+                      <button
+                        key={level}
+                        type="button"
+                        aria-pressed={competitionLevel === level}
+                        onClick={() => { setCompetitionLevel(level); setPage(1); }}
+                        className={`min-h-12 border px-2 py-2 text-xs font-bold uppercase tracking-wide transition-colors ${competitionLevel === level
+                          ? 'border-[#C0001E] bg-[#C0001E] text-white'
+                          : 'border-white/15 bg-zinc-900 text-zinc-300 hover:border-zinc-500 hover:text-white'}`}
+                      >
+                        {t(`fighters.levelFilter.${level}`)}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+              </div>
+
+              <fieldset>
+                <legend className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">{t('fighters.disciplineFilter.label')}</legend>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
+                  <button
+                    type="button"
+                    aria-pressed={selectedDisciplines.length === 0}
+                    onClick={() => updateDisciplineFilters([])}
+                    className={`group flex min-h-16 items-center gap-3 border px-3 py-3 text-left text-sm font-bold uppercase tracking-wide transition-all ${selectedDisciplines.length === 0
+                      ? 'border-[#C0001E] bg-[#C0001E] text-white shadow-[0_8px_24px_rgba(192,0,30,0.28)]'
+                      : 'border-white/10 bg-zinc-900 text-zinc-200 hover:-translate-y-0.5 hover:border-[#C0001E] hover:bg-zinc-800'}`}
+                  >
+                    <DisciplineMark discipline="all" />
+                    <span>{t('fighters.disciplineFilter.all')}</span>
                   </button>
-                );
-              })}
+                  {disciplineOptions.map((discipline) => {
+                    const selected = selectedDisciplines.some((item) => item.toLocaleLowerCase() === discipline.toLocaleLowerCase());
+                    const translationKey = disciplineI18nKey(discipline);
+                    return (
+                      <button
+                        key={discipline}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => updateDisciplineFilters(selected
+                          ? selectedDisciplines.filter((item) => item.toLocaleLowerCase() !== discipline.toLocaleLowerCase())
+                          : [...selectedDisciplines, discipline])}
+                        className={`group flex min-h-16 items-center gap-3 border px-3 py-3 text-left text-sm font-bold uppercase tracking-wide transition-all ${selected
+                          ? 'border-[#C0001E] bg-[#C0001E] text-white shadow-[0_8px_24px_rgba(192,0,30,0.28)]'
+                          : 'border-white/10 bg-zinc-900 text-zinc-200 hover:-translate-y-0.5 hover:border-[#C0001E] hover:bg-zinc-800'}`}
+                      >
+                        <DisciplineMark discipline={discipline} />
+                        <span>{translationKey ? t(`fighters.disciplines.${translationKey}`, { defaultValue: discipline }) : discipline}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-3 text-xs leading-relaxed text-zinc-500">{t('fighters.disciplineFilter.help')}</p>
+              </fieldset>
             </div>
-            <p className="mt-2 text-xs text-zinc-500">{t('fighters.disciplineFilter.help')}</p>
-          </fieldset>
-        </div>
+          </div>
+        </section>
+
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
 
         {loading ? (
           <div className="py-24 text-center text-zinc-400 text-sm">{t('fighters.loading')}</div>
@@ -538,6 +569,7 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
           <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
           </>
         )}
+        </div>
       </main>
 
       <Footer />
@@ -553,6 +585,47 @@ function getInitials(name: string) {
     .map((part) => part[0]?.toUpperCase())
     .join('') || 'SM';
 }
+
+function SearchIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400">
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="m16 16 4 4" />
+    </svg>
+  );
+}
+
+function DisciplineMark({ discipline }: { discipline: string }) {
+  const key = discipline === 'all' ? 'all' : disciplineI18nKey(discipline) ?? 'other';
+  const Icon = DISCIPLINE_ICONS[key] ?? MdSportsMartialArts;
+
+  return (
+    <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-current/25 bg-black/20 transition-transform group-hover:scale-105" aria-hidden="true">
+      <Icon className="h-6 w-6" />
+    </span>
+  );
+}
+
+const DISCIPLINE_ICONS: Record<string, IconType> = {
+  all: MdSportsMartialArts,
+  boxing: GiBoxingGlove,
+  muayThai: GiPunchingBag,
+  mma: MdSportsMma,
+  kickboxing: GiHighKick,
+  karate: TbKarate,
+  judo: GiKimono,
+  wrestling: GiGrapple,
+  limaLama: GiBlackBelt,
+  jiuJitsu: GiBelt,
+  pointFight: GiHighPunch,
+  bareKnuckle: GiFist,
+  k1: GiPunchBlast,
+  lightContact: GiGloves,
+  kickLight: GiBootKick,
+  lowKick: GiLeg,
+  fullContact: GiPunch,
+  other: MdSportsMartialArts,
+};
 
 function entryDisciplines(entry: FighterDirectoryEntry): string[] {
   return entry.kind === 'manual'

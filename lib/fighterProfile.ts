@@ -1,6 +1,8 @@
 import { GENERIC_WEIGHT_CLASS_OPTIONS } from '@/lib/combatWeightCategories';
 import { normalizeDisciplineList } from '@/lib/disciplines';
 
+export const FIGHTER_BIO_MAX_LENGTH = 280;
+
 const LEGACY_WEIGHT_LABELS = new Map(
   GENERIC_WEIGHT_CLASS_OPTIONS
     .filter(([value]) => Boolean(value))
@@ -22,4 +24,12 @@ export function getPublicWeightDisplay(
   if (normalizedClass) return LEGACY_WEIGHT_LABELS.get(normalizedClass) ?? normalizedClass;
   if (exactWeight != null && Number.isFinite(exactWeight)) return `${exactWeight} kg`;
   return null;
+}
+
+export function compactFighterBio(value?: string | null) {
+  const bio = value?.trim();
+  if (!bio) return null;
+  return bio.length > FIGHTER_BIO_MAX_LENGTH
+    ? `${bio.slice(0, FIGHTER_BIO_MAX_LENGTH - 1).trimEnd()}…`
+    : bio;
 }

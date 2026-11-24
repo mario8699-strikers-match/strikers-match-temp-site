@@ -23,6 +23,7 @@ import {
 } from '@/lib/socialMedia';
 import { DISCIPLINE_OPTIONS } from '@/lib/disciplines';
 import { countryFlagEmoji, getCountryName, getCountryOptions } from '@/lib/countries';
+import { compactFighterBio, FIGHTER_BIO_MAX_LENGTH } from '@/lib/fighterProfile';
 import type { SocialMediaHandles, SocialMediaPlatform } from '@/lib/socialMedia';
 import type { Profile, Fighter, MatchRequest, EventApplication } from '@/types';
 
@@ -345,7 +346,7 @@ export default function FighterProfilePage() {
 
     const payload = {
       nickname: nickname.trim() || null,
-      bio: bio.trim() || null,
+      bio: bio.trim().slice(0, FIGHTER_BIO_MAX_LENGTH) || null,
       weight_class: weightClass || null,
       disciplines: disciplines,
       nationalities: nationality ? [nationality] : [],
@@ -674,9 +675,9 @@ export default function FighterProfilePage() {
 
             {/* Bio */}
             {fighter.bio && (
-              <div className="border border-zinc-100 p-6">
-                <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color:'#9A9A9A' }}>Bio</p>
-                <p className="text-sm text-zinc-700 leading-relaxed">{fighter.bio}</p>
+              <div className="border-l-4 border-[#C0001E] bg-zinc-50 p-6">
+                <p className="mb-2 text-xs font-bold uppercase tracking-widest text-[#C0001E]">{t('fighters.profile.highlights')}</p>
+                <p className="whitespace-pre-line text-sm leading-relaxed text-zinc-700">{compactFighterBio(fighter.bio)}</p>
               </div>
             )}
 
@@ -961,10 +962,14 @@ export default function FighterProfilePage() {
               </div>
             </div>
 
-            {/* Bio */}
+            {/* Short public bio / accomplishments */}
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>Bio</label>
-              <textarea value={bio} onChange={e => setBio(e.target.value)} rows={4} placeholder={t('fighters.accountProfile.bioPlaceholder')}
+              <div className="mb-1 flex items-end justify-between gap-3">
+                <label className="block text-xs font-bold tracking-widest uppercase" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.bioLabel')}</label>
+                <span className="text-[11px] tabular-nums text-zinc-400">{bio.length}/{FIGHTER_BIO_MAX_LENGTH}</span>
+              </div>
+              <p className="mb-2 text-xs leading-relaxed text-zinc-500">{t('fighters.accountProfile.bioHelp')}</p>
+              <textarea value={bio} onChange={e => setBio(e.target.value)} maxLength={FIGHTER_BIO_MAX_LENGTH} rows={4} placeholder={t('fighters.accountProfile.bioPlaceholder')}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900 resize-none" />
             </div>
 

@@ -7,6 +7,7 @@ import { countryFlagEmoji, getCountryName } from '@/lib/countries';
 import { getSocialMediaDisplayValue, getSocialMediaHref } from '@/lib/socialMedia';
 import { disciplineI18nKey } from '@/lib/disciplines';
 import { fighterWeightClassI18nKey } from '@/lib/fighterDisplay';
+import { compactFighterBio } from '@/lib/fighterProfile';
 
 interface FighterProfileHeroProps {
   fullName: string;
@@ -18,6 +19,7 @@ interface FighterProfileHeroProps {
   primaryDiscipline?: string | null;
   weight?: string | null;
   team?: string | null;
+  bio?: string | null;
   wins?: number | null;
   losses?: number | null;
   draws?: number | null;
@@ -46,6 +48,7 @@ export function FighterProfileHero({
   primaryDiscipline,
   weight,
   team,
+  bio,
   wins,
   losses,
   draws,
@@ -72,6 +75,7 @@ export function FighterProfileHero({
   const localizedWeight = weightClassKey
     ? t(`events:events.weightClasses.${weightClassKey}`, { defaultValue: weight ?? '' })
     : weight;
+  const publicBio = compactFighterBio(bio);
 
   const facts = [
     { label: t('fighters.profile.primarySport'), value: localizedDiscipline },
@@ -174,6 +178,17 @@ export function FighterProfileHero({
               </div>
             ))}
           </dl>
+
+          {publicBio && (
+            <div className="mt-8 border-l-4 border-[#C0001E] bg-zinc-50 px-5 py-4">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C0001E]">
+                {t('fighters.profile.highlights')}
+              </p>
+              <p className="mt-2 whitespace-pre-line text-sm leading-6 text-zinc-700">
+                {publicBio}
+              </p>
+            </div>
+          )}
 
           {instagramHref && instagram && (
             <a

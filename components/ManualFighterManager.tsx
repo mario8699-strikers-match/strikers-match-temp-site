@@ -17,6 +17,7 @@ import {
   isValidSocialMediaIdentifier,
   normalizeSocialMediaIdentifier,
 } from '@/lib/socialMedia';
+import { FIGHTER_BIO_MAX_LENGTH } from '@/lib/fighterProfile';
 
 const ACCEPTED_PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/gif,image/avif';
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
@@ -215,7 +216,7 @@ export function ManualFighterManager({
       experience_level: level,
       notes: notes.trim() || null,
       photo_url: uploadedPhoto?.url ?? null,
-      bio: bio.trim() || null,
+      bio: bio.trim().slice(0, FIGHTER_BIO_MAX_LENGTH) || null,
       height_cm: heightCm ? Number(heightCm) : null,
       reach_cm: null,
       state: state.trim() || null,
@@ -705,8 +706,12 @@ export function ManualFighterManager({
           </div>
 
           <div>
-            <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.rosterManager.fields.publicBio')}</label>
-            <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} placeholder={t('fighters.rosterManager.placeholders.bio')}
+            <div className="mb-1 flex items-end justify-between gap-3">
+              <label className="block text-xs font-bold tracking-widest uppercase" style={{ color: '#5A5A5A' }}>{t('fighters.rosterManager.fields.publicBio')}</label>
+              <span className="text-[11px] tabular-nums text-zinc-400">{bio.length}/{FIGHTER_BIO_MAX_LENGTH}</span>
+            </div>
+            <p className="mb-2 text-xs leading-relaxed text-zinc-500">{t('fighters.rosterManager.bioHelp')}</p>
+            <textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={FIGHTER_BIO_MAX_LENGTH} rows={3} placeholder={t('fighters.rosterManager.placeholders.bio')}
               className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
           </div>
 

@@ -193,6 +193,7 @@ export default function FighterDetailPage() {
           primaryDiscipline={primaryDiscipline}
           weight={weight}
           team={fighter.gym_name}
+          bio={fighter.bio}
           wins={fighter.record_wins}
           losses={fighter.record_losses}
           draws={fighter.record_draws}
