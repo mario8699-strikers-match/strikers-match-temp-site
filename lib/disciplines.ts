@@ -7,7 +7,6 @@ export const DISCIPLINE_OPTIONS: readonly string[] = [
   'Lucha Libre',
   'Bare Knuckle',
   'K1',
-  'Light Contact',
   'Low Kick',
 ];
 
@@ -18,6 +17,7 @@ const LEGACY_DISCIPLINE_OPTIONS: readonly string[] = [
   'Lima Lama',
   'Jiu-Jitsu',
   'Point Fight',
+  'Light Contact',
   'Kick Light',
   'Full Contact',
   'Otro',
