@@ -22,6 +22,7 @@ import {
 } from '@/lib/combatWeightCategories';
 import { supabase } from '@/lib/supabaseClient';
 import { disciplineMatches, normalizeDisciplineList, sortDisciplines } from '@/lib/disciplines';
+import { getDisciplineRecord } from '@/lib/disciplineRecords';
 import { searchByClosestName } from '@/lib/personNameSearch';
 import { deleteFile, uploadFile } from '@/lib/storageClient';
 import { authService } from '@/services/authService';
@@ -951,6 +952,11 @@ function selectExistingParticipant(
       fighter.exact_weight,
       eventWeightClasses
     ) ?? fighter.weight_class ?? '';
+    const selectedRecord = getDisciplineRecord(fighter.discipline_records, discipline, {
+      wins: fighter.record_wins ?? 0,
+      losses: fighter.record_losses ?? 0,
+      draws: fighter.record_draws ?? 0,
+    });
     setForm({
       ...EMPTY_FORM,
       payment_status: defaultPaymentStatus,
@@ -959,7 +965,7 @@ function selectExistingParticipant(
       date_of_birth: fighter.profiles?.date_of_birth ?? '', gender_division: fighter.gender_division ?? '', weight_class: weightClass, exact_weight: stringValue(fighter.exact_weight),
       requested_weight_kg: stringValue(fighter.requested_weight_kg), acceptable_weight_min_kg: stringValue(fighter.acceptable_weight_min_kg), acceptable_weight_max_kg: stringValue(fighter.acceptable_weight_max_kg),
       discipline, ruleset: fighter.preferred_rulesets?.[0] ?? '', experience_level: fighter.experience_level ?? 'amateur', skill_rating: stringValue(fighter.skill_rating),
-      record_wins: String(fighter.record_wins ?? 0), record_losses: String(fighter.record_losses ?? 0), record_draws: String(fighter.record_draws ?? 0), ko_wins: String(fighter.ko_wins ?? 0), tko_wins: String(fighter.tko_wins ?? 0), ko_losses: String(fighter.ko_losses ?? 0), tko_losses: String(fighter.tko_losses ?? 0),
+      record_wins: String(selectedRecord.wins), record_losses: String(selectedRecord.losses), record_draws: String(selectedRecord.draws), ko_wins: String(fighter.ko_wins ?? 0), tko_wins: String(fighter.tko_wins ?? 0), ko_losses: String(fighter.ko_losses ?? 0), tko_losses: String(fighter.tko_losses ?? 0),
       gym_name: fighter.gym_name ?? '', special_restrictions: fighter.special_restrictions?.join(', ') ?? '', available_from: fighter.available_from ?? '', available_to: fighter.available_to ?? '', medical_clearance_date: fighter.medical_clearance_date ?? '', last_fight_at: fighter.last_fight_at ?? '', last_ko_loss_at: fighter.last_ko_loss_at ?? '',
     });
   } else {
@@ -975,12 +981,17 @@ function selectExistingParticipant(
       fighter.exact_weight,
       eventWeightClasses
     ) ?? fighter.weight_class ?? '';
+    const selectedRecord = getDisciplineRecord(fighter.discipline_records, discipline, {
+      wins: fighter.record_wins ?? 0,
+      losses: fighter.record_losses ?? 0,
+      draws: fighter.record_draws ?? 0,
+    });
     setForm({
       ...EMPTY_FORM,
       payment_status: defaultPaymentStatus,
       full_name: fighter.full_name, nickname: fighter.nickname ?? '', photo_url: fighter.photo_url ?? '', phone: fighter.phone ?? '', email: fighter.email ?? '', city: fighter.city ?? '', state: fighter.state ?? '', country: fighter.country ?? '',
       date_of_birth: fighter.date_of_birth ?? '', gender_division: fighter.gender_division ?? '', weight_class: weightClass, exact_weight: stringValue(fighter.exact_weight), requested_weight_kg: stringValue(fighter.requested_weight_kg), acceptable_weight_min_kg: stringValue(fighter.acceptable_weight_min_kg), acceptable_weight_max_kg: stringValue(fighter.acceptable_weight_max_kg),
-      discipline, ruleset: fighter.preferred_rulesets?.[0] ?? '', experience_level: fighter.experience_level ?? 'amateur', skill_rating: stringValue(fighter.skill_rating), record_wins: String(fighter.record_wins ?? 0), record_losses: String(fighter.record_losses ?? 0), record_draws: String(fighter.record_draws ?? 0), ko_wins: String(fighter.ko_wins ?? 0), tko_wins: String(fighter.tko_wins ?? 0), ko_losses: String(fighter.ko_losses ?? 0), tko_losses: String(fighter.tko_losses ?? 0),
+      discipline, ruleset: fighter.preferred_rulesets?.[0] ?? '', experience_level: fighter.experience_level ?? 'amateur', skill_rating: stringValue(fighter.skill_rating), record_wins: String(selectedRecord.wins), record_losses: String(selectedRecord.losses), record_draws: String(selectedRecord.draws), ko_wins: String(fighter.ko_wins ?? 0), tko_wins: String(fighter.tko_wins ?? 0), ko_losses: String(fighter.ko_losses ?? 0), tko_losses: String(fighter.tko_losses ?? 0),
       gym_name: fighter.gym_name ?? '', special_restrictions: fighter.special_restrictions?.join(', ') ?? '', available_from: fighter.available_from ?? '', available_to: fighter.available_to ?? '', medical_clearance_date: fighter.medical_clearance_date ?? '', last_fight_at: fighter.last_fight_at ?? '', last_ko_loss_at: fighter.last_ko_loss_at ?? '',
     });
   }

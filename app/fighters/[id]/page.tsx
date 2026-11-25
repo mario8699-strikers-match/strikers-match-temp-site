@@ -191,6 +191,8 @@ export default function FighterDetailPage() {
           country={fighter.profiles?.country}
           instagram={fighter.profiles?.instagram}
           primaryDiscipline={primaryDiscipline}
+          disciplines={fighter.disciplines}
+          disciplineRecords={fighter.discipline_records}
           weight={weight}
           team={fighter.gym_name}
           bio={fighter.bio}

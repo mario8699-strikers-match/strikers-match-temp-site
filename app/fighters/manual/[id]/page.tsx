@@ -112,6 +112,8 @@ export default function ManualFighterDetailPage() {
           country={fighter.country}
           instagram={fighter.instagram}
           primaryDiscipline={primaryDiscipline}
+          disciplines={fighter.disciplines}
+          disciplineRecords={fighter.discipline_records}
           weight={weight}
           team={fighter.gym_name}
           bio={fighter.bio}

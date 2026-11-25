@@ -3,13 +3,20 @@
 import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { InlineCombatRecord } from '@/components/CombatRecord';
 import { CountrySearchSelect } from '@/components/CountrySearchSelect';
+import { DisciplineRecordEditor } from '@/components/DisciplineRecordEditor';
+import { DisciplineRecordSummary } from '@/components/DisciplineRecordSummary';
 import { manualFighterService } from '@/services/manualFighterService';
 import type { ManualFighter } from '@/types';
 import { manualFighterPublicPath } from '@/lib/publicUrls';
 import { GenderDivisionCheckboxes } from '@/components/GenderDivisionCheckboxes';
 import { DISCIPLINE_OPTIONS, normalizeDisciplineList } from '@/lib/disciplines';
+import {
+  buildDisciplineRecordDraft,
+  disciplineRecordRows,
+  primaryDisciplineRecord,
+  type DisciplineRecordDraft,
+} from '@/lib/disciplineRecords';
 import { countryFlagEmoji, getCountryName, getCountryOptions } from '@/lib/countries';
 import { deleteFile, uploadFile } from '@/lib/storageClient';
 import {
@@ -53,6 +60,7 @@ type RequiredProfileDraft = {
   nationality: string;
   gymName: string;
   instagram: string;
+  disciplineRecords: DisciplineRecordDraft;
 };
 
 export function ManualFighterManager({
@@ -92,6 +100,7 @@ export function ManualFighterManager({
   const [wins, setWins] = useState('0');
   const [losses, setLosses] = useState('0');
   const [draws, setDraws] = useState('0');
+  const [disciplineRecordDraft, setDisciplineRecordDraft] = useState<DisciplineRecordDraft>({});
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
@@ -151,6 +160,15 @@ export function ManualFighterManager({
             nationality: requestedFighter.nationalities?.[0] ?? '',
             gymName: requestedFighter.gym_name ?? '',
             instagram: requestedFighter.instagram ?? '',
+            disciplineRecords: buildDisciplineRecordDraft(
+              normalizeDisciplineList(requestedFighter.disciplines, requestedFighter.discipline),
+              requestedFighter.discipline_records,
+              {
+                wins: requestedFighter.record_wins,
+                losses: requestedFighter.record_losses,
+                draws: requestedFighter.record_draws,
+              },
+            ),
           });
           window.setTimeout(() => {
             document.getElementById(`manual-fighter-${requestedFighter.id}`)?.scrollIntoView({
@@ -170,6 +188,7 @@ export function ManualFighterManager({
   const resetForm = () => {
     setName(''); setNickname(''); setWeight(''); setDisciplines([]);
     setWins('0'); setLosses('0'); setDraws('0');
+    setDisciplineRecordDraft({});
     setPhone(''); setEmail(''); setCity(''); setStateField(''); setCurrentCountry(''); setNationality(''); setGym(defaultGymName); setInstagram('');
     setLevel('amateur'); setNotes(''); setPhotoFile(null); setPhotoPreview(null); setBio('');
     setIsAvailable(true); setIsPublic(true); setDateOfBirth(''); setGenderDivision(''); setExactWeight(''); setHeightCm('');
@@ -189,6 +208,17 @@ export function ManualFighterManager({
     setSaving(true);
     setError(null);
 
+    const recordRows = disciplineRecordRows(disciplines, disciplineRecordDraft, {
+      wins: parseInt(wins) || 0,
+      losses: parseInt(losses) || 0,
+      draws: parseInt(draws) || 0,
+    });
+    const primaryRecord = primaryDisciplineRecord(disciplines, disciplineRecordDraft, {
+      wins: parseInt(wins) || 0,
+      losses: parseInt(losses) || 0,
+      draws: parseInt(draws) || 0,
+    });
+
     let uploadedPhoto: { url: string; key: string } | null = null;
     if (photoFile) {
       const uploadResult = await uploadFile(photoFile, 'fighter-photos');
@@ -206,9 +236,9 @@ export function ManualFighterManager({
       weight_class: weight || null,
       disciplines,
       discipline: disciplines[0] ?? null,
-      record_wins: parseInt(wins) || 0,
-      record_losses: parseInt(losses) || 0,
-      record_draws: parseInt(draws) || 0,
+      record_wins: primaryRecord.wins,
+      record_losses: primaryRecord.losses,
+      record_draws: primaryRecord.draws,
       phone: phone.trim() || null,
       email: email.trim() || null,
       city: city.trim() || null,
@@ -251,6 +281,14 @@ export function ManualFighterManager({
       console.error('Manual fighter insert failed:', err);
       setError(t('fighters.rosterManager.errors.addFighter', { error: err }));
     } else if (data) {
+      const disciplineRecordResult = await manualFighterService.replaceDisciplineRecords(data.id, recordRows);
+      if (disciplineRecordResult.error) {
+        await manualFighterService.remove(data.id);
+        if (uploadedPhoto) await deleteFile(uploadedPhoto.key);
+        setSaving(false);
+        setError(t('fighters.rosterManager.errors.recordSave', { error: disciplineRecordResult.error }));
+        return;
+      }
       const travelResult = await manualFighterService.updateTravelPreference(
         data.id,
         availableToTravelInternationally,
@@ -265,6 +303,7 @@ export function ManualFighterManager({
 
       const savedFighter = {
         ...data,
+        discipline_records: disciplineRecordResult.data ?? [],
         available_to_travel_internationally: availableToTravelInternationally,
       };
       setSaving(false);
@@ -400,6 +439,15 @@ export function ManualFighterManager({
       nationality: fighter.nationalities?.[0] ?? '',
       gymName: fighter.gym_name ?? '',
       instagram: fighter.instagram ?? '',
+      disciplineRecords: buildDisciplineRecordDraft(
+        normalizeDisciplineList(fighter.disciplines, fighter.discipline),
+        fighter.discipline_records,
+        {
+          wins: fighter.record_wins,
+          losses: fighter.record_losses,
+          draws: fighter.record_draws,
+        },
+      ),
     });
     setError(null);
   }
@@ -416,6 +464,22 @@ export function ManualFighterManager({
 
     setSavingRequiredProfileId(fighterId);
     setError(null);
+    const fighter = manualFighters.find((item) => item.id === fighterId);
+    const recordFallback = {
+      wins: fighter?.record_wins ?? 0,
+      losses: fighter?.record_losses ?? 0,
+      draws: fighter?.record_draws ?? 0,
+    };
+    const recordRows = disciplineRecordRows(
+      requiredProfileDraft.disciplines,
+      requiredProfileDraft.disciplineRecords,
+      recordFallback,
+    );
+    const primaryRecord = primaryDisciplineRecord(
+      requiredProfileDraft.disciplines,
+      requiredProfileDraft.disciplineRecords,
+      recordFallback,
+    );
     const result = await manualFighterService.update(fighterId, {
       full_name: requiredProfileDraft.fullName.trim(),
       weight_class: requiredProfileDraft.weightClass || null,
@@ -428,15 +492,30 @@ export function ManualFighterManager({
       nationalities: requiredProfileDraft.nationality ? [requiredProfileDraft.nationality] : [],
       gym_name: requiredProfileDraft.gymName.trim() || null,
       instagram: normalizeSocialMediaIdentifier(requiredProfileDraft.instagram),
+      record_wins: primaryRecord.wins,
+      record_losses: primaryRecord.losses,
+      record_draws: primaryRecord.draws,
     });
-    setSavingRequiredProfileId(null);
 
     if (result.error || !result.data) {
+      setSavingRequiredProfileId(null);
       setError(t('fighters.rosterManager.errors.profileSave', { error: result.error ?? t('fighters.rosterManager.errors.tryAgain') }));
       return;
     }
 
-    setManualFighters((current) => current.map((fighter) => fighter.id === fighterId ? result.data! : fighter));
+    const disciplineRecordResult = await manualFighterService.replaceDisciplineRecords(fighterId, recordRows);
+    setSavingRequiredProfileId(null);
+    if (disciplineRecordResult.error) {
+      setError(t('fighters.rosterManager.errors.recordSave', { error: disciplineRecordResult.error }));
+      return;
+    }
+
+    const savedFighter = {
+      ...fighter,
+      ...result.data,
+      discipline_records: disciplineRecordResult.data ?? [],
+    };
+    setManualFighters((current) => current.map((item) => item.id === fighterId ? savedFighter : item));
     setInstagramDrafts((current) => ({ ...current, [fighterId]: result.data!.instagram ?? '' }));
     setCountryDrafts((current) => ({ ...current, [fighterId]: result.data!.country_code ?? '' }));
     setEditingFighterId(null);
@@ -523,23 +602,11 @@ export function ManualFighterManager({
             <p className="mt-2 text-xs text-zinc-500">{t('fighters.rosterManager.disciplinesHelp')}</p>
           </fieldset>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.wins')}</label>
-              <input type="number" min="0" value={wins} onChange={(e) => setWins(e.target.value)}
-                className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
-            </div>
-            <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.losses')}</label>
-              <input type="number" min="0" value={losses} onChange={(e) => setLosses(e.target.value)}
-                className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
-            </div>
-            <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.draws')}</label>
-              <input type="number" min="0" value={draws} onChange={(e) => setDraws(e.target.value)}
-                className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
-            </div>
-          </div>
+          <DisciplineRecordEditor
+            disciplines={disciplines}
+            value={disciplineRecordDraft}
+            onChange={setDisciplineRecordDraft}
+          />
 
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <RosterInput label={t('fighters.rosterManager.fields.dateOfBirth')} type="date" value={dateOfBirth} onChange={setDateOfBirth} />
@@ -772,7 +839,15 @@ export function ManualFighterManager({
                   <p className="text-xs mt-0.5" style={{ color: '#5A5A5A' }}>
                     {f.weight_class ? WEIGHT_LABELS[f.weight_class] ?? f.weight_class : '—'} · {f.city ?? '—'}
                   </p>
-                  <InlineCombatRecord wins={f.record_wins} losses={f.record_losses} draws={f.record_draws} className="mt-1 text-xs" />
+                  <div className="mt-1">
+                    <DisciplineRecordSummary
+                      disciplines={normalizeDisciplineList(f.disciplines, f.discipline)}
+                      records={f.discipline_records}
+                      fallback={{ wins: f.record_wins, losses: f.record_losses, draws: f.record_draws }}
+                      recordLabel={t('fighters.accountProfile.recordLabel')}
+                      variant="compact"
+                    />
+                  </div>
                   {f.instagram && getSocialMediaHref('instagram', f.instagram) && (
                     <a
                       href={getSocialMediaHref('instagram', f.instagram) ?? undefined}
@@ -952,6 +1027,13 @@ export function ManualFighterManager({
                       })}
                     </div>
                   </fieldset>
+                  <DisciplineRecordEditor
+                    disciplines={requiredProfileDraft.disciplines}
+                    value={requiredProfileDraft.disciplineRecords}
+                    onChange={(disciplineRecords) => setRequiredProfileDraft((current) => current
+                      ? { ...current, disciplineRecords }
+                      : current)}
+                  />
                   <div className="flex justify-end">
                     <button
                       type="button"

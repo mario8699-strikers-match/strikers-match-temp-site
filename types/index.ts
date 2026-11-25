@@ -100,6 +100,18 @@ export interface Profile {
 }
 
 // Fighter-specific profile
+export interface FighterDisciplineRecord {
+  id: string;
+  fighter_id: string | null;
+  manual_fighter_id: string | null;
+  discipline: string;
+  wins: number;
+  losses: number;
+  draws: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Fighter {
   id: string;
   slug: string;
@@ -116,6 +128,7 @@ export interface Fighter {
   record_wins: number;
   record_losses: number;
   record_draws: number;
+  discipline_records?: FighterDisciplineRecord[];
   is_available: boolean;
   short_notice_ready: boolean;
   experience_level: 'amateur' | 'pro';
@@ -355,6 +368,7 @@ export interface ManualFighter {
   record_wins: number;
   record_losses: number;
   record_draws: number;
+  discipline_records?: FighterDisciplineRecord[];
   phone: string | null;
   email: string | null;
   city: string | null;

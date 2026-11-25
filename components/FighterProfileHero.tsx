@@ -2,12 +2,13 @@
 
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
-import { RecordValue } from '@/components/CombatRecord';
+import { DisciplineRecordSummary } from '@/components/DisciplineRecordSummary';
 import { countryFlagEmoji, getCountryName } from '@/lib/countries';
 import { getSocialMediaDisplayValue, getSocialMediaHref } from '@/lib/socialMedia';
 import { disciplineI18nKey } from '@/lib/disciplines';
 import { fighterWeightClassI18nKey } from '@/lib/fighterDisplay';
 import { compactFighterBio } from '@/lib/fighterProfile';
+import type { FighterDisciplineRecord } from '@/types';
 
 interface FighterProfileHeroProps {
   fullName: string;
@@ -17,6 +18,8 @@ interface FighterProfileHeroProps {
   country?: string | null;
   instagram?: string | null;
   primaryDiscipline?: string | null;
+  disciplines?: string[];
+  disciplineRecords?: FighterDisciplineRecord[];
   weight?: string | null;
   team?: string | null;
   bio?: string | null;
@@ -46,6 +49,8 @@ export function FighterProfileHero({
   country,
   instagram,
   primaryDiscipline,
+  disciplines = [],
+  disciplineRecords,
   weight,
   team,
   bio,
@@ -149,18 +154,15 @@ export function FighterProfileHero({
           </div>
 
           <div className="my-8 border-y border-zinc-200 py-6">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400">
-              {experienceLevel === 'pro'
+            <DisciplineRecordSummary
+              disciplines={disciplines.length > 0 ? disciplines : (primaryDiscipline ? [primaryDiscipline] : [])}
+              records={disciplineRecords}
+              fallback={{ wins: wins ?? 0, losses: losses ?? 0, draws: draws ?? 0 }}
+              recordLabel={experienceLevel === 'pro'
                 ? t('fighters.profile.professionalRecord')
                 : t('fighters.profile.amateurRecord')}
-            </p>
-            <p className="mt-2 flex flex-wrap items-baseline gap-2 font-display text-5xl font-black tracking-[-0.04em] sm:text-6xl">
-              <RecordValue part="wins" value={wins ?? 0} />
-              <span className="text-zinc-300">–</span>
-              <RecordValue part="losses" value={losses ?? 0} />
-              <span className="text-zinc-300">–</span>
-              <RecordValue part="draws" value={draws ?? 0} />
-            </p>
+              variant="hero"
+            />
             <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">
               {t('fighters.profile.recordOrder')}
             </p>

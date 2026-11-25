@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 import { isUuidIdentifier } from '@/lib/publicUrls';
-import type { ManualFighter, ManualFighterWithCreator, ServiceResponse } from '@/types';
+import type { FighterDisciplineRecord, ManualFighter, ManualFighterWithCreator, ServiceResponse } from '@/types';
 
 // Fields allowed on insert/update
 export type ManualFighterInput = Pick<ManualFighter, 'full_name'> & Partial<Omit<
@@ -34,6 +34,27 @@ function withoutInstagram<T extends { instagram?: string | null }>(payload: T) {
   const { instagram, ...legacyPayload } = payload;
   void instagram;
   return legacyPayload;
+}
+
+async function attachDisciplineRecords<T extends ManualFighter>(fighters: T[]) {
+  if (fighters.length === 0) return fighters;
+  const { data, error } = await supabase
+    .from('fighter_discipline_records')
+    .select('*')
+    .in('manual_fighter_id', fighters.map((fighter) => fighter.id))
+    .order('discipline');
+  if (error) return fighters;
+  const recordsByFighter = new Map<string, FighterDisciplineRecord[]>();
+  for (const record of (data ?? []) as FighterDisciplineRecord[]) {
+    if (!record.manual_fighter_id) continue;
+    const existing = recordsByFighter.get(record.manual_fighter_id) ?? [];
+    existing.push(record);
+    recordsByFighter.set(record.manual_fighter_id, existing);
+  }
+  return fighters.map((fighter) => ({
+    ...fighter,
+    discipline_records: recordsByFighter.get(fighter.id) ?? [],
+  }));
 }
 
 export const manualFighterService = {
@@ -77,7 +98,8 @@ export const manualFighterService = {
         .single();
 
       if (error) return { data: null, error: error.message };
-      return { data: data as ManualFighterWithCreator, error: null };
+      const [fighter] = await attachDisciplineRecords([data as ManualFighterWithCreator]);
+      return { data: fighter, error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }
@@ -110,10 +132,10 @@ export const manualFighterService = {
       );
 
       return {
-        data: fighters.map((fighter) => ({
+        data: await attachDisciplineRecords(fighters.map((fighter) => ({
           ...fighter,
           available_to_travel_internationally: travelByFighterId.get(fighter.id) ?? false,
-        })),
+        })) as ManualFighter[]),
         error: null,
       };
     } catch {
@@ -202,6 +224,50 @@ export const manualFighterService = {
 
       if (error) return { data: null, error: error.message };
       return { data: null, error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
+  async replaceDisciplineRecords(
+    manualFighterId: string,
+    records: Array<{ discipline: string; wins: number; losses: number; draws: number }>,
+  ): Promise<ServiceResponse<FighterDisciplineRecord[]>> {
+    try {
+      if (records.length > 0) {
+        const { error: upsertError } = await supabase
+          .from('fighter_discipline_records')
+          .upsert(
+            records.map((record) => ({ ...record, fighter_id: null, manual_fighter_id: manualFighterId })),
+            { onConflict: 'manual_fighter_id,discipline' },
+          );
+        if (upsertError) return { data: null, error: upsertError.message };
+      }
+
+      const { data: existing, error: existingError } = await supabase
+        .from('fighter_discipline_records')
+        .select('id, discipline')
+        .eq('manual_fighter_id', manualFighterId);
+      if (existingError) return { data: null, error: existingError.message };
+      const retained = new Set(records.map((record) => record.discipline.toLocaleLowerCase()));
+      const staleIds = (existing ?? [])
+        .filter((record) => !retained.has(String(record.discipline).toLocaleLowerCase()))
+        .map((record) => record.id);
+      if (staleIds.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('fighter_discipline_records')
+          .delete()
+          .in('id', staleIds);
+        if (deleteError) return { data: null, error: deleteError.message };
+      }
+
+      const { data, error } = await supabase
+        .from('fighter_discipline_records')
+        .select('*')
+        .eq('manual_fighter_id', manualFighterId)
+        .order('discipline');
+      if (error) return { data: null, error: error.message };
+      return { data: (data ?? []) as FighterDisciplineRecord[], error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }

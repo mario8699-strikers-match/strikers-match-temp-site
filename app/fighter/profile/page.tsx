@@ -6,8 +6,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
-import { RecordValue } from '@/components/CombatRecord';
 import { CountrySearchSelect } from '@/components/CountrySearchSelect';
+import { DisciplineRecordEditor } from '@/components/DisciplineRecordEditor';
+import { DisciplineRecordSummary } from '@/components/DisciplineRecordSummary';
 import { authService } from '@/services/authService';
 import { fighterService } from '@/services/fighterService';
 import { requestService } from '@/services/requestService';
@@ -22,6 +23,12 @@ import {
   normalizeSocialMediaIdentifier,
 } from '@/lib/socialMedia';
 import { DISCIPLINE_OPTIONS } from '@/lib/disciplines';
+import {
+  buildDisciplineRecordDraft,
+  disciplineRecordRows,
+  primaryDisciplineRecord,
+  type DisciplineRecordDraft,
+} from '@/lib/disciplineRecords';
 import { countryFlagEmoji, getCountryName, getCountryOptions } from '@/lib/countries';
 import { compactFighterBio, FIGHTER_BIO_MAX_LENGTH } from '@/lib/fighterProfile';
 import type { SocialMediaHandles, SocialMediaPlatform } from '@/lib/socialMedia';
@@ -79,6 +86,7 @@ export default function FighterProfilePage() {
   const [wins, setWins] = useState('0');
   const [losses, setLosses] = useState('0');
   const [draws, setDraws] = useState('0');
+  const [disciplineRecordDraft, setDisciplineRecordDraft] = useState<DisciplineRecordDraft>({});
   const [isAvailable, setIsAvailable] = useState(true);
   const [availableToTravelInternationally, setAvailableToTravelInternationally] = useState(false);
   const [shortNotice, setShortNotice] = useState(false);
@@ -145,6 +153,11 @@ export default function FighterProfilePage() {
     setWins(String(f.record_wins));
     setLosses(String(f.record_losses));
     setDraws(String(f.record_draws));
+    setDisciplineRecordDraft(buildDisciplineRecordDraft(
+      f.disciplines ?? [],
+      f.discipline_records,
+      { wins: f.record_wins, losses: f.record_losses, draws: f.record_draws },
+    ));
     setIsAvailable(f.is_available);
     setAvailableToTravelInternationally(f.available_to_travel_internationally ?? false);
     setShortNotice(f.short_notice_ready);
@@ -298,6 +311,17 @@ export default function FighterProfilePage() {
       photoUrl = url ?? undefined;
     }
 
+    const recordRows = disciplineRecordRows(disciplines, disciplineRecordDraft, {
+      wins: parseInt(wins) || 0,
+      losses: parseInt(losses) || 0,
+      draws: parseInt(draws) || 0,
+    });
+    const primaryRecord = primaryDisciplineRecord(disciplines, disciplineRecordDraft, {
+      wins: parseInt(wins) || 0,
+      losses: parseInt(losses) || 0,
+      draws: parseInt(draws) || 0,
+    });
+
     const payload = {
       nickname: nickname.trim() || null,
       bio: bio.trim().slice(0, FIGHTER_BIO_MAX_LENGTH) || null,
@@ -306,9 +330,9 @@ export default function FighterProfilePage() {
       gym_name: gymName.trim() || null,
       exact_weight: exactWeight ? parseFloat(exactWeight) : null,
       height_cm: heightCm ? parseFloat(heightCm) : null,
-      record_wins: parseInt(wins) || 0,
-      record_losses: parseInt(losses) || 0,
-      record_draws: parseInt(draws) || 0,
+      record_wins: primaryRecord.wins,
+      record_losses: primaryRecord.losses,
+      record_draws: primaryRecord.draws,
       is_available: isAvailable,
       short_notice_ready: shortNotice,
       experience_level: experienceLevel,
@@ -339,13 +363,26 @@ export default function FighterProfilePage() {
       return;
     }
 
-    const savedFighter = result.data
+    let savedFighter = result.data
       ? {
           ...result.data,
           available_to_travel_internationally: availableToTravelInternationally,
         }
       : null;
     if (savedFighter) {
+      const disciplineRecordResult = await fighterService.replaceDisciplineRecords(
+        savedFighter.id,
+        recordRows,
+      );
+      if (disciplineRecordResult.error) {
+        setSaving(false);
+        setError(t('fighters.accountProfile.errors.recordSave'));
+        return;
+      }
+      savedFighter = {
+        ...savedFighter,
+        discipline_records: disciplineRecordResult.data ?? [],
+      };
       const travelResult = await fighterService.updateTravelPreference(
         savedFighter.id,
         availableToTravelInternationally,
@@ -518,18 +555,18 @@ export default function FighterProfilePage() {
               </div>
             </div>
 
-            {/* Record */}
-            <div className="grid grid-cols-3 gap-4 border border-zinc-100 p-6 text-center">
-              {[
-                { label:t('fighters.accountProfile.wins'), value:fighter.record_wins, part:'wins' as const },
-                { label:t('fighters.accountProfile.losses'), value:fighter.record_losses, part:'losses' as const },
-                { label:t('fighters.accountProfile.draws'), value:fighter.record_draws, part:'draws' as const },
-              ].map(({label,value,part}) => (
-                <div key={label}>
-                  <p className="text-3xl font-black" style={{ fontFamily:'var(--font-barlow-condensed)', letterSpacing:'-1px' }}><RecordValue part={part} value={value} /></p>
-                  <p className="text-xs font-bold tracking-widest uppercase mt-1" style={{ color:'#5A5A5A' }}>{label}</p>
-                </div>
-              ))}
+            {/* Discipline-specific records */}
+            <div className="border border-zinc-100 p-6">
+              <DisciplineRecordSummary
+                disciplines={fighter.disciplines ?? []}
+                records={fighter.discipline_records}
+                fallback={{
+                  wins: fighter.record_wins,
+                  losses: fighter.record_losses,
+                  draws: fighter.record_draws,
+                }}
+                recordLabel={t('fighters.accountProfile.recordLabel')}
+              />
             </div>
 
             {/* Disciplines pills */}
@@ -736,31 +773,31 @@ export default function FighterProfilePage() {
             <div>
               <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.physicalStats')}</label>
               <div className="grid grid-cols-2 gap-3">
-                {[
-                  { label:t('fighters.accountProfile.weightKg'), val:exactWeight, set:setExactWeight, step:'0.1' },
-                  { label:t('fighters.accountProfile.heightCm'), val:heightCm, set:setHeightCm, step:'1' },
-                ].map(({ label, val, set: setter, step }) => (
-                  <div key={label}>
-                    <p className="text-xs text-zinc-400 mb-1">{label}</p>
-                    <input type="number" min="0" step={step} value={val} onChange={e => setter(e.target.value)}
-                      className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm text-center focus:outline-none focus:ring-1 focus:ring-zinc-900" />
-                  </div>
-                ))}
+                <div>
+                  <p className="text-xs text-zinc-400 mb-1">{t('fighters.accountProfile.weightKg')}</p>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={exactWeight}
+                    onChange={(event) => setExactWeight(event.target.value.replace(/[^0-9.,]/g, '').replace(',', '.'))}
+                    className="w-full border border-zinc-300 px-3 py-2 text-center text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                  />
+                </div>
+                <div>
+                  <p className="text-xs text-zinc-400 mb-1">{t('fighters.accountProfile.heightCm')}</p>
+                  <input type="number" min="0" step="1" value={heightCm} onChange={(event) => setHeightCm(event.target.value)}
+                    className="w-full border border-zinc-300 px-3 py-2 text-center text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900" />
+                </div>
               </div>
             </div>
 
-            {/* Record */}
+            {/* Discipline-specific records */}
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.recordLabel')}</label>
-              <div className="grid grid-cols-3 gap-3">
-                {[{label:t('fighters.accountProfile.wins'),val:wins,set:setWins},{label:t('fighters.accountProfile.losses'),val:losses,set:setLosses},{label:t('fighters.accountProfile.draws'),val:draws,set:setDraws}].map(({ label, val, set: setter }) => (
-                  <div key={label}>
-                    <p className="text-xs text-zinc-400 mb-1">{label}</p>
-                    <input type="number" min="0" value={val} onChange={e => setter(e.target.value)}
-                      className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm text-center focus:outline-none focus:ring-1 focus:ring-zinc-900" />
-                  </div>
-                ))}
-              </div>
+              <DisciplineRecordEditor
+                disciplines={disciplines}
+                value={disciplineRecordDraft}
+                onChange={setDisciplineRecordDraft}
+              />
             </div>
 
             {/* Availability window */}

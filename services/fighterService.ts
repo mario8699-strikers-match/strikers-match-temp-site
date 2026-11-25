@@ -1,9 +1,30 @@
 import { supabase } from '@/lib/supabaseClient';
 import { uploadFile } from '@/lib/storageClient';
 import { isUuidIdentifier } from '@/lib/publicUrls';
-import type { Fighter, FighterSearchFilters, FighterSearchResult, ServiceResponse } from '@/types';
+import type { Fighter, FighterDisciplineRecord, FighterSearchFilters, FighterSearchResult, ServiceResponse } from '@/types';
 
 const PAGE_SIZE = 12;
+
+async function attachDisciplineRecords(fighters: Fighter[]) {
+  if (fighters.length === 0) return fighters;
+  const { data, error } = await supabase
+    .from('fighter_discipline_records')
+    .select('*')
+    .in('fighter_id', fighters.map((fighter) => fighter.id))
+    .order('discipline');
+  if (error) return fighters;
+  const recordsByFighter = new Map<string, FighterDisciplineRecord[]>();
+  for (const record of (data ?? []) as FighterDisciplineRecord[]) {
+    if (!record.fighter_id) continue;
+    const existing = recordsByFighter.get(record.fighter_id) ?? [];
+    existing.push(record);
+    recordsByFighter.set(record.fighter_id, existing);
+  }
+  return fighters.map((fighter) => ({
+    ...fighter,
+    discipline_records: recordsByFighter.get(fighter.id) ?? [],
+  }));
+}
 
 export const fighterService = {
   /**
@@ -18,7 +39,7 @@ export const fighterService = {
         .order('created_at', { ascending: false });
 
       if (error) return { data: null, error: error.message };
-      return { data: data ?? [], error: null };
+      return { data: await attachDisciplineRecords((data ?? []) as Fighter[]), error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }
@@ -33,7 +54,8 @@ export const fighterService = {
         .single();
 
       if (error) return { data: null, error: error.message };
-      return { data, error: null };
+      const [fighter] = await attachDisciplineRecords([data as Fighter]);
+      return { data: fighter, error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }
@@ -55,14 +77,12 @@ export const fighterService = {
         .maybeSingle();
 
       if (travelError) return { data: null, error: travelError.message };
-      return {
-        data: {
+      const [fighterWithRecords] = await attachDisciplineRecords([{
           ...data,
           available_to_travel_internationally:
             travelPreference?.available_to_travel_internationally ?? false,
-        },
-        error: null,
-      };
+        } as Fighter]);
+      return { data: fighterWithRecords, error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }
@@ -77,7 +97,7 @@ export const fighterService = {
         .order('created_at', { ascending: false });
 
       if (error) return { data: null, error: error.message };
-      return { data: data ?? [], error: null };
+      return { data: await attachDisciplineRecords((data ?? []) as Fighter[]), error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }
@@ -189,6 +209,50 @@ export const fighterService = {
 
       if (error) return { data: null, error: error.message };
       return { data: null, error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
+  async replaceDisciplineRecords(
+    fighterId: string,
+    records: Array<{ discipline: string; wins: number; losses: number; draws: number }>,
+  ): Promise<ServiceResponse<FighterDisciplineRecord[]>> {
+    try {
+      if (records.length > 0) {
+        const { error: upsertError } = await supabase
+          .from('fighter_discipline_records')
+          .upsert(
+            records.map((record) => ({ ...record, fighter_id: fighterId, manual_fighter_id: null })),
+            { onConflict: 'fighter_id,discipline' },
+          );
+        if (upsertError) return { data: null, error: upsertError.message };
+      }
+
+      const { data: existing, error: existingError } = await supabase
+        .from('fighter_discipline_records')
+        .select('id, discipline')
+        .eq('fighter_id', fighterId);
+      if (existingError) return { data: null, error: existingError.message };
+      const retained = new Set(records.map((record) => record.discipline.toLocaleLowerCase()));
+      const staleIds = (existing ?? [])
+        .filter((record) => !retained.has(String(record.discipline).toLocaleLowerCase()))
+        .map((record) => record.id);
+      if (staleIds.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('fighter_discipline_records')
+          .delete()
+          .in('id', staleIds);
+        if (deleteError) return { data: null, error: deleteError.message };
+      }
+
+      const { data, error } = await supabase
+        .from('fighter_discipline_records')
+        .select('*')
+        .eq('fighter_id', fighterId)
+        .order('discipline');
+      if (error) return { data: null, error: error.message };
+      return { data: (data ?? []) as FighterDisciplineRecord[], error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }
