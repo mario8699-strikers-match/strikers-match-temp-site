@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { RecordValue } from '@/components/CombatRecord';
-import { GenderDivisionCheckboxes } from '@/components/GenderDivisionCheckboxes';
 import { authService } from '@/services/authService';
 import { fighterService } from '@/services/fighterService';
 import { requestService } from '@/services/requestService';
@@ -27,15 +26,6 @@ import { compactFighterBio, FIGHTER_BIO_MAX_LENGTH } from '@/lib/fighterProfile'
 import type { SocialMediaHandles, SocialMediaPlatform } from '@/lib/socialMedia';
 import type { Profile, Fighter, MatchRequest, EventApplication } from '@/types';
 
-const WEIGHT_CLASSES = [
-  'minimosca','mosca','supermosca','gallo','supergallo','pluma','superpluma',
-  'ligero','superligero','welter','superwelter','medio','supermedio','semipesado','crucero','pesado',
-];
-const WEIGHT_LABELS: Record<string, string> = {
-  minimosca:'Minimosca',mosca:'Mosca',supermosca:'Supermosca',gallo:'Gallo',supergallo:'Supergallo',
-  pluma:'Pluma',superpluma:'Superpluma',ligero:'Ligero',superligero:'Superligero',welter:'Welter',
-  superwelter:'Superwelter',medio:'Medio',supermedio:'Supermedio',semipesado:'Semipesado',crucero:'Crucero',pesado:'Pesado',
-};
 const STATUS_CLASSES: Record<string, string> = {
   pending: 'bg-amber-50 text-amber-700',
   accepted: 'bg-emerald-50 text-emerald-700',
@@ -81,28 +71,13 @@ export default function FighterProfilePage() {
   // Fighter profile fields
   const [nickname, setNickname] = useState('');
   const [bio, setBio] = useState('');
-  const [weightClass, setWeightClass] = useState('');
   const [disciplines, setDisciplines] = useState<string[]>([]);
   const [gymName, setGymName] = useState('');
   const [exactWeight, setExactWeight] = useState('');
   const [heightCm, setHeightCm] = useState('');
-  const [reachCm, setReachCm] = useState('');
   const [wins, setWins] = useState('0');
   const [losses, setLosses] = useState('0');
   const [draws, setDraws] = useState('0');
-  const [genderDivision, setGenderDivision] = useState('');
-  const [koWins, setKoWins] = useState('0');
-  const [tkoWins, setTkoWins] = useState('0');
-  const [koLosses, setKoLosses] = useState('0');
-  const [tkoLosses, setTkoLosses] = useState('0');
-  const [skillRating, setSkillRating] = useState('');
-  const [preferredRulesets, setPreferredRulesets] = useState('');
-  const [requestedWeight, setRequestedWeight] = useState('');
-  const [acceptableWeightMin, setAcceptableWeightMin] = useState('');
-  const [acceptableWeightMax, setAcceptableWeightMax] = useState('');
-  const [specialRestrictions, setSpecialRestrictions] = useState('');
-  const [lastFightAt, setLastFightAt] = useState('');
-  const [lastKoLossAt, setLastKoLossAt] = useState('');
   const [isAvailable, setIsAvailable] = useState(true);
   const [availableToTravelInternationally, setAvailableToTravelInternationally] = useState(false);
   const [shortNotice, setShortNotice] = useState(false);
@@ -162,28 +137,13 @@ export default function FighterProfilePage() {
     setNationality(f.nationalities?.[0] ?? '');
     setNickname(f.nickname ?? '');
     setBio(f.bio ?? '');
-    setWeightClass(f.weight_class ?? '');
     setDisciplines(f.disciplines ?? []);
     setGymName(f.gym_name ?? '');
     setExactWeight(f.exact_weight != null ? String(f.exact_weight) : '');
     setHeightCm(f.height_cm != null ? String(f.height_cm) : '');
-    setReachCm(f.reach_cm != null ? String(f.reach_cm) : '');
     setWins(String(f.record_wins));
     setLosses(String(f.record_losses));
     setDraws(String(f.record_draws));
-    setGenderDivision(f.gender_division ?? '');
-    setKoWins(String(f.ko_wins ?? 0));
-    setTkoWins(String(f.tko_wins ?? 0));
-    setKoLosses(String(f.ko_losses ?? 0));
-    setTkoLosses(String(f.tko_losses ?? 0));
-    setSkillRating(f.skill_rating != null ? String(f.skill_rating) : '');
-    setPreferredRulesets((f.preferred_rulesets ?? []).join(', '));
-    setRequestedWeight(f.requested_weight_kg != null ? String(f.requested_weight_kg) : '');
-    setAcceptableWeightMin(f.acceptable_weight_min_kg != null ? String(f.acceptable_weight_min_kg) : '');
-    setAcceptableWeightMax(f.acceptable_weight_max_kg != null ? String(f.acceptable_weight_max_kg) : '');
-    setSpecialRestrictions((f.special_restrictions ?? []).join(', '));
-    setLastFightAt(f.last_fight_at ?? '');
-    setLastKoLossAt(f.last_ko_loss_at ?? '');
     setIsAvailable(f.is_available);
     setAvailableToTravelInternationally(f.available_to_travel_internationally ?? false);
     setShortNotice(f.short_notice_ready);
@@ -312,13 +272,6 @@ export default function FighterProfilePage() {
       return;
     }
 
-    const minimumWeight = acceptableWeightMin ? Number(acceptableWeightMin) : null;
-    const maximumWeight = acceptableWeightMax ? Number(acceptableWeightMax) : null;
-    if (minimumWeight != null && maximumWeight != null && minimumWeight > maximumWeight) {
-      setError(t('fighters.accountProfile.errors.weightRange'));
-      return;
-    }
-
     const invalidPlatform = SOCIAL_MEDIA_PLATFORMS.find(
       ({ key }) => !isValidSocialMediaIdentifier(key, socialMedia[key])
     );
@@ -347,29 +300,14 @@ export default function FighterProfilePage() {
     const payload = {
       nickname: nickname.trim() || null,
       bio: bio.trim().slice(0, FIGHTER_BIO_MAX_LENGTH) || null,
-      weight_class: weightClass || null,
       disciplines: disciplines,
       nationalities: nationality ? [nationality] : [],
       gym_name: gymName.trim() || null,
       exact_weight: exactWeight ? parseFloat(exactWeight) : null,
       height_cm: heightCm ? parseFloat(heightCm) : null,
-      reach_cm: reachCm ? parseFloat(reachCm) : null,
       record_wins: parseInt(wins) || 0,
       record_losses: parseInt(losses) || 0,
       record_draws: parseInt(draws) || 0,
-      gender_division: genderDivision || null,
-      ko_wins: parseInt(koWins) || 0,
-      tko_wins: parseInt(tkoWins) || 0,
-      ko_losses: parseInt(koLosses) || 0,
-      tko_losses: parseInt(tkoLosses) || 0,
-      skill_rating: skillRating ? parseFloat(skillRating) : null,
-      preferred_rulesets: preferredRulesets.split(',').map((value) => value.trim()).filter(Boolean),
-      requested_weight_kg: requestedWeight ? parseFloat(requestedWeight) : null,
-      acceptable_weight_min_kg: minimumWeight,
-      acceptable_weight_max_kg: maximumWeight,
-      special_restrictions: specialRestrictions.split(',').map((value) => value.trim()).filter(Boolean),
-      last_fight_at: lastFightAt || null,
-      last_ko_loss_at: lastKoLossAt || null,
       is_available: isAvailable,
       short_notice_ready: shortNotice,
       experience_level: experienceLevel,
@@ -608,18 +546,9 @@ export default function FighterProfilePage() {
             {/* Details grid */}
             <div className="grid grid-cols-2 gap-4 border border-zinc-100 p-6">
               {[
-                { label:t('fighters.accountProfile.fields.division'), value: fighter.weight_class ? (WEIGHT_LABELS[fighter.weight_class] ?? fighter.weight_class) : '—' },
                 { label:t('fighters.accountProfile.gym'), value: fighter.gym_name ?? '—' },
                 { label:t('fighters.accountProfile.exactWeight'), value: fighter.exact_weight ? `${fighter.exact_weight} kg` : '—' },
-                { label:t('fighters.accountProfile.fields.skillLevel'), value: fighter.skill_rating ? `${fighter.skill_rating}/10` : '—' },
-                { label:t('fighters.accountProfile.koTkoFor'), value: `${fighter.ko_wins + fighter.tko_wins}` },
-                { label:t('fighters.accountProfile.koTkoAgainst'), value: `${fighter.ko_losses + fighter.tko_losses}` },
-                { label:t('fighters.accountProfile.rulesets'), value: fighter.preferred_rulesets.length ? fighter.preferred_rulesets.join(', ') : '—' },
-                { label:t('fighters.accountProfile.requestedWeight'), value: fighter.requested_weight_kg ? `${fighter.requested_weight_kg} kg` : '—' },
-                { label:t('fighters.accountProfile.acceptableRange'), value: fighter.acceptable_weight_min_kg != null || fighter.acceptable_weight_max_kg != null ? `${fighter.acceptable_weight_min_kg ?? '—'}–${fighter.acceptable_weight_max_kg ?? '—'} kg` : '—' },
-                { label:t('fighters.accountProfile.fields.lastFight'), value: fighter.last_fight_at ?? '—' },
                 { label:t('fighters.accountProfile.height'), value: fighter.height_cm ? `${fighter.height_cm} cm` : '—' },
-                { label:t('fighters.accountProfile.reach'), value: fighter.reach_cm ? `${fighter.reach_cm} cm` : '—' },
               ].map(({label,value}) => (
                 <div key={label}>
                   <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>{label}</p>
@@ -663,12 +592,6 @@ export default function FighterProfilePage() {
                 <div>
                   <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#9A9A9A' }}>{t('fighters.accountProfile.availableTo')}</p>
                   <p className="text-sm text-zinc-900">{fighter.available_to}</p>
-                </div>
-              )}
-              {fighter.special_restrictions.length > 0 && (
-                <div className="col-span-2 border border-amber-200 bg-amber-50 p-3">
-                  <p className="text-xs font-bold tracking-widest uppercase text-amber-800">{t('fighters.accountProfile.privateRestrictions')}</p>
-                  <p className="mt-1 text-sm text-amber-950">{fighter.special_restrictions.join(' · ')}</p>
                 </div>
               )}
             </div>
@@ -784,16 +707,6 @@ export default function FighterProfilePage() {
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
             </div>
 
-            {/* Weight class */}
-            <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.divisionWeight')}</label>
-              <select value={weightClass} onChange={e => setWeightClass(e.target.value)}
-                className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white">
-                <option value="">— {t('fighters.accountProfile.selectDivision')} —</option>
-                {WEIGHT_CLASSES.map(wc => <option key={wc} value={wc}>{WEIGHT_LABELS[wc]}</option>)}
-              </select>
-            </div>
-
             {/* Disciplines — multi-select checkboxes */}
             <div className="col-span-2">
               <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.disciplines')}</label>
@@ -827,11 +740,10 @@ export default function FighterProfilePage() {
             {/* Physical stats */}
             <div>
               <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.physicalStats')}</label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 {[
                   { label:t('fighters.accountProfile.weightKg'), val:exactWeight, set:setExactWeight, step:'0.1' },
                   { label:t('fighters.accountProfile.heightCm'), val:heightCm, set:setHeightCm, step:'1' },
-                  { label:t('fighters.accountProfile.reachCm'), val:reachCm, set:setReachCm, step:'1' },
                 ].map(({ label, val, set: setter, step }) => (
                   <div key={label}>
                     <p className="text-xs text-zinc-400 mb-1">{label}</p>
@@ -854,42 +766,6 @@ export default function FighterProfilePage() {
                   </div>
                 ))}
               </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.divisionAndLevel')}</label>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <GenderDivisionCheckboxes value={genderDivision} onChange={setGenderDivision} />
-                <input type="number" min="1" max="10" step="0.1" value={skillRating} onChange={e => setSkillRating(e.target.value)} placeholder={t('fighters.accountProfile.skillPlaceholder')} className="w-full border border-zinc-300 px-3 py-2 text-sm" />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.knockoutRecord')}</label>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {[{label:t('fighters.accountProfile.koFor'),val:koWins,set:setKoWins},{label:t('fighters.accountProfile.tkoFor'),val:tkoWins,set:setTkoWins},{label:t('fighters.accountProfile.koAgainst'),val:koLosses,set:setKoLosses},{label:t('fighters.accountProfile.tkoAgainst'),val:tkoLosses,set:setTkoLosses}].map(({ label, val, set: setter }) => <label key={label}><span className="mb-1 block text-xs text-zinc-400">{label}</span><input type="number" min="0" value={val} onChange={e => setter(e.target.value)} className="w-full border border-zinc-300 px-3 py-2 text-center text-sm" /></label>)}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.rulesAndPreferences')}</label>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <input value={preferredRulesets} onChange={e => setPreferredRulesets(e.target.value)} placeholder={t('fighters.accountProfile.rulesetsPlaceholder')} className="w-full border border-zinc-300 px-3 py-2 text-sm sm:col-span-2" />
-                <input type="number" min="0" step="0.1" value={requestedWeight} onChange={e => setRequestedWeight(e.target.value)} placeholder={t('fighters.accountProfile.requestedWeightPlaceholder')} className="w-full border border-zinc-300 px-3 py-2 text-sm" />
-                <div className="grid grid-cols-2 gap-3">
-                  <input type="number" min="0" step="0.1" value={acceptableWeightMin} onChange={e => setAcceptableWeightMin(e.target.value)} placeholder={t('fighters.accountProfile.minimumKg')} className="w-full border border-zinc-300 px-3 py-2 text-sm" />
-                  <input type="number" min="0" step="0.1" value={acceptableWeightMax} onChange={e => setAcceptableWeightMax(e.target.value)} placeholder={t('fighters.accountProfile.maximumKg')} className="w-full border border-zinc-300 px-3 py-2 text-sm" />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.recentHistoryRestrictions')}</label>
-              <div className="grid grid-cols-2 gap-3">
-                <label><span className="mb-1 block text-xs text-zinc-400">{t('fighters.accountProfile.fields.lastFight')}</span><input type="date" value={lastFightAt} onChange={e => setLastFightAt(e.target.value)} className="w-full border border-zinc-300 px-3 py-2 text-sm" /></label>
-                <label><span className="mb-1 block text-xs text-zinc-400">{t('fighters.accountProfile.fields.lastKoLoss')}</span><input type="date" value={lastKoLossAt} onChange={e => setLastKoLossAt(e.target.value)} className="w-full border border-zinc-300 px-3 py-2 text-sm" /></label>
-              </div>
-              <textarea value={specialRestrictions} onChange={e => setSpecialRestrictions(e.target.value)} rows={2} placeholder={t('fighters.accountProfile.restrictionsPlaceholder')} className="mt-3 w-full border border-zinc-300 px-3 py-2 text-sm" />
             </div>
 
             {/* Availability window */}
