@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { RecordValue } from '@/components/CombatRecord';
+import { CountrySearchSelect } from '@/components/CountrySearchSelect';
 import { authService } from '@/services/authService';
 import { fighterService } from '@/services/fighterService';
 import { requestService } from '@/services/requestService';
@@ -662,36 +663,30 @@ export default function FighterProfilePage() {
                   <input type="text" value={state} onChange={e => setState(e.target.value)} maxLength={100}
                     className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                 </label>
-                <label>
+                <div>
                   <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.fields.country')}</span>
-                  <select
+                  <CountrySearchSelect
                     value={currentCountryCode}
-                    onChange={(event) => setCurrentCountryCode(event.target.value)}
-                    className="w-full border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
-                  >
-                    <option value="">{t('fighters.accountProfile.selectCountry')}</option>
-                    {countryOptions.map((option) => (
-                      <option key={option.code} value={option.code}>
-                        {countryFlagEmoji(option.code)} {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
+                    onChange={setCurrentCountryCode}
+                    options={countryOptions}
+                    placeholder={t('fighters.accountProfile.selectCountry')}
+                    searchPlaceholder={t('fighters.accountProfile.searchCountry')}
+                    noResultsLabel={t('fighters.accountProfile.noCountryResults')}
+                    ariaLabel={t('fighters.accountProfile.fields.country')}
+                  />
+                </div>
+                <div>
                   <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.nationalityFlag')}</span>
-                  <select
+                  <CountrySearchSelect
                     value={nationality}
-                    onChange={(event) => setNationality(event.target.value)}
-                    className="w-full border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
-                  >
-                    <option value="">{t('fighters.accountProfile.selectCountry')}</option>
-                    {countryOptions.map((option) => (
-                      <option key={option.code} value={option.code}>
-                        {countryFlagEmoji(option.code)} {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    onChange={setNationality}
+                    options={countryOptions}
+                    placeholder={t('fighters.accountProfile.selectCountry')}
+                    searchPlaceholder={t('fighters.accountProfile.searchCountry')}
+                    noResultsLabel={t('fighters.accountProfile.noCountryResults')}
+                    ariaLabel={t('fighters.accountProfile.nationalityFlag')}
+                  />
+                </div>
                 <label>
                   <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.accountEmail')}</span>
                   <input type="email" value={profile.email} readOnly aria-readonly="true"

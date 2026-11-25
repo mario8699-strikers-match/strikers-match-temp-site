@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { InlineCombatRecord } from '@/components/CombatRecord';
+import { CountrySearchSelect } from '@/components/CountrySearchSelect';
 import { manualFighterService } from '@/services/manualFighterService';
 import type { ManualFighter } from '@/types';
 import { manualFighterPublicPath } from '@/lib/publicUrls';
@@ -612,33 +613,27 @@ export function ManualFighterManager({
             </div>
             <div>
               <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.rosterManager.fields.currentCountry')}</label>
-              <select
+              <CountrySearchSelect
                 value={currentCountry}
-                onChange={(event) => setCurrentCountry(event.target.value)}
-                className="w-full border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
-              >
-                <option value="">{t('fighters.rosterManager.select')}</option>
-                {countryOptions.map((option) => (
-                  <option key={option.code} value={option.code}>
-                    {countryFlagEmoji(option.code)} {option.label}
-                  </option>
-                ))}
-              </select>
+                onChange={setCurrentCountry}
+                options={countryOptions}
+                placeholder={t('fighters.rosterManager.select')}
+                searchPlaceholder={t('fighters.accountProfile.searchCountry')}
+                noResultsLabel={t('fighters.accountProfile.noCountryResults')}
+                ariaLabel={t('fighters.rosterManager.fields.currentCountry')}
+              />
             </div>
             <div>
               <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.rosterManager.fields.nationality')}</label>
-              <select
+              <CountrySearchSelect
                 value={nationality}
-                onChange={(event) => setNationality(event.target.value)}
-                className="w-full border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
-              >
-                <option value="">{t('fighters.rosterManager.select')}</option>
-                {countryOptions.map((option) => (
-                  <option key={option.code} value={option.code}>
-                    {countryFlagEmoji(option.code)} {option.label}
-                  </option>
-                ))}
-              </select>
+                onChange={setNationality}
+                options={countryOptions}
+                placeholder={t('fighters.rosterManager.select')}
+                searchPlaceholder={t('fighters.accountProfile.searchCountry')}
+                noResultsLabel={t('fighters.accountProfile.noCountryResults')}
+                ariaLabel={t('fighters.rosterManager.fields.nationality')}
+              />
             </div>
             <div>
               <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#5A5A5A' }}>{t('fighters.rosterManager.fields.gym')}</label>
@@ -810,19 +805,16 @@ export function ManualFighterManager({
                     </button>
                   </div>
                   <div className="mt-2 flex max-w-sm gap-2">
-                    <select
+                    <CountrySearchSelect
                       value={countryDrafts[f.id] ?? ''}
-                      onChange={(event) => setCountryDrafts((current) => ({ ...current, [f.id]: event.target.value }))}
-                      aria-label={t('fighters.rosterManager.currentCountryOf', { name: f.full_name })}
-                      className="min-w-0 flex-1 border border-zinc-300 bg-white px-2 py-1.5 text-xs"
-                    >
-                      <option value="">{t('fighters.rosterManager.fields.currentCountry')}</option>
-                      {countryOptions.map((option) => (
-                        <option key={option.code} value={option.code}>
-                          {countryFlagEmoji(option.code)} {option.label}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(countryCode) => setCountryDrafts((current) => ({ ...current, [f.id]: countryCode }))}
+                      options={countryOptions}
+                      placeholder={t('fighters.rosterManager.fields.currentCountry')}
+                      searchPlaceholder={t('fighters.accountProfile.searchCountry')}
+                      noResultsLabel={t('fighters.accountProfile.noCountryResults')}
+                      ariaLabel={t('fighters.rosterManager.currentCountryOf', { name: f.full_name })}
+                      className="min-w-0 flex-1"
+                    />
                     <button
                       type="button"
                       onClick={() => void saveFighterCountry(f.id)}
@@ -909,28 +901,30 @@ export function ManualFighterManager({
                       value={requiredProfileDraft.instagram}
                       onChange={(value) => setRequiredProfileDraft((current) => current ? { ...current, instagram: value } : current)}
                     />
-                    <label>
+                    <div>
                       <span className="mb-1 block text-xs text-zinc-500">{t('fighters.rosterManager.fields.currentCountry')}</span>
-                      <select
+                      <CountrySearchSelect
                         value={requiredProfileDraft.countryCode}
-                        onChange={(event) => setRequiredProfileDraft((current) => current ? { ...current, countryCode: event.target.value } : current)}
-                        className="w-full border border-zinc-300 bg-white px-3 py-2 text-sm"
-                      >
-                        <option value="">{t('fighters.rosterManager.select')}</option>
-                        {countryOptions.map((option) => <option key={option.code} value={option.code}>{countryFlagEmoji(option.code)} {option.label}</option>)}
-                      </select>
-                    </label>
-                    <label>
+                        onChange={(countryCode) => setRequiredProfileDraft((current) => current ? { ...current, countryCode } : current)}
+                        options={countryOptions}
+                        placeholder={t('fighters.rosterManager.select')}
+                        searchPlaceholder={t('fighters.accountProfile.searchCountry')}
+                        noResultsLabel={t('fighters.accountProfile.noCountryResults')}
+                        ariaLabel={t('fighters.rosterManager.fields.currentCountry')}
+                      />
+                    </div>
+                    <div>
                       <span className="mb-1 block text-xs text-zinc-500">{t('fighters.rosterManager.fields.nationality')}</span>
-                      <select
+                      <CountrySearchSelect
                         value={requiredProfileDraft.nationality}
-                        onChange={(event) => setRequiredProfileDraft((current) => current ? { ...current, nationality: event.target.value } : current)}
-                        className="w-full border border-zinc-300 bg-white px-3 py-2 text-sm"
-                      >
-                        <option value="">{t('fighters.rosterManager.select')}</option>
-                        {countryOptions.map((option) => <option key={option.code} value={option.code}>{countryFlagEmoji(option.code)} {option.label}</option>)}
-                      </select>
-                    </label>
+                        onChange={(nationality) => setRequiredProfileDraft((current) => current ? { ...current, nationality } : current)}
+                        options={countryOptions}
+                        placeholder={t('fighters.rosterManager.select')}
+                        searchPlaceholder={t('fighters.accountProfile.searchCountry')}
+                        noResultsLabel={t('fighters.accountProfile.noCountryResults')}
+                        ariaLabel={t('fighters.rosterManager.fields.nationality')}
+                      />
+                    </div>
                   </div>
                   <fieldset>
                     <legend className="mb-2 text-xs text-zinc-500">{t('fighters.rosterManager.fields.disciplines')}</legend>
