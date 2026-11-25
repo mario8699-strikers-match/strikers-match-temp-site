@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { PasswordInput } from '@/components/PasswordInput';
 import { AUTH_PROFILE_MISSING_ERROR, AUTH_PROFILE_UNAVAILABLE_ERROR, authService } from '@/services/authService';
 import { getSafeAuthNextPath, redirectAfterAuth } from '@/services/authRedirect';
 import type { RegisterFormData, UserRole } from '@/types';
@@ -408,9 +409,8 @@ export default function RegisterPage() {
             <label htmlFor="password" className="block text-sm font-medium text-zinc-700 mb-1">
               {t('auth.register.password')}
             </label>
-            <input
+            <PasswordInput
               id="password"
-              type="password"
               autoComplete="new-password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -427,9 +427,8 @@ export default function RegisterPage() {
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-zinc-700 mb-1">
               {t('auth.register.confirmPassword')}
             </label>
-            <input
+            <PasswordInput
               id="confirmPassword"
-              type="password"
               autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}

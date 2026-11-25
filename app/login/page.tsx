@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { PasswordInput } from '@/components/PasswordInput';
 import { AUTH_PROFILE_MISSING_ERROR, AUTH_PROFILE_UNAVAILABLE_ERROR, authService } from '@/services/authService';
 import { getSafeAuthNextPath, redirectAfterAuth } from '@/services/authRedirect';
 import type { LoginFormData } from '@/types';
@@ -153,9 +154,8 @@ export default function LoginPage() {
             <label htmlFor="password" className="block text-sm font-medium text-zinc-700 mb-1">
               {t('auth.login.password')}
             </label>
-            <input
+            <PasswordInput
               id="password"
-              type="password"
               autoComplete="current-password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}

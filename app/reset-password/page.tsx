@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { PasswordInput } from '@/components/PasswordInput';
 import { authService } from '@/services/authService';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -154,9 +155,8 @@ export default function ResetPasswordPage() {
             <label htmlFor="password" className="block text-sm font-medium text-zinc-700 mb-1">
               {t('auth.reset.newPassword')}
             </label>
-            <input
+            <PasswordInput
               id="password"
-              type="password"
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -169,9 +169,8 @@ export default function ResetPasswordPage() {
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-zinc-700 mb-1">
               {t('auth.reset.confirmPassword')}
             </label>
-            <input
+            <PasswordInput
               id="confirmPassword"
-              type="password"
               autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
