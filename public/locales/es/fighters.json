@@ -146,6 +146,7 @@
     },
     "accountProfile": {
       "title": "Perfil del peleador", "changePhoto": "Cambiar foto", "profilePhoto": "Foto de perfil", "noCity": "Sin ciudad registrada", "verified": "Verificado", "photoSelected": "Foto seleccionada — guarda los cambios para aplicarla.", "completeProfile": "Completa tu perfil de peleador", "configureProfile": "Configurar perfil",
+      "requiredFieldsHelp": "Los campos marcados con * son obligatorios para completar el perfil público del peleador.",
       "internationalTravel": "Viajes internacionales", "willingToTravel": "Disponible para viajar internacionalmente", "notWillingToTravel": "No indicó disponibilidad para viajar", "travelSaveError": "El perfil se guardó, pero no se pudo guardar la disponibilidad para viajar. Intenta de nuevo.",
       "completeProfileHelp": "Agrega tu división, disciplina y récord para aparecer en el directorio.", "personalInformation": "Información personal", "emailLockedHelp": "Puedes actualizar estos datos. El correo de acceso no se puede modificar aquí.", "selectCountry": "Selecciona un país", "searchCountry": "Busca por nombre o código del país…", "noCountryResults": "No se encontraron países.", "divisionWeight": "División / peso", "selectDivision": "Selecciona una división", "physicalStats": "Estadísticas físicas", "recordLabel": "Récord (V – D – E)", "divisionAndLevel": "División y nivel técnico", "knockoutRecord": "Récord KO / TKO", "minimumKg": "Mín. kg", "maximumKg": "Máx. kg", "bioLabel": "Bio y logros", "bioHelp": "Agrega solo los títulos, logros o momentos más importantes de tu carrera (máximo 280 caracteres).", "bioPlaceholder": "Ejemplo: Campeón nacional · 3 veces medallista regional", "noFightRequests": "No tienes solicitudes de pelea aún.", "noApplications": "No has aplicado a ningún evento aún.", "deleteWarning": "Eliminar tu cuenta es permanente. Se borrarán todos tus datos y no podrás recuperarlos.", "deleteConfirmation": "Esta acción es irreversible. Se eliminarán tu perfil, datos y toda la información asociada a tu cuenta. ¿Estás seguro?", "deleting": "Eliminando…", "yesDelete": "Sí, eliminar",
       "selectDisciplineForRecord": "Selecciona al menos una disciplina para agregar su récord.",
@@ -154,7 +155,24 @@
       "fields": { "phone": "Teléfono", "country": "País", "division": "División", "genderDivision": "División de género", "skillLevel": "Nivel técnico", "lastFight": "Última pelea", "lastKoLoss": "Última derrota por KO" },
       "requestStatus": { "pending": "Pendiente", "accepted": "Aceptada", "declined": "Rechazada", "cancelled": "Cancelada" },
       "applicationStatus": { "pending": "Pendiente", "accepted": "Aceptado", "declined": "Rechazado", "withdrawn": "Retirado" },
-      "errors": { "weightRange": "El peso mínimo aceptable no puede ser mayor que el peso máximo.", "personalDataSave": "El perfil deportivo se guardó, pero no se pudieron guardar los datos personales. Intenta de nuevo.", "socialMedia": "Revisa tu usuario o enlace de {{platform}}.", "photoUpload": "No se pudo subir la foto.", "recordSave": "El perfil se guardó, pero no se pudieron guardar los récords por disciplina. Intenta de nuevo.", "save": "No se pudo guardar el perfil. Intenta de nuevo." }
+      "errors": { "nameRequired": "El nombre completo es obligatorio.", "weightRange": "El peso mínimo aceptable no puede ser mayor que el peso máximo.", "personalDataSave": "El perfil deportivo se guardó, pero no se pudieron guardar los datos personales. Intenta de nuevo.", "socialMedia": "Revisa tu usuario o enlace de {{platform}}.", "photoUpload": "No se pudo subir la foto.", "recordSave": "El perfil se guardó, pero no se pudieron guardar los récords por disciplina. Intenta de nuevo.", "save": "No se pudo guardar el perfil. Intenta de nuevo." }
+    },
+    "media": {
+      "title": "Videos de combate",
+      "help": "Agrega enlaces públicos a combates recientes o highlights cortos de YouTube, Instagram, TikTok u otra plataforma.",
+      "type": "Tipo de video",
+      "recentFight": "Combate reciente",
+      "highlight": "Highlight",
+      "linkTitle": "Título del video",
+      "titlePlaceholder": "Ejemplo: Combate de campeonato",
+      "url": "Enlace público del video",
+      "remove": "Eliminar",
+      "addRecentFight": "Agregar combate reciente",
+      "addHighlight": "Agregar highlight",
+      "recentFights": "Combates recientes",
+      "highlights": "Highlights",
+      "invalidUrl": "Ingresa un enlace público completo que comience con http:// o https://.",
+      "saveError": "No se pudieron guardar los videos de combate. Intenta de nuevo."
     },
     "search": {
       "label": "Buscar atleta",

@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { FighterProfileHero } from '@/components/FighterProfileHero';
+import { FighterMediaShowcase } from '@/components/FighterMediaShowcase';
 import { fighterService } from '@/services/fighterService';
 import { eventService } from '@/services/eventService';
 import { requestService } from '@/services/requestService';
@@ -202,6 +203,11 @@ export default function FighterDetailPage() {
           experienceLevel={fighter.experience_level}
           verified={fighter.verified}
         />
+        {Boolean(fighter.media_links?.length) && (
+          <div className="mt-6">
+            <FighterMediaShowcase links={fighter.media_links} />
+          </div>
+        )}
 
         {/* CTA */}
         {profile?.role === 'spectator' && (

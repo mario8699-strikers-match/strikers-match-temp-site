@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 import { isUuidIdentifier } from '@/lib/publicUrls';
-import type { FighterDisciplineRecord, ManualFighter, ManualFighterWithCreator, ServiceResponse } from '@/types';
+import type { FighterDisciplineRecord, FighterMediaLink, ManualFighter, ManualFighterWithCreator, ServiceResponse } from '@/types';
 
 // Fields allowed on insert/update
 export type ManualFighterInput = Pick<ManualFighter, 'full_name'> & Partial<Omit<
@@ -57,6 +57,22 @@ async function attachDisciplineRecords<T extends ManualFighter>(fighters: T[]) {
   }));
 }
 
+async function attachMediaLinks<T extends ManualFighter>(fighters: T[]) {
+  if (fighters.length === 0) return fighters;
+  const { data, error } = await supabase
+    .from('fighter_media_links')
+    .select('*')
+    .in('manual_fighter_id', fighters.map((fighter) => fighter.id))
+    .order('sort_order');
+  if (error) return fighters;
+  const linksByFighter = new Map<string, FighterMediaLink[]>();
+  for (const link of (data ?? []) as FighterMediaLink[]) {
+    if (!link.manual_fighter_id) continue;
+    linksByFighter.set(link.manual_fighter_id, [...(linksByFighter.get(link.manual_fighter_id) ?? []), link]);
+  }
+  return fighters.map((fighter) => ({ ...fighter, media_links: linksByFighter.get(fighter.id) ?? [] }));
+}
+
 export const manualFighterService = {
   // Public list — intentionally excludes private medical/contact fields.
   async getAllPublic(): Promise<ServiceResponse<ManualFighterWithCreator[]>> {
@@ -98,7 +114,7 @@ export const manualFighterService = {
         .single();
 
       if (error) return { data: null, error: error.message };
-      const [fighter] = await attachDisciplineRecords([data as ManualFighterWithCreator]);
+      const [fighter] = await attachMediaLinks(await attachDisciplineRecords([data as ManualFighterWithCreator]));
       return { data: fighter, error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
@@ -132,10 +148,10 @@ export const manualFighterService = {
       );
 
       return {
-        data: await attachDisciplineRecords(fighters.map((fighter) => ({
+        data: await attachMediaLinks(await attachDisciplineRecords(fighters.map((fighter) => ({
           ...fighter,
           available_to_travel_internationally: travelByFighterId.get(fighter.id) ?? false,
-        })) as ManualFighter[]),
+        })) as ManualFighter[])),
         error: null,
       };
     } catch {
@@ -268,6 +284,38 @@ export const manualFighterService = {
         .order('discipline');
       if (error) return { data: null, error: error.message };
       return { data: (data ?? []) as FighterDisciplineRecord[], error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
+  async replaceMediaLinks(
+    manualFighterId: string,
+    links: Array<{ category: 'recent_fight' | 'highlight'; title: string | null; url: string; sort_order: number }>,
+  ): Promise<ServiceResponse<FighterMediaLink[]>> {
+    try {
+      const { data: existing, error: existingError } = await supabase
+        .from('fighter_media_links')
+        .select('id')
+        .eq('manual_fighter_id', manualFighterId);
+      if (existingError) return { data: null, error: existingError.message };
+
+      let inserted: FighterMediaLink[] = [];
+      if (links.length > 0) {
+        const { data, error } = await supabase
+          .from('fighter_media_links')
+          .insert(links.map((link) => ({ ...link, fighter_id: null, manual_fighter_id: manualFighterId })))
+          .select('*');
+        if (error) return { data: null, error: error.message };
+        inserted = (data ?? []) as FighterMediaLink[];
+      }
+
+      const staleIds = (existing ?? []).map((link) => link.id);
+      if (staleIds.length > 0) {
+        const { error } = await supabase.from('fighter_media_links').delete().in('id', staleIds);
+        if (error) return { data: null, error: error.message };
+      }
+      return { data: inserted, error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }

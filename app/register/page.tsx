@@ -323,11 +323,12 @@ export default function RegisterPage() {
             {t('auth.register.selectedRole')}{' '}
             <span className="font-semibold text-zinc-900">{t(`auth.register.${formData.role}`)}</span>
           </div>
+          <p className="text-xs text-zinc-500">{t('auth.register.requiredFieldsHelp')}</p>
 
           {formData.role === 'promoter' && (
             <fieldset>
               <legend className="block text-sm font-medium text-zinc-700 mb-2">
-                {t('auth.register.promoterFederationPrompt')}
+                {t('auth.register.promoterFederationPrompt')} <span className="text-[#C0001E]" aria-hidden="true">*</span>
               </legend>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {(['federated', 'independent'] as const).map((status) => (
@@ -366,12 +367,13 @@ export default function RegisterPage() {
           {/* Full Name */}
           <div>
             <label htmlFor="full_name" className="block text-sm font-medium text-zinc-700 mb-1">
-              {t(isGymOwner ? 'auth.register.gymOwnerName' : 'auth.register.fullName')}
+              {t(isGymOwner ? 'auth.register.gymOwnerName' : 'auth.register.fullName')} <span className="text-[#C0001E]" aria-hidden="true">*</span>
             </label>
             <input
               id="full_name"
               type="text"
               autoComplete="name"
+              required
               value={formData.full_name}
               onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
               placeholder={t(isGymOwner ? 'auth.register.gymOwnerNamePlaceholder' : 'auth.register.fullNamePlaceholder')}
@@ -388,12 +390,13 @@ export default function RegisterPage() {
           {/* Email */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-zinc-700 mb-1">
-              {t('auth.register.email')}
+              {t('auth.register.email')} <span className="text-[#C0001E]" aria-hidden="true">*</span>
             </label>
             <input
               id="email"
               type="email"
               autoComplete="email"
+              required
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder={t('auth.register.emailPlaceholder')}
@@ -407,11 +410,12 @@ export default function RegisterPage() {
           {/* Password */}
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-zinc-700 mb-1">
-              {t('auth.register.password')}
+              {t('auth.register.password')} <span className="text-[#C0001E]" aria-hidden="true">*</span>
             </label>
             <PasswordInput
               id="password"
               autoComplete="new-password"
+              required
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               placeholder={t('auth.register.passwordPlaceholder')}
@@ -425,11 +429,12 @@ export default function RegisterPage() {
           {/* Confirm Password */}
           <div>
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-zinc-700 mb-1">
-              {t('auth.register.confirmPassword')}
+              {t('auth.register.confirmPassword')} <span className="text-[#C0001E]" aria-hidden="true">*</span>
             </label>
             <PasswordInput
               id="confirmPassword"
               autoComplete="new-password"
+              required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder={t('auth.register.confirmPasswordPlaceholder')}
@@ -474,11 +479,12 @@ export default function RegisterPage() {
           {/* Date of Birth */}
           <div>
             <label htmlFor="date_of_birth" className="block text-sm font-medium text-zinc-700 mb-1">
-              {t('auth.register.dateOfBirth')}
+              {t('auth.register.dateOfBirth')} <span className="text-[#C0001E]" aria-hidden="true">*</span>
             </label>
             <input
               id="date_of_birth"
               type="date"
+              required
               value={formData.date_of_birth}
               onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
               max={new Date().toISOString().split('T')[0]}
@@ -548,6 +554,7 @@ export default function RegisterPage() {
                 className="mt-0.5 w-4 h-4 border-zinc-300 text-zinc-900 focus:ring-zinc-900"
               />
               <span className="text-sm text-zinc-700">
+                <span className="text-[#C0001E]" aria-hidden="true">*</span>{' '}
                 {tLegal('legal.register.acceptTerms')}{' '}
                 <a href="/terms" target="_blank" className="font-medium text-zinc-900 underline hover:text-[#C0001E]">
                   {tLegal('legal.register.termsLink')}

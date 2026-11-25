@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { CountrySearchSelect } from '@/components/CountrySearchSelect';
 import { DisciplineRecordEditor } from '@/components/DisciplineRecordEditor';
 import { DisciplineRecordSummary } from '@/components/DisciplineRecordSummary';
+import { FighterMediaEditor } from '@/components/FighterMediaEditor';
 import { manualFighterService } from '@/services/manualFighterService';
 import type { ManualFighter } from '@/types';
 import { manualFighterPublicPath } from '@/lib/publicUrls';
@@ -26,6 +27,12 @@ import {
   normalizeSocialMediaIdentifier,
 } from '@/lib/socialMedia';
 import { FIGHTER_BIO_MAX_LENGTH } from '@/lib/fighterProfile';
+import {
+  isValidFighterMediaUrl,
+  mediaDraftFromLinks,
+  mediaRowsFromDraft,
+  type FighterMediaDraftItem,
+} from '@/lib/fighterMedia';
 
 const ACCEPTED_PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/gif,image/avif';
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
@@ -61,6 +68,7 @@ type RequiredProfileDraft = {
   gymName: string;
   instagram: string;
   disciplineRecords: DisciplineRecordDraft;
+  mediaLinks: FighterMediaDraftItem[];
 };
 
 export function ManualFighterManager({
@@ -101,6 +109,7 @@ export function ManualFighterManager({
   const [losses, setLosses] = useState('0');
   const [draws, setDraws] = useState('0');
   const [disciplineRecordDraft, setDisciplineRecordDraft] = useState<DisciplineRecordDraft>({});
+  const [mediaDraft, setMediaDraft] = useState<FighterMediaDraftItem[]>([]);
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
@@ -169,6 +178,7 @@ export function ManualFighterManager({
                 draws: requestedFighter.record_draws,
               },
             ),
+            mediaLinks: mediaDraftFromLinks(requestedFighter.media_links),
           });
           window.setTimeout(() => {
             document.getElementById(`manual-fighter-${requestedFighter.id}`)?.scrollIntoView({
@@ -189,6 +199,7 @@ export function ManualFighterManager({
     setName(''); setNickname(''); setWeight(''); setDisciplines([]);
     setWins('0'); setLosses('0'); setDraws('0');
     setDisciplineRecordDraft({});
+    setMediaDraft([]);
     setPhone(''); setEmail(''); setCity(''); setStateField(''); setCurrentCountry(''); setNationality(''); setGym(defaultGymName); setInstagram('');
     setLevel('amateur'); setNotes(''); setPhotoFile(null); setPhotoPreview(null); setBio('');
     setIsAvailable(true); setIsPublic(true); setDateOfBirth(''); setGenderDivision(''); setExactWeight(''); setHeightCm('');
@@ -203,6 +214,10 @@ export function ManualFighterManager({
     if (!currentCountry) { setError(t('fighters.rosterManager.errors.countryRequired')); return; }
     if (!isValidSocialMediaIdentifier('instagram', instagram)) {
       setError(t('fighters.rosterManager.errors.invalidInstagram'));
+      return;
+    }
+    if (mediaDraft.some((item) => (item.title.trim() || item.url.trim()) && !isValidFighterMediaUrl(item.url))) {
+      setError(t('fighters.media.invalidUrl'));
       return;
     }
     setSaving(true);
@@ -289,6 +304,14 @@ export function ManualFighterManager({
         setError(t('fighters.rosterManager.errors.recordSave', { error: disciplineRecordResult.error }));
         return;
       }
+      const mediaResult = await manualFighterService.replaceMediaLinks(data.id, mediaRowsFromDraft(mediaDraft));
+      if (mediaResult.error) {
+        await manualFighterService.remove(data.id);
+        if (uploadedPhoto) await deleteFile(uploadedPhoto.key);
+        setSaving(false);
+        setError(t('fighters.media.saveError'));
+        return;
+      }
       const travelResult = await manualFighterService.updateTravelPreference(
         data.id,
         availableToTravelInternationally,
@@ -304,6 +327,7 @@ export function ManualFighterManager({
       const savedFighter = {
         ...data,
         discipline_records: disciplineRecordResult.data ?? [],
+        media_links: mediaResult.data ?? [],
         available_to_travel_internationally: availableToTravelInternationally,
       };
       setSaving(false);
@@ -448,6 +472,7 @@ export function ManualFighterManager({
           draws: fighter.record_draws,
         },
       ),
+      mediaLinks: mediaDraftFromLinks(fighter.media_links),
     });
     setError(null);
   }
@@ -459,6 +484,12 @@ export function ManualFighterManager({
     }
     if (requiredProfileDraft.instagram && !isValidSocialMediaIdentifier('instagram', requiredProfileDraft.instagram)) {
       setError(t('fighters.rosterManager.errors.invalidInstagram'));
+      return;
+    }
+    if (requiredProfileDraft.mediaLinks.some((item) =>
+      (item.title.trim() || item.url.trim()) && !isValidFighterMediaUrl(item.url)
+    )) {
+      setError(t('fighters.media.invalidUrl'));
       return;
     }
 
@@ -504,16 +535,27 @@ export function ManualFighterManager({
     }
 
     const disciplineRecordResult = await manualFighterService.replaceDisciplineRecords(fighterId, recordRows);
-    setSavingRequiredProfileId(null);
     if (disciplineRecordResult.error) {
+      setSavingRequiredProfileId(null);
       setError(t('fighters.rosterManager.errors.recordSave', { error: disciplineRecordResult.error }));
       return;
     }
+    const mediaResult = await manualFighterService.replaceMediaLinks(
+      fighterId,
+      mediaRowsFromDraft(requiredProfileDraft.mediaLinks),
+    );
+    if (mediaResult.error) {
+      setSavingRequiredProfileId(null);
+      setError(t('fighters.media.saveError'));
+      return;
+    }
+    setSavingRequiredProfileId(null);
 
     const savedFighter = {
       ...fighter,
       ...result.data,
       discipline_records: disciplineRecordResult.data ?? [],
+      media_links: mediaResult.data ?? [],
     };
     setManualFighters((current) => current.map((item) => item.id === fighterId ? savedFighter : item));
     setInstagramDrafts((current) => ({ ...current, [fighterId]: result.data!.instagram ?? '' }));
@@ -607,6 +649,8 @@ export function ManualFighterManager({
             value={disciplineRecordDraft}
             onChange={setDisciplineRecordDraft}
           />
+
+          <FighterMediaEditor value={mediaDraft} onChange={setMediaDraft} />
 
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <RosterInput label={t('fighters.rosterManager.fields.dateOfBirth')} type="date" value={dateOfBirth} onChange={setDateOfBirth} />
@@ -1032,6 +1076,12 @@ export function ManualFighterManager({
                     value={requiredProfileDraft.disciplineRecords}
                     onChange={(disciplineRecords) => setRequiredProfileDraft((current) => current
                       ? { ...current, disciplineRecords }
+                      : current)}
+                  />
+                  <FighterMediaEditor
+                    value={requiredProfileDraft.mediaLinks}
+                    onChange={(mediaLinks) => setRequiredProfileDraft((current) => current
+                      ? { ...current, mediaLinks }
                       : current)}
                   />
                   <div className="flex justify-end">

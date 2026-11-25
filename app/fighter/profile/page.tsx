@@ -9,6 +9,8 @@ import { Footer } from '@/components/Footer';
 import { CountrySearchSelect } from '@/components/CountrySearchSelect';
 import { DisciplineRecordEditor } from '@/components/DisciplineRecordEditor';
 import { DisciplineRecordSummary } from '@/components/DisciplineRecordSummary';
+import { FighterMediaEditor } from '@/components/FighterMediaEditor';
+import { FighterMediaShowcase } from '@/components/FighterMediaShowcase';
 import { authService } from '@/services/authService';
 import { fighterService } from '@/services/fighterService';
 import { requestService } from '@/services/requestService';
@@ -31,6 +33,12 @@ import {
 } from '@/lib/disciplineRecords';
 import { countryFlagEmoji, getCountryName, getCountryOptions } from '@/lib/countries';
 import { compactFighterBio, FIGHTER_BIO_MAX_LENGTH } from '@/lib/fighterProfile';
+import {
+  isValidFighterMediaUrl,
+  mediaDraftFromLinks,
+  mediaRowsFromDraft,
+  type FighterMediaDraftItem,
+} from '@/lib/fighterMedia';
 import type { SocialMediaHandles, SocialMediaPlatform } from '@/lib/socialMedia';
 import type { Profile, Fighter, MatchRequest, EventApplication } from '@/types';
 
@@ -87,6 +95,7 @@ export default function FighterProfilePage() {
   const [losses, setLosses] = useState('0');
   const [draws, setDraws] = useState('0');
   const [disciplineRecordDraft, setDisciplineRecordDraft] = useState<DisciplineRecordDraft>({});
+  const [mediaDraft, setMediaDraft] = useState<FighterMediaDraftItem[]>([]);
   const [isAvailable, setIsAvailable] = useState(true);
   const [availableToTravelInternationally, setAvailableToTravelInternationally] = useState(false);
   const [shortNotice, setShortNotice] = useState(false);
@@ -158,6 +167,7 @@ export default function FighterProfilePage() {
       f.discipline_records,
       { wins: f.record_wins, losses: f.record_losses, draws: f.record_draws },
     ));
+    setMediaDraft(mediaDraftFromLinks(f.media_links));
     setIsAvailable(f.is_available);
     setAvailableToTravelInternationally(f.available_to_travel_internationally ?? false);
     setShortNotice(f.short_notice_ready);
@@ -282,7 +292,7 @@ export default function FighterProfilePage() {
 
     const normalizedFullName = fullName.trim();
     if (!normalizedFullName) {
-      setError('El nombre completo es obligatorio.');
+      setError(t('fighters.accountProfile.errors.nameRequired'));
       return;
     }
 
@@ -291,6 +301,13 @@ export default function FighterProfilePage() {
     );
     if (invalidPlatform) {
       setError(t('fighters.accountProfile.errors.socialMedia', { platform: invalidPlatform.label }));
+      return;
+    }
+    const invalidMediaLink = mediaDraft.find((item) =>
+      (item.title.trim() || item.url.trim()) && !isValidFighterMediaUrl(item.url)
+    );
+    if (invalidMediaLink) {
+      setError(t('fighters.media.invalidUrl'));
       return;
     }
 
@@ -383,6 +400,16 @@ export default function FighterProfilePage() {
         ...savedFighter,
         discipline_records: disciplineRecordResult.data ?? [],
       };
+      const mediaResult = await fighterService.replaceMediaLinks(
+        savedFighter.id,
+        mediaRowsFromDraft(mediaDraft),
+      );
+      if (mediaResult.error) {
+        setSaving(false);
+        setError(t('fighters.media.saveError'));
+        return;
+      }
+      savedFighter = { ...savedFighter, media_links: mediaResult.data ?? [] };
       const travelResult = await fighterService.updateTravelPreference(
         savedFighter.id,
         availableToTravelInternationally,
@@ -495,6 +522,11 @@ export default function FighterProfilePage() {
               <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
             </button>
             <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
+            {editing && (
+              <p className="mt-2 text-center text-[10px] font-bold uppercase tracking-wide text-zinc-500">
+                {t('fighters.accountProfile.profilePhoto')} <span className="text-[#C0001E]" aria-hidden="true">*</span>
+              </p>
+            )}
           </div>
 
           <div className="flex-1">
@@ -642,6 +674,8 @@ export default function FighterProfilePage() {
               </div>
             )}
 
+            <FighterMediaShowcase links={fighter.media_links} />
+
             {visibleSocialMedia.length > 0 && (
               <div className="border border-zinc-100 p-6">
                 <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color:'#9A9A9A' }}>{t('fighters.accountProfile.socialMedia')}</p>
@@ -671,13 +705,15 @@ export default function FighterProfilePage() {
         {/* ── Edit / Setup Form ── */}
         {editing && (
           <div className="space-y-5">
+            <p className="text-xs text-zinc-500">{t('fighters.accountProfile.requiredFieldsHelp')}</p>
             <div className="border border-zinc-200 p-4 sm:p-5">
               <p className="text-xs font-bold tracking-widest uppercase" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.personalInformation')}</p>
               <p className="mt-1 text-xs text-zinc-500">{t('fighters.accountProfile.emailLockedHelp')}</p>
               <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <label className="sm:col-span-2">
-                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.fullName')}</span>
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.fullName')} <span className="text-[#C0001E]" aria-hidden="true">*</span></span>
                   <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} required maxLength={120}
+                    placeholder={t('fighters.accountProfile.fullName')}
                     className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                 </label>
                 <label>
@@ -686,22 +722,24 @@ export default function FighterProfilePage() {
                     className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                 </label>
                 <label>
-                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.dateOfBirth')}</span>
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.dateOfBirth')} <span className="text-[#C0001E]" aria-hidden="true">*</span></span>
                   <input type="date" value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)}
                     className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                 </label>
                 <label>
                   <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.city')}</span>
                   <input type="text" value={city} onChange={e => setCity(e.target.value)} maxLength={100}
+                    placeholder={t('fighters.accountProfile.city')}
                     className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                 </label>
                 <label>
                   <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.state')}</span>
                   <input type="text" value={state} onChange={e => setState(e.target.value)} maxLength={100}
+                    placeholder={t('fighters.accountProfile.state')}
                     className="w-full border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900" />
                 </label>
                 <div>
-                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.fields.country')}</span>
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.fields.country')} <span className="text-[#C0001E]" aria-hidden="true">*</span></span>
                   <CountrySearchSelect
                     value={currentCountryCode}
                     onChange={setCurrentCountryCode}
@@ -713,7 +751,7 @@ export default function FighterProfilePage() {
                   />
                 </div>
                 <div>
-                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.nationalityFlag')}</span>
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-zinc-500">{t('fighters.accountProfile.nationalityFlag')} <span className="text-[#C0001E]" aria-hidden="true">*</span></span>
                   <CountrySearchSelect
                     value={nationality}
                     onChange={setNationality}
@@ -741,7 +779,7 @@ export default function FighterProfilePage() {
 
             {/* Disciplines — multi-select checkboxes */}
             <div className="col-span-2">
-              <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.disciplines')}</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-2" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.disciplines')} <span className="text-[#C0001E]" aria-hidden="true">*</span></label>
               <div className="flex flex-wrap gap-2">
                 {DISCIPLINE_OPTIONS.map(d => (
                   <button
@@ -764,7 +802,7 @@ export default function FighterProfilePage() {
 
             {/* Gym */}
             <div>
-              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.gym')}</label>
+              <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.gym')} <span className="text-[#C0001E]" aria-hidden="true">*</span></label>
               <input type="text" value={gymName} onChange={e => setGymName(e.target.value)} placeholder={t('fighters.accountProfile.gymPlaceholder')}
                 className="w-full border border-zinc-300 px-3 py-2 text-zinc-900 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900" />
             </div>
@@ -774,7 +812,7 @@ export default function FighterProfilePage() {
               <label className="block text-xs font-bold tracking-widest uppercase mb-1" style={{ color:'#5A5A5A' }}>{t('fighters.accountProfile.physicalStats')}</label>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-xs text-zinc-400 mb-1">{t('fighters.accountProfile.weightKg')}</p>
+                  <p className="text-xs text-zinc-400 mb-1">{t('fighters.accountProfile.weightKg')} <span className="text-[#C0001E]" aria-hidden="true">*</span></p>
                   <input
                     type="text"
                     inputMode="decimal"
@@ -888,7 +926,7 @@ export default function FighterProfilePage() {
               <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {SOCIAL_MEDIA_PLATFORMS.map(({ key, label, placeholder }) => (
                   <label key={key}>
-                    <span className="mb-1 block text-xs text-zinc-400">{label}</span>
+                    <span className="mb-1 block text-xs text-zinc-400">{label}{key === 'instagram' && <> <span className="text-[#C0001E]" aria-hidden="true">*</span></>}</span>
                     <input
                       type="text"
                       value={socialMedia[key]}
@@ -904,6 +942,8 @@ export default function FighterProfilePage() {
                 ))}
               </div>
             </div>
+
+            <FighterMediaEditor value={mediaDraft} onChange={setMediaDraft} />
 
             {/* Representation */}
             <div>

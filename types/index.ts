@@ -112,6 +112,20 @@ export interface FighterDisciplineRecord {
   updated_at: string;
 }
 
+export type FighterMediaCategory = 'recent_fight' | 'highlight';
+
+export interface FighterMediaLink {
+  id: string;
+  fighter_id: string | null;
+  manual_fighter_id: string | null;
+  category: FighterMediaCategory;
+  title: string | null;
+  url: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Fighter {
   id: string;
   slug: string;
@@ -129,6 +143,7 @@ export interface Fighter {
   record_losses: number;
   record_draws: number;
   discipline_records?: FighterDisciplineRecord[];
+  media_links?: FighterMediaLink[];
   is_available: boolean;
   short_notice_ready: boolean;
   experience_level: 'amateur' | 'pro';
@@ -369,6 +384,7 @@ export interface ManualFighter {
   record_losses: number;
   record_draws: number;
   discipline_records?: FighterDisciplineRecord[];
+  media_links?: FighterMediaLink[];
   phone: string | null;
   email: string | null;
   city: string | null;

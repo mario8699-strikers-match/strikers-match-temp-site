@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { FighterProfileHero } from '@/components/FighterProfileHero';
+import { FighterMediaShowcase } from '@/components/FighterMediaShowcase';
 import { manualFighterService } from '@/services/manualFighterService';
 import { eventService } from '@/services/eventService';
 import { requestService } from '@/services/requestService';
@@ -123,6 +124,11 @@ export default function ManualFighterDetailPage() {
           experienceLevel={fighter.experience_level}
           roster
         />
+        {Boolean(fighter.media_links?.length) && (
+          <div className="mt-6">
+            <FighterMediaShowcase links={fighter.media_links} />
+          </div>
+        )}
 
         {/* Roster notice */}
         <div className="mb-6 mt-6 border border-amber-200 bg-amber-50/50 p-4">

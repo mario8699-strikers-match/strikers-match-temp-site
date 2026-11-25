@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabaseClient';
 import { uploadFile } from '@/lib/storageClient';
 import { isUuidIdentifier } from '@/lib/publicUrls';
-import type { Fighter, FighterDisciplineRecord, FighterSearchFilters, FighterSearchResult, ServiceResponse } from '@/types';
+import type { Fighter, FighterDisciplineRecord, FighterMediaLink, FighterSearchFilters, FighterSearchResult, ServiceResponse } from '@/types';
 
 const PAGE_SIZE = 12;
 
@@ -24,6 +24,22 @@ async function attachDisciplineRecords(fighters: Fighter[]) {
     ...fighter,
     discipline_records: recordsByFighter.get(fighter.id) ?? [],
   }));
+}
+
+async function attachMediaLinks(fighters: Fighter[]) {
+  if (fighters.length === 0) return fighters;
+  const { data, error } = await supabase
+    .from('fighter_media_links')
+    .select('*')
+    .in('fighter_id', fighters.map((fighter) => fighter.id))
+    .order('sort_order');
+  if (error) return fighters;
+  const linksByFighter = new Map<string, FighterMediaLink[]>();
+  for (const link of (data ?? []) as FighterMediaLink[]) {
+    if (!link.fighter_id) continue;
+    linksByFighter.set(link.fighter_id, [...(linksByFighter.get(link.fighter_id) ?? []), link]);
+  }
+  return fighters.map((fighter) => ({ ...fighter, media_links: linksByFighter.get(fighter.id) ?? [] }));
 }
 
 export const fighterService = {
@@ -54,7 +70,7 @@ export const fighterService = {
         .single();
 
       if (error) return { data: null, error: error.message };
-      const [fighter] = await attachDisciplineRecords([data as Fighter]);
+      const [fighter] = await attachMediaLinks(await attachDisciplineRecords([data as Fighter]));
       return { data: fighter, error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
@@ -77,11 +93,11 @@ export const fighterService = {
         .maybeSingle();
 
       if (travelError) return { data: null, error: travelError.message };
-      const [fighterWithRecords] = await attachDisciplineRecords([{
+      const [fighterWithRecords] = await attachMediaLinks(await attachDisciplineRecords([{
           ...data,
           available_to_travel_internationally:
             travelPreference?.available_to_travel_internationally ?? false,
-        } as Fighter]);
+        } as Fighter]));
       return { data: fighterWithRecords, error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
@@ -253,6 +269,38 @@ export const fighterService = {
         .order('discipline');
       if (error) return { data: null, error: error.message };
       return { data: (data ?? []) as FighterDisciplineRecord[], error: null };
+    } catch {
+      return { data: null, error: 'An unexpected error occurred.' };
+    }
+  },
+
+  async replaceMediaLinks(
+    fighterId: string,
+    links: Array<{ category: 'recent_fight' | 'highlight'; title: string | null; url: string; sort_order: number }>,
+  ): Promise<ServiceResponse<FighterMediaLink[]>> {
+    try {
+      const { data: existing, error: existingError } = await supabase
+        .from('fighter_media_links')
+        .select('id')
+        .eq('fighter_id', fighterId);
+      if (existingError) return { data: null, error: existingError.message };
+
+      let inserted: FighterMediaLink[] = [];
+      if (links.length > 0) {
+        const { data, error } = await supabase
+          .from('fighter_media_links')
+          .insert(links.map((link) => ({ ...link, fighter_id: fighterId, manual_fighter_id: null })))
+          .select('*');
+        if (error) return { data: null, error: error.message };
+        inserted = (data ?? []) as FighterMediaLink[];
+      }
+
+      const staleIds = (existing ?? []).map((link) => link.id);
+      if (staleIds.length > 0) {
+        const { error } = await supabase.from('fighter_media_links').delete().in('id', staleIds);
+        if (error) return { data: null, error: error.message };
+      }
+      return { data: inserted, error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }
