@@ -83,7 +83,7 @@ export const manualFighterService = {
         .order('created_at', { ascending: false });
 
       if (error) return { data: null, error: error.message };
-      return { data: (data as ManualFighterWithCreator[]) ?? [], error: null };
+      return { data: await attachDisciplineRecords((data as ManualFighterWithCreator[]) ?? []), error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }
@@ -98,7 +98,7 @@ export const manualFighterService = {
         .order('created_at', { ascending: false });
 
       if (error) return { data: null, error: error.message };
-      return { data: (data as ManualFighterWithCreator[]) ?? [], error: null };
+      return { data: await attachDisciplineRecords((data as ManualFighterWithCreator[]) ?? []), error: null };
     } catch {
       return { data: null, error: 'An unexpected error occurred.' };
     }

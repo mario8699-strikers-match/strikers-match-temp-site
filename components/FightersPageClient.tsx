@@ -40,6 +40,7 @@ import { countryFlagEmoji, getCountryName } from '@/lib/countries';
 import { fighterPublicPath, manualFighterPublicPath } from '@/lib/publicUrls';
 import { fighterWeightClassI18nKey } from '@/lib/fighterDisplay';
 import { getSocialMediaDisplayValue } from '@/lib/socialMedia';
+import { EMPTY_COMBAT_RECORD, getDisciplineRecord } from '@/lib/disciplineRecords';
 
 const PAGE_SIZE = 12;
 
@@ -390,6 +391,16 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
               const wins = entry.data.record_wins ?? 0;
               const losses = entry.data.record_losses ?? 0;
               const draws = entry.data.record_draws ?? 0;
+              const disciplineRecords = disciplines.length > 0
+                ? disciplines.map((discipline, disciplineIndex) => ({
+                    discipline,
+                    record: getDisciplineRecord(
+                      entry.data.discipline_records,
+                      discipline,
+                      disciplineIndex === 0 ? { wins, losses, draws } : EMPTY_COMBAT_RECORD,
+                    ),
+                  }))
+                : [{ discipline: '', record: { wins, losses, draws } }];
               const isAvailable = entry.data.is_available;
               const photoUrl = entry.data.photo_url;
               const exactWeight = entry.data.exact_weight;
@@ -488,16 +499,8 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                       </div>
                     </div>
 
-                    <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_150px_minmax(150px,0.8fr)] lg:items-center">
+                    <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,0.8fr)_minmax(240px,1.35fr)_minmax(150px,0.7fr)] lg:items-center">
                       <div className="flex min-w-0 flex-wrap gap-2">
-                        {disciplines.map((discipline) => {
-                          const translationKey = disciplineI18nKey(discipline);
-                          return (
-                            <span key={discipline} className="bg-zinc-800 px-3 py-2 text-xs font-black uppercase tracking-wide text-white">
-                              {translationKey ? t(`fighters.disciplines.${translationKey}`, { defaultValue: discipline }) : discipline}
-                            </span>
-                          );
-                        })}
                         {localizedWeightClass && (
                           <span className="border border-white/10 bg-zinc-900 px-3 py-2 text-xs font-bold text-zinc-200">{localizedWeightClass}</span>
                         )}
@@ -512,15 +515,27 @@ export function FightersPageClient({ initialEntries }: FightersPageClientProps) 
                         </span>
                       </div>
 
-                      <div className="border-y border-white/10 py-4 text-center lg:border-x lg:border-y-0 lg:px-5 lg:py-2">
-                        <p className="flex items-center justify-center gap-1 font-display text-3xl font-black tracking-wide" aria-label={`${wins}-${losses}-${draws}`}>
-                          <span className="text-emerald-400">{wins}</span>
-                          <span className="text-zinc-600" aria-hidden="true">–</span>
-                          <span className="text-red-500">{losses}</span>
-                          <span className="text-zinc-600" aria-hidden="true">–</span>
-                          <span className="text-blue-500">{draws}</span>
-                        </p>
-                        <p className="mt-1 text-xs font-bold uppercase tracking-[0.16em] text-zinc-500">{t('fighters.card.record')}</p>
+                      <div className="space-y-2 border-y border-white/10 py-4 lg:border-x lg:border-y-0 lg:px-5 lg:py-1">
+                        {disciplineRecords.map(({ discipline, record }) => {
+                          const translationKey = disciplineI18nKey(discipline);
+                          const localizedDiscipline = translationKey
+                            ? t(`fighters.disciplines.${translationKey}`, { defaultValue: discipline })
+                            : discipline;
+                          return (
+                            <div key={discipline || 'record'} className="flex items-center justify-between gap-4 border border-white/10 bg-zinc-900/70 px-3 py-2.5">
+                              <p className="min-w-0 truncate text-xs font-black uppercase tracking-[0.12em] text-zinc-300">
+                                {[localizedDiscipline, t('fighters.card.record')].filter(Boolean).join(' · ')}
+                              </p>
+                              <p className="flex shrink-0 items-center gap-1 font-display text-2xl font-black tracking-wide" aria-label={`${record.wins}-${record.losses}-${record.draws}`}>
+                                <span className="text-emerald-400">{record.wins}</span>
+                                <span className="text-zinc-600" aria-hidden="true">–</span>
+                                <span className="text-red-500">{record.losses}</span>
+                                <span className="text-zinc-600" aria-hidden="true">–</span>
+                                <span className="text-blue-500">{record.draws}</span>
+                              </p>
+                            </div>
+                          );
+                        })}
                       </div>
 
                       <div className="min-w-0 lg:px-4 lg:text-center">

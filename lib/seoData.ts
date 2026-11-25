@@ -8,6 +8,7 @@ import {
   type BusinessListing,
   type Event,
   type FighterWithProfile,
+  type FighterDisciplineRecord,
   type ManualFighterWithCreator,
   type UserRole,
 } from '@/types';
@@ -228,9 +229,28 @@ export const getPublicFightersForPage = cache(async (): Promise<{
         .order('created_at', { ascending: false }),
     ]);
 
+    const registered = (registeredResult.data ?? []) as unknown as FighterWithProfile[];
+    const manual = (manualResult.data ?? []) as unknown as ManualFighterWithCreator[];
+    const [registeredRecordsResult, manualRecordsResult] = await Promise.all([
+      registered.length > 0
+        ? client.from('fighter_discipline_records').select('*').in('fighter_id', registered.map((fighter) => fighter.id))
+        : Promise.resolve({ data: [] }),
+      manual.length > 0
+        ? client.from('fighter_discipline_records').select('*').in('manual_fighter_id', manual.map((fighter) => fighter.id))
+        : Promise.resolve({ data: [] }),
+    ]);
+    const registeredRecords = (registeredRecordsResult.data ?? []) as FighterDisciplineRecord[];
+    const manualRecords = (manualRecordsResult.data ?? []) as FighterDisciplineRecord[];
+
     return {
-      registered: (registeredResult.data ?? []) as unknown as FighterWithProfile[],
-      manual: (manualResult.data ?? []) as unknown as ManualFighterWithCreator[],
+      registered: registered.map((fighter) => ({
+        ...fighter,
+        discipline_records: registeredRecords.filter((record) => record.fighter_id === fighter.id),
+      })),
+      manual: manual.map((fighter) => ({
+        ...fighter,
+        discipline_records: manualRecords.filter((record) => record.manual_fighter_id === fighter.id),
+      })),
     };
   } catch {
     return { registered: [], manual: [] };
