@@ -333,14 +333,17 @@ DECLARE
   member_row public.promoter_organization_members%ROWTYPE;
   owner_uuid uuid;
 BEGIN
-  SELECT member, organization.owner_id
-  INTO member_row, owner_uuid
+  SELECT * INTO member_row
   FROM public.promoter_organization_members member
-  JOIN public.promoter_organizations organization ON organization.id = member.organization_id
   WHERE member.id = member_uuid
-  FOR UPDATE OF member;
+  FOR UPDATE;
 
   IF member_row.id IS NULL THEN RAISE EXCEPTION 'promoter_team_member_not_found'; END IF;
+
+  SELECT organization.owner_id INTO owner_uuid
+  FROM public.promoter_organizations organization
+  WHERE organization.id = member_row.organization_id;
+
   IF NOT public.has_promoter_team_permission(owner_uuid, 'manage_team') THEN
     RAISE EXCEPTION 'promoter_team_not_authorized';
   END IF;
