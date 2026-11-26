@@ -23,7 +23,17 @@ const EMPTY_SUMMARY: OrganizerPaymentSummary = {
   refunded_cents: 0,
 };
 
-export function OrganizerPaymentsPanel({ eventId }: { eventId?: string }) {
+export function OrganizerPaymentsPanel({
+  eventId,
+  organizerId,
+  canManageStripe = true,
+  canRefund = true,
+}: {
+  eventId?: string;
+  organizerId?: string;
+  canManageStripe?: boolean;
+  canRefund?: boolean;
+}) {
   const { t, i18n } = useTranslation('events');
   const money = (cents: number, currency = 'MXN') => (
     formatLocalizedCurrency(cents / 100, currency, i18n.resolvedLanguage)
@@ -38,8 +48,8 @@ export function OrganizerPaymentsPanel({ eventId }: { eventId?: string }) {
 
   const load = useCallback(async () => {
     const [accountResult, paymentResult] = await Promise.all([
-      getConnectAccount(),
-      getOrganizerPayments(eventId),
+      canManageStripe ? getConnectAccount() : Promise.resolve({ data: null, error: null }),
+      getOrganizerPayments(eventId, organizerId),
     ]);
     setAccount(accountResult.data ?? null);
     if (paymentResult.data) {
@@ -48,12 +58,15 @@ export function OrganizerPaymentsPanel({ eventId }: { eventId?: string }) {
     }
     setError(accountResult.error ?? paymentResult.error);
     setLoading(false);
-  }, [eventId]);
+  }, [canManageStripe, eventId, organizerId]);
 
   useEffect(() => {
     let active = true;
     const shouldSync = new URLSearchParams(window.location.search).has('stripe');
-    Promise.all([getConnectAccount(shouldSync), getOrganizerPayments(eventId)]).then(([accountResult, paymentResult]) => {
+    Promise.all([
+      canManageStripe ? getConnectAccount(shouldSync) : Promise.resolve({ data: null, error: null }),
+      getOrganizerPayments(eventId, organizerId),
+    ]).then(([accountResult, paymentResult]) => {
       if (!active) return;
       setAccount(accountResult.data ?? null);
       if (paymentResult.data) {
@@ -64,7 +77,7 @@ export function OrganizerPaymentsPanel({ eventId }: { eventId?: string }) {
       setLoading(false);
     });
     return () => { active = false; };
-  }, [eventId]);
+  }, [canManageStripe, eventId, organizerId]);
 
   const openStripe = async () => {
     setActing('stripe');
@@ -104,14 +117,16 @@ export function OrganizerPaymentsPanel({ eventId }: { eventId?: string }) {
             {t('events.organizerPayments.description')}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => void openStripe()}
-          disabled={acting === 'stripe'}
-          className="min-h-11 bg-zinc-900 px-4 py-3 text-xs font-bold uppercase tracking-wider text-white disabled:opacity-50"
-        >
-          {acting === 'stripe' ? t('events.paymentSettings.opening') : account?.onboarding_complete ? t('events.organizerPayments.manageStripe') : t('events.paymentSettings.connectStripe')}
-        </button>
+        {canManageStripe && (
+          <button
+            type="button"
+            onClick={() => void openStripe()}
+            disabled={acting === 'stripe'}
+            className="min-h-11 bg-zinc-900 px-4 py-3 text-xs font-bold uppercase tracking-wider text-white disabled:opacity-50"
+          >
+            {acting === 'stripe' ? t('events.paymentSettings.opening') : account?.onboarding_complete ? t('events.organizerPayments.manageStripe') : t('events.paymentSettings.connectStripe')}
+          </button>
+        )}
       </div>
 
       {error && (
@@ -128,14 +143,16 @@ export function OrganizerPaymentsPanel({ eventId }: { eventId?: string }) {
         <p className="mt-5 text-sm text-zinc-400">{t('events.organizerPayments.loading')}</p>
       ) : (
         <>
-          <div className={`mt-5 border p-4 ${account?.onboarding_complete ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
-            <p className="text-sm font-bold text-zinc-900">
-              {account?.onboarding_complete ? t('events.organizerPayments.accountReady') : t('events.organizerPayments.accountNotReady')}
-            </p>
-            <p className="mt-1 text-xs text-zinc-600">
-              {account?.account_display_name ?? t('events.organizerPayments.noAccount')} · {t('events.organizerPayments.charges')} {account?.charges_enabled ? t('events.organizerPayments.active') : t('events.organizerPayments.inactive')} · {t('events.organizerPayments.payouts')} {account?.payouts_enabled ? t('events.organizerPayments.active') : t('events.organizerPayments.inactive')}
-            </p>
-          </div>
+          {canManageStripe && (
+            <div className={`mt-5 border p-4 ${account?.onboarding_complete ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
+              <p className="text-sm font-bold text-zinc-900">
+                {account?.onboarding_complete ? t('events.organizerPayments.accountReady') : t('events.organizerPayments.accountNotReady')}
+              </p>
+              <p className="mt-1 text-xs text-zinc-600">
+                {account?.account_display_name ?? t('events.organizerPayments.noAccount')} · {t('events.organizerPayments.charges')} {account?.charges_enabled ? t('events.organizerPayments.active') : t('events.organizerPayments.inactive')} · {t('events.organizerPayments.payouts')} {account?.payouts_enabled ? t('events.organizerPayments.active') : t('events.organizerPayments.inactive')}
+              </p>
+            </div>
+          )}
 
           <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Metric label={t('events.organizerPayments.collected')} value={money(summary.gross_paid_cents)} />
@@ -165,7 +182,7 @@ export function OrganizerPaymentsPanel({ eventId }: { eventId?: string }) {
                         <p className="text-sm font-black text-zinc-900">{money(payment.amount_cents, payment.currency)}</p>
                         <p className="text-xs text-zinc-500">{t(`events.organizerPayments.status.${payment.payment_status}`)}</p>
                       </div>
-                      {['paid', 'partially_refunded'].includes(payment.payment_status) && (
+                      {canRefund && ['paid', 'partially_refunded'].includes(payment.payment_status) && (
                         <button
                           type="button"
                           onClick={() => void refund(payment)}

@@ -1,6 +1,7 @@
 import { isMinor, hasValidConsent } from '@/services/consentService';
 import { VENDOR_ROLES } from '@/types';
 import type { Profile } from '@/types';
+import { getMyPromoterOrganizations } from '@/services/promoterTeamService';
 
 export function getSafeAuthNextPath(nextPath?: string | null): string | null {
   if (!nextPath || typeof window === 'undefined') return null;
@@ -44,6 +45,13 @@ export async function redirectAfterAuth(profile: Profile | null, nextPath?: stri
     window.location.href = '/admin';
     return;
   }
+
+  const organizationResult = await getMyPromoterOrganizations();
+  if ((organizationResult.data?.length ?? 0) > 0) {
+    window.location.href = '/promoter/dashboard';
+    return;
+  }
+
   if (role === 'promoter') {
     window.location.href = '/events';
     return;

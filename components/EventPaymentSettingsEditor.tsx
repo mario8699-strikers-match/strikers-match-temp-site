@@ -14,9 +14,11 @@ import type { EventPaymentMethod, RegistrationType } from '@/types';
 export function EventPaymentSettingsEditor({
   eventId,
   eventStatus,
+  canManageStripe = true,
 }: {
   eventId: string;
   eventStatus: string;
+  canManageStripe?: boolean;
 }) {
   const { t } = useTranslation('events');
   const [registrationType, setRegistrationType] = useState<RegistrationType>('free');
@@ -33,7 +35,10 @@ export function EventPaymentSettingsEditor({
   useEffect(() => {
     let active = true;
     const shouldSync = new URLSearchParams(window.location.search).has('stripe');
-    Promise.all([getEventPaymentSettings(eventId), getConnectAccount(shouldSync)]).then(([settingsResult, accountResult]) => {
+    Promise.all([
+      getEventPaymentSettings(eventId),
+      canManageStripe ? getConnectAccount(shouldSync) : Promise.resolve({ data: null, error: null }),
+    ]).then(([settingsResult, accountResult]) => {
       if (!active) return;
       if (settingsResult.data) {
         setRegistrationType(settingsResult.data.registration_type);
@@ -68,9 +73,10 @@ export function EventPaymentSettingsEditor({
       setLoading(false);
     });
     return () => { active = false; };
-  }, [eventId, paymentDraftKey]);
+  }, [canManageStripe, eventId, paymentDraftKey]);
 
   async function connect() {
+    if (!canManageStripe) return;
     setActing('connect');
     setError(null);
     setErrorActionUrl(null);
@@ -99,7 +105,7 @@ export function EventPaymentSettingsEditor({
     }
     if (
       eventStatus === 'published' && registrationType === 'paid' && paymentMethod === 'stripe'
-      && !account?.onboarding_complete
+      && canManageStripe && !account?.onboarding_complete
     ) {
       await connect();
       return;
@@ -124,14 +130,16 @@ export function EventPaymentSettingsEditor({
           <h2 className="text-xl font-black uppercase text-zinc-900">{t('events.paymentSettings.title')}</h2>
           <p className="mt-1 text-sm text-zinc-500">{t('events.paymentSettings.description')}</p>
         </div>
-        <button
-          type="button"
-          onClick={() => void connect()}
-          disabled={acting === 'connect'}
-          className="min-h-11 border border-zinc-300 px-4 py-3 text-xs font-bold uppercase text-zinc-800 disabled:opacity-50"
-        >
-          {acting === 'connect' ? t('events.paymentSettings.opening') : account?.onboarding_complete ? t('events.paymentSettings.manageStripe') : t('events.paymentSettings.connectStripe')}
-        </button>
+        {canManageStripe && (
+          <button
+            type="button"
+            onClick={() => void connect()}
+            disabled={acting === 'connect'}
+            className="min-h-11 border border-zinc-300 px-4 py-3 text-xs font-bold uppercase text-zinc-800 disabled:opacity-50"
+          >
+            {acting === 'connect' ? t('events.paymentSettings.opening') : account?.onboarding_complete ? t('events.paymentSettings.manageStripe') : t('events.paymentSettings.connectStripe')}
+          </button>
+        )}
       </div>
 
       {loading ? <p className="mt-5 text-sm text-zinc-400">{t('events.paymentSettings.loading')}</p> : (
@@ -196,7 +204,11 @@ export function EventPaymentSettingsEditor({
               </div>
               {paymentMethod === 'stripe' && (
                 <div className={`border p-3 text-sm ${account?.onboarding_complete ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-200 bg-amber-50 text-amber-800'}`}>
-                  <p className="font-bold">{account?.onboarding_complete ? t('events.paymentSettings.stripeReady') : t('events.paymentSettings.stripeRequired')}</p>
+                  <p className="font-bold">
+                    {canManageStripe
+                      ? (account?.onboarding_complete ? t('events.paymentSettings.stripeReady') : t('events.paymentSettings.stripeRequired'))
+                      : t('events.paymentSettings.ownerStripeRequired')}
+                  </p>
                   <p className="mt-1 text-xs">{t('events.paymentSettings.noPlatformFee')}</p>
                 </div>
               )}

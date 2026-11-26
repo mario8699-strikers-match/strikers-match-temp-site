@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripeClient';
-import { authenticateServerRequest, createAdminSupabase } from '@/lib/serverAuth';
-import { canCreateEvent } from '@/lib/eventPermissions';
+import { authenticateServerRequest, createAdminSupabase, hasPromoterTeamPermission } from '@/lib/serverAuth';
 
 export const runtime = 'nodejs';
 
@@ -9,10 +8,6 @@ export async function POST(request: NextRequest) {
   try {
     const auth = await authenticateServerRequest(request);
     if (auth instanceof NextResponse) return auth;
-    if (!canCreateEvent(auth.role)) {
-      return NextResponse.json({ error: 'Acceso denegado.' }, { status: 403 });
-    }
-
     const body = await request.json().catch(() => ({})) as { paymentId?: string };
     if (!body.paymentId) {
       return NextResponse.json({ error: 'Falta el pago.' }, { status: 400 });
@@ -27,7 +22,7 @@ export async function POST(request: NextRequest) {
     if (error || !payment) {
       return NextResponse.json({ error: 'No se encontró el pago.' }, { status: 404 });
     }
-    if (payment.organizer_id !== auth.userId && auth.role !== 'admin') {
+    if (!(await hasPromoterTeamPermission(auth, payment.organizer_id, 'finance'))) {
       return NextResponse.json({ error: 'No autorizado para reembolsar este pago.' }, { status: 403 });
     }
     if (!payment.stripe_charge_id || !['paid', 'partially_refunded'].includes(payment.payment_status)) {

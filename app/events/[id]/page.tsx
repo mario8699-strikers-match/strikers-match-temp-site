@@ -593,7 +593,8 @@ export default function EventDetailPage() {
   }
 
   const canManageEvent = canOperateThisEvent;
-  const canEditEvent = profile && (event.promoter_id === profile.id || profile.role === 'admin');
+  const canEditEvent = eventToolAccess.settings;
+  const canDeleteEvent = Boolean(profile && (event.promoter_id === profile.id || profile.role === 'admin'));
   const isFighter = profile?.role === 'fighter';
   const missingRegistrationProfileFields = myFighter && profile
     ? getMissingFighterRegistrationProfileFields(myFighter, profile)
@@ -698,6 +699,10 @@ export default function EventDetailPage() {
                   <button onClick={enterEdit} className="min-h-11 border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50">
                     {t('events.editEvent')}
                   </button>
+                </>
+              )}
+              {canDeleteEvent && (
+                <>
                   <button onClick={() => setShowDeleteConfirm(true)} className="min-h-11 border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50">
                     {t('events.deleteEvent')}
                   </button>

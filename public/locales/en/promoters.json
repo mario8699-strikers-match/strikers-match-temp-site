@@ -55,6 +55,106 @@
         "withdrawn": "Withdrawn"
       }
     },
+    "team": {
+      "eyebrow": "Organization team",
+      "description": "Assign reusable access across every event owned by this organization. Event-specific staff assignments remain available for temporary crews.",
+      "memberCount_one": "{{count}} member",
+      "memberCount_other": "{{count}} members",
+      "accountEmail": "Account email",
+      "emailPlaceholder": "team.member@example.com",
+      "accessLevel": "Access level",
+      "addOrUpdate": "Add or update",
+      "inviteOrAdd": "Invite or add",
+      "saving": "Saving...",
+      "existingAccountHelp": "The person must already have a Strikers Match account. Adding the same email again changes their role.",
+      "invitationHelp": "Existing accounts receive access immediately. New users receive a secure registration invitation by email.",
+      "loading": "Loading team...",
+      "empty": "No team members have been added yet.",
+      "member": "Team member",
+      "noEmail": "No email",
+      "remove": "Remove",
+      "removing": "Removing...",
+      "removeConfirm": "Remove {{name}} from this organization?",
+      "memberSaved": "Team access was saved.",
+      "invitationSent": "The registration invitation was sent.",
+      "memberRemoved": "Team member was removed.",
+      "pendingInvitations": "Pending invitations ({{count}})",
+      "expires": "Expires {{date}}",
+      "revoke": "Revoke invitation",
+      "revoking": "Revoking...",
+      "revokeConfirm": "Revoke the invitation sent to {{email}}?",
+      "invitationRevoked": "The invitation was revoked.",
+      "invitation": {
+        "loading": "Loading invitation...",
+        "title": "Join an organization team",
+        "organization": "Organization",
+        "assignedRole": "Assigned access level",
+        "signedInReady": "You are signed in as {{email}}. Accept to activate your organization access.",
+        "accept": "Accept invitation",
+        "accepting": "Activating access...",
+        "wrongAccount": "This invitation belongs to {{email}}, but you are signed in as {{currentEmail}}. Sign out and use the invited account.",
+        "switchAccount": "Sign out and switch account",
+        "existingAccount": "A Strikers Match account already exists for {{email}}. Sign in to accept this invitation.",
+        "signIn": "Sign in to accept",
+        "emailLocked": "The invitation is tied to this email address and cannot be changed.",
+        "createAccount": "Create account and join",
+        "confirmEmailTitle": "Confirm your email",
+        "confirmEmailDescription": "We sent a confirmation link to {{email}}. After confirming, return here and sign in to activate your team access.",
+        "signInAfterConfirmation": "Sign in after confirming",
+        "errors": {
+          "invalid": "This invitation is invalid or has already been used.",
+          "expired": "This invitation has expired. Ask the organization owner to send a new one.",
+          "emailMismatch": "Sign in with the email address that received this invitation."
+        }
+      },
+      "roles": {
+        "owner": {
+          "label": "Owner",
+          "description": "Full control, including Stripe ownership and organization security."
+        },
+        "organization_admin": {
+          "label": "Organization administrator",
+          "description": "Manages the team and all event areas, but cannot connect or own the Stripe account."
+        },
+        "event_manager": {
+          "label": "Event manager",
+          "description": "Creates and edits events and manages participants, matchmaking, bouts and printouts."
+        },
+        "matchmaker": {
+          "label": "Matchmaker",
+          "description": "Manages participants, matchmaking, official bouts and bout printouts."
+        },
+        "operations": {
+          "label": "Operations",
+          "description": "Runs event-day bout status, results, timing and operational printouts."
+        },
+        "media_producer": {
+          "label": "Media / producer",
+          "description": "Accesses graphics, display mode and streaming production tools."
+        },
+        "finance": {
+          "label": "Finance",
+          "description": "Manages registration fees, payment confirmation, payment activity and refunds."
+        },
+        "read_only": {
+          "label": "Read only",
+          "description": "Can review organization events and private event information without making changes."
+        }
+      },
+      "errors": {
+        "requestFailed": "The team request could not be completed.",
+        "accountNotFound": "No active Strikers Match account was found for that email.",
+        "invalidRole": "Select a valid access level.",
+        "ownerImplicit": "The organization owner already has full access.",
+        "notAuthorized": "You do not have permission to manage this team.",
+        "memberNotFound": "The team member could not be found.",
+        "ownerNotAllowed": "This account cannot own an event organization.",
+        "invalidEmail": "Enter a valid email address.",
+        "accountUnavailable": "That account cannot be added to the organization.",
+        "emailUnavailable": "Team invitation email is not configured.",
+        "emailFailed": "The invitation was created, but the email could not be delivered. Try sending it again."
+      }
+    },
     "federation": {
       "profileLabel": "Promoter classification",
       "profileHelp": "Use Federated only if your promotion works under a recognized federation or association. Current promoters remain Independent until updated.",

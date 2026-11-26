@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabaseClient';
+import { hasEventTeamPermission } from '@/services/promoterTeamService';
 import type { Event, EventStaff, EventStaffRole, Profile, ServiceResponse } from '@/types';
 
 export type EventStaffFeature = 'settings' | 'matchmaking' | 'bouts' | 'print' | 'operation' | 'production';
@@ -48,9 +49,11 @@ export async function canAccessEventTools(
   if (event && event.promoter_id === profile.id) return true;
 
   try {
-    const { data, error } = await supabase.rpc('is_event_staff_member', { target_event_id: eventId });
-    if (error) return false;
-    return Boolean(data);
+    const [{ data, error }, organizationAllowed] = await Promise.all([
+      supabase.rpc('is_event_staff_member', { target_event_id: eventId }),
+      hasEventTeamPermission(eventId, 'view_event'),
+    ]);
+    return organizationAllowed || (!error && Boolean(data));
   } catch {
     return false;
   }
@@ -66,7 +69,7 @@ export async function canUseEventFeature(
   if (profile.role === 'admin') return true;
   if (event && event.promoter_id === profile.id) return true;
 
-  if (feature === 'settings') return false;
+  if (feature === 'settings') return hasEventTeamPermission(eventId, 'manage_event');
 
   const roleMap: Record<Exclude<EventStaffFeature, 'settings'>, EventStaffRole[]> = {
     matchmaking: ['manager'],
@@ -75,14 +78,23 @@ export async function canUseEventFeature(
     operation: ['operator'],
     production: ['producer'],
   };
+  const permissionMap = {
+    matchmaking: 'matchmaking',
+    bouts: 'bouts',
+    print: 'print',
+    operation: 'operation',
+    production: 'production',
+  } as const;
 
   try {
-    const { data, error } = await supabase.rpc('has_event_staff_role', {
-      target_event_id: eventId,
-      allowed_roles: roleMap[feature],
-    });
-    if (error) return false;
-    return Boolean(data);
+    const [{ data, error }, organizationAllowed] = await Promise.all([
+      supabase.rpc('has_event_staff_role', {
+        target_event_id: eventId,
+        allowed_roles: roleMap[feature],
+      }),
+      hasEventTeamPermission(eventId, permissionMap[feature]),
+    ]);
+    return organizationAllowed || (!error && Boolean(data));
   } catch {
     return false;
   }
@@ -98,7 +110,7 @@ export async function canManageEventStaff(
   if (event && event.promoter_id === profile.id) return true;
 
   try {
-    const { data, error } = await supabase.rpc('is_event_owner_or_admin', { target_event_id: eventId });
+    const { data, error } = await supabase.rpc('can_manage_event_staff', { target_event_id: eventId });
     if (error) return false;
     return Boolean(data);
   } catch {

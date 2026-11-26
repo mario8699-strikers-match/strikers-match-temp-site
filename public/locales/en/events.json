@@ -38,6 +38,8 @@
       "manualDescription": "Bank transfer or cash confirmed by you.",
       "stripeReady": "Stripe is ready to collect payments.",
       "stripeRequired": "Complete Stripe setup before publishing.",
+      "ownerStripeRequired": "Only the organization owner can connect Stripe. The owner must complete setup before this event can use Stripe.",
+      "teamFinanceRequired": "Your team role does not include financial access. Create a free event or ask the owner or finance team.",
       "noPlatformFee": "Strikers Match currently does not charge a platform fee on these registrations.",
       "saving": "Saving…",
       "save": "Save registration and payment settings"

@@ -17,7 +17,12 @@ import { authService } from '@/services/authService';
 import { updateGuidedOnboarding } from '@/services/onboardingService';
 import { getCountryOptions } from '@/lib/countries';
 import { getConnectAccount, openConnectAccount, type ConnectAccountStatus } from '@/services/paymentService';
-import type { EventFormData, Profile } from '@/types';
+import {
+  ensureMyPromoterOrganization,
+  getMyPromoterOrganizations,
+  organizationHasPermission,
+} from '@/services/promoterTeamService';
+import type { EventFormData, Profile, PromoterOrganizationContext } from '@/types';
 
 const STATUSES: EventFormData['status'][] = ['draft', 'published', 'cancelled', 'completed'];
 const PAYMENT_SETUP_DRAFT_KEY = 'strikersmatch:event-payment-setup-draft';
@@ -59,6 +64,7 @@ export default function CreateEventPage() {
   const [flyerFile, setFlyerFile] = useState<File | null>(null);
   const [flyerPreview, setFlyerPreview] = useState<string | null>(null);
   const [paymentAccount, setPaymentAccount] = useState<ConnectAccountStatus | null>(null);
+  const [organization, setOrganization] = useState<PromoterOrganizationContext | null>(null);
   const [connectingStripe, setConnectingStripe] = useState(false);
   const [serverErrorActionUrl, setServerErrorActionUrl] = useState<string | null>(null);
 
@@ -76,14 +82,26 @@ export default function CreateEventPage() {
         window.sessionStorage.removeItem(PAYMENT_SETUP_DRAFT_KEY);
       }
     }
-    authService.getSession().then(({ data }) => {
+    authService.getSession().then(async ({ data }) => {
       const p = data?.profile ?? null;
       setProfile(p);
       if (!p) {
         window.location.href = '/login';
-      } else if (!canCreateEvent(p.role)) {
-        window.location.href = '/events';
       } else {
+        if (canCreateEvent(p.role)) await ensureMyPromoterOrganization();
+        const contextsResult = await getMyPromoterOrganizations();
+        const contexts = contextsResult.data ?? [];
+        const requestedOwner = new URLSearchParams(window.location.search).get('organizer');
+        const eligible = contexts.filter((context) => organizationHasPermission(context, 'create_event'));
+        const selected = eligible.find((context) => context.owner_id === requestedOwner)
+          ?? eligible.find((context) => context.owner_id === p.id)
+          ?? eligible[0]
+          ?? null;
+        if (!selected) {
+          window.location.href = '/events';
+          return;
+        }
+        setOrganization(selected);
         setFormData((current) => ({
           ...current,
           country_code: current.country_code || p.country_code || '',
@@ -91,7 +109,9 @@ export default function CreateEventPage() {
           timezone: current.timezone || p.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
           currency: current.currency || p.preferred_currency || 'MXN',
         }));
-        void getConnectAccount(returnedFromStripe).then(({ data }) => setPaymentAccount(data ?? null));
+        if (organizationHasPermission(selected, 'manage_stripe')) {
+          void getConnectAccount(returnedFromStripe).then(({ data }) => setPaymentAccount(data ?? null));
+        }
       }
     });
   }, []);
@@ -127,9 +147,14 @@ export default function CreateEventPage() {
     if (formData.registration_type === 'paid' && feeCents <= 0) {
       newErrors.signup_fee = t('events.paymentSettings.invalidFee');
     }
+    if (formData.registration_type === 'paid' && !organizationHasPermission(organization, 'finance')) {
+      newErrors.registration_type = t('events.paymentSettings.teamFinanceRequired');
+    }
     if (
       formData.status === 'published' && formData.registration_type === 'paid'
-      && formData.payment_method === 'stripe' && !paymentAccount?.onboarding_complete
+      && formData.payment_method === 'stripe'
+      && organizationHasPermission(organization, 'manage_stripe')
+      && !paymentAccount?.onboarding_complete
     ) {
       newErrors.payment_method = t('events.paymentSettings.stripeRequired');
     }
@@ -138,6 +163,7 @@ export default function CreateEventPage() {
   };
 
   const handleConnectStripe = async () => {
+    if (!organizationHasPermission(organization, 'manage_stripe')) return;
     setConnectingStripe(true);
     setServerError(null);
     setServerErrorActionUrl(null);
@@ -159,7 +185,7 @@ export default function CreateEventPage() {
     if (!validate()) return;
     setServerError(null);
     setLoading(true);
-    const promoterId = profile!.id;
+    const promoterId = organization!.owner_id;
 
     // Upload flyer first if selected
     let flyerUrl: string | null = null;
@@ -198,7 +224,7 @@ export default function CreateEventPage() {
   };
 
   // Block render until auth is confirmed — covers: checking, unauthenticated, wrong role
-  if (!profile || !canCreateEvent(profile.role)) {
+  if (!profile || !organization) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <p className="text-zinc-400 text-sm">...</p>
@@ -475,12 +501,14 @@ export default function CreateEventPage() {
                 <span className="block text-sm font-black uppercase">{t('events.paymentSettings.free')}</span>
                 <span className="mt-1 block text-xs text-zinc-500">{t('events.paymentSettings.freeDescription')}</span>
               </button>
-              <button type="button" onClick={() => setFormData((prev) => ({ ...prev, registration_type: 'paid' }))}
-                className={`border p-3 text-left ${formData.registration_type === 'paid' ? 'border-[#C0001E] bg-red-50' : 'border-zinc-300'}`}>
+              <button type="button" disabled={!organizationHasPermission(organization, 'finance')}
+                onClick={() => setFormData((prev) => ({ ...prev, registration_type: 'paid' }))}
+                className={`border p-3 text-left disabled:cursor-not-allowed disabled:opacity-50 ${formData.registration_type === 'paid' ? 'border-[#C0001E] bg-red-50' : 'border-zinc-300'}`}>
                 <span className="block text-sm font-black uppercase">{t('events.paymentSettings.paid')}</span>
                 <span className="mt-1 block text-xs text-zinc-500">{t('events.paymentSettings.paidDescription')}</span>
               </button>
             </div>
+            {errors.registration_type && <p className="mt-2 text-xs text-red-700">{errors.registration_type}</p>}
             {formData.registration_type === 'paid' && (
               <div className="mt-4 space-y-4">
                 <label className="block">
@@ -509,12 +537,18 @@ export default function CreateEventPage() {
                 </div>
                 {formData.payment_method === 'stripe' && (
                   <div className={`border p-3 ${paymentAccount?.onboarding_complete ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
-                    <p className="text-sm font-bold text-zinc-900">{paymentAccount?.onboarding_complete ? t('events.paymentSettings.stripeReady') : t('events.paymentSettings.stripeRequired')}</p>
+                    <p className="text-sm font-bold text-zinc-900">
+                      {organizationHasPermission(organization, 'manage_stripe')
+                        ? (paymentAccount?.onboarding_complete ? t('events.paymentSettings.stripeReady') : t('events.paymentSettings.stripeRequired'))
+                        : t('events.paymentSettings.ownerStripeRequired')}
+                    </p>
                     <p className="mt-1 text-xs text-zinc-600">{t('events.paymentSettings.noPlatformFee')}</p>
-                    <button type="button" onClick={() => void handleConnectStripe()} disabled={connectingStripe}
-                      className="mt-3 min-h-11 border border-zinc-300 bg-white px-4 py-2 text-xs font-bold uppercase text-zinc-800 disabled:opacity-50">
-                      {connectingStripe ? t('events.paymentSettings.opening') : paymentAccount?.onboarding_complete ? t('events.paymentSettings.manageStripe') : t('events.paymentSettings.connectStripe')}
-                    </button>
+                    {organizationHasPermission(organization, 'manage_stripe') && (
+                      <button type="button" onClick={() => void handleConnectStripe()} disabled={connectingStripe}
+                        className="mt-3 min-h-11 border border-zinc-300 bg-white px-4 py-2 text-xs font-bold uppercase text-zinc-800 disabled:opacity-50">
+                        {connectingStripe ? t('events.paymentSettings.opening') : paymentAccount?.onboarding_complete ? t('events.paymentSettings.manageStripe') : t('events.paymentSettings.connectStripe')}
+                      </button>
+                    )}
                     {errors.payment_method && <p className="mt-2 text-xs text-red-700">{errors.payment_method}</p>}
                   </div>
                 )}

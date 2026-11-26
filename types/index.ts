@@ -683,6 +683,67 @@ export interface EventStaff {
   } | null;
 }
 
+export type PromoterOrganizationRole =
+  | 'owner'
+  | 'organization_admin'
+  | 'event_manager'
+  | 'matchmaker'
+  | 'operations'
+  | 'media_producer'
+  | 'finance'
+  | 'read_only';
+
+export type PromoterOrganizationPermission =
+  | 'view_dashboard'
+  | 'view_event'
+  | 'view_private'
+  | 'manage_team'
+  | 'create_event'
+  | 'manage_event'
+  | 'matchmaking'
+  | 'bouts'
+  | 'print'
+  | 'operation'
+  | 'production'
+  | 'finance'
+  | 'manage_stripe';
+
+export interface PromoterOrganizationContext {
+  organization_id: string;
+  owner_id: string;
+  organization_name: string;
+  team_role: PromoterOrganizationRole;
+  permissions: PromoterOrganizationPermission[];
+}
+
+export interface PromoterOrganizationMember {
+  member_id: string;
+  profile_id: string;
+  full_name: string | null;
+  email: string | null;
+  organization_role: Exclude<PromoterOrganizationRole, 'owner'>;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface PromoterOrganizationInvitationPreview {
+  email: string;
+  role: Exclude<PromoterOrganizationRole, 'owner'>;
+  organizationId: string;
+  organizationName: string;
+  accountExists: boolean;
+  expiresAt: string;
+}
+
+export interface PromoterOrganizationInvitation {
+  invitation_id: string;
+  email: string;
+  organization_role: Exclude<PromoterOrganizationRole, 'owner'>;
+  invitation_status: 'pending' | 'accepted' | 'revoked' | 'expired';
+  expires_at: string;
+  created_at: string;
+}
+
 export interface EventMatchmakingSettings {
   event_id: string;
   weight_tolerance_kg: number;

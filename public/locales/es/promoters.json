@@ -55,6 +55,106 @@
         "withdrawn": "Retirado"
       }
     },
+    "team": {
+      "eyebrow": "Equipo de la organización",
+      "description": "Asigna accesos reutilizables para todos los eventos de esta organización. Las asignaciones por evento siguen disponibles para equipos temporales.",
+      "memberCount_one": "{{count}} integrante",
+      "memberCount_other": "{{count}} integrantes",
+      "accountEmail": "Email de la cuenta",
+      "emailPlaceholder": "integrante@ejemplo.com",
+      "accessLevel": "Nivel de acceso",
+      "addOrUpdate": "Agregar o actualizar",
+      "inviteOrAdd": "Invitar o agregar",
+      "saving": "Guardando...",
+      "existingAccountHelp": "La persona debe tener una cuenta de Strikers Match. Volver a agregar el mismo email cambia su rol.",
+      "invitationHelp": "Las cuentas existentes reciben acceso de inmediato. Los usuarios nuevos reciben por email una invitación segura para registrarse.",
+      "loading": "Cargando equipo...",
+      "empty": "Todavía no se han agregado integrantes.",
+      "member": "Integrante del equipo",
+      "noEmail": "Sin email",
+      "remove": "Quitar",
+      "removing": "Quitando...",
+      "removeConfirm": "¿Quitar a {{name}} de esta organización?",
+      "memberSaved": "El acceso del equipo fue guardado.",
+      "invitationSent": "La invitación de registro fue enviada.",
+      "memberRemoved": "El integrante fue retirado.",
+      "pendingInvitations": "Invitaciones pendientes ({{count}})",
+      "expires": "Vence {{date}}",
+      "revoke": "Revocar invitación",
+      "revoking": "Revocando...",
+      "revokeConfirm": "¿Revocar la invitación enviada a {{email}}?",
+      "invitationRevoked": "La invitación fue revocada.",
+      "invitation": {
+        "loading": "Cargando invitación...",
+        "title": "Únete al equipo de una organización",
+        "organization": "Organización",
+        "assignedRole": "Nivel de acceso asignado",
+        "signedInReady": "Iniciaste sesión como {{email}}. Acepta para activar tu acceso a la organización.",
+        "accept": "Aceptar invitación",
+        "accepting": "Activando acceso...",
+        "wrongAccount": "Esta invitación pertenece a {{email}}, pero iniciaste sesión como {{currentEmail}}. Cierra sesión y usa la cuenta invitada.",
+        "switchAccount": "Cerrar sesión y cambiar de cuenta",
+        "existingAccount": "Ya existe una cuenta de Strikers Match para {{email}}. Inicia sesión para aceptar la invitación.",
+        "signIn": "Iniciar sesión para aceptar",
+        "emailLocked": "La invitación está vinculada a este email y no puede cambiarse.",
+        "createAccount": "Crear cuenta y unirme",
+        "confirmEmailTitle": "Confirma tu email",
+        "confirmEmailDescription": "Enviamos un enlace de confirmación a {{email}}. Después de confirmarlo, vuelve aquí e inicia sesión para activar tu acceso.",
+        "signInAfterConfirmation": "Iniciar sesión después de confirmar",
+        "errors": {
+          "invalid": "Esta invitación no es válida o ya fue utilizada.",
+          "expired": "La invitación venció. Pide al propietario que envíe una nueva.",
+          "emailMismatch": "Inicia sesión con el email que recibió esta invitación."
+        }
+      },
+      "roles": {
+        "owner": {
+          "label": "Propietario",
+          "description": "Control total, incluida la propiedad de Stripe y la seguridad de la organización."
+        },
+        "organization_admin": {
+          "label": "Administrador de la organización",
+          "description": "Administra el equipo y todas las áreas de eventos, pero no puede conectar ni ser propietario de Stripe."
+        },
+        "event_manager": {
+          "label": "Administrador de eventos",
+          "description": "Crea y edita eventos y administra participantes, matchmaking, combates e impresiones."
+        },
+        "matchmaker": {
+          "label": "Matchmaker",
+          "description": "Administra participantes, matchmaking, combates oficiales e impresiones de combate."
+        },
+        "operations": {
+          "label": "Operaciones",
+          "description": "Controla estados, resultados, tiempos e impresiones durante el evento."
+        },
+        "media_producer": {
+          "label": "Medios / producción",
+          "description": "Accede a gráficos, modo pantalla y herramientas de producción de transmisión."
+        },
+        "finance": {
+          "label": "Finanzas",
+          "description": "Administra cuotas, confirmaciones de pago, actividad de pagos y reembolsos."
+        },
+        "read_only": {
+          "label": "Solo lectura",
+          "description": "Puede revisar eventos e información privada sin realizar cambios."
+        }
+      },
+      "errors": {
+        "requestFailed": "No se pudo completar la solicitud del equipo.",
+        "accountNotFound": "No se encontró una cuenta activa de Strikers Match con ese email.",
+        "invalidRole": "Selecciona un nivel de acceso válido.",
+        "ownerImplicit": "El propietario ya tiene acceso completo.",
+        "notAuthorized": "No tienes permiso para administrar este equipo.",
+        "memberNotFound": "No se encontró al integrante.",
+        "ownerNotAllowed": "Esta cuenta no puede ser propietaria de una organización de eventos.",
+        "invalidEmail": "Ingresa un email válido.",
+        "accountUnavailable": "Esa cuenta no puede agregarse a la organización.",
+        "emailUnavailable": "El correo de invitaciones no está configurado.",
+        "emailFailed": "La invitación fue creada, pero el email no pudo enviarse. Intenta enviarla de nuevo."
+      }
+    },
     "federation": {
       "profileLabel": "Clasificación del promotor",
       "profileHelp": "Usa Federado solo si tu promotora trabaja bajo una federación o asociación reconocida. Los promotores actuales quedan como Independientes hasta que se actualicen.",

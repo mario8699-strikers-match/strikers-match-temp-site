@@ -60,6 +60,18 @@ export async function authenticateServerRequest(
   };
 }
 
+export async function hasPromoterTeamPermission(
+  auth: ServerAuthContext,
+  ownerId: string,
+  permission: string,
+): Promise<boolean> {
+  const { data, error } = await auth.supabase.rpc('has_promoter_team_permission', {
+    target_owner_id: ownerId,
+    requested_permission: permission,
+  });
+  return !error && Boolean(data);
+}
+
 export function requestAppUrl(request: NextRequest): string {
   const configured = process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL;
   if (configured) return configured.replace(/\/$/, '');

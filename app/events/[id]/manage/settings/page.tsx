@@ -11,9 +11,11 @@ import { authService } from '@/services/authService';
 import {
   addEventStaffByEmail,
   canManageEventStaff,
+  canUseEventFeature,
   getEventStaff,
   removeEventStaff,
 } from '@/services/eventStaffService';
+import { hasEventTeamPermission } from '@/services/promoterTeamService';
 import { eventService } from '@/services/eventService';
 import { advanceGuidedOnboarding } from '@/services/onboardingService';
 import {
@@ -50,6 +52,7 @@ export default function EventSettingsPage() {
   const [staffRole, setStaffRole] = useState<EventStaffRole>('manager');
   const [canManage, setCanManage] = useState(false);
   const [canEditStaff, setCanEditStaff] = useState(false);
+  const [canFinance, setCanFinance] = useState(false);
   const [divisionForm, setDivisionForm] = useState<EventDivisionInput>(DEFAULT_DIVISION_INPUT);
   const [editingDivisionId, setEditingDivisionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -80,10 +83,15 @@ export default function EventSettingsPage() {
         const nextEvent = eventResult.data ?? null;
         setProfile(nextProfile);
         setEvent(nextEvent);
-        const staffEditAllowed = await canManageEventStaff(eventId, nextProfile, nextEvent);
-        setCanManage(staffEditAllowed);
+        const [settingsAllowed, staffEditAllowed, financeAllowed] = await Promise.all([
+          canUseEventFeature(eventId, 'settings', nextProfile, nextEvent),
+          canManageEventStaff(eventId, nextProfile, nextEvent),
+          hasEventTeamPermission(eventId, 'finance'),
+        ]);
+        setCanManage(settingsAllowed);
         setCanEditStaff(staffEditAllowed);
-        if (staffEditAllowed) {
+        setCanFinance(financeAllowed);
+        if (settingsAllowed || staffEditAllowed || financeAllowed) {
           await reload();
         }
       })
@@ -205,7 +213,7 @@ export default function EventSettingsPage() {
     return <Frame><p className="text-sm text-zinc-500">{t('events.engine.loading.settings')}</p></Frame>;
   }
 
-  if (!canManage) {
+  if (!canManage && !canEditStaff && !canFinance) {
     return (
       <Frame>
         <h1 className="text-3xl font-black uppercase text-zinc-900">{t('events.engine.settings.title')}</h1>
@@ -236,11 +244,23 @@ export default function EventSettingsPage() {
       {error && <p className="border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p>}
       {message && <p className="border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p>}
 
-      <EventPaymentSettingsEditor eventId={eventId} eventStatus={event?.status ?? 'draft'} />
+      {canFinance && (
+        <>
+          <EventPaymentSettingsEditor
+            eventId={eventId}
+            eventStatus={event?.status ?? 'draft'}
+            canManageStripe={Boolean(profile && event?.promoter_id === profile.id)}
+          />
+          <OrganizerPaymentsPanel
+            eventId={eventId}
+            organizerId={event?.promoter_id}
+            canManageStripe={Boolean(profile && event?.promoter_id === profile.id)}
+            canRefund
+          />
+        </>
+      )}
 
-      <OrganizerPaymentsPanel eventId={eventId} />
-
-      <section className="border border-zinc-200 p-4 sm:p-5">
+      {canEditStaff && <section className="border border-zinc-200 p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 className="text-xl font-black uppercase text-zinc-900">{t('events.engine.settings.eventStaff')}</h2>
@@ -303,9 +323,9 @@ export default function EventSettingsPage() {
             </article>
           ))}
         </div>
-      </section>
+      </section>}
 
-      <section className="border border-zinc-200 p-4 sm:p-5">
+      {canManage && <section className="border border-zinc-200 p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-black uppercase text-zinc-900">{t('events.engine.settings.compatibilityRules')}</h2>
@@ -365,9 +385,9 @@ export default function EventSettingsPage() {
             <span className="mt-1 block text-xs text-zinc-500">{t('events.engine.settings.promoterPreferencesHelp')}</span>
           </label>
         </div>
-      </section>
+      </section>}
 
-      <section className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,420px)_1fr]">
+      {canManage && <section className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,420px)_1fr]">
         <div className="border border-zinc-200 p-4 sm:p-5">
           <h2 className="text-xl font-black uppercase text-zinc-900">{editingDivisionId ? t('events.engine.settings.editDivision') : t('events.engine.settings.newDivision')}</h2>
           <div className="mt-5 grid grid-cols-1 gap-3">
@@ -436,7 +456,7 @@ export default function EventSettingsPage() {
             ))}
           </div>
         </div>
-      </section>
+      </section>}
     </Frame>
   );
 }

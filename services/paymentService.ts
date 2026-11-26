@@ -133,11 +133,15 @@ export async function getRegistrationPayment(registrationId: string): Promise<Se
   }
 }
 
-export async function getOrganizerPayments(eventId?: string): Promise<ServiceResponse<{
+export async function getOrganizerPayments(eventId?: string, organizerId?: string): Promise<ServiceResponse<{
   payments: RegistrationPayment[];
   summary: OrganizerPaymentSummary;
 }>> {
-  return authenticatedRequest(`/api/payments${eventId ? `?eventId=${encodeURIComponent(eventId)}` : ''}`);
+  const params = new URLSearchParams();
+  if (eventId) params.set('eventId', eventId);
+  if (organizerId) params.set('organizerId', organizerId);
+  const query = params.toString();
+  return authenticatedRequest(`/api/payments${query ? `?${query}` : ''}`);
 }
 
 export async function refundRegistrationPayment(paymentId: string): Promise<ServiceResponse<{

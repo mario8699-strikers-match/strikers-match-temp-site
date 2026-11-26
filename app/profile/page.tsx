@@ -7,11 +7,13 @@ import { useTranslation } from 'react-i18next';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { authService } from '@/services/authService';
-import type { Profile } from '@/types';
+import { getMyPromoterOrganizations } from '@/services/promoterTeamService';
+import type { Profile, PromoterOrganizationContext } from '@/types';
 
 export default function ProfilePage() {
   const { t } = useTranslation(['common', 'promoters']);
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
+  const [organizations, setOrganizations] = useState<PromoterOrganizationContext[]>([]);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,13 +30,15 @@ export default function ProfilePage() {
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    authService.getSession().then(({ data }) => {
+    authService.getSession().then(async ({ data }) => {
       const p = data?.profile ?? null;
       if (!p) { window.location.href = '/login'; return; }
       setProfile(p);
       setFullName(p.full_name ?? '');
       setCity(p.city ?? '');
       setPhone(p.phone ?? '');
+      const organizationResult = await getMyPromoterOrganizations();
+      setOrganizations(organizationResult.data ?? []);
     });
   }, []);
 
@@ -141,7 +145,9 @@ export default function ProfilePage() {
             <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#C0001E' }}>{t('common:accountProfile.myAccount')}</p>
             <h1 className="text-3xl font-black uppercase" style={{ letterSpacing: '-1px' }}>{t('common:accountProfile.profile')}</h1>
             <span className="inline-block mt-2 text-xs font-bold px-2 py-1 uppercase tracking-widest bg-zinc-100 text-zinc-600">
-              {t(`common:accountProfile.roles.${profile!.role}`, { defaultValue: profile!.role })}
+              {organizations[0]
+                ? t(`promoters:promoters.team.roles.${organizations[0].team_role}.label`)
+                : t(`common:accountProfile.roles.${profile!.role}`, { defaultValue: profile!.role })}
             </span>
           </div>
         </div>
@@ -174,6 +180,23 @@ export default function ProfilePage() {
                 </div>
               ))}
             </div>
+            {organizations.length > 0 && (
+              <div className="border border-zinc-100 p-6">
+                <p className="text-xs font-bold tracking-widest uppercase text-[#C0001E]">
+                  {t('promoters:promoters.team.eyebrow')}
+                </p>
+                <div className="mt-4 space-y-3">
+                  {organizations.map((organization) => (
+                    <div key={organization.organization_id} className="flex flex-col gap-1 border-l-2 border-zinc-900 pl-3 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="text-sm font-black text-zinc-900">{organization.organization_name}</p>
+                      <span className="text-xs font-bold uppercase tracking-wide text-zinc-500">
+                        {t(`promoters:promoters.team.roles.${organization.team_role}.label`)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setEditing(true)}

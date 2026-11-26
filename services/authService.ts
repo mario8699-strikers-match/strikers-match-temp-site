@@ -120,12 +120,16 @@ export const authService = {
     }
   },
 
-  async register(formData: RegisterFormData): Promise<ServiceResponse<AuthSession>> {
+  async register(
+    formData: RegisterFormData,
+    options: { emailRedirectTo?: string } = {},
+  ): Promise<ServiceResponse<AuthSession>> {
     try {
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
+          ...(options.emailRedirectTo ? { emailRedirectTo: options.emailRedirectTo } : {}),
           data: {
             full_name: formData.full_name,
             role: formData.role,

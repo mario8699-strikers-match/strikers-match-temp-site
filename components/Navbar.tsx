@@ -7,7 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { authService } from '@/services/authService';
 import { canCreateEvent } from '@/lib/eventPermissions';
 import { VENDOR_ROLES } from '@/types';
-import type { Profile } from '@/types';
+import { getMyPromoterOrganizations } from '@/services/promoterTeamService';
+import type { Profile, PromoterOrganizationRole } from '@/types';
 
 type ActivePage = 'home' | 'events' | 'fighters' | 'professionals' | 'promoters' | 'managers' | 'sponsors' | 'gallery' | 'pricing' | 'login' | 'register' | null;
 
@@ -42,16 +43,24 @@ function profileLink(role: string): { labelKey: string; href: string }[] {
 }
 
 export function Navbar({ activePage }: NavbarProps) {
-  const { t } = useTranslation('navigation');
+  const { t } = useTranslation(['navigation', 'promoters']);
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [hasPromoterTeamDashboard, setHasPromoterTeamDashboard] = useState(false);
+  const [promoterTeamRole, setPromoterTeamRole] = useState<PromoterOrganizationRole | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    authService.getSession().then(({ data }) => {
-      setProfile(data?.profile ?? null);
+    authService.getSession().then(async ({ data }) => {
+      const nextProfile = data?.profile ?? null;
+      setProfile(nextProfile);
+      if (nextProfile) {
+        const result = await getMyPromoterOrganizations();
+        setHasPromoterTeamDashboard((result.data?.length ?? 0) > 0);
+        setPromoterTeamRole(result.data?.[0]?.team_role ?? null);
+      }
     });
   }, []);
 
@@ -115,6 +124,17 @@ export function Navbar({ activePage }: NavbarProps) {
     }`;
 
   const isLoggedIn = profile !== undefined && profile !== null;
+  const accountRoleLabel = promoterTeamRole
+    ? t(`promoters:promoters.team.roles.${promoterTeamRole}.label`)
+    : profile?.role;
+  const userLinks = profile ? profileLink(profile.role) : [];
+  if (
+    profile
+    && hasPromoterTeamDashboard
+    && !userLinks.some((link) => link.href === '/promoter/dashboard')
+  ) {
+    userLinks.unshift({ labelKey: 'nav.teamDashboard', href: '/promoter/dashboard' });
+  }
 
   // Hamburger icon (renders for both logged-in desktop and all mobile)
   const hamburgerBtn = (
@@ -196,11 +216,11 @@ export function Navbar({ activePage }: NavbarProps) {
                               {profile.full_name || profile.role}
                             </p>
                             <p className="text-xs text-[#5A5A5A] uppercase tracking-widest mt-0.5">
-                              {profile.role}
+                              {accountRoleLabel}
                             </p>
                           </div>
                           <div className="py-1">
-                            {profileLink(profile.role).map(({ labelKey, href }) => (
+                            {userLinks.map(({ labelKey, href }) => (
                               <Link
                                 key={href}
                                 href={href}
@@ -277,7 +297,7 @@ export function Navbar({ activePage }: NavbarProps) {
             <>
               {/* Profile links */}
               <div className="py-2">
-                {profileLink(profile.role).map(({ labelKey, href }) => (
+                {userLinks.map(({ labelKey, href }) => (
                   <Link
                     key={href}
                     href={href}

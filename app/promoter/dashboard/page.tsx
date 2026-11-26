@@ -8,6 +8,7 @@ import { Footer } from '@/components/Footer';
 import { ManualFighterManager } from '@/components/ManualFighterManager';
 import { EligibilityStatus } from '@/components/EligibilityStatus';
 import { OrganizerPaymentsPanel } from '@/components/OrganizerPaymentsPanel';
+import { PromoterTeamPanel } from '@/components/PromoterTeamPanel';
 import { authService } from '@/services/authService';
 import { eventService } from '@/services/eventService';
 import { getEventRegistrations, confirmPayment } from '@/services/registrationService';
@@ -15,6 +16,13 @@ import type { Event, EventApplication, Profile } from '@/types';
 import type { RegistrationWithFighter } from '@/types';
 import { formatLocalizedDate } from '@/lib/locale';
 import { eventPublicPath } from '@/lib/publicUrls';
+import { canCreateEvent } from '@/lib/eventPermissions';
+import {
+  ensureMyPromoterOrganization,
+  getMyPromoterOrganizations,
+  organizationHasPermission,
+} from '@/services/promoterTeamService';
+import type { PromoterOrganizationContext } from '@/types';
 
 const STATUS_COLORS: Record<Event['status'], string> = {
   draft:     'bg-zinc-100 text-zinc-600',
@@ -45,6 +53,8 @@ export default function PromoterDashboardPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendingCounts, setPendingCounts] = useState<Record<string, number>>({});
+  const [organizations, setOrganizations] = useState<PromoterOrganizationContext[]>([]);
+  const [activeOrganizationId, setActiveOrganizationId] = useState<string | null>(null);
 
   // Selected event for applications panel
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -63,20 +73,44 @@ export default function PromoterDashboardPage() {
       const p = data?.profile ?? null;
       setProfile(p);
       if (!p) { window.location.href = '/login'; return; }
-      if (p.role !== 'promoter' && p.role !== 'admin') { window.location.href = '/'; return; }
-
-      // Auto-complete past events first
-      await eventService.autoCompletePastEvents();
-
-      const [{ data: evs }, counts] = await Promise.all([
-        eventService.getByPromoter(p.id),
-        eventService.getApplicationCountsForPromoter(p.id),
-      ]);
-      setEvents(evs ?? []);
-      setPendingCounts(counts);
-      setLoading(false);
+      if (canCreateEvent(p.role)) await ensureMyPromoterOrganization();
+      const contextsResult = await getMyPromoterOrganizations();
+      const contexts = contextsResult.data ?? [];
+      if (contexts.length === 0) { window.location.href = '/'; return; }
+      setOrganizations(contexts);
+      setActiveOrganizationId((current) => (
+        current && contexts.some((organization) => organization.organization_id === current)
+          ? current
+          : (contexts.find((organization) => organization.owner_id === p.id) ?? contexts[0]).organization_id
+      ));
     });
   }, []);
+
+  const activeOrganization = organizations.find((organization) => (
+    organization.organization_id === activeOrganizationId
+  )) ?? null;
+
+  useEffect(() => {
+    if (!activeOrganization) return;
+    let active = true;
+    const load = async () => {
+      if (organizationHasPermission(activeOrganization, 'manage_event')) {
+        await eventService.autoCompletePastEvents();
+      }
+      const [{ data: evs }, counts] = await Promise.all([
+        eventService.getByPromoter(activeOrganization.owner_id),
+        eventService.getApplicationCountsForPromoter(activeOrganization.owner_id),
+      ]);
+      if (!active) return;
+      setEvents(evs ?? []);
+      setPendingCounts(counts);
+      setSelectedEventId(null);
+      setSelectedRegEventId(null);
+      setLoading(false);
+    };
+    void load();
+    return () => { active = false; };
+  }, [activeOrganization]);
 
   const loadApplications = async (eventId: string) => {
     if (selectedEventId === eventId) { setSelectedEventId(null); return; }
@@ -125,7 +159,16 @@ export default function PromoterDashboardPage() {
     return formatLocalizedDate(new Date(year, month - 1, day), i18n.resolvedLanguage, { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
-  if (profile === undefined) return <div className="min-h-screen bg-white flex items-center justify-center"><p className="text-sm" style={{ color: '#9A9A9A' }}>...</p></div>;
+  if (!profile || !activeOrganization) return <div className="min-h-screen bg-white flex items-center justify-center"><p className="text-sm" style={{ color: '#9A9A9A' }}>...</p></div>;
+
+  const canManageTeam = organizationHasPermission(activeOrganization, 'manage_team');
+  const canCreateOrganizationEvent = organizationHasPermission(activeOrganization, 'create_event');
+  const canManageEvents = organizationHasPermission(activeOrganization, 'manage_event');
+  const canMatchmake = organizationHasPermission(activeOrganization, 'matchmaking');
+  const canViewPrivate = organizationHasPermission(activeOrganization, 'view_private');
+  const canManageFinance = organizationHasPermission(activeOrganization, 'finance');
+  const canManageStripe = organizationHasPermission(activeOrganization, 'manage_stripe');
+  const ownsActiveOrganization = activeOrganization.owner_id === profile.id;
 
   const publishedEvents = events.filter((e) => e.status === 'published');
   const draftEvents = events.filter((e) => e.status !== 'published' && e.status !== 'completed');
@@ -140,16 +183,39 @@ export default function PromoterDashboardPage() {
         <div className="mb-8 flex items-start justify-between gap-4 flex-wrap">
           <div>
             <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#C0001E' }}>{t('promoters.dashboard.title')}</p>
-            <h1 className="text-3xl font-black uppercase" style={{ letterSpacing: '-1px' }}>{profile!.full_name}</h1>
-            <p className="text-sm mt-1" style={{ color: '#5A5A5A' }}>{profile!.city ?? ''}</p>
+            <h1 className="text-3xl font-black uppercase" style={{ letterSpacing: '-1px' }}>{activeOrganization.organization_name}</h1>
+            <p className="text-sm mt-1" style={{ color: '#5A5A5A' }}>
+              {t(`promoters.team.roles.${activeOrganization.team_role}.label`)}
+            </p>
           </div>
-          <Link href="/events/create"
-            className="px-5 py-2.5 text-xs font-bold tracking-widest uppercase text-white transition-colors flex-shrink-0"
-            style={{ background: '#C0001E' }}
-            onMouseOver={(e) => (e.currentTarget.style.background = '#9A0018')}
-            onMouseOut={(e) => (e.currentTarget.style.background = '#C0001E')}>
-            + {t('promoters.dashboard.newEvent')}
-          </Link>
+          <div className="flex flex-col items-stretch gap-2 sm:items-end">
+            {organizations.length > 1 && (
+              <select
+                value={activeOrganization.organization_id}
+                onChange={(event) => {
+                  setLoading(true);
+                  setActiveOrganizationId(event.target.value);
+                }}
+                className="min-h-11 border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold text-zinc-800"
+                aria-label={t('promoters.team.eyebrow')}
+              >
+                {organizations.map((organization) => (
+                  <option key={organization.organization_id} value={organization.organization_id}>
+                    {organization.organization_name}
+                  </option>
+                ))}
+              </select>
+            )}
+            {canCreateOrganizationEvent && (
+              <Link href={`/events/create?organizer=${activeOrganization.owner_id}`}
+                className="px-5 py-2.5 text-xs font-bold tracking-widest uppercase text-white transition-colors flex-shrink-0"
+                style={{ background: '#C0001E' }}
+                onMouseOver={(e) => (e.currentTarget.style.background = '#9A0018')}
+                onMouseOut={(e) => (e.currentTarget.style.background = '#C0001E')}>
+                + {t('promoters.dashboard.newEvent')}
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Posting note */}
@@ -160,7 +226,13 @@ export default function PromoterDashboardPage() {
           <span className="font-semibold">{t('promoters.dashboard.description')}</span>
         </div>
 
-        <OrganizerPaymentsPanel />
+        {canManageFinance && (
+          <OrganizerPaymentsPanel
+            organizerId={activeOrganization.owner_id}
+            canManageStripe={canManageStripe}
+            canRefund
+          />
+        )}
 
         {/* Stats row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
@@ -176,6 +248,8 @@ export default function PromoterDashboardPage() {
           ))}
         </div>
 
+        {canManageTeam && <PromoterTeamPanel organization={activeOrganization} />}
+
         {/* Events list */}
         <div className="mb-2 flex items-center justify-between">
           <p className="text-xs font-bold tracking-widest uppercase" style={{ color: '#C0001E' }}>
@@ -188,11 +262,15 @@ export default function PromoterDashboardPage() {
         ) : events.length === 0 ? (
           <div className="border border-dashed border-zinc-200 py-16 text-center">
             <p className="text-sm text-zinc-400 mb-2">{t('promoters.dashboard.noEvents')}</p>
-            <p className="text-xs text-emerald-700 font-semibold mb-4">{t('promoters.dashboard.noEventsHint')}</p>
-            <Link href="/events/create" className="text-xs font-bold tracking-widest uppercase text-white px-5 py-2.5 transition-colors"
-              style={{ background: '#C0001E' }}>
-              {t('promoters.dashboard.createFirstEvent')}
-            </Link>
+            {canCreateOrganizationEvent && (
+              <>
+                <p className="text-xs text-emerald-700 font-semibold mb-4">{t('promoters.dashboard.noEventsHint')}</p>
+                <Link href={`/events/create?organizer=${activeOrganization.owner_id}`} className="text-xs font-bold tracking-widest uppercase text-white px-5 py-2.5 transition-colors"
+                  style={{ background: '#C0001E' }}>
+                  {t('promoters.dashboard.createFirstEvent')}
+                </Link>
+              </>
+            )}
           </div>
         ) : (
           <div className="space-y-3">
@@ -245,26 +323,32 @@ export default function PromoterDashboardPage() {
 
                     {/* Actions */}
                     <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
-                      <Link href={`/events/${ev.id}/manage/matchmaking`}
-                        className="bg-[#C0001E] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#9A0018]">
-                        {t('promoters.dashboard.fightersMatchmaking')}
-                      </Link>
+                      {canMatchmake && (
+                        <Link href={`/events/${ev.id}/manage/matchmaking`}
+                          className="bg-[#C0001E] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#9A0018]">
+                          {t('promoters.dashboard.fightersMatchmaking')}
+                        </Link>
+                      )}
                       <a href={eventPublicPath(ev)}
                         className="text-xs font-medium text-zinc-500 border border-zinc-200 px-3 py-1.5 hover:bg-zinc-50 transition-colors">
-                        {t('promoters.dashboard.edit')}
+                        {canManageEvents ? t('promoters.dashboard.edit') : t('promoters.viewEvents')}
                       </a>
-                      <button onClick={() => loadApplications(ev.id)}
-                        className={`text-xs font-bold tracking-wide uppercase px-3 py-1.5 border transition-colors ${
-                          isOpen ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-700 border-zinc-300 hover:bg-zinc-50'
-                        }`}>
-                        {t('promoters.dashboard.applications')}
-                      </button>
-                      <button onClick={() => loadRegistrations(ev.id)}
-                        className={`text-xs font-bold tracking-wide uppercase px-3 py-1.5 border transition-colors ${
-                          selectedRegEventId === ev.id ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-700 border-zinc-300 hover:bg-zinc-50'
-                        }`}>
-                        {t('promoters.dashboard.registrationPayments')}
-                      </button>
+                      {canViewPrivate && (
+                        <button onClick={() => loadApplications(ev.id)}
+                          className={`text-xs font-bold tracking-wide uppercase px-3 py-1.5 border transition-colors ${
+                            isOpen ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-700 border-zinc-300 hover:bg-zinc-50'
+                          }`}>
+                          {t('promoters.dashboard.applications')}
+                        </button>
+                      )}
+                      {canManageFinance && (
+                        <button onClick={() => loadRegistrations(ev.id)}
+                          className={`text-xs font-bold tracking-wide uppercase px-3 py-1.5 border transition-colors ${
+                            selectedRegEventId === ev.id ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-700 border-zinc-300 hover:bg-zinc-50'
+                          }`}>
+                          {t('promoters.dashboard.registrationPayments')}
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -306,7 +390,7 @@ export default function PromoterDashboardPage() {
                                     &ldquo;{app.message}&rdquo;
                                   </p>
                                 )}
-                                {app.status === 'pending' && (
+                                {app.status === 'pending' && canMatchmake && (
                                   <div className="flex gap-2 justify-end">
                                     <button onClick={() => handleAppStatus(app.id, 'declined')} disabled={updatingApp === app.id}
                                       className="px-3 py-1.5 text-xs font-semibold border border-zinc-300 text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 transition-colors">
@@ -429,7 +513,7 @@ export default function PromoterDashboardPage() {
         )}
 
         {/* ── Manual fighters (roster) ── */}
-        {profile && (
+        {profile && ownsActiveOrganization && (
           <div id="fighter-roster" className="mt-12 scroll-mt-24 border-t border-zinc-100 pt-8">
             <ManualFighterManager creatorId={profile.id} />
           </div>

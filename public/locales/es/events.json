@@ -38,6 +38,8 @@
       "manualDescription": "Transferencia o efectivo confirmado por ti.",
       "stripeReady": "Stripe está listo para cobrar.",
       "stripeRequired": "Debes completar Stripe antes de publicar.",
+      "ownerStripeRequired": "Solo el propietario puede conectar Stripe. El propietario debe completar la configuración para que este evento use Stripe.",
+      "teamFinanceRequired": "Tu rol no incluye acceso financiero. Crea un evento gratuito o solicita ayuda al propietario o al equipo de finanzas.",
       "noPlatformFee": "Actualmente Strikers Match no aplica una comisión de plataforma a estas inscripciones.",
       "saving": "Guardando…",
       "save": "Guardar registro y cobro"
